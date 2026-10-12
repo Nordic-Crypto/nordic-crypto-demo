@@ -3,32 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#06080f">
-<meta name="description" content="NordicCrypto — Personal crypto banking, cards, IBAN.">
-<title>NordicCrypto — Personal crypto banking</title>
+<meta name="theme-color" content="#05070c">
+<meta name="description" content="NordicCrypto — the bank account for the crypto generation. Cards, IBAN, and instant exchange.">
+<title>NordicCrypto — Banking for the crypto generation</title>
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
 
-<!-- Animated background -->
-<div class="bg-layer" aria-hidden="true">
-  <div class="bg-blob bg-blob-1"></div>
-  <div class="bg-blob bg-blob-2"></div>
-  <div class="bg-blob bg-blob-3"></div>
-  <div class="bg-grid"></div>
-  <div class="bg-noise"></div>
+<!-- MESH BG (CSS-only, no blur) -->
+<div class="mesh" aria-hidden="true">
+  <div class="mesh-1"></div>
+  <div class="mesh-2"></div>
+  <div class="mesh-3"></div>
 </div>
-
-<!-- Cursor glow -->
-<div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+<div class="grid-overlay" aria-hidden="true"></div>
 
 <!-- HEADER -->
 <header class="header" id="header">
-  <div class="header-inner">
+  <div class="wrap">
     <a href="#" class="logo">
       <div class="logo-mark"><img src="logo.png" alt="" onerror="this.style.display='none'"></div>
       <div class="logo-text">Nordic<span>Crypto</span></div>
@@ -36,166 +32,247 @@
     <nav class="nav">
       <a href="#features">Features</a>
       <a href="#security">Security</a>
+      <a href="#calc">Calculator</a>
       <a href="#about">About</a>
     </nav>
-    <div class="header-actions">
-      <button class="btn btn-ghost" data-modal="loginModal">Log in</button>
-      <button class="btn btn-primary" data-modal="registerModal">Create account</button>
+    <div class="actions">
+      <button class="btn ghost" data-modal="loginModal">Sign in</button>
+      <button class="btn primary" data-modal="registerModal">Open account</button>
     </div>
   </div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-inner">
-    <div class="hero-badge anim-in" data-delay="0">
-      <span class="dot"></span> Built in Scandinavia
-    </div>
-
-    <h1 class="hero-title anim-in" data-delay="100">
-      Personal crypto banking<br>
-      <span class="gradient-text">reimagined.</span>
-    </h1>
-
-    <p class="hero-sub anim-in" data-delay="200">
-      Cards, IBAN, and crypto exchange — all in one app.
-      Bank-grade security, instant settlement, Nordic design.
-    </p>
-
-    <!-- Live ticker -->
-    <div class="live-ticker anim-in" data-delay="250">
-      <div class="ticker-item">
-        <span class="ticker-icon btc">₿</span>
-        <span class="ticker-symbol">BTC</span>
-        <span class="ticker-price" id="tkBTC">$—</span>
-        <span class="ticker-change" id="tkBTCchg">—</span>
-      </div>
-      <div class="ticker-item">
-        <span class="ticker-icon eth">Ξ</span>
-        <span class="ticker-symbol">ETH</span>
-        <span class="ticker-price" id="tkETH">$—</span>
-        <span class="ticker-change" id="tkETHchg">—</span>
-      </div>
-      <div class="ticker-item">
-        <span class="ticker-icon sol">◎</span>
-        <span class="ticker-symbol">SOL</span>
-        <span class="ticker-price" id="tkSOL">$—</span>
-        <span class="ticker-change" id="tkSOLchg">—</span>
-      </div>
-      <div class="ticker-live">
-        <span class="ticker-dot"></span> LIVE
-      </div>
-    </div>
-
-    <div class="hero-cta anim-in" data-delay="350">
-      <button class="btn btn-primary btn-lg" data-modal="registerModal">
-        Create account <span class="arrow">→</span>
-      </button>
-      <button class="btn btn-ghost btn-lg" data-modal="loginModal">
-        I already have an account
-      </button>
-    </div>
-
-    <!-- 3D Card -->
-    <div class="hero-card-wrap anim-in" data-delay="500">
-      <div class="hero-card" id="heroCard">
-        <div class="hero-card-shine"></div>
-        <div class="hero-card-top">
-          <div class="hero-card-brand">NORDIC CRYPTO</div>
-          <div class="hero-card-type">METAL VISA</div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div class="pill anim-in" style="--d:0">
+          <span class="pill-dot"></span>
+          Live in the Nordics · v2.0
         </div>
-        <div class="hero-card-chip-row">
-          <div class="hero-chip"></div>
-          <svg class="hero-nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6c2 2 2 8 0 12M10 5c3 3 3 11 0 14M14 4c4 4 4 12 0 16"/></svg>
+        <h1 class="hero-h1 anim-in" style="--d:80">
+          The bank account<br>
+          <span class="grad">for the crypto<br>generation.</span>
+        </h1>
+        <p class="hero-p anim-in" style="--d:160">
+          Cards, IBAN and instant exchange — in one elegant app.
+          Built in Scandinavia, engineered for the world.
+        </p>
+        <div class="hero-cta anim-in" style="--d:240">
+          <button class="btn primary xl" data-modal="registerModal">
+            Open account <span class="arr">→</span>
+          </button>
+          <button class="btn ghost xl" data-modal="loginModal">
+            Sign in
+          </button>
         </div>
-        <div class="hero-card-num">4921 •••• •••• 8432</div>
-        <div class="hero-card-footer">
-          <div>
-            <div class="hero-card-label">CARD HOLDER</div>
-            <div class="hero-card-value">E. L.</div>
+
+        <div class="ticker anim-in" style="--d:320">
+          <div class="tick">
+            <span class="ico btc">₿</span>
+            <span class="sym">BTC</span>
+            <span class="price" id="tkBTC">$—</span>
+            <span class="chg" id="tkBTCchg">—</span>
           </div>
-          <div>
-            <div class="hero-card-label">EXPIRES</div>
-            <div class="hero-card-value mono">03/29</div>
+          <div class="tick">
+            <span class="ico eth">Ξ</span>
+            <span class="sym">ETH</span>
+            <span class="price" id="tkETH">$—</span>
+            <span class="chg" id="tkETHchg">—</span>
+          </div>
+          <div class="tick">
+            <span class="ico sol">◎</span>
+            <span class="sym">SOL</span>
+            <span class="price" id="tkSOL">$—</span>
+            <span class="chg" id="tkSOLchg">—</span>
           </div>
         </div>
+
+        <div class="hero-trust anim-in" style="--d:400">
+          <span class="trust-item">🛡️ PCI DSS</span>
+          <span class="trust-item">🇪🇺 GDPR</span>
+          <span class="trust-item">⚡ SEPA Instant</span>
+        </div>
+      </div>
+
+      <div class="hero-right anim-in" style="--d:200">
+        <div class="phone-stage">
+          <!-- Phone mockup -->
+          <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="ps-top">
+                <div class="ps-greet">Good afternoon</div>
+                <div class="ps-name">Eva</div>
+              </div>
+              <div class="ps-bal">
+                <div class="ps-bal-lbl">Total balance</div>
+                <div class="ps-bal-v">€41,444<span>.91</span></div>
+                <div class="ps-bal-chg">▲ +3.18% this month</div>
+              </div>
+              <div class="ps-chart">
+                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#00E5FF" stop-opacity=".4"/>
+                      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,60 L30,55 L60,58 L90,40 L120,45 L150,30 L180,35 L210,22 L240,28 L270,15 L300,20 L300,80 L0,80 Z" fill="url(#pg)"/>
+                  <path d="M0,60 L30,55 L60,58 L90,40 L120,45 L150,30 L180,35 L210,22 L240,28 L270,15 L300,20" fill="none" stroke="#00E5FF" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="ps-actions">
+                <div class="ps-act"><div class="ps-act-i">↑</div><span>Send</span></div>
+                <div class="ps-act"><div class="ps-act-i">↓</div><span>Receive</span></div>
+                <div class="ps-act"><div class="ps-act-i">⇄</div><span>Swap</span></div>
+              </div>
+              <div class="ps-tx">
+                <div class="ps-tx-row">
+                  <div class="ps-tx-i">₿</div>
+                  <div class="ps-tx-info">
+                    <div class="ps-tx-name">Bitcoin</div>
+                    <div class="ps-tx-sub">+0.0216 BTC</div>
+                  </div>
+                  <div class="ps-tx-amt">+$1,278</div>
+                </div>
+                <div class="ps-tx-row">
+                  <div class="ps-tx-i eth">Ξ</div>
+                  <div class="ps-tx-info">
+                    <div class="ps-tx-name">Ethereum</div>
+                    <div class="ps-tx-sub">+6.9071 ETH</div>
+                  </div>
+                  <div class="ps-tx-amt">+$2,543</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating card -->
+          <div class="fc">
+            <div class="fc-shine"></div>
+            <div class="fc-top">
+              <div class="fc-brand">NORDIC CRYPTO</div>
+              <div class="fc-type">VISA</div>
+            </div>
+            <div class="fc-chip"></div>
+            <div class="fc-num">4921 •••• 8432</div>
+            <div class="fc-bot">
+              <div><div class="fc-lbl">CARD HOLDER</div><div class="fc-val">E. L.</div></div>
+              <div><div class="fc-lbl">EXPIRES</div><div class="fc-val mono">03/29</div></div>
+            </div>
+          </div>
+
+          <!-- Floating notification 1 -->
+          <div class="fn fn-1">
+            <div class="fn-ico">✓</div>
+            <div class="fn-info">
+              <div class="fn-title">Payment received</div>
+              <div class="fn-sub">+€1,200.00 from SWE</div>
+            </div>
+          </div>
+
+          <!-- Floating notification 2 -->
+          <div class="fn fn-2">
+            <div class="fn-ico">₿</div>
+            <div class="fn-info">
+              <div class="fn-title">BTC bought</div>
+              <div class="fn-sub">0.0125 BTC · $1,050</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="hero-scroll-hint">
-    <div class="hero-scroll-line"></div>
-    <span>Scroll to explore</span>
   </div>
 </section>
 
 <!-- STATS -->
-<section class="stats-section">
-  <div class="stats-grid">
-    <div class="stat-block anim-up">
-      <div class="stat-value" data-count="47" data-suffix="+">0</div>
-      <div class="stat-label">Active clients</div>
-    </div>
-    <div class="stat-block anim-up" data-delay="100">
-      <div class="stat-value" data-count="50" data-prefix="$" data-suffix="k+">0</div>
-      <div class="stat-label">Monthly volume</div>
-    </div>
-    <div class="stat-block anim-up" data-delay="200">
-      <div class="stat-value" data-count="99.9" data-suffix="%" data-decimals="1">0</div>
-      <div class="stat-label">Uptime</div>
-    </div>
-    <div class="stat-block anim-up" data-delay="300">
-      <div class="stat-value" data-count="24" data-suffix="/7">0</div>
-      <div class="stat-label">Support</div>
+<section class="stats">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat anim-up">
+        <div class="stat-v" data-count="47" data-suffix="+">0</div>
+        <div class="stat-l">Active clients</div>
+      </div>
+      <div class="stat anim-up" style="--d:80">
+        <div class="stat-v" data-count="50" data-prefix="$" data-suffix="k+">0</div>
+        <div class="stat-l">Monthly volume</div>
+      </div>
+      <div class="stat anim-up" style="--d:160">
+        <div class="stat-v" data-count="99.9" data-suffix="%" data-decimals="1">0</div>
+        <div class="stat-l">Uptime</div>
+      </div>
+      <div class="stat anim-up" style="--d:240">
+        <div class="stat-v" data-count="24" data-suffix="/7">0</div>
+        <div class="stat-l">Support</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- FEATURES — Bento grid -->
+<!-- FEATURES -->
 <section class="section" id="features">
-  <div class="section-inner">
+  <div class="wrap">
     <div class="section-head anim-up">
-      <div class="eyebrow">Features</div>
-      <h2>Everything you need.<br>Nothing you don't.</h2>
+      <div class="tag">Features</div>
+      <h2>One account.<br><span class="dim">Every financial primitive.</span></h2>
+      <p class="mut center">Banking, crypto, and everything in between — without the friction.</p>
     </div>
+
     <div class="bento">
-      <div class="bento-item bento-large anim-up">
-        <div class="bento-icon">💎</div>
+      <div class="b b-lg anim-up">
+        <div class="b-badge">Featured</div>
+        <div class="b-icon gi-cyan">💎</div>
         <h3>Virtual Metal Cards</h3>
-        <p>Visa / Mastercard virtual cards issued in 30 seconds. Order a physical metal card shipped from Stockholm.</p>
-        <div class="bento-visual">
+        <p>Visa & Mastercard issued in 30 seconds. Physical metal shipped from Stockholm in 5 days.</p>
+        <div class="b-visual">
           <div class="mini-card">
-            <div class="mini-card-brand">NORDIC CRYPTO</div>
-            <div class="mini-card-num">4921 •••• 8432</div>
+            <div class="mc-brand">NORDIC CRYPTO</div>
+            <div class="mc-chip"></div>
+            <div class="mc-num">4921 •••• 8432</div>
+            <div class="mc-bot">
+              <div class="mc-lbl">CARD HOLDER</div>
+              <div class="mc-val">E. L.</div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="bento-item anim-up" data-delay="100">
-        <div class="bento-icon">🏦</div>
+      <div class="b anim-up" style="--d:80">
+        <div class="b-icon gi-violet">🏦</div>
         <h3>SEPA IBAN</h3>
-        <p>Your own IBAN for SEPA transfers. Receive salary, pay bills across Europe.</p>
+        <p>Your own European IBAN. Receive salary, pay bills, send money across 36 countries.</p>
       </div>
-      <div class="bento-item anim-up" data-delay="150">
-        <div class="bento-icon">₿</div>
+      <div class="b anim-up" style="--d:160">
+        <div class="b-icon gi-orange">₿</div>
         <h3>Crypto Exchange</h3>
-        <p>Buy, sell BTC, ETH, USDT, SOL, BNB at market price. Instant settlement.</p>
+        <p>Buy, sell, convert BTC, ETH, USDT, SOL, BNB at market price. Instant settlement.</p>
       </div>
-      <div class="bento-item anim-up" data-delay="200">
-        <div class="bento-icon">🔒</div>
+      <div class="b anim-up" style="--d:240">
+        <div class="b-icon gi-pink">🔒</div>
         <h3>Bank-grade Security</h3>
-        <p>2FA, session fingerprint, rate limiting, CSRF. Your funds protected.</p>
+        <p>2FA, session fingerprint, rate limiting, CSRF protection. Your funds stay yours.</p>
       </div>
-      <div class="bento-item bento-wide anim-up" data-delay="250">
-        <div class="bento-icon">⚡</div>
-        <h3>Instant Settlement</h3>
-        <p>SEPA and crypto settlements in real-time. Multi-currency: USD, EUR, SEK, NOK, DKK, GBP.</p>
+      <div class="b b-wide anim-up" style="--d:320">
+        <div class="b-wide-inner">
+          <div>
+            <div class="b-icon gi-green">⚡</div>
+            <h3>Instant Settlement</h3>
+            <p>SEPA and crypto settlements in real-time. No waiting, no delays, no hidden fees.</p>
+          </div>
+          <div class="b-coins">
+            <span>USD</span><span>EUR</span><span>SEK</span>
+            <span>NOK</span><span>DKK</span><span>GBP</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- MARQUEE -->
-<section class="marquee-section">
-  <div class="marquee-label">Trusted infrastructure</div>
+<section class="marquee-sec">
+  <div class="marquee-lbl">Trusted infrastructure</div>
   <div class="marquee">
     <div class="marquee-track">
       <span>VISA</span><span>Mastercard</span><span>SEPA</span><span>SWIFT</span>
@@ -209,54 +286,93 @@
 </section>
 
 <!-- SECURITY -->
-<section class="section section-dark" id="security">
-  <div class="section-inner section-split">
-    <div class="anim-left">
-      <div class="eyebrow">Security</div>
-      <h2>Your money is safe with us.</h2>
-      <p class="muted">We use the same encryption standards as major European banks. Your data is encrypted in transit and at rest.</p>
-      <ul class="check-list">
-        <li>256-bit SSL/TLS encryption</li>
-        <li>GDPR compliant</li>
-        <li>Two-factor authentication</li>
-        <li>Session fingerprinting</li>
-        <li>Anti-fraud monitoring 24/7</li>
-      </ul>
-    </div>
-    <div class="trust-visual anim-right">
-      <div class="shield-wrap">
-        <div class="shield-ring shield-ring-1"></div>
-        <div class="shield-ring shield-ring-2"></div>
-        <div class="shield-ring shield-ring-3"></div>
-        <div class="shield-core">🛡️</div>
+<section class="section" id="security">
+  <div class="wrap">
+    <div class="split">
+      <div class="anim-left">
+        <div class="tag">Security</div>
+        <h2>Bank-grade security.<br><span class="dim">Crypto-native speed.</span></h2>
+        <p class="mut">Same encryption standards as major European banks. Your data is encrypted in transit and at rest, always.</p>
+        <ul class="checks">
+          <li><span class="chk"></span> 256-bit SSL/TLS encryption</li>
+          <li><span class="chk"></span> GDPR compliant</li>
+          <li><span class="chk"></span> Two-factor authentication</li>
+          <li><span class="chk"></span> Session fingerprinting</li>
+          <li><span class="chk"></span> Anti-fraud monitoring 24/7</li>
+        </ul>
+      </div>
+      <div class="shield-wrap anim-right">
+        <div class="shield">
+          <div class="shield-inner">🛡️</div>
+          <div class="ring r1"></div>
+          <div class="ring r2"></div>
+          <div class="ring r3"></div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- CALCULATOR -->
-<section class="section">
-  <div class="section-inner">
+<section class="section" id="calc">
+  <div class="wrap">
     <div class="section-head anim-up">
-      <div class="eyebrow">Calculator</div>
+      <div class="tag">Calculator</div>
       <h2>Try it right now.</h2>
-      <p class="muted" style="max-width:640px;margin:0 auto;">See how much crypto you get for your money. Live rates.</p>
+      <p class="mut center">See how much crypto you get for your money. Live market rates.</p>
     </div>
-    <div class="calc-wrap anim-up">
-      <div class="calc-input-side">
-        <label class="field-label">You send</label>
-        <div class="calc-input-row">
-          <input type="number" id="calcAmount" class="calc-input" value="1000" min="1">
-          <select id="calcCurrency" class="calc-select">
+    <div class="calc anim-up">
+      <div class="calc-side">
+        <label>You send</label>
+        <div class="calc-in">
+          <input type="number" id="calcAmount" value="1000" min="1">
+          <select id="calcCurrency">
             <option>EUR</option><option>USD</option><option>SEK</option><option>NOK</option><option>GBP</option>
           </select>
         </div>
       </div>
       <div class="calc-swap">⇅</div>
-      <div class="calc-output-side">
-        <label class="field-label">You receive</label>
-        <div class="calc-output" id="calcOutput">0.012 BTC</div>
+      <div class="calc-side">
+        <label>You receive</label>
+        <div class="calc-out" id="calcOutput">0.012 BTC</div>
         <div class="calc-rate" id="calcRate">1 BTC = $84,000</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP (БОНУС) -->
+<section class="section" id="roadmap">
+  <div class="wrap">
+    <div class="section-head anim-up">
+      <div class="tag">Roadmap</div>
+      <h2>What's coming next.</h2>
+      <p class="mut center">We ship fast. Here's what we're building.</p>
+    </div>
+    <div class="roadmap">
+      <div class="rm rm-done anim-up">
+        <div class="rm-dot"></div>
+        <div class="rm-q">Q1 2026</div>
+        <div class="rm-t">Launch</div>
+        <div class="rm-d">Cards, IBAN, crypto exchange.</div>
+      </div>
+      <div class="rm rm-now anim-up" style="--d:80">
+        <div class="rm-dot"></div>
+        <div class="rm-q">Q2 2026</div>
+        <div class="rm-t">Business accounts</div>
+        <div class="rm-d">Multi-user, API access, invoices.</div>
+      </div>
+      <div class="rm rm-next anim-up" style="--d:160">
+        <div class="rm-dot"></div>
+        <div class="rm-q">Q3 2026</div>
+        <div class="rm-t">Lending & yield</div>
+        <div class="rm-d">Earn up to 8% APY on idle balances.</div>
+      </div>
+      <div class="rm rm-future anim-up" style="--d:240">
+        <div class="rm-dot"></div>
+        <div class="rm-q">Q4 2026</div>
+        <div class="rm-t">Physical branches</div>
+        <div class="rm-d">Stockholm, Oslo, Copenhagen.</div>
       </div>
     </div>
   </div>
@@ -264,102 +380,122 @@
 
 <!-- ABOUT -->
 <section class="section" id="about">
-  <div class="section-inner section-split">
-    <div class="about-visual anim-left">
-      <div class="orbit">
-        <div class="orbit-ring"></div>
-        <div class="orbit-ring orbit-ring-2"></div>
-        <div class="orbit-ring orbit-ring-3"></div>
-        <div class="orbit-core">NC</div>
+  <div class="wrap">
+    <div class="split">
+      <div class="orbit anim-left">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+        <div class="core">NC</div>
       </div>
-    </div>
-    <div class="anim-right">
-      <div class="eyebrow">About</div>
-      <h2>Built in Scandinavia.<br>For the world.</h2>
-      <p class="muted">NordicCrypto is a demonstration project built for Nordic clients. We combine Nordic design philosophy with modern fintech technology.</p>
-      <p class="muted demo-warn"><b>⚠️ This is a demo project.</b> Do not enter real banking credentials.</p>
+      <div class="anim-right">
+        <div class="tag">About</div>
+        <h2>Built in Scandinavia.<br><span class="dim">For the world.</span></h2>
+        <p class="mut">NordicCrypto is a demonstration project built for Nordic clients. We combine Nordic design philosophy with modern fintech technology.</p>
+        <div class="warn">
+          <b>⚠️ Demo project.</b> Do not enter real banking credentials.
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="cta-section">
-  <div class="cta-inner anim-up">
+<section class="cta">
+  <div class="wrap cta-in anim-up">
     <h2>Ready to get started?</h2>
     <p>Create your account in 30 seconds. No card required.</p>
-    <button class="btn btn-primary btn-lg" data-modal="registerModal">
-      Create account <span class="arrow">→</span>
+    <button class="btn primary xl" data-modal="registerModal">
+      Open account <span class="arr">→</span>
     </button>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer class="footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <div class="logo-text">Nordic<span>Crypto</span></div>
-      <p>Personal crypto banking</p>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="logo-text">Nordic<span>Crypto</span></div>
+        <p>Personal crypto banking</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <div class="foot-h">Product</div>
+          <a href="#features">Features</a>
+          <a href="#security">Security</a>
+          <a href="#calc">Calculator</a>
+          <a href="#roadmap">Roadmap</a>
+        </div>
+        <div class="foot-col">
+          <div class="foot-h">Company</div>
+          <a href="#about">About</a>
+          <a href="mailto:support@nordiccrypto.net">Contact</a>
+        </div>
+        <div class="foot-col">
+          <div class="foot-h">Legal</div>
+          <a href="#" data-alert="Privacy Policy — demo.">Privacy</a>
+          <a href="#" data-alert="Terms of Service — demo.">Terms</a>
+        </div>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="#" data-alert="Privacy Policy — demo project.">Privacy</a>
-      <a href="#" data-alert="Terms of Service — demo project.">Terms</a>
-      <a href="mailto:support@nordiccrypto.net">Contact</a>
+    <div class="foot-bot">
+      <span>© 2026 NordicCrypto. All rights reserved.</span>
+      <span class="foot-status"><span class="dot"></span> All systems operational</span>
     </div>
-    <div class="footer-copy">© 2026 NordicCrypto. All rights reserved.</div>
   </div>
 </footer>
 
 <!-- LOGIN MODAL -->
-<div class="modal-overlay" id="loginModal">
+<div class="modal" id="loginModal">
   <div class="modal-card">
-    <button class="modal-close" data-close>×</button>
+    <button class="modal-x" data-close>×</button>
     <h3>Welcome back</h3>
     <p class="modal-sub">Sign in to your account</p>
-    <label class="field-label">Email</label>
-    <input type="email" class="field-input" id="loginEmail" placeholder="your@email.com">
-    <label class="field-label">Password</label>
-    <input type="password" class="field-input" id="loginPassword" placeholder="Enter your password">
-    <div class="error-msg" id="loginError" style="display:none"></div>
-    <button class="btn btn-primary btn-block" id="loginSubmit">Sign in →</button>
+    <label class="lbl">Email</label>
+    <input type="email" class="inp" id="loginEmail" placeholder="your@email.com">
+    <label class="lbl">Password</label>
+    <input type="password" class="inp" id="loginPassword" placeholder="Enter password">
+    <div class="err" id="loginError" style="display:none"></div>
+    <button class="btn primary block" id="loginSubmit">Sign in →</button>
     <div class="modal-hint">No account? <a href="#" data-switch="registerModal">Create one</a></div>
   </div>
 </div>
 
 <!-- REGISTER MODAL -->
-<div class="modal-overlay" id="registerModal">
-  <div class="modal-card modal-card-lg">
-    <button class="modal-close" data-close>×</button>
-    <h3>Create account</h3>
+<div class="modal" id="registerModal">
+  <div class="modal-card modal-lg">
+    <button class="modal-x" data-close>×</button>
+    <h3>Create your account</h3>
     <p class="modal-sub">Choose your account type</p>
 
-    <div class="acc-type-grid">
-      <button type="button" class="acc-type-btn on" data-acc="banking">
-        <div class="acc-type-icon banking">🏦</div>
-        <div class="acc-type-title">Banking</div>
-        <div class="acc-type-desc">Card + IBAN + Exchange</div>
-        <div class="acc-type-badge">Recommended</div>
+    <div class="acc-grid">
+      <button type="button" class="acc on" data-acc="banking">
+        <div class="acc-ico banking">🏦</div>
+        <div class="acc-t">Banking</div>
+        <div class="acc-d">Card + IBAN + Exchange</div>
+        <div class="acc-b">Recommended</div>
       </button>
-      <button type="button" class="acc-type-btn" data-acc="exchange">
-        <div class="acc-type-icon exchange">🪙</div>
-        <div class="acc-type-title">Exchange</div>
-        <div class="acc-type-desc">IBAN + Trading only</div>
-        <div class="acc-type-badge">Fast setup</div>
+      <button type="button" class="acc" data-acc="exchange">
+        <div class="acc-ico exchange">🪙</div>
+        <div class="acc-t">Exchange</div>
+        <div class="acc-d">IBAN + Trading only</div>
+        <div class="acc-b">Fast</div>
       </button>
     </div>
-
     <input type="hidden" id="regAccType" value="banking">
 
-    <label class="field-label">Full name</label>
-    <input type="text" class="field-input" id="regName" placeholder="Satoshi Nakamoto">
-    <label class="field-label">Email</label>
-    <input type="email" class="field-input" id="regEmail" placeholder="your@email.com">
-    <label class="field-label">Password</label>
-    <input type="password" class="field-input" id="regPassword" placeholder="Min 6 characters">
-    <label class="field-label">Confirm password</label>
-    <input type="password" class="field-input" id="regConfirm" placeholder="Repeat password">
-    <div class="error-msg" id="registerError" style="display:none"></div>
-    <button class="btn btn-primary btn-block" id="registerSubmit">Create account →</button>
-    <div class="modal-hint">Have an account? <a href="#" data-switch="loginModal">Sign in</a></div>
+    <label class="lbl">Full name</label>
+    <input type="text" class="inp" id="regName" placeholder="Satoshi Nakamoto">
+    <label class="lbl">Email</label>
+    <input type="email" class="inp" id="regEmail" placeholder="your@email.com">
+    <label class="lbl">Password</label>
+    <input type="password" class="inp" id="regPassword" placeholder="Min 6 characters">
+    <label class="lbl">Confirm password</label>
+    <input type="password" class="inp" id="regConfirm" placeholder="Repeat password">
+    <div class="err" id="registerError" style="display:none"></div>
+    <button class="btn primary block" id="registerSubmit">Create account →</button>
+    <div class="modal-hint">Have account? <a href="#" data-switch="loginModal">Sign in</a></div>
   </div>
 </div>
 
