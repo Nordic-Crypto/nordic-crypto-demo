@@ -647,7 +647,8 @@ const raycaster=new THREE.Raycaster();
 const pointer=new THREE.Vector2(5,5);
 
 function vecFor(lat,lon,r=1.01){
-  const a=THREE.MathUtils.degToRad(lat), b=THREE.MathUtils.degToRad(lon);
+  const a=THREE.MathUtils.degToRad(lat);
+  const b=THREE.MathUtils.degToRad(lon + TEXTURE_LON_OFFSET);
   return new THREE.Vector3(r*Math.cos(a)*Math.sin(b),r*Math.sin(a),r*Math.cos(a)*Math.cos(b));
 }
 function glowTexture(){
