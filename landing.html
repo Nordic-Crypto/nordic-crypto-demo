@@ -327,10 +327,28 @@
 
 <!-- REGISTER MODAL -->
 <div class="modal-overlay" id="registerModal">
-  <div class="modal-card">
+  <div class="modal-card modal-card-lg">
     <button class="modal-close" data-close>×</button>
     <h3>Create account</h3>
-    <p class="modal-sub">Start your crypto banking journey</p>
+    <p class="modal-sub">Choose your account type</p>
+
+    <div class="acc-type-grid">
+      <button type="button" class="acc-type-btn on" data-acc="banking">
+        <div class="acc-type-icon banking">🏦</div>
+        <div class="acc-type-title">Banking</div>
+        <div class="acc-type-desc">Card + IBAN + Exchange</div>
+        <div class="acc-type-badge">Recommended</div>
+      </button>
+      <button type="button" class="acc-type-btn" data-acc="exchange">
+        <div class="acc-type-icon exchange">🪙</div>
+        <div class="acc-type-title">Exchange</div>
+        <div class="acc-type-desc">IBAN + Trading only</div>
+        <div class="acc-type-badge">Fast setup</div>
+      </button>
+    </div>
+
+    <input type="hidden" id="regAccType" value="banking">
+
     <label class="field-label">Full name</label>
     <input type="text" class="field-input" id="regName" placeholder="Satoshi Nakamoto">
     <label class="field-label">Email</label>
