@@ -402,3 +402,99 @@ body {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .mesh-1, .mesh-2, .mesh-3, .marquee-track, .fc, .fn, .shield-inner, .orbit .ring { animation: none !important; }
 }
+/* ============================================================
+   HERO VIDEO
+   ============================================================ */
+.hero-video-stage {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1 / 1;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d1220, #05070c);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow:
+    0 60px 120px -40px rgba(0,229,255,.3),
+    0 40px 80px -30px rgba(0,0,0,.9),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  margin: 0 auto;
+}
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 1;
+}
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0,229,255,.06), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(124,58,237,.06), transparent 50%),
+    linear-gradient(180deg, transparent 60%, rgba(5,7,12,.4) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+.hero-video-badge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(13,19,31,.85);
+  border: 1px solid rgba(0,229,255,.25);
+  border-radius: 999px;
+  font-size: .75rem;
+  color: #7ee5ff;
+  font-weight: 700;
+  letter-spacing: .05em;
+  z-index: 3;
+}
+.hv-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 960px) {
+  .hero-video-stage {
+    max-width: 100%;
+    aspect-ratio: 4 / 5;
+  }
+}
+@media (max-width: 480px) {
+  .hero-video-stage {
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+  }
+  .hero-video-badge {
+    bottom: 14px;
+    left: 14px;
+    font-size: .68rem;
+    padding: 6px 10px;
+  }
+}
+
+/* Отключаем анимации на слабых устройствах */
+@media (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; }
+  .hero-video-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0,229,255,.2), transparent 60%),
+      linear-gradient(135deg, #0d1220, #05070c);
+    z-index: 1;
+  }
+}
