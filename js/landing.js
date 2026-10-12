@@ -1,19 +1,14 @@
 /* ============================================================
-   NORDIC CRYPTO — LANDING v4.0
-   Fixed: CSS-in-JS bug (v3.0)
-   Added: password toggle, strength meter, crypto picker,
-          retry logic, live flash, offline detection,
-          copy-to-clipboard, hotkeys, event tracking
+   NORDIC CRYPTO — LANDING v6.0 (final clean)
    ============================================================ */
 (function () {
   'use strict';
 
-  /* ---------- CONFIG ---------- */
   var WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
-  var PRICE_REFRESH = 15000;   // 15s
+  var PRICE_REFRESH = 15000;
   var MAX_RETRIES = 3;
 
-  /* ---------- TRACKING (bonus) ---------- */
+  /* ---------- TRACKING ---------- */
   function track(event, data) {
     try {
       if (window.gtag) window.gtag('event', event, data || {});
@@ -22,7 +17,7 @@
     } catch (e) {}
   }
 
-  /* ---------- RETRY FETCH (bonus) ---------- */
+  /* ---------- RETRY FETCH ---------- */
   async function fetchRetry(url, opts, retries) {
     retries = retries == null ? MAX_RETRIES : retries;
     for (var i = 0; i < retries; i++) {
@@ -38,11 +33,10 @@
     throw new Error('Network failed after retries');
   }
 
-  /* ---------- OFFLINE DETECTION (bonus) ---------- */
+  /* ---------- OFFLINE ---------- */
   (function offline() {
     function setStatus() {
       var off = !navigator.onLine;
-      document.documentElement.classList.toggle('is-offline', off);
       var badge = document.getElementById('offlineBadge');
       if (off && !badge) {
         badge = document.createElement('div');
@@ -50,9 +44,7 @@
         badge.textContent = '⚠ Offline — check your connection';
         badge.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:8px;text-align:center;background:#ff5470;color:#fff;font-weight:700;font-size:.85rem;';
         document.body.appendChild(badge);
-      } else if (!off && badge) {
-        badge.remove();
-      }
+      } else if (!off && badge) badge.remove();
     }
     window.addEventListener('online', setStatus);
     window.addEventListener('offline', setStatus);
@@ -65,19 +57,21 @@
     return;
   }
 
-  /* ---------- 1. HEADER SCROLL ---------- */
+  /* ---------- HEADER SCROLL ---------- */
   var header = document.querySelector('.header');
-  var _ticking = false, _lastScrolled = false;
-  function updateHeader() {
-    var s = window.scrollY > 40;
-    if (s !== _lastScrolled) { _lastScrolled = s; header.classList.toggle('scrolled', s); }
-    _ticking = false;
+  if (header) {
+    var _ticking = false, _lastScrolled = false;
+    var updateHeader = function () {
+      var s = window.scrollY > 40;
+      if (s !== _lastScrolled) { _lastScrolled = s; header.classList.toggle('scrolled', s); }
+      _ticking = false;
+    };
+    window.addEventListener('scroll', function () {
+      if (!_ticking) { requestAnimationFrame(updateHeader); _ticking = true; }
+    }, { passive: true });
   }
-  window.addEventListener('scroll', function () {
-    if (!_ticking) { requestAnimationFrame(updateHeader); _ticking = true; }
-  }, { passive: true });
 
-  /* ---------- 2. SCROLL REVEAL ---------- */
+  /* ---------- SCROLL REVEAL ---------- */
   var revealEls = document.querySelectorAll('.anim-up, .anim-left, .anim-right');
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
@@ -90,7 +84,7 @@
     revealEls.forEach(function (el) { el.classList.add('in'); });
   }
 
-  /* ---------- 3. COUNT-UP ---------- */
+  /* ---------- COUNT-UP (universal: .stat-v[data-count], .cs-val[data-count]) ---------- */
   function animateCount(el) {
     var target = parseFloat(el.getAttribute('data-count'));
     var dec = parseInt(el.getAttribute('data-decimals') || '0', 10);
@@ -107,19 +101,19 @@
     }
     requestAnimationFrame(step);
   }
-  var stats = document.querySelectorAll('.stat-v[data-count]');
+  var countEls = document.querySelectorAll('.stat-v[data-count], .cs-val[data-count]');
   if ('IntersectionObserver' in window) {
     var sio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (e.isIntersecting) { animateCount(e.target); sio.unobserve(e.target); }
       });
     }, { threshold: 0.4 });
-    stats.forEach(function (el) { sio.observe(el); });
+    countEls.forEach(function (el) { sio.observe(el); });
   } else {
-    stats.forEach(function (el) { animateCount(el); });
+    countEls.forEach(function (el) { animateCount(el); });
   }
 
-  /* ---------- 4. MODALS ---------- */
+  /* ---------- MODALS ---------- */
   var lastFocused = null;
   function openModal(id) {
     lastFocused = document.activeElement;
@@ -153,7 +147,7 @@
     a.addEventListener('click', function (e) { e.preventDefault(); alert(this.getAttribute('data-alert')); });
   });
 
-  /* ---------- 5. PASSWORD TOGGLE + STRENGTH (bonus) ---------- */
+  /* ---------- PASSWORD TOGGLE ---------- */
   document.querySelectorAll('input[type="password"]').forEach(function (inp) {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative;';
@@ -171,44 +165,7 @@
     wrap.appendChild(btn);
   });
 
-  function strength(p) {
-    var s = 0;
-    if (p.length >= 6) s++;
-    if (p.length >= 10) s++;
-    if (/[A-Z]/.test(p)) s++;
-    if (/[0-9]/.test(p)) s++;
-    if (/[^A-Za-z0-9]/.test(p)) s++;
-    return s; // 0..5
-  }
-  var regPass = document.getElementById('regPassword');
-  if (regPass) {
-    var meter = document.createElement('div');
-    meter.style.cssText = 'height:4px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden;';
-    var bar = document.createElement('div');
-    bar.style.cssText = 'height:100%;width:0;transition:all .3s;';
-    meter.appendChild(bar);
-    regPass.parentNode.parentNode.appendChild(meter);
-    regPass.addEventListener('input', function () {
-      var s = strength(regPass.value);
-      var colors = ['#ff5470', '#ff5470', '#f59e0b', '#f59e0b', '#10b981', '#10b981'];
-      bar.style.width = (s * 20) + '%';
-      bar.style.background = colors[s];
-    });
-  }
-
-  /* ---------- 6. EMAIL LIVE VALIDATION (bonus) ---------- */
-  ['loginEmail', 'regEmail'].forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', function () {
-      var v = el.value.trim();
-      if (!v) { el.style.borderColor = ''; return; }
-      var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      el.style.borderColor = ok ? 'rgba(16,185,129,.5)' : 'rgba(255,84,112,.5)';
-    });
-  });
-
-  /* ---------- 7. LOGIN ---------- */
+  /* ---------- LOGIN ---------- */
   function showErr(id, msg) { var el = document.getElementById(id); if (el) { el.textContent = msg; el.style.display = 'block'; } }
   function hideErr(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
 
@@ -225,8 +182,7 @@
     loginBtn.disabled = true; loginBtn.textContent = 'Signing in...';
     try {
       var r = await fetchRetry(WORKER_URL + '?action=login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email, password: password })
       });
       var d = await r.json();
@@ -253,7 +209,7 @@
     if (el) el.addEventListener('keydown', function (e) { if (e.key === 'Enter') loginBtn.click(); });
   });
 
-  /* ---------- 8. REGISTER ---------- */
+  /* ---------- REGISTER ---------- */
   document.querySelectorAll('.acc').forEach(function (btn) {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.acc').forEach(function (b) { b.classList.remove('on'); });
@@ -280,8 +236,7 @@
     regBtn.disabled = true; regBtn.textContent = 'Creating...';
     try {
       var r = await fetchRetry(WORKER_URL + '?action=register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name, email: email, password: password, accountType: accountType })
       });
       var d = await r.json();
@@ -309,7 +264,7 @@
     if (el) el.addEventListener('keydown', function (e) { if (e.key === 'Enter') regBtn.click(); });
   });
 
-  /* ---------- 9. SMOOTH SCROLL ---------- */
+  /* ---------- SMOOTH SCROLL ---------- */
   document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     a.addEventListener('click', function (e) {
       var t = this.getAttribute('href');
@@ -320,7 +275,7 @@
     });
   });
 
-  /* ---------- 10. LIVE CRYPTO TICKER ---------- */
+  /* ---------- LIVE CRYPTO TICKER ---------- */
   (function ticker() {
     var map = { BTC: 'tkBTC', ETH: 'tkETH', SOL: 'tkSOL' };
     if (!document.getElementById('tkBTC')) return;
@@ -363,7 +318,7 @@
     });
   })();
 
-  /* ---------- 11. CALCULATOR v2 (bonus: SOL + picker) ---------- */
+  /* ---------- CALCULATOR ---------- */
   (function calc() {
     var aEl = document.getElementById('calcAmount');
     var cEl = document.getElementById('calcCurrency');
@@ -375,7 +330,6 @@
     var prices = { BTC: 84000, ETH: 3200, SOL: 180 };
     var currentCoin = 'BTC';
 
-    // Crypto picker (bonus)
     var picker = document.createElement('div');
     picker.style.cssText = 'display:flex;gap:8px;margin-bottom:12px;justify-content:center;flex-wrap:wrap;';
     ['BTC', 'ETH', 'SOL'].forEach(function (sym) {
@@ -398,12 +352,14 @@
       };
       picker.appendChild(b);
     });
-    // Set default active
-    picker.querySelector('[data-coin="BTC"]').style.background = 'rgba(0,229,255,.15)';
-    picker.querySelector('[data-coin="BTC"]').style.color = '#00e5ff';
-    picker.querySelector('[data-coin="BTC"]').style.borderColor = 'rgba(0,229,255,.4)';
+    var defaultBtn = picker.querySelector('[data-coin="BTC"]');
+    if (defaultBtn) {
+      defaultBtn.style.background = 'rgba(0,229,255,.15)';
+      defaultBtn.style.color = '#00e5ff';
+      defaultBtn.style.borderColor = 'rgba(0,229,255,.4)';
+    }
     var calcEl = aEl.closest('.calc') || aEl.parentNode;
-    calcEl.parentNode.insertBefore(picker, calcEl);
+    if (calcEl && calcEl.parentNode) calcEl.parentNode.insertBefore(picker, calcEl);
 
     async function loadPrices() {
       try {
@@ -431,7 +387,7 @@
     setInterval(loadPrices, 60000);
   })();
 
-  /* ---------- 12. FOMO NOTIFICATIONS ---------- */
+  /* ---------- FOMO NOTIFICATIONS ---------- */
   (function fomo() {
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || window.innerWidth < 640) return;
@@ -464,7 +420,7 @@
     setTimeout(function () { show(); setInterval(show, 18000); }, 10000);
   })();
 
-  /* ---------- 13. HOTKEYS (bonus) ---------- */
+  /* ---------- HOTKEYS ---------- */
   document.addEventListener('keydown', function (e) {
     if (e.target.matches('input, textarea')) return;
     if (e.key === '/') {
@@ -478,75 +434,7 @@
     }
   });
 
-  /* ---------- 14. LOG ---------- */
-  console.log('%c[NordicCrypto] ✅ Landing v4.0 loaded — no CSS-in-JS, all good', 'color:#00e5ff;font-weight:bold;font-size:13px');
-  /* ---------- 17. LIVE THREAT COUNTER ---------- */
-  (function threatCounter() {
-    var el = document.getElementById('threatCount');
-    if (!el) return;
-    // Стартовое значение — реалистичное число "отбитых" угроз
-    var base = 1247832;
-    var counter = base;
-    function fmt(n) { return n.toLocaleString('en-US'); }
-    el.textContent = fmt(counter);
-    // Прибавляем 3-9 "угроз" каждые 2-5 секунд
-    function tick() {
-      counter += Math.floor(Math.random() * 7) + 3;
-      el.textContent = fmt(counter);
-      setTimeout(tick, 2000 + Math.random() * 3000);
-    }
-    setTimeout(tick, 2500);
-  })();
-
-  /* ---------- 18. MAP ARCS ANIMATION ---------- */
-  (function mapArcs() {
-    var arcs = document.querySelectorAll('.arc');
-    if (!arcs.length) return;
-    arcs.forEach(function (a) {
-      // Случайная задержка для «живости»
-      a.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
-      a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
-    });
-  })();
-  /* ---------- 17. SCROLL PROGRESS ---------- */
-  (function scrollProgress() {
-    var bar = document.getElementById('scrollProgress');
-    if (!bar) return;
-    function update() {
-      var h = document.documentElement;
-      var max = h.scrollHeight - h.clientHeight;
-      var p = max > 0 ? h.scrollTop / max : 0;
-      bar.style.transform = 'scaleX(' + p + ')';
-    }
-    window.addEventListener('scroll', update, { passive: true });
-    update();
-  })();
-
-  /* ---------- 18. BACK TO TOP ---------- */
-  (function backTop() {
-    var btn = document.getElementById('backTop');
-    if (!btn) return;
-    function check() {
-      if (window.scrollY > 600) btn.classList.add('on');
-      else btn.classList.remove('on');
-    }
-    window.addEventListener('scroll', check, { passive: true });
-    btn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    check();
-  })();
-
-  /* ---------- 19. CARD MOUSE GLOW ---------- */
-  document.querySelectorAll('.b').forEach(function (card) {
-    card.addEventListener('mousemove', function (e) {
-      var r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
-      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
-    });
-  });
-
-  /* ---------- 20. THREAT COUNTER ---------- */
+  /* ---------- THREAT COUNTER ---------- */
   (function threatCounter() {
     var el = document.getElementById('threatCount');
     if (!el) return;
@@ -561,144 +449,137 @@
     setTimeout(tick, 2500);
   })();
 
-  /* ---------- 21. MAP ARCS RANDOM DELAY ---------- */
-  document.querySelectorAll('.arc').forEach(function (a) {
-    a.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
-    a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
-  });
-
-  /* ---------- 22. COVERAGE STATS COUNT-UP ---------- */
-  (function coverageCount() {
-    var els = document.querySelectorAll('.cs-val[data-count]');
-    if (!els.length) return;
-    function animate(el) {
-      var target = parseFloat(el.getAttribute('data-count'));
-      var dec = parseInt(el.getAttribute('data-decimals') || '0', 10);
-      var pre = el.getAttribute('data-prefix') || '';
-      var suf = el.getAttribute('data-suffix') || '';
-      var dur = 1600, start = null;
-      function step(ts) {
-        if (!start) start = ts;
-        var p = Math.min((ts - start) / dur, 1);
-        var eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = pre + (target * eased).toFixed(dec) + suf;
-        if (p < 1) requestAnimationFrame(step);
-        else el.textContent = pre + target.toFixed(dec) + suf;
-      }
-      requestAnimationFrame(step);
+  /* ---------- SCROLL PROGRESS ---------- */
+  (function scrollProgress() {
+    var bar = document.getElementById('scrollProgress');
+    if (!bar) return;
+    function update() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      var p = max > 0 ? h.scrollTop / max : 0;
+      bar.style.transform = 'scaleX(' + p + ')';
     }
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function(entries){
-        entries.forEach(function(e){
-          if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
-        });
-      }, { threshold: 0.4 });
-      els.forEach(function(el){ io.observe(el); });
-    } else {
-      els.forEach(animate);
-    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
   })();
 
-     /* ---------- 23. 3D GLOBE CITY POSITIONING ---------- */
-  (function globeCities() {
-    var globe = document.getElementById('globe');
-    var markersWrap = document.getElementById('globeMarkers');
-    if (!globe || !markersWrap) return;
+  /* ---------- BACK TO TOP ---------- */
+  (function backTop() {
+    var btn = document.getElementById('backTop');
+    if (!btn) return;
+    function check() {
+      if (window.scrollY > 600) btn.classList.add('on');
+      else btn.classList.remove('on');
+    }
+    window.addEventListener('scroll', check, { passive: true });
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    check();
+  })();
 
-    var markers = markersWrap.querySelectorAll('.gmarker');
+  /* ---------- BENTO CARD MOUSE GLOW ---------- */
+  document.querySelectorAll('.b').forEach(function (card) {
+    card.addEventListener('mousemove', function (e) {
+      var r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  /* ---------- 3D GLOBE — City Positioning ---------- */
+  (function globe() {
+    var globeEl = document.getElementById('globe');
+    var wrap = document.getElementById('globeMarkers');
+    if (!globeEl || !wrap) return;
+
+    var markers = wrap.querySelectorAll('.gmarker');
     if (!markers.length) return;
 
-    // Convert lat/lng to x/y on a rotating sphere
-    // Simplified equirectangular projection onto circle:
-    // x = cos(lng) * cos(lat) ; y = sin(lat)
-    function positionMarkers() {
-      var rect = globe.getBoundingClientRect();
-      var r = rect.width / 2;
-      var cx = rect.width / 2;
-      var cy = rect.height / 2;
+    // Rotation offset: which longitude is at the FRONT of the globe
+    // 18° = Stockholm is front-center, so Nordics + Europe visible
+    var ROTATION_OFFSET = -18;
+
+    function project(lat, lng) {
+      var phi   = lat * Math.PI / 180;
+      var theta = (lng + ROTATION_OFFSET) * Math.PI / 180;
+      var x = Math.cos(phi) * Math.sin(theta);
+      var y = Math.sin(phi);
+      var z = Math.cos(phi) * Math.cos(theta);
+      return { x: x, y: y, z: z };
+    }
+
+    function update() {
+      var rect = globeEl.getBoundingClientRect();
+      var r  = rect.width / 2;
+      var cx = r;
+      var cy = r;
 
       markers.forEach(function (m) {
-        var lat = parseFloat(m.style.getPropertyValue('--lat'));
-        var lng = parseFloat(m.style.getPropertyValue('--lng'));
-        var latRad = lat * Math.PI / 180;
-        var lngRad = lng * Math.PI / 180;
+        var lat = parseFloat(m.dataset.lat);
+        var lng = parseFloat(m.dataset.lng);
+        var p = project(lat, lng);
 
-        // Simple spherical → 2D projection
-        var x = cx + Math.cos(latRad) * Math.sin(lngRad) * r;
-        var y = cy - Math.sin(latRad) * r;
+        var left = cx + p.x * r;
+        var top  = cy - p.y * r;
 
-        // Visibility check (hide if behind the globe)
-        var depth = Math.cos(latRad) * Math.cos(lngRad);
-        m.style.left = x + 'px';
-        m.style.top = y + 'px';
-        m.style.opacity = depth > -0.2 ? Math.max(0.2, (depth + 1) / 2) : 0;
-        m.style.zIndex = depth > 0 ? 10 : 5;
+        m.style.left = left + 'px';
+        m.style.top  = top  + 'px';
+
+        if (p.z < 0.05) {
+          m.style.opacity = '0';
+          m.style.pointerEvents = 'none';
+        } else {
+          m.style.opacity = Math.min(1, p.z * 1.5 + 0.15);
+          m.style.pointerEvents = 'auto';
+        }
+        m.style.zIndex = p.z > 0 ? '10' : '5';
       });
     }
 
-    positionMarkers();
-    window.addEventListener('resize', positionMarkers);
+    update();
+    window.addEventListener('resize', update);
 
-    // Hover zoom effect
     markers.forEach(function (m) {
       m.addEventListener('mouseenter', function () {
         markers.forEach(function (x) { x.classList.remove('zoomed'); });
         m.classList.add('zoomed');
-        globe.style.transform = 'translateY(-10px) scale(1.06)';
-        globe.style.transition = 'transform .6s cubic-bezier(.34,1.56,.64,1)';
       });
       m.addEventListener('mouseleave', function () {
         m.classList.remove('zoomed');
-        globe.style.transform = '';
-        globe.style.transition = 'transform .6s ease';
       });
     });
 
-    console.log('[NC] 🌍 Globe initialized with', markers.length, 'cities');
+    console.log('[NC] 🌍 Globe initialized —', markers.length, 'cities');
   })();
-   
-  track('landing_view', { v: '4.0' });
-})();
-/* ---------- 15. FORCE VIDEO AUTOPLAY ---------- */
-(function forceVideo() {
-  var v = document.querySelector('.hero-video');
-  if (!v) return;
-  v.muted = true;
-  v.playsInline = true;
-  var play = function () {
-    var p = v.play();
-    if (p && p.catch) p.catch(function () {
-      // autoplay заблокирован — ждём клик
-      document.addEventListener('click', function once() {
-        v.play();
-        document.removeEventListener('click', once);
-      }, { once: true });
-    });
-  };
-  if (v.readyState >= 3) play();
-  else v.addEventListener('loadeddata', play, { once: true });
-  // На всякий случай — повторим через 1 сек
-  setTimeout(play, 1000);
-})();
-  /* ---------- 15. FORCE VIDEO VISIBLE ---------- */
+
+  /* ---------- FORCE VIDEO AUTOPLAY ---------- */
   (function forceVideo() {
     var v = document.querySelector('.hero-video');
     if (!v) return;
-    // Форсим display через inline-стиль — перебивает любой @media
     v.style.display = 'block';
     v.style.visibility = 'visible';
     v.style.opacity = '1';
-    // Форсим autoplay
     v.muted = true;
     v.playsInline = true;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
     var tryPlay = function () {
       var p = v.play();
       if (p && p.catch) p.catch(function () {
-        document.addEventListener('click', function () { v.play(); }, { once: true });
+        var kick = function () { v.play().catch(function(){}); };
+        document.addEventListener('click', kick, { once: true });
+        document.addEventListener('touchstart', kick, { once: true });
+        document.addEventListener('scroll', kick, { once: true, passive: true });
       });
     };
     if (v.readyState >= 2) tryPlay();
     else v.addEventListener('loadeddata', tryPlay, { once: true });
-    console.log('[NC] Video forced visible. Reduced-motion:',
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    setTimeout(tryPlay, 800);
+    setTimeout(tryPlay, 2000);
   })();
+
+  /* ---------- LOG ---------- */
+  console.log('%c[NordicCrypto] ✅ Landing v6.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
+  track('landing_view', { v: '6.0' });
+})();
