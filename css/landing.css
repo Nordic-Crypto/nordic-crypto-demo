@@ -487,7 +487,9 @@ body {
 
 /* Отключаем анимации на слабых устройствах */
 @media (prefers-reduced-motion: reduce) {
-  .hero-video { display: none; }
+  .hero-video {
+    display: block;      /* было: none */
+  }
   .hero-video-stage::before {
     content: '';
     position: absolute;
@@ -495,7 +497,8 @@ body {
     background:
       radial-gradient(circle at 50% 50%, rgba(0,229,255,.2), transparent 60%),
       linear-gradient(135deg, #0d1220, #05070c);
-    z-index: 1;
+    z-index: 0;          /* было: 1 — чтобы не перекрывало видео */
+    pointer-events: none;
   }
 }
 /* ============================================================
