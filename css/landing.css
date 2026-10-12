@@ -308,9 +308,42 @@ img, svg, video { max-width: 100%; display: block; }
 
 .globe-planet {
   position: absolute; inset: 0; border-radius: 50%;
-  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'%3E%3Cdefs%3E%3CradialGradient id='ocean' cx='35%25' cy='35%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%232a6fa5'/%3E%3Cstop offset='40%25' stop-color='%231a4d7a'/%3E%3Cstop offset='75%25' stop-color='%230d2942'/%3E%3Cstop offset='100%25' stop-color='%2305101c'/%3E%3C/radialGradient%3E%3CradialGradient id='landGrad' cx='50%25' cy='40%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%233d6b47'/%3E%3Cstop offset='60%25' stop-color='%23254231'/%3E%3Cstop offset='100%25' stop-color='%231a3021'/%3E%3C/radialGradient%3E%3Cfilter id='soft'%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='800' height='800' fill='url(%23ocean)'/%3E%3Cg fill='url(%23landGrad)' filter='url(%23soft)'%3E%3Cpath d='M130 230 Q 170 190 230 200 Q 290 220 300 280 Q 300 340 260 380 Q 220 420 180 410 Q 140 390 125 340 Q 115 280 130 230 Z'/%3E%3Cpath d='M 280 130 Q 320 110 370 120 Q 410 140 410 180 Q 400 210 370 215 Q 340 210 310 195 Q 285 175 280 150 Z'/%3E%3Cpath d='M 240 440 Q 270 430 300 450 Q 330 490 320 540 Q 300 590 270 600 Q 240 590 225 540 Q 215 490 240 440 Z'/%3E%3Cpath d='M 380 190 Q 410 175 445 185 Q 470 205 465 240 Q 450 270 420 275 Q 395 270 385 240 Q 375 215 380 190 Z'/%3E%3Cpath d='M 400 310 Q 435 300 470 320 Q 490 360 475 410 Q 450 450 420 450 Q 400 445 395 410 Q 390 360 400 310 Z'/%3E%3Cpath d='M 500 200 Q 560 175 630 190 Q 690 210 710 260 Q 715 310 690 350 Q 655 380 610 375 Q 570 365 540 335 Q 510 300 500 260 Q 495 230 500 200 Z'/%3E%3Cpath d='M 560 380 Q 600 375 630 400 Q 645 440 630 480 Q 605 505 575 500 Q 550 490 545 455 Q 545 415 560 380 Z'/%3E%3Cpath d='M 660 500 Q 700 490 730 515 Q 745 555 730 590 Q 705 615 675 605 Q 655 590 655 555 Q 655 525 660 500 Z'/%3E%3Cpath d='M 200 100 Q 240 85 280 100 Q 290 130 270 145 Q 240 150 215 140 Q 200 120 200 100 Z'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: cover; background-position: center; z-index: 1;
+  background:
+    /* Ocean base with light from top-left */
+    radial-gradient(circle at 32% 28%, #4a9fd4 0%, #2a6fa5 18%, #1a4d7a 42%, #0d2942 72%, #05101c 100%);
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Continents layer as overlay */
+.globe-planet::before {
+  content: '';
+  position: absolute;
+  inset: -2%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'><g fill='%233d7a4a' stroke='%235fa860' stroke-width='0.6' opacity='0.95'><path d='M70 140 Q 95 105 140 100 Q 190 100 215 130 Q 235 165 225 205 Q 210 240 180 255 Q 145 260 115 245 Q 85 225 75 190 Q 68 165 70 140 Z'/><path d='M 175 95 Q 210 75 250 80 Q 285 90 295 120 Q 290 155 260 165 Q 225 165 200 150 Q 180 130 175 110 Z'/><path d='M 160 295 Q 195 285 225 300 Q 255 330 250 380 Q 230 425 195 440 Q 165 440 145 415 Q 130 380 135 345 Q 140 315 160 295 Z'/><path d='M 240 165 Q 270 155 300 165 Q 320 190 315 220 Q 300 245 270 245 Q 245 240 235 215 Q 230 190 240 165 Z'/><path d='M 265 265 Q 295 260 320 280 Q 335 315 325 355 Q 300 385 275 380 Q 255 370 250 340 Q 248 305 265 265 Z'/><path d='M 320 175 Q 375 160 425 175 Q 465 195 475 235 Q 475 275 445 305 Q 405 325 370 315 Q 340 300 325 270 Q 315 240 320 210 Q 318 190 320 175 Z'/><path d='M 380 335 Q 415 325 440 345 Q 455 380 445 415 Q 420 435 395 425 Q 380 415 375 385 Q 375 355 380 335 Z'/><path d='M 430 445 Q 455 440 470 460 Q 475 485 460 495 Q 445 495 435 480 Q 430 465 430 445 Z'/><path d='M 120 55 Q 145 45 170 55 Q 180 75 165 90 Q 145 95 130 85 Q 120 75 120 55 Z'/></g></svg>");
+  background-size: cover;
+  background-position: center;
+  filter: drop-shadow(0 0 3px rgba(90,200,120,.4));
   animation: globeRotateBg 90s linear infinite;
+  z-index: 1;
+}
+
+/* Night-side shadow on right */
+.globe-planet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, transparent 15%, transparent 35%, rgba(0,0,0,.35) 65%, rgba(0,0,0,.75) 100%),
+    radial-gradient(circle at 75% 75%, rgba(0,0,0,.55), transparent 55%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes globeRotateBg {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 @keyframes globeRotateBg { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
 
