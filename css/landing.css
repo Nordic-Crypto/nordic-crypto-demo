@@ -577,8 +577,19 @@ img, svg, video { max-width: 100%; display: block; }
 .gc-stat-value span { color: #00E5FF; }
 .gc-stat-label { color: #929DB2; font-size: 12px; font-weight: 500; letter-spacing: .3px; }
 .gc-footer {
-  display: flex; justify-content: center; align-items: center; gap: 9px;
-  margin-top: 31px; color: #64738B; font-size: 11px; text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-top: 34px;
+  color: #8b9ab5 !important;
+  font-size: 11.5px;
+  text-align: center;
+  letter-spacing: .02em;
+}
+.gc-footer svg {
+  flex-shrink: 0;
+  color: #00E5FF !important;
 }
 .gc-footer svg { flex-shrink: 0; color: #00E5FF; }
 
