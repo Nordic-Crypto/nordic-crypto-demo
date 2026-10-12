@@ -2013,6 +2013,8 @@ function showRejectedScreen(reason) {
 async function checkVerificationStatus() {
   var token = getSessionToken();
   if (!token) return null;
+  var email = localStorage.getItem('user_email');
+
   try {
     var r = await fetch(WORKER_URL + '?action=getUserState', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2020,7 +2022,22 @@ async function checkVerificationStatus() {
     });
     var data = await r.json();
     if (!data || data.error) return null;
-    return data.verification || null;
+    
+    // 🛡️ FIX: если localStorage помнит approved — не даём затереть на pending
+    var localApproved = localStorage.getItem('nc_kyc_approved_' + email) === '1';
+    var serverV = data.verification || null;
+    
+    if (localApproved && (!serverV || serverV.status !== 'approved')) {
+      console.log('[KYC FIX] Server says', serverV && serverV.status, 'but local says approved — using approved');
+      return { status: 'approved' };
+    }
+    
+    // 🛡️ FIX: если сервер approved — запоминаем локально
+    if (serverV && serverV.status === 'approved') {
+      localStorage.setItem('nc_kyc_approved_' + email, '1');
+    }
+    
+    return serverV;
   } catch(e) { return null; }
 }
 
