@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<!-- MESH BG (CSS-only, no blur) -->
+<!-- MESH BG -->
 <div class="mesh" aria-hidden="true">
   <div class="mesh-1"></div>
   <div class="mesh-2"></div>
@@ -96,90 +96,15 @@
         </div>
       </div>
 
+      <!-- HERO VIDEO -->
       <div class="hero-right anim-in" style="--d:200">
-        <div class="phone-stage">
-          <!-- Phone mockup -->
-          <div class="phone">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="ps-top">
-                <div class="ps-greet">Good afternoon</div>
-                <div class="ps-name">Eva</div>
-              </div>
-              <div class="ps-bal">
-                <div class="ps-bal-lbl">Total balance</div>
-                <div class="ps-bal-v">€41,444<span>.91</span></div>
-                <div class="ps-bal-chg">▲ +3.18% this month</div>
-              </div>
-              <div class="ps-chart">
-                <svg viewBox="0 0 300 80" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#00E5FF" stop-opacity=".4"/>
-                      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,60 L30,55 L60,58 L90,40 L120,45 L150,30 L180,35 L210,22 L240,28 L270,15 L300,20 L300,80 L0,80 Z" fill="url(#pg)"/>
-                  <path d="M0,60 L30,55 L60,58 L90,40 L120,45 L150,30 L180,35 L210,22 L240,28 L270,15 L300,20" fill="none" stroke="#00E5FF" stroke-width="2"/>
-                </svg>
-              </div>
-              <div class="ps-actions">
-                <div class="ps-act"><div class="ps-act-i">↑</div><span>Send</span></div>
-                <div class="ps-act"><div class="ps-act-i">↓</div><span>Receive</span></div>
-                <div class="ps-act"><div class="ps-act-i">⇄</div><span>Swap</span></div>
-              </div>
-              <div class="ps-tx">
-                <div class="ps-tx-row">
-                  <div class="ps-tx-i">₿</div>
-                  <div class="ps-tx-info">
-                    <div class="ps-tx-name">Bitcoin</div>
-                    <div class="ps-tx-sub">+0.0216 BTC</div>
-                  </div>
-                  <div class="ps-tx-amt">+$1,278</div>
-                </div>
-                <div class="ps-tx-row">
-                  <div class="ps-tx-i eth">Ξ</div>
-                  <div class="ps-tx-info">
-                    <div class="ps-tx-name">Ethereum</div>
-                    <div class="ps-tx-sub">+6.9071 ETH</div>
-                  </div>
-                  <div class="ps-tx-amt">+$2,543</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Floating card -->
-          <div class="fc">
-            <div class="fc-shine"></div>
-            <div class="fc-top">
-              <div class="fc-brand">NORDIC CRYPTO</div>
-              <div class="fc-type">VISA</div>
-            </div>
-            <div class="fc-chip"></div>
-            <div class="fc-num">4921 •••• 8432</div>
-            <div class="fc-bot">
-              <div><div class="fc-lbl">CARD HOLDER</div><div class="fc-val">E. L.</div></div>
-              <div><div class="fc-lbl">EXPIRES</div><div class="fc-val mono">03/29</div></div>
-            </div>
-          </div>
-
-          <!-- Floating notification 1 -->
-          <div class="fn fn-1">
-            <div class="fn-ico">✓</div>
-            <div class="fn-info">
-              <div class="fn-title">Payment received</div>
-              <div class="fn-sub">+€1,200.00 from SWE</div>
-            </div>
-          </div>
-
-          <!-- Floating notification 2 -->
-          <div class="fn fn-2">
-            <div class="fn-ico">₿</div>
-            <div class="fn-info">
-              <div class="fn-title">BTC bought</div>
-              <div class="fn-sub">0.0125 BTC · $1,050</div>
-            </div>
+        <div class="hero-video-stage">
+          <video class="hero-video" autoplay muted loop playsinline preload="auto" poster="hero-poster.jpg">
+            <source src="hero-video.mp4" type="video/mp4">
+          </video>
+          <div class="hero-video-overlay"></div>
+          <div class="hero-video-badge">
+            <span class="hv-dot"></span> NC Card · Metal Visa
           </div>
         </div>
       </div>
@@ -341,7 +266,7 @@
   </div>
 </section>
 
-<!-- ROADMAP (БОНУС) -->
+<!-- ROADMAP -->
 <section class="section" id="roadmap">
   <div class="wrap">
     <div class="section-head anim-up">
