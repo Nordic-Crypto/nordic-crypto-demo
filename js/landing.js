@@ -508,6 +508,65 @@
       a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
     });
   })();
+  /* ---------- 17. SCROLL PROGRESS ---------- */
+  (function scrollProgress() {
+    var bar = document.getElementById('scrollProgress');
+    if (!bar) return;
+    function update() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      var p = max > 0 ? h.scrollTop / max : 0;
+      bar.style.transform = 'scaleX(' + p + ')';
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  })();
+
+  /* ---------- 18. BACK TO TOP ---------- */
+  (function backTop() {
+    var btn = document.getElementById('backTop');
+    if (!btn) return;
+    function check() {
+      if (window.scrollY > 600) btn.classList.add('on');
+      else btn.classList.remove('on');
+    }
+    window.addEventListener('scroll', check, { passive: true });
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    check();
+  })();
+
+  /* ---------- 19. CARD MOUSE GLOW ---------- */
+  document.querySelectorAll('.b').forEach(function (card) {
+    card.addEventListener('mousemove', function (e) {
+      var r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  /* ---------- 20. THREAT COUNTER ---------- */
+  (function threatCounter() {
+    var el = document.getElementById('threatCount');
+    if (!el) return;
+    var counter = 1247832;
+    function fmt(n) { return n.toLocaleString('en-US'); }
+    el.textContent = fmt(counter);
+    function tick() {
+      counter += Math.floor(Math.random() * 7) + 3;
+      el.textContent = fmt(counter);
+      setTimeout(tick, 2000 + Math.random() * 3000);
+    }
+    setTimeout(tick, 2500);
+  })();
+
+  /* ---------- 21. MAP ARCS RANDOM DELAY ---------- */
+  document.querySelectorAll('.arc').forEach(function (a) {
+    a.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+    a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
+  });
+   
   track('landing_view', { v: '4.0' });
 })();
 /* ---------- 15. FORCE VIDEO AUTOPLAY ---------- */
