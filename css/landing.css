@@ -345,15 +345,36 @@ img, svg, video { max-width: 100%; display: block; }
   transition: all .25s;
 }
 .coin:hover { background: rgba(0,229,255,.06); border-color: rgba(0,229,255,.28); color: #7ee5ff; transform: translateY(-1px); }
-.flag { display: inline-block; width: 20px; height: 14px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); flex-shrink: 0; }
-.flag-us { background: linear-gradient(#b22234 0 14%, #fff 14% 28%, #b22234 28% 42%, #fff 42% 56%, #b22234 56% 70%, #fff 70% 84%, #b22234 84%); }
-.flag-eu { background: #003399; position: relative; }
-.flag-eu::after { content: '★'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #ffcc00; font-size: 9px; }
-.flag-se { background: linear-gradient(90deg, #006aa7 0 30%, #fecc00 30% 45%, #006aa7 45%); }
-.flag-no { background: linear-gradient(90deg, #ba0c2f 0 30%, #fff 30% 38%, #00205b 38% 46%, #fff 46% 54%, #ba0c2f 54%); }
-.flag-dk { background: linear-gradient(90deg, #c60c30 0 30%, #fff 30% 42%, #c60c30 42%); }
-.flag-gb { background: #012169; position: relative; }
-.flag-gb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, transparent 42%, #fff 42% 58%, transparent 58%), linear-gradient(90deg, transparent 42%, #fff 42% 58%, transparent 58%), linear-gradient(0deg, transparent 45%, #c8102e 45% 55%, transparent 55%), linear-gradient(90deg, transparent 45%, #c8102e 45% 55%, transparent 55%); }
+.flag {
+  display: inline-block;
+  width: 22px;
+  height: 15px;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.12);
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.flag-us {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23b22234'/%3E%3Cg fill='%23fff'%3E%3Crect y='4.6' width='60' height='4.6'/%3E%3Crect y='13.8' width='60' height='4.6'/%3E%3Crect y='23' width='60' height='4.6'/%3E%3Crect y='32.2' width='60' height='4.6'/%3E%3C/g%3E%3Crect width='24' height='21.5' fill='%233c3b6e'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='4' cy='4' r='1'/%3E%3Ccircle cx='10' cy='4' r='1'/%3E%3Ccircle cx='16' cy='4' r='1'/%3E%3Ccircle cx='7' cy='8' r='1'/%3E%3Ccircle cx='13' cy='8' r='1'/%3E%3Ccircle cx='19' cy='8' r='1'/%3E%3Ccircle cx='4' cy='12' r='1'/%3E%3Ccircle cx='10' cy='12' r='1'/%3E%3Ccircle cx='16' cy='12' r='1'/%3E%3Ccircle cx='7' cy='16' r='1'/%3E%3Ccircle cx='13' cy='16' r='1'/%3E%3Ccircle cx='19' cy='16' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+.flag-eu {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23003399'/%3E%3Cg fill='%23ffcc00'%3E%3Ccircle cx='30' cy='8' r='1.3'/%3E%3Ccircle cx='36' cy='10' r='1.3'/%3E%3Ccircle cx='40' cy='15' r='1.3'/%3E%3Ccircle cx='40' cy='21' r='1.3'/%3E%3Ccircle cx='36' cy='26' r='1.3'/%3E%3Ccircle cx='30' cy='28' r='1.3'/%3E%3Ccircle cx='24' cy='26' r='1.3'/%3E%3Ccircle cx='20' cy='21' r='1.3'/%3E%3Ccircle cx='20' cy='15' r='1.3'/%3E%3Ccircle cx='24' cy='10' r='1.3'/%3E%3C/g%3E%3C/svg%3E");
+}
+.flag-se {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23006aa7'/%3E%3Crect x='18' width='9' height='40' fill='%23fecc00'/%3E%3Crect y='16' width='60' height='9' fill='%23fecc00'/%3E%3C/svg%3E");
+}
+.flag-no {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23ba0c2f'/%3E%3Crect x='16' width='10' height='40' fill='%23fff'/%3E%3Crect y='15' width='60' height='10' fill='%23fff'/%3E%3Crect x='19' width='4' height='40' fill='%2300205b'/%3E%3Crect y='18' width='60' height='4' fill='%2300205b'/%3E%3C/svg%3E");
+}
+.flag-dk {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23c60c30'/%3E%3Crect x='18' width='7' height='40' fill='%23fff'/%3E%3Crect y='17' width='60' height='7' fill='%23fff'/%3E%3C/svg%3E");
+}
+.flag-gb {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Crect width='60' height='40' fill='%23012169'/%3E%3Cpath d='M0 0 L60 40 M60 0 L0 40' stroke='%23fff' stroke-width='8'/%3E%3Cpath d='M0 0 L60 40 M60 0 L0 40' stroke='%23c8102e' stroke-width='4'/%3E%3Crect x='25' width='10' height='40' fill='%23fff'/%3E%3Crect y='15' width='60' height='10' fill='%23fff'/%3E%3Crect x='27' width='6' height='40' fill='%23c8102e'/%3E%3Crect y='17' width='60' height='6' fill='%23c8102e'/%3E%3C/svg%3E");
+}
 
 /* ============================================================
    MARQUEE
@@ -539,7 +560,12 @@ img, svg, video { max-width: 100%; display: block; }
 }
 .world-map { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-.arc { stroke-dasharray: 4 6; animation: arcFlow 6s linear infinite; filter: drop-shadow(0 0 4px rgba(0,229,255,.5)); }
+.arc {
+  stroke-dasharray: 6 8;
+  stroke-width: 1.5;
+  animation: arcFlow 6s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(0,229,255,.8));
+}
 .arc-1 { animation-delay: 0s; }
 .arc-2 { animation-delay: 1s; }
 .arc-3 { animation-delay: 2s; }
@@ -551,13 +577,13 @@ img, svg, video { max-width: 100%; display: block; }
 .marker { position: absolute; transform: translate(-50%, -50%); cursor: pointer; z-index: 3; }
 .mk-dot {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 8px; height: 8px; border-radius: 50%; background: #00e5ff;
-  box-shadow: 0 0 12px #00e5ff, 0 0 24px rgba(0,229,255,.6); z-index: 2;
+  width: 10px; height: 10px; border-radius: 50%; background: #00e5ff;
+  box-shadow: 0 0 14px #00e5ff, 0 0 28px rgba(0,229,255,.8); z-index: 2;
   transition: transform .3s;
 }
 .mk-pulse {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 8px; height: 8px; border-radius: 50%; background: rgba(0,229,255,.5);
+  width: 10px; height: 10px; border-radius: 50%; background: rgba(0,229,255,.7);
   animation: mkPulse 2.4s ease-out infinite; z-index: 1;
 }
 .marker:nth-child(2) .mk-pulse { animation-delay: .4s; }
