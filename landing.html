@@ -367,71 +367,58 @@
 <!-- GLOBAL COVERAGE -->
 <section class="gc-section" id="coverage">
   <div class="gc-container">
-
     <header class="gc-header">
-      <div class="gc-eyebrow">
-        <span class="gc-eyebrow-dot"></span>
-        Where we operate
-      </div>
-
-      <h2>
-        Built in Scandinavia.<br>
-        <span class="gc-gradient-text">Live across the world.</span>
-      </h2>
-
-      <p>
-        Regulated, local, and always online. NordicCrypto is available in 36+ countries.
-      </p>
+      <div class="gc-eyebrow"><i></i> Worldwide financial infrastructure</div>
+      <h2>Built in Scandinavia.<br><span class="gc-gradient">Live across the world.</span></h2>
+      <p>Regulated, local, and always online. NordicCrypto is available in 36+ countries.</p>
     </header>
 
-    <div class="gc-globe-layout">
-      <div class="gc-globe-stage" id="gc-globe-stage">
-        <div class="gc-globe-halo"></div>
+    <div class="gc-stage-wrap">
+      <div class="gc-stage" id="gc-stage" aria-label="Interactive globe. Drag to rotate, use the mouse wheel to zoom, or select a city.">
+        <div class="gc-halo"></div>
         <div class="gc-orbit"></div>
-        <div class="gc-orbit gc-orbit-two"></div>
-
-        <canvas id="gc-globe" aria-label="Interactive rotating globe showing NordicCrypto locations"></canvas>
-
+        <div class="gc-orbit two"></div>
+        <canvas id="gc-globe"></canvas>
         <div class="gc-tooltip" id="gc-tooltip" role="status" aria-live="polite">
-          <strong id="gc-tooltip-city">Stockholm</strong>
-          <span id="gc-tooltip-role">Nordic Headquarters</span>
+          <strong id="gc-tooltip-city"></strong>
+          <span id="gc-tooltip-role"></span>
           <small>NordicCrypto Global Network</small>
         </div>
-
-        <div class="gc-location-hint">
-          <i></i>
-          HOVER OVER A CITY TO EXPLORE
+        <div class="gc-controls" aria-label="Globe zoom controls">
+          <button class="gc-zoom" id="gc-zoom-in" type="button" aria-label="Zoom in">+</button>
+          <button class="gc-zoom" id="gc-zoom-out" type="button" aria-label="Zoom out">−</button>
         </div>
+        <div class="gc-hint"><i class="gc-status-dot"></i> DRAG TO ROTATE · HOVER A CITY · SCROLL TO ZOOM</div>
       </div>
     </div>
+
+    <div class="gc-selected" id="gc-selected" aria-live="polite">
+      <div class="gc-selected-icon" aria-hidden="true">◎</div>
+      <div class="gc-selected-copy">
+        <div class="gc-selected-title" id="gc-selected-title">Stockholm · Nordic Headquarters</div>
+        <div class="gc-selected-role" id="gc-selected-role">Our Nordic hub connects financial services across the region.</div>
+        <div class="gc-selected-coord" id="gc-selected-coord">59.3° N, 18.1° E</div>
+      </div>
+      <div class="gc-live"><i class="gc-status-dot"></i> NETWORK NODE</div>
+    </div>
+
+    <nav class="gc-city-nav" id="gc-city-nav" aria-label="Choose a city">
+      <button class="gc-city-btn active" type="button" data-city="Stockholm">Stockholm</button>
+      <button class="gc-city-btn" type="button" data-city="Oslo">Oslo</button>
+      <button class="gc-city-btn" type="button" data-city="Copenhagen">Copenhagen</button>
+      <button class="gc-city-btn" type="button" data-city="Helsinki">Helsinki</button>
+      <button class="gc-city-btn" type="button" data-city="London">London</button>
+      <button class="gc-city-btn" type="button" data-city="New York">New York</button>
+    </nav>
 
     <div class="gc-stats">
-      <div class="gc-stat">
-        <div class="gc-stat-value">36<span>+</span></div>
-        <div class="gc-stat-label">Countries Covered</div>
-      </div>
-      <div class="gc-stat">
-        <div class="gc-stat-value">24<span>/</span>7</div>
-        <div class="gc-stat-label">Global Support</div>
-      </div>
-      <div class="gc-stat">
-        <div class="gc-stat-value">06</div>
-        <div class="gc-stat-label">Strategic Locations</div>
-      </div>
-      <div class="gc-stat">
-        <div class="gc-stat-value">99.9<span>%</span></div>
-        <div class="gc-stat-label">Platform Uptime</div>
-      </div>
+      <div class="gc-stat"><div class="gc-stat-value">36<span>+</span></div><div class="gc-stat-label">Countries Covered</div></div>
+      <div class="gc-stat"><div class="gc-stat-value">24<span>/</span>7</div><div class="gc-stat-label">Global Support</div></div>
+      <div class="gc-stat"><div class="gc-stat-value">06</div><div class="gc-stat-label">Strategic Locations</div></div>
+      <div class="gc-stat"><div class="gc-stat-value">99.9<span>%</span></div><div class="gc-stat-label">Platform Uptime</div></div>
     </div>
 
-    <div class="gc-footer">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3Z" stroke="currentColor" stroke-width="1.5"/>
-      </svg>
-      Connected across continents. Designed around you.
-    </div>
-
+    <div class="gc-footer">✦ &nbsp; Connected across continents. Designed around you.</div>
   </div>
 </section>
 
