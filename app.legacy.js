@@ -619,6 +619,11 @@ function refreshBalanceFromServer(){
   if (!token) return;
   var email = window.adminViewingEmail || localStorage.getItem('user_email');
   if (!email) return;
+  
+  // 🛡️ FIX: не перезатирать локальный баланс, если он свежее
+  var localUsd = Number(st.usd) || 0;
+  var lastLocalUpdate = st._lastLocalUpdate || 0;
+  var timeSinceUpdate = Date.now() - lastLocalUpdate;
 
   fetch(WORKER_LOGIN_URL + '?action=getUserState', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
