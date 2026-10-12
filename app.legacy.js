@@ -5619,3 +5619,31 @@ console.log('%c[NordicCrypto] ✅ App v3.2 loaded — full rebuild', 'color:#00d
     }
   }, 250);
 })();
+/* 🛡️ FIX: проверка KYC при возврате на вкладку */
+document.addEventListener('visibilitychange', async function() {
+  if (document.hidden) return;
+  var p = document.getElementById('pendingScreen');
+  var pVisible = p && (p.classList.contains('on') || p.style.display === 'flex');
+  if (!pVisible) return;
+
+  var v = await checkVerificationStatus();
+  if (!v) return;
+
+  if (v.status === 'approved') {
+    if (!st.verification) st.verification = {};
+    st.verification.status = 'approved';
+    if (typeof loadFromServer === 'function') {
+      loadFromServer(function(){
+        if (p) { p.classList.remove('on'); p.style.display = 'none'; }
+        var side = document.getElementById('sideBar');
+        var main = document.getElementById('mainApp');
+        if (side) side.style.display = 'flex';
+        if (main) main.style.display = 'flex';
+        if (typeof render === 'function') render();
+        if (typeof applyAccountType === 'function') applyAccountType();
+      });
+    }
+    if (typeof toast === 'function') toast('✅ Approved!');
+    if (typeof playChime === 'function') playChime();
+  }
+});
