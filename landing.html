@@ -373,124 +373,79 @@
       <p class="mut center">Regulated, local, and always online. NordicCrypto is available in 36+ countries.</p>
     </div>
 
-    <div class="map-wrap anim-up">
-     <svg class="world-map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
-  <defs>
-    <radialGradient id="mapDot" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00e5ff" stop-opacity=".8"/>
-      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="continentGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="rgba(0,229,255,.15)"/>
-      <stop offset="100%" stop-color="rgba(124,58,237,.08)"/>
-    </linearGradient>
-  </defs>
+    <div class="globe-wrap anim-up">
+      <div class="globe-stage" id="globeStage">
+        <!-- GLOW behind globe -->
+        <div class="globe-glow"></div>
 
-  <!-- CONTINENTS (simplified outlines) -->
-  <g fill="rgba(125,138,158,.18)" stroke="rgba(125,138,158,.45)" stroke-width="0.8" stroke-linejoin="round">
+        <!-- ROTATING GLOBE -->
+        <div class="globe" id="globe">
+          <!-- Starfield inside globe -->
+          <div class="globe-stars"></div>
 
-    <!-- North America -->
-    <path d="M 130 110 L 175 95 L 210 105 L 240 120 L 255 145 L 250 170 L 240 195 L 230 215 L 215 230 L 200 245 L 195 265 L 185 250 L 175 230 L 160 210 L 145 200 L 130 195 L 115 185 L 105 165 L 110 145 L 120 125 Z" />
+          <!-- Earth texture -->
+          <div class="globe-earth"></div>
 
-    <!-- Greenland -->
-    <path d="M 290 80 L 320 75 L 340 90 L 335 115 L 315 130 L 295 120 L 285 100 Z" />
+          <!-- Night lights (cities) -->
+          <div class="globe-lights"></div>
 
-    <!-- South America -->
-    <path d="M 245 280 L 270 275 L 295 285 L 310 305 L 315 330 L 310 360 L 300 390 L 290 415 L 275 430 L 260 425 L 250 405 L 245 380 L 240 355 L 235 330 L 235 305 Z" />
+          <!-- Atmosphere ring -->
+          <div class="globe-atmosphere"></div>
 
-    <!-- Europe -->
-    <path d="M 440 115 L 465 105 L 490 105 L 510 115 L 525 130 L 530 150 L 520 170 L 505 180 L 490 190 L 475 185 L 460 175 L 450 160 L 445 140 L 440 130 Z" />
-
-    <!-- UK -->
-    <path d="M 425 125 L 440 120 L 445 135 L 440 150 L 430 150 L 422 140 Z" />
-
-    <!-- Africa -->
-    <path d="M 465 200 L 495 195 L 520 205 L 535 225 L 545 250 L 550 280 L 545 310 L 535 340 L 520 365 L 505 380 L 490 380 L 475 365 L 465 340 L 460 310 L 455 280 L 455 250 L 458 225 Z" />
-
-    <!-- Madagascar -->
-    <path d="M 565 335 L 575 330 L 578 350 L 572 370 L 563 365 L 560 350 Z" />
-
-    <!-- Asia -->
-    <path d="M 550 100 L 590 90 L 630 95 L 670 105 L 710 115 L 750 120 L 790 125 L 830 135 L 855 155 L 860 180 L 845 200 L 825 215 L 800 220 L 775 215 L 750 205 L 725 200 L 700 195 L 680 200 L 660 210 L 645 220 L 630 225 L 615 220 L 600 205 L 585 195 L 570 185 L 555 170 L 545 150 L 545 130 Z" />
-
-    <!-- India -->
-    <path d="M 655 220 L 680 215 L 700 220 L 705 245 L 700 270 L 685 285 L 668 280 L 655 260 L 650 240 Z" />
-
-    <!-- Southeast Asia -->
-    <path d="M 720 245 L 750 250 L 770 265 L 780 285 L 765 300 L 745 300 L 725 290 L 715 275 L 712 260 Z" />
-
-    <!-- Japan -->
-    <path d="M 850 165 L 862 160 L 870 175 L 868 195 L 858 200 L 850 185 Z" />
-
-    <!-- Australia -->
-    <path d="M 800 340 L 840 330 L 875 340 L 895 365 L 890 395 L 870 415 L 840 420 L 810 410 L 795 385 L 795 360 Z" />
-
-    <!-- New Zealand -->
-    <path d="M 910 405 L 920 400 L 925 420 L 918 435 L 908 428 Z" />
-
-  </g>
-
-  <!-- CONNECTION ARCS from Stockholm -->
-  <g stroke="rgba(0,229,255,.55)" fill="none" stroke-width="1.2" class="arcs">
-    <path d="M 492 148 Q 350 90 200 180" class="arc arc-1"/>
-    <path d="M 492 148 Q 400 240 290 340" class="arc arc-2"/>
-    <path d="M 492 148 Q 600 130 720 200" class="arc arc-3"/>
-    <path d="M 492 148 Q 650 320 845 385" class="arc arc-4"/>
-    <path d="M 492 148 Q 520 250 505 340" class="arc arc-5"/>
-  </g>
-</svg>
-
-      <div class="map-markers">
-  <div class="marker m-stockholm" style="left: 49.2%; top: 29.6%;">
-    <span class="mk-pulse"></span>
-    <span class="mk-dot"></span>
-    <div class="mk-card">
-      <div class="mk-flag">🇸🇪</div>
-      <div>
-        <div class="mk-city">Stockholm</div>
-        <div class="mk-role">HQ · Regulated</div>
+          <!-- City markers -->
+          <div class="globe-markers" id="globeMarkers">
+            <button class="gmarker" data-city="stockholm" style="--lat: 59.3; --lng: 18.1;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">Stockholm<span class="gm-role">HQ</span></span>
+            </button>
+            <button class="gmarker" data-city="oslo" style="--lat: 59.9; --lng: 10.7;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">Oslo<span class="gm-role">SEPA</span></span>
+            </button>
+            <button class="gmarker" data-city="copenhagen" style="--lat: 55.7; --lng: 12.6;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">Copenhagen<span class="gm-role">Cards</span></span>
+            </button>
+            <button class="gmarker" data-city="helsinki" style="--lat: 60.2; --lng: 24.9;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">Helsinki<span class="gm-role">Crypto</span></span>
+            </button>
+            <button class="gmarker" data-city="london" style="--lat: 51.5; --lng: -0.1;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">London<span class="gm-role">FX Desk</span></span>
+            </button>
+            <button class="gmarker" data-city="newyork" style="--lat: 40.7; --lng: -74.0;">
+              <span class="gm-dot"></span>
+              <span class="gm-pulse"></span>
+              <span class="gm-label">New York<span class="gm-role">USD Desk</span></span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <div class="marker m-oslo" style="left: 47.5%; top: 27%;">
-    <span class="mk-pulse"></span><span class="mk-dot"></span>
-    <div class="mk-card"><div class="mk-flag">🇳🇴</div><div><div class="mk-city">Oslo</div><div class="mk-role">SEPA</div></div></div>
-  </div>
-  <div class="marker m-copenhagen" style="left: 50.5%; top: 32%;">
-    <span class="mk-pulse"></span><span class="mk-dot"></span>
-    <div class="mk-card"><div class="mk-flag">🇩🇰</div><div><div class="mk-city">Copenhagen</div><div class="mk-role">Cards</div></div></div>
-  </div>
-  <div class="marker m-helsinki" style="left: 53%; top: 27.5%;">
-    <span class="mk-pulse"></span><span class="mk-dot"></span>
-    <div class="mk-card"><div class="mk-flag">🇫🇮</div><div><div class="mk-city">Helsinki</div><div class="mk-role">Crypto</div></div></div>
-  </div>
-  <div class="marker m-london" style="left: 44%; top: 27%;">
-    <span class="mk-pulse"></span><span class="mk-dot"></span>
-    <div class="mk-card"><div class="mk-flag">🇬🇧</div><div><div class="mk-city">London</div><div class="mk-role">FX Desk</div></div></div>
-  </div>
-  <div class="marker m-nyc" style="left: 21%; top: 32%;">
-    <span class="mk-pulse"></span><span class="mk-dot"></span>
-    <div class="mk-card"><div class="mk-flag">🇺🇸</div><div><div class="mk-city">New York</div><div class="mk-role">USD Desk</div></div></div>
-  </div>
-</div>
-    </div>
 
-    <div class="coverage-stats anim-up">
-      <div class="cs">
-        <div class="cs-val" data-count="36" data-suffix="+">0</div>
-        <div class="cs-lbl">Countries</div>
-      </div>
-      <div class="cs">
-        <div class="cs-val" data-count="24" data-suffix="/7">0</div>
-        <div class="cs-lbl">Live support</div>
-      </div>
-      <div class="cs">
-        <div class="cs-val" data-count="6" data-prefix="">0</div>
-        <div class="cs-lbl">Offices</div>
-      </div>
-      <div class="cs">
-        <div class="cs-val" data-count="99.9" data-suffix="%" data-decimals="1">0</div>
-        <div class="cs-lbl">Uptime</div>
+      <!-- Coverage stats -->
+      <div class="coverage-stats anim-up">
+        <div class="cs">
+          <div class="cs-val" data-count="36" data-suffix="+">0</div>
+          <div class="cs-lbl">Countries</div>
+        </div>
+        <div class="cs">
+          <div class="cs-val" data-count="24" data-suffix="/7">0</div>
+          <div class="cs-lbl">Live support</div>
+        </div>
+        <div class="cs">
+          <div class="cs-val" data-count="6" data-prefix="">0</div>
+          <div class="cs-lbl">Offices</div>
+        </div>
+        <div class="cs">
+          <div class="cs-val" data-count="99.9" data-suffix="%" data-decimals="1">0</div>
+          <div class="cs-lbl">Uptime</div>
+        </div>
       </div>
     </div>
   </div>
