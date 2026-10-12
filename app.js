@@ -28,7 +28,7 @@
 
   var APP_VERSION = '7.0.2';   // ← было 7.0.1
 
-    var MODULES = [
+   var MODULES = [
     'js/core.js?v=' + APP_VERSION,
     'js/auth.js?v=' + APP_VERSION,
     'app.legacy.js?v=' + APP_VERSION,
@@ -48,8 +48,8 @@
     'js/current-user-fix.js?v=' + APP_VERSION,
     'js/maintenance-mode.js?v=' + APP_VERSION,
     'js/admin-maintenance-buttons.js?v=' + APP_VERSION,
-    'js/kyc-fix.js?v=' + APP_VERSION      // ← 🆕 ДОБАВИЛ
-  ];
+    'js/kyc-fix.js?v=' + APP_VERSION      
+];
 
   console.log('%c[NordicCrypto] 🚀 Loader v' + APP_VERSION + ' starting...',
     'color:#00d4ff;font-weight:bold;font-size:14px');
