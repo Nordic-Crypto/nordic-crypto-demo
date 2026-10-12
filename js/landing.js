@@ -189,24 +189,36 @@
     if (el) el.addEventListener('keydown', function(e){ if (e.key === 'Enter') loginBtn.click(); });
   });
 
-  // 8. REGISTER
+    // 8. REGISTER
+  document.querySelectorAll('.acc-type-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.acc-type-btn').forEach(function(b){ b.classList.remove('on'); });
+      this.classList.add('on');
+      document.getElementById('regAccType').value = this.getAttribute('data-acc');
+    });
+  });
+
   var regBtn = document.getElementById('registerSubmit');
   if (regBtn) regBtn.onclick = async function(){
     var name = (document.getElementById('regName').value || '').trim();
     var email = (document.getElementById('regEmail').value || '').trim().toLowerCase();
     var password = document.getElementById('regPassword').value || '';
     var confirm = document.getElementById('regConfirm').value || '';
+    var accountType = document.getElementById('regAccType').value || 'banking';
+
     hideErr('registerError');
     if (!name){ showErr('registerError', 'Please enter your name'); return; }
     if (!email || email.indexOf('@') === -1){ showErr('registerError', 'Enter valid email'); return; }
     if (password.length < 6){ showErr('registerError', 'Password must be at least 6 characters'); return; }
     if (password !== confirm){ showErr('registerError', 'Passwords do not match'); return; }
+
     regBtn.disabled = true;
     regBtn.textContent = 'Creating...';
+
     try {
       var r = await fetch(WORKER_URL + '?action=register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, email: email, password: password })
+        body: JSON.stringify({ name: name, email: email, password: password, accountType: accountType })
       });
       var d = await r.json();
       if (d.ok && d.token){
@@ -214,6 +226,7 @@
         localStorage.setItem('user_email', d.user.email);
         localStorage.setItem('user_role', d.user.role || 'user');
         localStorage.setItem('user_name', d.user.name || name);
+        localStorage.setItem('user_account_type', accountType);
         window.location.replace('index.html');
       } else {
         showErr('registerError', d.error || 'Registration failed');
