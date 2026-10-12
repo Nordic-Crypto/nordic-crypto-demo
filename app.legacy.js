@@ -99,10 +99,12 @@ function loadFromServer(cb, targetEmail){
 }
 
 function saveToServer(){
-  if (window.adminViewingEmail) return;
-  if (localStorage.getItem('user_role') === 'admin') return;
   var token = getSessionToken();
   if (!token) return;
+  
+  // Если админ смотрит клиента — сохраняем ОТ ИМЕНИ КЛИЕНТА
+  var targetEmail = window.adminViewingEmail || localStorage.getItem('user_email');
+  if (!targetEmail) return;
 
   if (!stateLoaded) {
     console.warn('[saveToServer] skipped — state not loaded yet');
