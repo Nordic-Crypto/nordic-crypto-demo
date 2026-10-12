@@ -148,51 +148,107 @@
     </div>
 
     <div class="bento">
-      <div class="b b-lg anim-up">
-        <div class="b-badge">Featured</div>
-        <div class="b-icon gi-cyan">💎</div>
+
+      <!-- FEATURED -->
+      <div class="b b-lg b-feat anim-up">
+        <div class="b-badge"><span class="badge-dot"></span>Featured</div>
+        <div class="b-icon gi-cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M2 10h20"/>
+            <path d="M6 15h4"/>
+            <circle cx="17" cy="15" r="1.2"/>
+          </svg>
+        </div>
         <h3>Virtual Metal Cards</h3>
-        <p>Visa & Mastercard issued in 30 seconds. Physical metal shipped from Stockholm in 5 days.</p>
+        <p>Visa &amp; Mastercard issued in 30 seconds. Physical metal shipped from Stockholm in 5 days.</p>
         <div class="b-visual">
           <div class="mini-card">
-            <div class="mc-brand">NORDIC CRYPTO</div>
+            <div class="mc-shine"></div>
+            <div class="mc-top">
+              <div class="mc-brand">NORDIC CRYPTO</div>
+              <div class="mc-brand-sub">Metal</div>
+            </div>
             <div class="mc-chip"></div>
-            <div class="mc-num">4921 •••• 8432</div>
+            <div class="mc-num">4921 •••• •••• 8432</div>
             <div class="mc-bot">
-              <div class="mc-lbl">CARD HOLDER</div>
-              <div class="mc-val">E. L.</div>
+              <div>
+                <div class="mc-lbl">CARD HOLDER</div>
+                <div class="mc-val">E. L.</div>
+              </div>
+              <div class="mc-logo">
+                <svg viewBox="0 0 32 20" fill="none">
+                  <circle cx="10" cy="10" r="8" fill="#fff" fill-opacity=".9"/>
+                  <circle cx="22" cy="10" r="8" fill="#fff" fill-opacity=".6"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- SEPA IBAN -->
       <div class="b anim-up" style="--d:80">
-        <div class="b-icon gi-violet">🏦</div>
+        <div class="b-icon gi-violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M5 21V10l7-5 7 5v11"/>
+            <path d="M9 21v-6h6v6"/>
+            <path d="M12 5V3"/>
+          </svg>
+        </div>
         <h3>SEPA IBAN</h3>
         <p>Your own European IBAN. Receive salary, pay bills, send money across 36 countries.</p>
       </div>
+
+      <!-- CRYPTO EXCHANGE -->
       <div class="b anim-up" style="--d:160">
-        <div class="b-icon gi-orange">₿</div>
+        <div class="b-icon gi-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.5 9.5c0-1.1 1-2 2.5-2s2.5.9 2.5 2-1 1.8-2.5 2-2.5.9-2.5 2 1 2 2.5 2 2.5-.9 2.5-2"/>
+            <path d="M12 6v1.5M12 16.5V18"/>
+          </svg>
+        </div>
         <h3>Crypto Exchange</h3>
         <p>Buy, sell, convert BTC, ETH, USDT, SOL, BNB at market price. Instant settlement.</p>
       </div>
+
+      <!-- SECURITY -->
       <div class="b anim-up" style="--d:240">
-        <div class="b-icon gi-pink">🔒</div>
+        <div class="b-icon gi-pink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l8 3v6c0 5-3.5 8.5-8 9.5C7.5 20.5 4 17 4 12V6l8-3z"/>
+            <path d="M9.5 12l1.8 1.8L15 10.2"/>
+          </svg>
+        </div>
         <h3>Bank-grade Security</h3>
         <p>2FA, session fingerprint, rate limiting, CSRF protection. Your funds stay yours.</p>
       </div>
-      <div class="b b-wide anim-up" style="--d:320">
+
+      <!-- INSTANT SETTLEMENT -->
+      <div class="b b-wide b-wide-grad anim-up" style="--d:320">
         <div class="b-wide-inner">
           <div>
-            <div class="b-icon gi-green">⚡</div>
+            <div class="b-icon gi-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>
+              </svg>
+            </div>
             <h3>Instant Settlement</h3>
             <p>SEPA and crypto settlements in real-time. No waiting, no delays, no hidden fees.</p>
           </div>
           <div class="b-coins">
-            <span>USD</span><span>EUR</span><span>SEK</span>
-            <span>NOK</span><span>DKK</span><span>GBP</span>
+            <span class="coin"><i class="flag flag-us"></i>USD</span>
+            <span class="coin"><i class="flag flag-eu"></i>EUR</span>
+            <span class="coin"><i class="flag flag-se"></i>SEK</span>
+            <span class="coin"><i class="flag flag-no"></i>NOK</span>
+            <span class="coin"><i class="flag flag-dk"></i>DKK</span>
+            <span class="coin"><i class="flag flag-gb"></i>GBP</span>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </section>
