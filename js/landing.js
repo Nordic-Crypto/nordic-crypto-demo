@@ -13,10 +13,23 @@
   var WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
 
   // 1. HEADER SCROLL
+    // 1. HEADER SCROLL — с throttle через requestAnimationFrame
   var header = document.querySelector('.header');
+  var _ticking = false;
+  var _lastScrolled = false;
+  function updateHeader(){
+    var shouldScroll = window.scrollY > 40;
+    if (shouldScroll !== _lastScrolled){
+      _lastScrolled = shouldScroll;
+      header.classList.toggle('scrolled', shouldScroll);
+    }
+    _ticking = false;
+  }
   window.addEventListener('scroll', function(){
-    if (window.scrollY > 40) header.classList.add('scrolled');
-    else header.classList.remove('scrolled');
+    if (!_ticking) {
+      requestAnimationFrame(updateHeader);
+      _ticking = true;
+    }
   }, { passive: true });
 
   // 2. CURSOR GLOW
