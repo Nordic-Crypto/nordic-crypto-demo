@@ -599,3 +599,17 @@ img, svg, video { max-width: 100%; display: block; }
   .gc-stat { padding: 20px 10px 18px; }
   .gc-stat-label { font-size: 10px; }
 }
+/* Disclaimer — subtle demo notice */
+.disclaimer {
+  margin-top: 22px;
+  font-size: .72rem;
+  color: rgba(125, 138, 158, .55);
+  letter-spacing: .02em;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.disclaimer::before {
+  content: '◦';
+  margin-right: 6px;
+  color: rgba(125, 138, 158, .4);
+}
