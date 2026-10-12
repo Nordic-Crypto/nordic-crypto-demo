@@ -2064,13 +2064,9 @@ async function gateByVerification() {
 window.gateByVerification = gateByVerification;
 
 /* ============================================================
-   🎁 KYC AUTO-APPROVE POLLING v3.2 — FIXED + BONUSES
-   Проверяет статус каждые 8 сек, даже если pendingScreen
-   скрыт через style.display (fix бага "approve не подхватывался").
-   Бонусы:
-   - Toast + звук + уведомление при approve
-   - Мигание заголовка вкладки (если клиент на другой вкладке)
-   - Быстрая первая проверка через 2 сек (UX boost)
+   🎁 KYC AUTO-APPROVE POLLING v3.3 — FIXED
+   Проверяет статус КАЖДЫЕ 5 СЕК, даже если st.verification
+   устарел. Форсирует обновление st.verification.status.
    ============================================================ */
 
 window._kycApprovedShown = false;
@@ -2093,17 +2089,34 @@ function flashTitleOnApprove() {
   });
 }
 
+// 🛡️ FIX: проверяем pendingScreen по DOM, а не только по st
 setInterval(async function(){
-  var vStatus = (st.verification && st.verification.status) || null;
   var p = document.getElementById('pendingScreen');
-  var pVisible = p && (p.classList.contains('on') || p.style.display === 'flex');
+  var v = document.getElementById('verifyScreen');
+  var r = document.getElementById('rejectedScreen');
 
-  if (vStatus !== 'pending' && !pVisible) return;
+  var anyVisible = 
+    (p && (p.classList.contains('on') || p.style.display === 'flex')) ||
+    (v && (v.classList.contains('on') || v.style.display === 'flex')) ||
+    (r && (r.classList.contains('on') || r.style.display === 'flex'));
 
-  var v = await checkVerificationStatus();
-  if (!v) return;
+  var vStatus = (st.verification && st.verification.status) || null;
 
-  if (v.status === 'approved') {
+  // Проверяем если: показан pending OR показан verify OR st говорит pending
+  if (!anyVisible && vStatus !== 'pending' && vStatus !== null) return;
+
+  // 🛡️ FIX: ВСЕГДА запрашиваем свежий статус (не полагаемся на st)
+  var freshV = await checkVerificationStatus();
+  if (!freshV) return;
+
+  // 🛡️ FIX: записываем свежий статус в st — чтобы UI синхронизировался
+  if (!st.verification) st.verification = {};
+  var oldStatus = st.verification.status;
+  st.verification = Object.assign({}, st.verification, freshV);
+
+  console.log('[KYC Poll] Status:', freshV.status, '| was:', oldStatus);
+
+  if (freshV.status === 'approved') {
     if (!window._kycApprovedShown) {
       window._kycApprovedShown = true;
       if (typeof toast === 'function') toast('✅ Verification approved!');
@@ -2112,39 +2125,37 @@ setInterval(async function(){
         addNotification('🎉 Your identity has been verified!', '✅');
       }
       if (typeof flashTitleOnApprove === 'function') flashTitleOnApprove();
+      if (typeof spawnConfetti === 'function') spawnConfetti();
     }
+
+    // 🛡️ FIX: убираем все экраны и грузим dashboard
     loadFromServer(function(){
-      if (p) { p.classList.remove('on'); p.style.display = 'none'; }
-      var r = document.getElementById('rejectedScreen');
-      if (r) { r.classList.remove('on'); r.style.display = 'none'; }
-      var vs = document.getElementById('verifyScreen');
-      if (vs) { vs.classList.remove('on'); vs.style.display = 'none'; }
+      if (p) { p.classList.remove('on'); p.style.display = 'none'; p.style.zIndex = ''; }
+      if (r) { r.classList.remove('on'); r.style.display = 'none'; r.style.zIndex = ''; }
+      if (v) { v.classList.remove('on'); v.style.display = 'none'; v.style.zIndex = ''; }
+
+      var loginEl = document.getElementById('loginScreen');
+      if (loginEl) { loginEl.style.display = 'none'; loginEl.style.pointerEvents = 'none'; }
+
       var side = document.getElementById('sideBar');
       var main = document.getElementById('mainApp');
       if (side) side.style.display = 'flex';
       if (main) main.style.display = 'flex';
+
       render();
       if (typeof applyAccountType === 'function') applyAccountType();
       if (typeof gateByVerification === 'function') gateByVerification();
     });
-  } else if (v.status === 'rejected') {
-    showRejectedScreen(v.reason);
+  } else if (freshV.status === 'rejected') {
+    showRejectedScreen(freshV.reason);
+  } else if (freshV.status === 'pending') {
+    // 🛡️ FIX: убеждаемся что pendingScreen видим
+    if (p && !p.classList.contains('on')) {
+      p.classList.add('on');
+      p.style.display = 'flex';
+    }
   }
-}, 8000);
-
-/* 🎁 Быстрая первая проверка через 2 сек */
-setTimeout(function(){
-  var vStatus = (st.verification && st.verification.status) || null;
-  if (vStatus === 'pending') {
-    var _oneShot = setInterval(async function(){
-      var v = await checkVerificationStatus();
-      if (!v) return;
-      if (v.status === 'approved' || v.status === 'rejected') {
-        clearInterval(_oneShot);
-      }
-    }, 2000);
-  }
-}, 1500);
+}, 5000);   // ← каждые 5 секунд (было 8)
 
 /* ---------- NAV ---------- */
 function initNav(){
