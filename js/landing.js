@@ -32,20 +32,22 @@
     }
   }, { passive: true });
 
-  // 2. CURSOR GLOW
+    // 2. CURSOR GLOW — только на больших экранах, отключаем на слабых
   var cursorGlow = document.getElementById('cursorGlow');
-  if (cursorGlow && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  var isDesktop = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)').matches;
+  if (cursorGlow && isDesktop) {
     var mouseX = 0, mouseY = 0, glowX = 0, glowY = 0;
     document.addEventListener('mousemove', function(e){
       mouseX = e.clientX; mouseY = e.clientY;
-    });
+    }, { passive: true });
     (function animateGlow(){
-      glowX += (mouseX - glowX) * 0.12;
-      glowY += (mouseY - glowY) * 0.12;
-      cursorGlow.style.left = glowX + 'px';
-      cursorGlow.style.top = glowY + 'px';
+      glowX += (mouseX - glowX) * 0.15;
+      glowY += (mouseY - glowY) * 0.15;
+      cursorGlow.style.transform = 'translate(' + glowX + 'px, ' + glowY + 'px) translate(-50%, -50%)';
       requestAnimationFrame(animateGlow);
     })();
+  } else if (cursorGlow) {
+    cursorGlow.style.display = 'none';
   }
 
   // 3. SCROLL REVEAL
