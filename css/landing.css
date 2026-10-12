@@ -293,3 +293,116 @@ body {
   .calc-swap { margin: 0 auto; }
   .fomo-toast { left: 12px; right: 12px; bottom: 12px; max-width: none; }
 }
+/* ============================================================
+   ACCOUNT TYPE SELECTOR (register modal)
+   ============================================================ */
+.modal-card-lg { max-width: 500px; }
+
+.acc-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.acc-type-btn {
+  position: relative;
+  padding: 20px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.02);
+  border: 2px solid var(--bd);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--txt);
+  text-align: left;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  overflow: hidden;
+}
+.acc-type-btn:hover {
+  background: rgba(0,229,255,.04);
+  border-color: rgba(0,229,255,.25);
+  transform: translateY(-2px);
+}
+.acc-type-btn.on {
+  background: linear-gradient(135deg, rgba(0,229,255,.1), rgba(124,58,237,.1));
+  border-color: var(--pri);
+  box-shadow: 0 0 30px -10px rgba(0,229,255,.6);
+}
+.acc-type-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  transition: transform .3s;
+}
+.acc-type-icon.banking {
+  background: linear-gradient(135deg, rgba(0,229,255,.15), rgba(124,58,237,.15));
+  border: 1px solid rgba(0,229,255,.3);
+}
+.acc-type-icon.exchange {
+  background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(239,68,68,.15));
+  border: 1px solid rgba(245,158,11,.3);
+}
+.acc-type-btn:hover .acc-type-icon { transform: scale(1.1) rotate(-6deg); }
+.acc-type-title { font-size: .95rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.acc-type-desc { font-size: .72rem; color: var(--mut); line-height: 1.35; }
+.acc-type-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  background: rgba(0,229,255,.15);
+  color: var(--pri);
+  border: 1px solid rgba(0,229,255,.3);
+}
+.acc-type-btn[data-acc="exchange"] .acc-type-badge {
+  background: rgba(245,158,11,.15);
+  color: #f59e0b;
+  border-color: rgba(245,158,11,.3);
+}
+@media (max-width: 540px) { .acc-type-grid { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   🚀 PERFORMANCE FIXES (чтобы не лагало)
+   ============================================================ */
+@media (max-width: 768px) {
+  .bg-blob { filter: blur(60px); opacity: .25; }
+  .bg-grid, .bg-noise { display: none; }
+  .cursor-glow { display: none; }
+  .header.scrolled {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(6,8,15,.95);
+  }
+  .modal-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(3,6,11,.95);
+  }
+}
+
+/* GPU acceleration для всех анимаций */
+.bg-blob, .hero-card, .marquee-track, .orbit-ring, .shield-ring {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* Уменьшаем нагрузку на слабых устройствах */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .bg-blob, .marquee-track { animation: none; }
+}
