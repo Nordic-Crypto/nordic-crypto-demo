@@ -566,6 +566,38 @@
     a.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
     a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
   });
+
+  /* ---------- 22. COVERAGE STATS COUNT-UP ---------- */
+  (function coverageCount() {
+    var els = document.querySelectorAll('.cs-val[data-count]');
+    if (!els.length) return;
+    function animate(el) {
+      var target = parseFloat(el.getAttribute('data-count'));
+      var dec = parseInt(el.getAttribute('data-decimals') || '0', 10);
+      var pre = el.getAttribute('data-prefix') || '';
+      var suf = el.getAttribute('data-suffix') || '';
+      var dur = 1600, start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = pre + (target * eased).toFixed(dec) + suf;
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = pre + target.toFixed(dec) + suf;
+      }
+      requestAnimationFrame(step);
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.4 });
+      els.forEach(function(el){ io.observe(el); });
+    } else {
+      els.forEach(animate);
+    }
+  })();
    
   track('landing_view', { v: '4.0' });
 })();
