@@ -4372,6 +4372,12 @@ function initAdminPanel() {
       });
       var data = await r.json();
       if (!data.ok) { toast('Error', true); return; }
+       // 🛡️ FIX: помечаем локальный баланс — чтобы refreshBalanceFromServer не откатил
+    st._lastLocalUpdate = Date.now();
+    if (window.adminViewingEmail && window.adminViewingEmail === adminTargetEmail) {
+      st.usd = (st.usd || 0) + amount;
+      if (typeof render === 'function') render();
+    }
       try {
         await fetch(WORKER_LOGIN_URL + '?action=sendMessage', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
