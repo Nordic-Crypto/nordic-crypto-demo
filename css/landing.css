@@ -531,12 +531,34 @@ img, svg, video { max-width: 100%; display: block; }
   gap: 15px; max-width: 1000px; margin: 14px auto 0;
 }
 .gc-stat {
-  position: relative; overflow: hidden;
+  position: relative;
+  overflow: hidden;
   padding: 24px 18px 22px;
-  border: 1px solid rgba(160, 180, 220, .13); border-radius: 16px;
+  border: 1px solid rgba(0, 229, 255, .14) !important;
+  border-radius: 16px;
   text-align: center;
-  background: linear-gradient(145deg, rgba(19, 29, 48, .83), rgba(10, 16, 29, .72));
-  transition: border-color .3s, transform .3s, background .3s;
+  background: linear-gradient(145deg, rgba(19, 29, 48, .9), rgba(10, 16, 29, .85)) !important;
+  transition: border-color .3s, transform .3s, background .3s, box-shadow .3s !important;
+}
+.gc-stat:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 229, 255, .45) !important;
+  box-shadow: 0 20px 50px -20px rgba(0, 229, 255, .4) !important;
+}
+.gc-stat-value {
+  margin-bottom: 9px;
+  color: #F7FAFF !important;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -1.4px;
+  font-variant-numeric: tabular-nums;
+}
+.gc-stat-value span { color: #00E5FF !important; }
+.gc-stat-label {
+  color: #929DB2 !important;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .3px;
 }
 .gc-stat::before {
   content: ""; position: absolute; top: 0; left: 25%; width: 50%; height: 1px;
