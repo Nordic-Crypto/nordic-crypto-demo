@@ -623,13 +623,17 @@ const tipRole = document.getElementById('gc-tooltip-role');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const cities = [
-  {name:'Stockholm',lat:59.3,lon:18.1,role:'Nordic Headquarters',detail:'Our Nordic hub connects financial services across the region.'},
-  {name:'Oslo',lat:59.9,lon:10.7,role:'Nordic Operations',detail:'Supporting customers and operations across Norway.'},
-  {name:'Copenhagen',lat:55.7,lon:12.6,role:'Regional Office',detail:'A key connection point for customers in Denmark.'},
-  {name:'Helsinki',lat:60.2,lon:24.9,role:'Technology Hub',detail:'Technology and digital financial services for the region.'},
-  {name:'London',lat:51.5,lon:-0.1,role:'European Financial Hub',detail:'Connecting international financial services and markets.'},
-  {name:'New York',lat:40.7,lon:-74.0,role:'North American Hub',detail:'A gateway for customers and connections across North America.'}
+  {name:'Stockholm',lat:59.3,lon:18.1,role:'Nordic Headquarters',detail:'...'},
+  {name:'Oslo',lat:59.9,lon:10.7,role:'Nordic Operations',detail:'...'},
+  {name:'Copenhagen',lat:55.7,lon:12.6,role:'Regional Office',detail:'...'},
+  {name:'Helsinki',lat:60.2,lon:24.9,role:'Technology Hub',detail:'...'},
+  {name:'London',lat:51.5,lon:-0.1,role:'European Financial Hub',detail:'...'},
+  {name:'New York',lat:40.7,lon:-74.0,role:'North American Hub',detail:'...'}
 ];
+
+// Texture offset — earth_atmos_2048.jpg has a rotation offset
+// This shifts all longitude values so markers land on correct landmasses
+const TEXTURE_LON_OFFSET = -85;
 
 let renderer,scene,camera,globeGroup,earth,arcGroup;
 let markerGroups=[],hitMeshes=[];
