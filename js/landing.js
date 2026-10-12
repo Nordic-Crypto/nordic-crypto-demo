@@ -598,6 +598,64 @@
       els.forEach(animate);
     }
   })();
+
+     /* ---------- 23. 3D GLOBE CITY POSITIONING ---------- */
+  (function globeCities() {
+    var globe = document.getElementById('globe');
+    var markersWrap = document.getElementById('globeMarkers');
+    if (!globe || !markersWrap) return;
+
+    var markers = markersWrap.querySelectorAll('.gmarker');
+    if (!markers.length) return;
+
+    // Convert lat/lng to x/y on a rotating sphere
+    // Simplified equirectangular projection onto circle:
+    // x = cos(lng) * cos(lat) ; y = sin(lat)
+    function positionMarkers() {
+      var rect = globe.getBoundingClientRect();
+      var r = rect.width / 2;
+      var cx = rect.width / 2;
+      var cy = rect.height / 2;
+
+      markers.forEach(function (m) {
+        var lat = parseFloat(m.style.getPropertyValue('--lat'));
+        var lng = parseFloat(m.style.getPropertyValue('--lng'));
+        var latRad = lat * Math.PI / 180;
+        var lngRad = lng * Math.PI / 180;
+
+        // Simple spherical → 2D projection
+        var x = cx + Math.cos(latRad) * Math.sin(lngRad) * r;
+        var y = cy - Math.sin(latRad) * r;
+
+        // Visibility check (hide if behind the globe)
+        var depth = Math.cos(latRad) * Math.cos(lngRad);
+        m.style.left = x + 'px';
+        m.style.top = y + 'px';
+        m.style.opacity = depth > -0.2 ? Math.max(0.2, (depth + 1) / 2) : 0;
+        m.style.zIndex = depth > 0 ? 10 : 5;
+      });
+    }
+
+    positionMarkers();
+    window.addEventListener('resize', positionMarkers);
+
+    // Hover zoom effect
+    markers.forEach(function (m) {
+      m.addEventListener('mouseenter', function () {
+        markers.forEach(function (x) { x.classList.remove('zoomed'); });
+        m.classList.add('zoomed');
+        globe.style.transform = 'translateY(-10px) scale(1.06)';
+        globe.style.transition = 'transform .6s cubic-bezier(.34,1.56,.64,1)';
+      });
+      m.addEventListener('mouseleave', function () {
+        m.classList.remove('zoomed');
+        globe.style.transform = '';
+        globe.style.transition = 'transform .6s ease';
+      });
+    });
+
+    console.log('[NC] 🌍 Globe initialized with', markers.length, 'cities');
+  })();
    
   track('landing_view', { v: '4.0' });
 })();
