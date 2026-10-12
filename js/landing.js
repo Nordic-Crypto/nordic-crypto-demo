@@ -504,3 +504,25 @@
   // На всякий случай — повторим через 1 сек
   setTimeout(play, 1000);
 })();
+  /* ---------- 15. FORCE VIDEO VISIBLE ---------- */
+  (function forceVideo() {
+    var v = document.querySelector('.hero-video');
+    if (!v) return;
+    // Форсим display через inline-стиль — перебивает любой @media
+    v.style.display = 'block';
+    v.style.visibility = 'visible';
+    v.style.opacity = '1';
+    // Форсим autoplay
+    v.muted = true;
+    v.playsInline = true;
+    var tryPlay = function () {
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {
+        document.addEventListener('click', function () { v.play(); }, { once: true });
+      });
+    };
+    if (v.readyState >= 2) tryPlay();
+    else v.addEventListener('loadeddata', tryPlay, { once: true });
+    console.log('[NC] Video forced visible. Reduced-motion:',
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  })();
