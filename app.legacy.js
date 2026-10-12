@@ -2022,21 +2022,21 @@ async function checkVerificationStatus() {
     });
     var data = await r.json();
     if (!data || data.error) return null;
-    
-    // 🛡️ FIX: если localStorage помнит approved — не даём затереть на pending
-    var localApproved = localStorage.getItem('nc_kyc_approved_' + email) === '1';
+
     var serverV = data.verification || null;
-    
+    var localApproved = email && localStorage.getItem('nc_kyc_approved_' + email) === '1';
+
+    // 🛡️ FIX: если сервер откатил на pending, но localStorage помнит approved
     if (localApproved && (!serverV || serverV.status !== 'approved')) {
-      console.log('[KYC FIX] Server says', serverV && serverV.status, 'but local says approved — using approved');
+      console.log('[KYC FIX] Server says', serverV && serverV.status, '— using local approved');
       return { status: 'approved' };
     }
-    
-    // 🛡️ FIX: если сервер approved — запоминаем локально
-    if (serverV && serverV.status === 'approved') {
+
+    // 🛡️ FIX: если сервер вернул approved — запоминаем
+    if (serverV && serverV.status === 'approved' && email) {
       localStorage.setItem('nc_kyc_approved_' + email, '1');
     }
-    
+
     return serverV;
   } catch(e) { return null; }
 }
