@@ -2133,7 +2133,11 @@ setInterval(async function(){
 
   console.log('[KYC Poll] Status:', freshV.status, '| was:', oldStatus);
 
-  if (freshV.status === 'approved') {
+    if (freshV.status === 'approved') {
+    // 🛡️ FIX: запоминаем approved в localStorage — чтобы сервер не откатил
+    var email = localStorage.getItem('user_email');
+    if (email) localStorage.setItem('nc_kyc_approved_' + email, '1');
+
     if (!window._kycApprovedShown) {
       window._kycApprovedShown = true;
       if (typeof toast === 'function') toast('✅ Verification approved!');
@@ -2163,10 +2167,17 @@ setInterval(async function(){
       if (typeof applyAccountType === 'function') applyAccountType();
       if (typeof gateByVerification === 'function') gateByVerification();
     });
-  } else if (freshV.status === 'rejected') {
+    } else if (freshV.status === 'rejected') {
     showRejectedScreen(freshV.reason);
   } else if (freshV.status === 'pending') {
-    // 🛡️ FIX: убеждаемся что pendingScreen видим
+    // 🛡️ FIX: НЕ показываем pending, если localStorage помнит approved
+    var email = localStorage.getItem('user_email');
+    var isLocallyApproved = localStorage.getItem('nc_kyc_approved_' + email) === '1';
+    if (isLocallyApproved) {
+      console.log('[KYC FIX] Skipping pending — locally approved');
+      return;
+    }
+    // Показываем pendingScreen
     if (p && !p.classList.contains('on')) {
       p.classList.add('on');
       p.style.display = 'flex';
