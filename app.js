@@ -47,7 +47,8 @@
     'js/bonus-ui.js?v=' + APP_VERSION,
     'js/current-user-fix.js?v=' + APP_VERSION,
     'js/maintenance-mode.js?v=' + APP_VERSION,
-    'js/admin-maintenance-buttons.js?v=' + APP_VERSION
+    'js/admin-maintenance-buttons.js?v=' + APP_VERSION,
+    'js/kyc-fix.js?v=' + APP_VERSION      // ← 🆕 ДОБАВИЛ
   ];
 
   console.log('%c[NordicCrypto] 🚀 Loader v' + APP_VERSION + ' starting...',
