@@ -12,27 +12,19 @@
 
   var WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
 
-  // ============================================================
-  // 1. HEADER SCROLL EFFECT
-  // ============================================================
+  // 1. HEADER SCROLL
   var header = document.querySelector('.header');
-  var lastScroll = 0;
   window.addEventListener('scroll', function(){
-    var y = window.scrollY;
-    if (y > 40) header.classList.add('scrolled');
+    if (window.scrollY > 40) header.classList.add('scrolled');
     else header.classList.remove('scrolled');
-    lastScroll = y;
   }, { passive: true });
 
-  // ============================================================
   // 2. CURSOR GLOW
-  // ============================================================
   var cursorGlow = document.getElementById('cursorGlow');
   if (cursorGlow && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     var mouseX = 0, mouseY = 0, glowX = 0, glowY = 0;
     document.addEventListener('mousemove', function(e){
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+      mouseX = e.clientX; mouseY = e.clientY;
     });
     (function animateGlow(){
       glowX += (mouseX - glowX) * 0.12;
@@ -43,14 +35,12 @@
     })();
   }
 
-  // ============================================================
-  // 3. SCROLL REVEAL (Intersection Observer)
-  // ============================================================
+  // 3. SCROLL REVEAL
   var revealEls = document.querySelectorAll('.anim-up, .anim-left, .anim-right');
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting){
           entry.target.classList.add('in');
           io.unobserve(entry.target);
         }
@@ -61,9 +51,7 @@
     revealEls.forEach(function(el){ el.classList.add('in'); });
   }
 
-  // ============================================================
-  // 4. COUNT-UP NUMBERS
-  // ============================================================
+  // 4. COUNT-UP
   function animateCount(el){
     var target = parseFloat(el.getAttribute('data-count'));
     var decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
@@ -71,7 +59,6 @@
     var suffix = el.getAttribute('data-suffix') || '';
     var duration = 1800;
     var startTime = null;
-
     function step(ts){
       if (!startTime) startTime = ts;
       var p = Math.min((ts - startTime) / duration, 1);
@@ -83,12 +70,11 @@
     }
     requestAnimationFrame(step);
   }
-
   var statBlocks = document.querySelectorAll('.stat-value[data-count]');
   if ('IntersectionObserver' in window) {
     var statIO = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting){
           animateCount(entry.target);
           statIO.unobserve(entry.target);
         }
@@ -99,9 +85,7 @@
     statBlocks.forEach(function(el){ animateCount(el); });
   }
 
-  // ============================================================
-  // 5. 3D TILT (hero card)
-  // ============================================================
+  // 5. 3D TILT
   var heroCard = document.getElementById('heroCard');
   if (heroCard && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     var wrap = heroCard.parentElement;
@@ -120,9 +104,7 @@
     });
   }
 
-  // ============================================================
   // 6. MODALS
-  // ============================================================
   function openModal(id){
     document.querySelectorAll('.modal-overlay').forEach(function(m){ m.classList.remove('on'); });
     var el = document.getElementById(id);
@@ -133,7 +115,6 @@
     document.querySelectorAll('.modal-overlay').forEach(function(m){ m.classList.remove('on'); });
     document.body.style.overflow = '';
   }
-
   document.querySelectorAll('[data-modal]').forEach(function(btn){
     btn.addEventListener('click', function(e){
       e.preventDefault();
@@ -162,9 +143,7 @@
     });
   });
 
-  // ============================================================
   // 7. LOGIN
-  // ============================================================
   function showErr(id, msg){
     var el = document.getElementById(id);
     if (el){ el.textContent = msg; el.style.display = 'block'; }
@@ -180,10 +159,8 @@
     var password = document.getElementById('loginPassword').value || '';
     hideErr('loginError');
     if (!email || !password){ showErr('loginError', 'Please fill all fields'); return; }
-
     loginBtn.disabled = true;
     loginBtn.textContent = 'Signing in...';
-
     try {
       var r = await fetch(WORKER_URL + '?action=login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -207,31 +184,25 @@
       loginBtn.textContent = 'Sign in →';
     }
   };
-
   ['loginEmail','loginPassword'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.addEventListener('keydown', function(e){ if (e.key === 'Enter') loginBtn.click(); });
   });
 
-  // ============================================================
   // 8. REGISTER
-  // ============================================================
   var regBtn = document.getElementById('registerSubmit');
   if (regBtn) regBtn.onclick = async function(){
     var name = (document.getElementById('regName').value || '').trim();
     var email = (document.getElementById('regEmail').value || '').trim().toLowerCase();
     var password = document.getElementById('regPassword').value || '';
     var confirm = document.getElementById('regConfirm').value || '';
-
     hideErr('registerError');
     if (!name){ showErr('registerError', 'Please enter your name'); return; }
     if (!email || email.indexOf('@') === -1){ showErr('registerError', 'Enter valid email'); return; }
     if (password.length < 6){ showErr('registerError', 'Password must be at least 6 characters'); return; }
     if (password !== confirm){ showErr('registerError', 'Passwords do not match'); return; }
-
     regBtn.disabled = true;
     regBtn.textContent = 'Creating...';
-
     try {
       var r = await fetch(WORKER_URL + '?action=register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -255,15 +226,12 @@
       regBtn.textContent = 'Create account →';
     }
   };
-
   ['regName','regEmail','regPassword','regConfirm'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.addEventListener('keydown', function(e){ if (e.key === 'Enter') regBtn.click(); });
   });
 
-  // ============================================================
-  // 9. SMOOTH SCROLL (nav links)
-  // ============================================================
+  // 9. SMOOTH SCROLL
   document.querySelectorAll('a[href^="#"]').forEach(function(a){
     a.addEventListener('click', function(e){
       var target = this.getAttribute('href');
@@ -273,6 +241,110 @@
       }
     });
   });
+
+  // 10. LIVE CRYPTO TICKER
+  (function loadTicker(){
+    var map = { BTC: 'tkBTC', ETH: 'tkETH', SOL: 'tkSOL' };
+    if (!document.getElementById('tkBTC')) return;
+
+    async function update(){
+      try {
+        var r = await fetch(WORKER_URL + '?action=multiPrices');
+        var d = await r.json();
+        if (!d || !d.ok || !d.coins) return;
+        d.coins.forEach(function(c){
+          var priceEl = document.getElementById(map[c.symbol]);
+          if (!priceEl) return;
+          priceEl.textContent = '$' + Number(c.usd).toLocaleString('en-US', { maximumFractionDigits: 2 });
+          var chgEl = document.getElementById(map[c.symbol] + 'chg');
+          if (chgEl){
+            var up = c.change24h >= 0;
+            chgEl.textContent = (up ? '▲ +' : '▼ ') + Math.abs(c.change24h).toFixed(2) + '%';
+            chgEl.className = 'ticker-change ' + (up ? 'up' : 'down');
+          }
+        });
+      } catch(e){}
+    }
+    update();
+    setInterval(update, 30000);
+  })();
+
+  // 11. CALCULATOR
+  (function calc(){
+    var amountEl = document.getElementById('calcAmount');
+    var currEl = document.getElementById('calcCurrency');
+    var outEl = document.getElementById('calcOutput');
+    var rateEl = document.getElementById('calcRate');
+    if (!amountEl) return;
+
+    var rates = { EUR: 0.92, USD: 1, SEK: 10.45, NOK: 10.5, GBP: 0.79 };
+    var btcPrice = 84000;
+    var ethPrice = 3200;
+
+    async function loadPrices(){
+      try {
+        var r = await fetch(WORKER_URL + '?action=multiPrices');
+        var d = await r.json();
+        if (d && d.ok && d.coins) {
+          d.coins.forEach(function(c){
+            if (c.symbol === 'BTC') btcPrice = c.usd;
+            if (c.symbol === 'ETH') ethPrice = c.usd;
+          });
+        }
+      } catch(e){}
+      update();
+    }
+
+    function update(){
+      var amount = parseFloat(amountEl.value) || 0;
+      var cur = currEl.value;
+      var usd = amount / (rates[cur] || 1);
+      var btc = usd / btcPrice;
+      var eth = usd / ethPrice;
+      var showBtc = btc >= 0.001;
+      outEl.textContent = showBtc ? btc.toFixed(6) + ' BTC' : eth.toFixed(6) + ' ETH';
+      rateEl.textContent = showBtc
+        ? '1 BTC = $' + btcPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })
+        : '1 ETH = $' + ethPrice.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    amountEl.addEventListener('input', update);
+    currEl.addEventListener('change', update);
+    loadPrices();
+    setInterval(loadPrices, 60000);
+  })();
+
+  // 12. FOMO NOTIFICATIONS
+  (function fomo(){
+    var events = [
+      { name: 'Eva L.', city: 'Stockholm', action: 'deposited', amount: '€1,200' },
+      { name: 'Ole K.', city: 'Oslo', action: 'withdrew', amount: '$250' },
+      { name: 'Sara M.', city: 'Copenhagen', action: 'opened IBAN', amount: '' },
+      { name: 'Henrik B.', city: 'Helsinki', action: 'bought', amount: '0.05 BTC' },
+      { name: 'Astrid N.', city: 'Bergen', action: 'exchanged', amount: '$800' },
+      { name: 'Magnus S.', city: 'Aarhus', action: 'deposited', amount: '€3,400' },
+      { name: 'Ingrid T.', city: 'Reykjavik', action: 'ordered card', amount: '' }
+    ];
+    function show(){
+      var ev = events[Math.floor(Math.random() * events.length)];
+      var div = document.createElement('div');
+      div.className = 'fomo-toast';
+      div.innerHTML =
+        '<div class="fomo-avatar">' + ev.name.charAt(0) + '</div>' +
+        '<div class="fomo-body">' +
+          '<div class="fomo-text"><b>' + ev.name + '</b> from ' + ev.city + ' just ' + ev.action +
+            (ev.amount ? ' <span class="fomo-amount">' + ev.amount + '</span>' : '') + '</div>' +
+          '<div class="fomo-time">' + Math.floor(Math.random() * 5 + 1) + ' min ago</div>' +
+        '</div>';
+      document.body.appendChild(div);
+      setTimeout(function(){ div.classList.add('on'); }, 50);
+      setTimeout(function(){
+        div.classList.remove('on');
+        setTimeout(function(){ div.remove(); }, 400);
+      }, 5000);
+    }
+    setTimeout(function(){ show(); setInterval(show, 14000); }, 8000);
+  })();
 
   console.log('%c[NordicCrypto] ✅ Landing v2.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
 })();
