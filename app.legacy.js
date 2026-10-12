@@ -1856,13 +1856,52 @@ window.submitRealVerification = async function() {
       body: JSON.stringify({ token: token, email: email, state: st, force: true })
     });
 
-    // 4. 🛡️ Флаг "KYC уже отправлялся" — чтобы не гонять по кругу
+        // 4. 🛡️ Флаг "KYC уже отправлялся" — чтобы не гонять по кругу
     localStorage.setItem('nc_kyc_done_' + email, '1');
+
+    // 🛡️ FIX: явно сохраняем статус 'pending' в стейт и на сервер
+    if (!st.verification) st.verification = {};
+    st.verification.status = 'pending';
+    st.verification.submittedAt = Date.now();
+    await fetch(WORKER_URL + '?action=setUserState', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, email: email, state: st, force: true })
+    });
+
+    // 🛡️ FIX: сбрасываем кэш воркера
+    try {
+      await fetch(WORKER_URL + '?action=submitVerification', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, docType, docKeys: [docKey, selfieKey],
+          personalInfo: { street, city, zip, country }, state: st })
+      });
+    } catch(e) {}
 
     document.querySelectorAll('#kycLoadingOverlay').forEach(function(el){ el.remove(); });
 
+    // 🛡️ FIX: прячем ВСЁ кроме pendingScreen
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('sideBar').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('verifyScreen').classList.remove('on');
+    document.getElementById('verifyScreen').style.display = 'none';
+    document.getElementById('onboard').classList.remove('on');
+    document.getElementById('rejectedScreen').classList.remove('on');
+
     hideVerifyScreen();
     showPendingScreen();
+
+    // 🛡️ FIX: принудительно показываем pendingScreen поверх всего
+    var _p = document.getElementById('pendingScreen');
+    if (_p) {
+      _p.classList.add('on');
+      _p.style.display = 'flex';
+      _p.style.position = 'fixed';
+      _p.style.inset = '0';
+      _p.style.zIndex = '9999';
+      _p.style.visibility = 'visible';
+      _p.style.opacity = '1';
+    }
 
     var _p = document.getElementById('pendingScreen');
     if (_p) {
