@@ -374,50 +374,71 @@
     </div>
 
     <div class="map-wrap anim-up">
-      <svg class="world-map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <radialGradient id="mapDot" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#00e5ff" stop-opacity=".8"/>
-            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <g fill="rgba(125,138,158,.6)">
-          <circle cx="180" cy="160" r="2"/><circle cx="200" cy="140" r="2"/><circle cx="220" cy="150" r="2"/>
-          <circle cx="160" cy="180" r="2"/><circle cx="190" cy="200" r="2"/><circle cx="210" cy="180" r="2"/>
-          <circle cx="240" cy="170" r="2"/><circle cx="150" cy="150" r="2"/><circle cx="170" cy="220" r="2"/>
-          <circle cx="230" cy="200" r="2"/><circle cx="250" cy="190" r="2"/><circle cx="130" cy="200" r="2"/>
-          <circle cx="200" cy="240" r="2"/><circle cx="180" cy="260" r="2"/><circle cx="220" cy="250" r="2"/>
-          <circle cx="260" cy="160" r="2"/><circle cx="140" cy="170" r="2"/><circle cx="110" cy="190" r="2"/>
-          <circle cx="280" cy="310" r="2"/><circle cx="300" cy="330" r="2"/><circle cx="290" cy="360" r="2"/>
-          <circle cx="310" cy="380" r="2"/><circle cx="300" cy="410" r="2"/><circle cx="280" cy="430" r="2"/>
-          <circle cx="270" cy="340" r="2"/><circle cx="330" cy="350" r="2"/><circle cx="320" cy="400" r="2"/>
-          <circle cx="470" cy="140" r="2"/><circle cx="490" cy="130" r="2"/><circle cx="500" cy="150" r="2"/>
-          <circle cx="480" cy="160" r="2"/><circle cx="510" cy="140" r="2"/><circle cx="520" cy="160" r="2"/>
-          <circle cx="460" cy="130" r="2"/><circle cx="540" cy="150" r="2"/><circle cx="530" cy="130" r="2"/>
-          <circle cx="450" cy="150" r="2"/><circle cx="490" cy="170" r="2"/><circle cx="550" cy="140" r="2"/>
-          <circle cx="500" cy="240" r="2"/><circle cx="520" cy="260" r="2"/><circle cx="510" cy="290" r="2"/>
-          <circle cx="530" cy="320" r="2"/><circle cx="520" cy="350" r="2"/><circle cx="540" cy="280" r="2"/>
-          <circle cx="490" cy="270" r="2"/><circle cx="550" cy="300" r="2"/><circle cx="560" cy="250" r="2"/>
-          <circle cx="480" cy="300" r="2"/><circle cx="530" cy="220" r="2"/>
-          <circle cx="620" cy="140" r="2"/><circle cx="650" cy="150" r="2"/><circle cx="680" cy="140" r="2"/>
-          <circle cx="720" cy="150" r="2"/><circle cx="760" cy="160" r="2"/><circle cx="800" cy="150" r="2"/>
-          <circle cx="640" cy="180" r="2"/><circle cx="680" cy="190" r="2"/><circle cx="720" cy="180" r="2"/>
-          <circle cx="760" cy="200" r="2"/><circle cx="800" cy="190" r="2"/><circle cx="840" cy="180" r="2"/>
-          <circle cx="660" cy="220" r="2"/><circle cx="700" cy="230" r="2"/><circle cx="740" cy="220" r="2"/>
-          <circle cx="780" cy="240" r="2"/><circle cx="820" cy="230" r="2"/>
-          <circle cx="600" cy="160" r="2"/><circle cx="600" cy="200" r="2"/>
-          <circle cx="820" cy="380" r="2"/><circle cx="850" cy="390" r="2"/><circle cx="880" cy="380" r="2"/>
-          <circle cx="860" cy="410" r="2"/><circle cx="840" cy="420" r="2"/><circle cx="880" cy="410" r="2"/>
-          <circle cx="800" cy="400" r="2"/><circle cx="900" cy="400" r="2"/>
-        </g>
-        <g stroke="rgba(0,229,255,.7)" fill="none" stroke-width="1.5" class="arcs">
-          <path d="M492 148 Q 350 100 200 160" class="arc arc-1"/>
-          <path d="M492 148 Q 400 220 300 330" class="arc arc-2"/>
-          <path d="M492 148 Q 600 130 720 180" class="arc arc-3"/>
-          <path d="M492 148 Q 650 300 840 400" class="arc arc-4"/>
-          <path d="M492 148 Q 520 230 530 300" class="arc arc-5"/>
-        </g>
-      </svg>
+     <svg class="world-map" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="mapDot" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity=".8"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="continentGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,229,255,.15)"/>
+      <stop offset="100%" stop-color="rgba(124,58,237,.08)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- CONTINENTS (simplified outlines) -->
+  <g fill="rgba(125,138,158,.18)" stroke="rgba(125,138,158,.45)" stroke-width="0.8" stroke-linejoin="round">
+
+    <!-- North America -->
+    <path d="M 130 110 L 175 95 L 210 105 L 240 120 L 255 145 L 250 170 L 240 195 L 230 215 L 215 230 L 200 245 L 195 265 L 185 250 L 175 230 L 160 210 L 145 200 L 130 195 L 115 185 L 105 165 L 110 145 L 120 125 Z" />
+
+    <!-- Greenland -->
+    <path d="M 290 80 L 320 75 L 340 90 L 335 115 L 315 130 L 295 120 L 285 100 Z" />
+
+    <!-- South America -->
+    <path d="M 245 280 L 270 275 L 295 285 L 310 305 L 315 330 L 310 360 L 300 390 L 290 415 L 275 430 L 260 425 L 250 405 L 245 380 L 240 355 L 235 330 L 235 305 Z" />
+
+    <!-- Europe -->
+    <path d="M 440 115 L 465 105 L 490 105 L 510 115 L 525 130 L 530 150 L 520 170 L 505 180 L 490 190 L 475 185 L 460 175 L 450 160 L 445 140 L 440 130 Z" />
+
+    <!-- UK -->
+    <path d="M 425 125 L 440 120 L 445 135 L 440 150 L 430 150 L 422 140 Z" />
+
+    <!-- Africa -->
+    <path d="M 465 200 L 495 195 L 520 205 L 535 225 L 545 250 L 550 280 L 545 310 L 535 340 L 520 365 L 505 380 L 490 380 L 475 365 L 465 340 L 460 310 L 455 280 L 455 250 L 458 225 Z" />
+
+    <!-- Madagascar -->
+    <path d="M 565 335 L 575 330 L 578 350 L 572 370 L 563 365 L 560 350 Z" />
+
+    <!-- Asia -->
+    <path d="M 550 100 L 590 90 L 630 95 L 670 105 L 710 115 L 750 120 L 790 125 L 830 135 L 855 155 L 860 180 L 845 200 L 825 215 L 800 220 L 775 215 L 750 205 L 725 200 L 700 195 L 680 200 L 660 210 L 645 220 L 630 225 L 615 220 L 600 205 L 585 195 L 570 185 L 555 170 L 545 150 L 545 130 Z" />
+
+    <!-- India -->
+    <path d="M 655 220 L 680 215 L 700 220 L 705 245 L 700 270 L 685 285 L 668 280 L 655 260 L 650 240 Z" />
+
+    <!-- Southeast Asia -->
+    <path d="M 720 245 L 750 250 L 770 265 L 780 285 L 765 300 L 745 300 L 725 290 L 715 275 L 712 260 Z" />
+
+    <!-- Japan -->
+    <path d="M 850 165 L 862 160 L 870 175 L 868 195 L 858 200 L 850 185 Z" />
+
+    <!-- Australia -->
+    <path d="M 800 340 L 840 330 L 875 340 L 895 365 L 890 395 L 870 415 L 840 420 L 810 410 L 795 385 L 795 360 Z" />
+
+    <!-- New Zealand -->
+    <path d="M 910 405 L 920 400 L 925 420 L 918 435 L 908 428 Z" />
+
+  </g>
+
+  <!-- CONNECTION ARCS from Stockholm -->
+  <g stroke="rgba(0,229,255,.55)" fill="none" stroke-width="1.2" class="arcs">
+    <path d="M 492 148 Q 350 90 200 180" class="arc arc-1"/>
+    <path d="M 492 148 Q 400 240 290 340" class="arc arc-2"/>
+    <path d="M 492 148 Q 600 130 720 200" class="arc arc-3"/>
+    <path d="M 492 148 Q 650 320 845 385" class="arc arc-4"/>
+    <path d="M 492 148 Q 520 250 505 340" class="arc arc-5"/>
+  </g>
+</svg>
 
       <div class="map-markers">
         <div class="marker m-stockholm" style="left: 49.2%; top: 29.6%;">
