@@ -1784,11 +1784,10 @@ window.submitRealVerification = async function() {
 
   var loadingOverlay = document.createElement('div');
   loadingOverlay.id = 'kycLoadingOverlay';
-  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;color:#e7edf5;font-family:inherit;';
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;color:#e7edf5;';
   loadingOverlay.innerHTML =
     '<div style="width:60px;height:60px;border:4px solid rgba(0,212,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:kycSpin 1s linear infinite;margin-bottom:24px;"></div>' +
-    '<div style="font-size:20px;font-weight:700;margin-bottom:8px;">Uploading documents...</div>' +
-    '<div style="font-size:14px;color:#94a3b8;">Please wait, do not close this page</div>' +
+    '<div style="font-size:20px;font-weight:700;">Uploading documents...</div>' +
     '<style>@keyframes kycSpin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(loadingOverlay);
 
@@ -1813,23 +1812,35 @@ window.submitRealVerification = async function() {
     var docKey    = await uploadKycFile(docFile, 'passport');
     var selfieKey = await uploadKycFile(selfieFile, 'selfie');
 
-    var r = await fetch(WORKER_URL + '?action=submitVerification', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token, docType,
-        docKeys: [docKey, selfieKey],
-        personalInfo: { street, city, zip, country }
-      })
-    });
-    var data = await r.json();
-    if (!data.ok) throw new Error(data.error || 'Submit failed');
-
+    // 1. Обновляем st локально
     if (!st.verification) st.verification = {};
     st.verification.status = 'pending';
     st.verification.docType = docType;
     st.verification.docKeys = [docKey, selfieKey];
     st.verification.personalInfo = { street, city, zip, country };
     st.verification.submittedAt = Date.now();
+
+    // 2. Отправляем в воркер (submitVerification)
+    var r = await fetch(WORKER_URL + '?action=submitVerification', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token, docType, docKeys: [docKey, selfieKey],
+        personalInfo: { street, city, zip, country },
+        state: st  // ← на случай если воркер умеет это
+      })
+    });
+    var data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'Submit failed');
+
+    // 3. 🛡️ ДВОЙНАЯ ЗАЩИТА: сохраняем state через setUserState
+    var email = localStorage.getItem('user_email');
+    await fetch(WORKER_URL + '?action=setUserState', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, email: email, state: st, force: true })
+    });
+
+    // 4. 🛡️ Флаг "KYC уже отправлялся" — чтобы не гонять по кругу
+    localStorage.setItem('nc_kyc_done_' + email, '1');
 
     document.querySelectorAll('#kycLoadingOverlay').forEach(function(el){ el.remove(); });
 
@@ -1843,8 +1854,6 @@ window.submitRealVerification = async function() {
       _p.style.position = 'fixed';
       _p.style.inset = '0';
       _p.style.zIndex = '2900';
-      var _step = _p.querySelector('.verify-step');
-      if (_step) _step.classList.add('on');
     }
 
     var _side = document.getElementById('sideBar'); if (_side) _side.style.display = 'none';
