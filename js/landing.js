@@ -480,7 +480,34 @@
 
   /* ---------- 14. LOG ---------- */
   console.log('%c[NordicCrypto] ✅ Landing v4.0 loaded — no CSS-in-JS, all good', 'color:#00e5ff;font-weight:bold;font-size:13px');
+  /* ---------- 17. LIVE THREAT COUNTER ---------- */
+  (function threatCounter() {
+    var el = document.getElementById('threatCount');
+    if (!el) return;
+    // Стартовое значение — реалистичное число "отбитых" угроз
+    var base = 1247832;
+    var counter = base;
+    function fmt(n) { return n.toLocaleString('en-US'); }
+    el.textContent = fmt(counter);
+    // Прибавляем 3-9 "угроз" каждые 2-5 секунд
+    function tick() {
+      counter += Math.floor(Math.random() * 7) + 3;
+      el.textContent = fmt(counter);
+      setTimeout(tick, 2000 + Math.random() * 3000);
+    }
+    setTimeout(tick, 2500);
+  })();
 
+  /* ---------- 18. MAP ARCS ANIMATION ---------- */
+  (function mapArcs() {
+    var arcs = document.querySelectorAll('.arc');
+    if (!arcs.length) return;
+    arcs.forEach(function (a) {
+      // Случайная задержка для «живости»
+      a.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+      a.style.animationDuration = (5 + Math.random() * 3).toFixed(2) + 's';
+    });
+  })();
   track('landing_view', { v: '4.0' });
 })();
 /* ---------- 15. FORCE VIDEO AUTOPLAY ---------- */
