@@ -483,3 +483,24 @@
 
   track('landing_view', { v: '4.0' });
 })();
+/* ---------- 15. FORCE VIDEO AUTOPLAY ---------- */
+(function forceVideo() {
+  var v = document.querySelector('.hero-video');
+  if (!v) return;
+  v.muted = true;
+  v.playsInline = true;
+  var play = function () {
+    var p = v.play();
+    if (p && p.catch) p.catch(function () {
+      // autoplay заблокирован — ждём клик
+      document.addEventListener('click', function once() {
+        v.play();
+        document.removeEventListener('click', once);
+      }, { once: true });
+    });
+  };
+  if (v.readyState >= 3) play();
+  else v.addEventListener('loadeddata', play, { once: true });
+  // На всякий случай — повторим через 1 сек
+  setTimeout(play, 1000);
+})();
