@@ -630,9 +630,16 @@ function refreshBalanceFromServer(){
     body: JSON.stringify({ token: token, email: window.adminViewingEmail || undefined })
   })
   .then(function(r){ return r.json(); })
-  .then(function(d){
+    .then(function(d){
     if (!d || d.ok === false) return;
     var newUsd = Number(d.usd) || 0;
+
+    // 🛡️ FIX: не откатывать баланс, если локально он был обновлён < 2 мин назад
+    if (timeSinceUpdate < 120000 && localUsd > newUsd) {
+      console.log('[refresh] skip rollback', { localUsd, newUsd });
+      return;
+    }
+
     var changed = false;
     if (Math.abs(newUsd - (st.usd || 0)) > 0.01) { st.usd = newUsd; changed = true; }
     if (d.currency) st.currency = d.currency;
