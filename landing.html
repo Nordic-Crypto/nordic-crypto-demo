@@ -365,84 +365,73 @@
 </section>
 
 <!-- GLOBAL COVERAGE -->
-<section class="section sec-coverage" id="coverage">
-  <div class="wrap">
-    <div class="section-head anim-up">
-      <div class="tag">Where we operate</div>
-      <h2>Built in Scandinavia.<br><span class="dim">Live across the world.</span></h2>
-      <p class="mut center">Regulated, local, and always online. NordicCrypto is available in 36+ countries.</p>
-    </div>
+<section class="gc-section" id="coverage">
+  <div class="gc-container">
 
-    <div class="globe-wrap anim-up">
-      <div class="globe-stage" id="globeStage">
-        <!-- GLOW behind globe -->
-        <div class="globe-glow"></div>
-
-        <!-- ROTATING GLOBE -->
-        <div class="globe" id="globe">
-
-          <!-- Earth texture -->
-          <div class="globe-earth"></div>
-
-          <!-- Atmosphere ring -->
-          <div class="globe-atmosphere"></div>
-
-          <!-- City markers -->
-          <div class="globe-markers" id="globeMarkers">
-            <button class="gmarker" data-city="stockholm" style="--lat: 59.3; --lng: 18.1;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">Stockholm<span class="gm-role">HQ</span></span>
-            </button>
-            <button class="gmarker" data-city="oslo" style="--lat: 59.9; --lng: 10.7;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">Oslo<span class="gm-role">SEPA</span></span>
-            </button>
-            <button class="gmarker" data-city="copenhagen" style="--lat: 55.7; --lng: 12.6;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">Copenhagen<span class="gm-role">Cards</span></span>
-            </button>
-            <button class="gmarker" data-city="helsinki" style="--lat: 60.2; --lng: 24.9;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">Helsinki<span class="gm-role">Crypto</span></span>
-            </button>
-            <button class="gmarker" data-city="london" style="--lat: 51.5; --lng: -0.1;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">London<span class="gm-role">FX Desk</span></span>
-            </button>
-            <button class="gmarker" data-city="newyork" style="--lat: 40.7; --lng: -74.0;">
-              <span class="gm-dot"></span>
-              <span class="gm-pulse"></span>
-              <span class="gm-label">New York<span class="gm-role">USD Desk</span></span>
-            </button>
-          </div>
-        </div>
+    <header class="gc-header">
+      <div class="gc-eyebrow">
+        <span class="gc-eyebrow-dot"></span>
+        Where we operate
       </div>
 
-      <!-- Coverage stats -->
-      <div class="coverage-stats anim-up">
-        <div class="cs">
-          <div class="cs-val" data-count="36" data-suffix="+">0</div>
-          <div class="cs-lbl">Countries</div>
+      <h2>
+        Built in Scandinavia.<br>
+        <span class="gc-gradient-text">Live across the world.</span>
+      </h2>
+
+      <p>
+        Regulated, local, and always online. NordicCrypto is available in 36+ countries.
+      </p>
+    </header>
+
+    <div class="gc-globe-layout">
+      <div class="gc-globe-stage" id="gc-globe-stage">
+        <div class="gc-globe-halo"></div>
+        <div class="gc-orbit"></div>
+        <div class="gc-orbit gc-orbit-two"></div>
+
+        <canvas id="gc-globe" aria-label="Interactive rotating globe showing NordicCrypto locations"></canvas>
+
+        <div class="gc-tooltip" id="gc-tooltip" role="status" aria-live="polite">
+          <strong id="gc-tooltip-city">Stockholm</strong>
+          <span id="gc-tooltip-role">Nordic Headquarters</span>
+          <small>NordicCrypto Global Network</small>
         </div>
-        <div class="cs">
-          <div class="cs-val" data-count="24" data-suffix="/7">0</div>
-          <div class="cs-lbl">Live support</div>
-        </div>
-        <div class="cs">
-          <div class="cs-val" data-count="6" data-prefix="">0</div>
-          <div class="cs-lbl">Offices</div>
-        </div>
-        <div class="cs">
-          <div class="cs-val" data-count="99.9" data-suffix="%" data-decimals="1">0</div>
-          <div class="cs-lbl">Uptime</div>
+
+        <div class="gc-location-hint">
+          <i></i>
+          HOVER OVER A CITY TO EXPLORE
         </div>
       </div>
     </div>
+
+    <div class="gc-stats">
+      <div class="gc-stat">
+        <div class="gc-stat-value">36<span>+</span></div>
+        <div class="gc-stat-label">Countries Covered</div>
+      </div>
+      <div class="gc-stat">
+        <div class="gc-stat-value">24<span>/</span>7</div>
+        <div class="gc-stat-label">Global Support</div>
+      </div>
+      <div class="gc-stat">
+        <div class="gc-stat-value">06</div>
+        <div class="gc-stat-label">Strategic Locations</div>
+      </div>
+      <div class="gc-stat">
+        <div class="gc-stat-value">99.9<span>%</span></div>
+        <div class="gc-stat-label">Platform Uptime</div>
+      </div>
+    </div>
+
+    <div class="gc-footer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3Z" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      Connected across continents. Designed around you.
+    </div>
+
   </div>
 </section>
 
