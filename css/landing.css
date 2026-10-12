@@ -1017,3 +1017,15 @@ img, svg, video { max-width: 100%; display: block; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .mesh-1, .mesh-2, .mesh-3, .marquee-track, .radar-sweep, .radar-dot, .lock-core, .lock-shackle, .shield-float-badge, .arc, .mk-pulse { animation: none !important; }
 }
+/* Hover effect on section title */
+.sec-coverage .section-head:hover ~ .globe-wrap .globe {
+  transform: scale(1.08);
+  filter: brightness(1.1) saturate(1.2);
+  transition: transform .8s cubic-bezier(.34,1.56,.64,1), filter .8s ease;
+}
+
+.sec-coverage .section-head:hover ~ .globe-wrap .globe-glow {
+  opacity: 1;
+  transform: scale(1.15);
+  transition: opacity .8s, transform .8s;
+}
