@@ -3598,16 +3598,17 @@ window.loadAdminVerifications = async function(opts) {
       else { navBadge.style.display = 'none'; }
     }
 
-    // 🛡️ Hash-проверка — не перерисовываем если ничего не изменилось
-    var newHash = list.map(function(v) {
-      return v.email + '|' + v.status + '|' + (v.submittedAt || 0) + '|' + (v.reviewedAt || 0);
-    }).join(',');
+   // 🛡️ FIX: перерисовываем ВСЕГДА при явном refresh или смене вкладки
+var newHash = list.map(function(v) {
+  return v.email + '|' + v.status + '|' + (v.submittedAt || 0) + '|' + (v.reviewedAt || 0);
+}).join(',');
 
-    if (newHash === _lastVerifsHash && _lastVerifsRendered) {
-      return;  // ← ничего не меняем, список стоит
-    }
-    _lastVerifsHash = newHash;
-    _lastVerifsRendered = true;
+var force = opts && opts.force === true;
+if (!force && newHash === _lastVerifsHash && _lastVerifsRendered) {
+  return;
+}
+_lastVerifsHash = newHash;
+_lastVerifsRendered = true;
 
     if (!list.length) {
       box.innerHTML = '<div class="admin-empty">No verifications yet</div>';
