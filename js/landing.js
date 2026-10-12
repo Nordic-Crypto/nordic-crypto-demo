@@ -487,71 +487,7 @@
     });
   });
 
-  /* ---------- 3D GLOBE — City Positioning ---------- */
-  (function globe() {
-    var globeEl = document.getElementById('globe');
-    var wrap = document.getElementById('globeMarkers');
-    if (!globeEl || !wrap) return;
 
-    var markers = wrap.querySelectorAll('.gmarker');
-    if (!markers.length) return;
-
-    // Rotation offset: which longitude is at the FRONT of the globe
-    // 18° = Stockholm is front-center, so Nordics + Europe visible
-    var ROTATION_OFFSET = -18;
-
-    function project(lat, lng) {
-      var phi   = lat * Math.PI / 180;
-      var theta = (lng + ROTATION_OFFSET) * Math.PI / 180;
-      var x = Math.cos(phi) * Math.sin(theta);
-      var y = Math.sin(phi);
-      var z = Math.cos(phi) * Math.cos(theta);
-      return { x: x, y: y, z: z };
-    }
-
-    function update() {
-      var rect = globeEl.getBoundingClientRect();
-      var r  = rect.width / 2;
-      var cx = r;
-      var cy = r;
-
-      markers.forEach(function (m) {
-        var lat = parseFloat(m.dataset.lat);
-        var lng = parseFloat(m.dataset.lng);
-        var p = project(lat, lng);
-
-        var left = cx + p.x * r;
-        var top  = cy - p.y * r;
-
-        m.style.left = left + 'px';
-        m.style.top  = top  + 'px';
-
-        if (p.z < 0.05) {
-          m.style.opacity = '0';
-          m.style.pointerEvents = 'none';
-        } else {
-          m.style.opacity = Math.min(1, p.z * 1.5 + 0.15);
-          m.style.pointerEvents = 'auto';
-        }
-        m.style.zIndex = p.z > 0 ? '10' : '5';
-      });
-    }
-
-    update();
-    window.addEventListener('resize', update);
-
-    markers.forEach(function (m) {
-      m.addEventListener('mouseenter', function () {
-        markers.forEach(function (x) { x.classList.remove('zoomed'); });
-        m.classList.add('zoomed');
-      });
-      m.addEventListener('mouseleave', function () {
-        m.classList.remove('zoomed');
-      });
-    });
-
-    console.log('[NC] 🌍 Globe initialized —', markers.length, 'cities');
-  })();
 
   /* ---------- FORCE VIDEO AUTOPLAY ---------- */
   (function forceVideo() {
@@ -580,6 +516,6 @@
   })();
 
   /* ---------- LOG ---------- */
-  console.log('%c[NordicCrypto] ✅ Landing v6.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
+  console.log('%c[NordicCrypto] ✅ Landing v7.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
   track('landing_view', { v: '6.0' });
 })();
