@@ -349,30 +349,94 @@
   </div>
 </section>
 
-<!-- SECURITY -->
-<section class="section" id="security">
+<!-- SECURITY v3 -->
+<section class="section sec-security" id="security">
   <div class="wrap">
-    <div class="split">
+    <div class="split split-sec">
+
+      <!-- LEFT -->
       <div class="anim-left">
         <div class="tag">Security</div>
         <h2>Bank-grade security.<br><span class="dim">Crypto-native speed.</span></h2>
         <p class="mut">Same encryption standards as major European banks. Your data is encrypted in transit and at rest, always.</p>
+
         <ul class="checks">
-          <li><span class="chk"></span> 256-bit SSL/TLS encryption</li>
-          <li><span class="chk"></span> GDPR compliant</li>
-          <li><span class="chk"></span> Two-factor authentication</li>
-          <li><span class="chk"></span> Session fingerprinting</li>
-          <li><span class="chk"></span> Anti-fraud monitoring 24/7</li>
+          <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="chk-text">256-bit SSL/TLS encryption</span></li>
+          <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="chk-text">GDPR compliant</span></li>
+          <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="chk-text">Two-factor authentication</span></li>
+          <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="chk-text">Session fingerprinting</span></li>
+          <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="chk-text">Anti-fraud monitoring 24/7</span></li>
         </ul>
-      </div>
-      <div class="shield-wrap anim-right">
-        <div class="shield">
-          <div class="shield-inner">🛡️</div>
-          <div class="ring r1"></div>
-          <div class="ring r2"></div>
-          <div class="ring r3"></div>
+
+        <!-- Live counter -->
+        <div class="threat-counter">
+          <div class="tc-dot"></div>
+          <div>
+            <div class="tc-lbl">Threats blocked today</div>
+            <div class="tc-val" id="threatCount">0</div>
+          </div>
         </div>
       </div>
+
+      <!-- RIGHT -->
+      <div class="shield-wrap anim-right">
+        <div class="shield-stage">
+
+          <!-- Radar -->
+          <div class="radar">
+            <div class="radar-ring rr1"></div>
+            <div class="radar-ring rr2"></div>
+            <div class="radar-ring rr3"></div>
+            <div class="radar-sweep"></div>
+            <span class="radar-dot rd1"></span>
+            <span class="radar-dot rd2"></span>
+            <span class="radar-dot rd3"></span>
+          </div>
+
+          <!-- Lock core -->
+          <div class="lock-core">
+            <svg class="lock-svg" viewBox="0 0 64 64" fill="none">
+              <defs>
+                <linearGradient id="lockGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#7ee5ff"/>
+                  <stop offset="60%" stop-color="#00e5ff"/>
+                  <stop offset="100%" stop-color="#7c3aed"/>
+                </linearGradient>
+                <filter id="lockGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2.2" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <!-- Shackle -->
+              <path class="lock-shackle" d="M22 26 V18 a10 10 0 0 1 20 0 V26"
+                    stroke="url(#lockGrad)" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+              <!-- Body -->
+              <rect x="14" y="26" width="36" height="28" rx="6"
+                    fill="rgba(0,229,255,.10)" stroke="url(#lockGrad)" stroke-width="2" filter="url(#lockGlow)"/>
+              <!-- Keyhole -->
+              <circle cx="32" cy="40" r="3.5" fill="#7ee5ff"/>
+              <rect x="30.5" y="42" width="3" height="7" rx="1.5" fill="#7ee5ff"/>
+            </svg>
+            <div class="lock-scan"></div>
+          </div>
+
+          <!-- Badges -->
+          <div class="shield-float-badge fb-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>AES-256</span>
+          </div>
+          <div class="shield-float-badge fb-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>PCI DSS</span>
+          </div>
+          <div class="shield-float-badge fb-3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>
+            <span>GDPR</span>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
