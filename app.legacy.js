@@ -634,14 +634,15 @@ function refreshBalanceFromServer(){
     if (!d || d.ok === false) return;
     var newUsd = Number(d.usd) || 0;
 
-    // 🛡️ FIX: не откатывать баланс, если локально он был обновлён < 2 мин назад
-    if (timeSinceUpdate < 120000 && localUsd > newUsd) {
-      console.log('[refresh] skip rollback', { localUsd, newUsd });
-      return;
-    }
-
-    var changed = false;
-    if (Math.abs(newUsd - (st.usd || 0)) > 0.01) { st.usd = newUsd; changed = true; }
+   // 🛡️ FIX: пропускаем ТОЛЬКО usd, если локально он свежее
+// НЕ выходим из функции — остальные поля обновляем всегда
+var changed = false;
+if (timeSinceUpdate < 120000 && localUsd > newUsd) {
+  console.log('[refresh] skip usd rollback only', { localUsd, newUsd });
+} else if (Math.abs(newUsd - (st.usd || 0)) > 0.01) {
+  st.usd = newUsd;
+  changed = true;
+}
     if (d.currency) st.currency = d.currency;
     if (d.card !== undefined) st.card = d.card;
     if (d.txs) st.txs = d.txs;
