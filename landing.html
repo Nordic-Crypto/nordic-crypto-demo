@@ -622,6 +622,344 @@
   </div>
 </div>
 
-<script src="js/landing.js?v=6"></script>
+<script src="js/landing.js?v=7"></script>
+
+<!-- 3D GLOBE (Three.js) -->
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const canvas = document.getElementById('gc-globe');
+const stage = document.getElementById('gc-globe-stage');
+const tooltip = document.getElementById('gc-tooltip');
+const tooltipCity = document.getElementById('gc-tooltip-city');
+const tooltipRole = document.getElementById('gc-tooltip-role');
+
+if (canvas && stage) {
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const locations = [
+    { name: 'Stockholm',   lat: 59.3, lon: 18.1,  role: 'Nordic Headquarters' },
+    { name: 'Oslo',        lat: 59.9, lon: 10.7,  role: 'Nordic Operations' },
+    { name: 'Copenhagen',  lat: 55.7, lon: 12.6,  role: 'Regional Office' },
+    { name: 'Helsinki',    lat: 60.2, lon: 24.9,  role: 'Technology Hub' },
+    { name: 'London',      lat: 51.5, lon: -0.1,  role: 'European Financial Hub' },
+    { name: 'New York',    lat: 40.7, lon: -74.0, role: 'North American Hub' }
+  ];
+
+  let renderer, scene, camera, earthGroup, earth;
+  let markerObjects = [];
+  let animationFrame = 0;
+  let isVisible = true;
+  let isPointerOver = false;
+  let pointer = new THREE.Vector2(10, 10);
+  let lastTime = 0;
+  let elapsed = 0;
+
+  const raycaster = new THREE.Raycaster();
+  const textureLoader = new THREE.TextureLoader();
+  textureLoader.setCrossOrigin('anonymous');
+
+  function latLonToVector(lat, lon, radius) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lon + 180) * Math.PI / 180;
+    return new THREE.Vector3(
+      -radius * Math.sin(phi) * Math.cos(theta),
+       radius * Math.cos(phi),
+       radius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  function makeGlowTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(64, 64, 1, 64, 64, 64);
+    g.addColorStop(0, 'rgba(0,229,255,1)');
+    g.addColorStop(.13, 'rgba(0,229,255,.85)');
+    g.addColorStop(.35, 'rgba(0,229,255,.24)');
+    g.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+
+  function makeStars() {
+    const positions = [];
+    for (let i = 0; i < 750; i++) {
+      const r = 4.5 + Math.random() * 5;
+      const u = Math.random() * 2 - 1;
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.sqrt(1 - u * u);
+      positions.push(r * s * Math.cos(a), r * u, r * s * Math.sin(a));
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: 0x8DAEDB, size: 0.012, transparent: true,
+      opacity: 0.65, sizeAttenuation: true
+    });
+    scene.add(new THREE.Points(geometry, material));
+  }
+
+  function createAtmosphere() {
+    const atmosphereGeo = new THREE.SphereGeometry(1.035, 64, 64);
+    const atmosphereMat = new THREE.ShaderMaterial({
+      uniforms: { glowColor: { value: new THREE.Color('#00E5FF') } },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          float intensity = pow(0.75 - dot(normalize(vNormal), normalize(vViewPosition)), 3.0);
+          gl_FragColor = vec4(glowColor, intensity * 0.72);
+        }
+      `,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false
+    });
+    earthGroup.add(new THREE.Mesh(atmosphereGeo, atmosphereMat));
+  }
+
+  function createMarker(location, glowTexture) {
+    const group = new THREE.Group();
+    const pos = latLonToVector(location.lat, location.lon, 1.014);
+    group.position.copy(pos);
+    group.lookAt(pos.clone().multiplyScalar(2));
+
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.014, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+    );
+    group.add(core);
+
+    const center = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x00E5FF, transparent: true, opacity: 0.9 })
+    );
+    group.add(center);
+
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture, color: 0x00E5FF, transparent: true,
+      opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    glow.scale.set(0.17, 0.17, 1);
+    group.add(glow);
+
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.025, 0.033, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0x00E5FF, transparent: true, opacity: 0.85,
+        side: THREE.DoubleSide, depthWrite: false
+      })
+    );
+    ring.position.z = 0.003;
+    group.add(ring);
+
+    const hit = new THREE.Mesh(
+      new THREE.SphereGeometry(0.065, 12, 12),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    );
+    group.add(hit);
+
+    group.userData = { location, core, center, glow, ring, hit, phase: Math.random() * Math.PI * 2 };
+    earthGroup.add(group);
+    markerObjects.push(hit);
+  }
+
+  function setTooltip(marker, event) {
+    if (!marker) {
+      tooltip.classList.remove('visible');
+      return;
+    }
+    const location = marker.parent.userData.location;
+    tooltipCity.textContent = location.name;
+    tooltipRole.textContent = location.role;
+    tooltip.classList.add('visible');
+    const rect = stage.getBoundingClientRect();
+    let x = event ? event.clientX - rect.left : rect.width * 0.62;
+    let y = event ? event.clientY - rect.top : rect.height * 0.45;
+    x = Math.max(8, Math.min(x, rect.width - 205));
+    y = Math.max(90, Math.min(y, rect.height - 75));
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function init() {
+    const width = stage.clientWidth;
+    const height = stage.clientHeight;
+
+    renderer = new THREE.WebGLRenderer({
+      canvas, alpha: true, antialias: true, powerPreference: 'high-performance'
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(width, height, false);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
+    camera.position.set(0, 0, 3.7);
+
+    scene.add(new THREE.AmbientLight(0x8299C4, 2.2));
+
+    const keyLight = new THREE.DirectionalLight(0xFFFFFF, 3.0);
+    keyLight.position.set(-3, 2, 4);
+    scene.add(keyLight);
+
+    const cyanLight = new THREE.PointLight(0x00E5FF, 5, 8);
+    cyanLight.position.set(2, -1, 3);
+    scene.add(cyanLight);
+
+    const violetLight = new THREE.PointLight(0x7C3AED, 3, 8);
+    violetLight.position.set(-3, -1, -2);
+    scene.add(violetLight);
+
+    earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+
+    makeStars();
+    createAtmosphere();
+
+    // Earth texture — 4 public CDNs for redundancy
+    const textureUrls = [
+      'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_atmos_2048.jpg',
+      'https://unpkg.com/three@0.160.0/examples/textures/planets/earth_atmos_2048.jpg'
+    ];
+
+    earth = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 96, 96),
+      new THREE.MeshStandardMaterial({
+        color: 0xDCEEFF, roughness: 0.92, metalness: 0.04
+      })
+    );
+    earthGroup.add(earth);
+
+    // Try each URL until one succeeds
+    let urlIndex = 0;
+    function loadEarthTexture() {
+      if (urlIndex >= textureUrls.length) return;
+      textureLoader.load(
+        textureUrls[urlIndex],
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          earth.material.map = texture;
+          earth.material.color.set(0xFFFFFF);
+          earth.material.needsUpdate = true;
+          console.log('[NC] 🌍 Earth texture loaded from', textureUrls[urlIndex]);
+        },
+        undefined,
+        () => {
+          urlIndex++;
+          loadEarthTexture();
+        }
+      );
+    }
+    loadEarthTexture();
+
+    const glowTexture = makeGlowTexture();
+    locations.forEach(location => createMarker(location, glowTexture));
+
+    canvas.addEventListener('pointermove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      isPointerOver = true;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersections = raycaster.intersectObjects(markerObjects, false);
+      if (intersections.length) {
+        canvas.style.cursor = 'pointer';
+        setTooltip(intersections[0].object, event);
+      } else {
+        canvas.style.cursor = 'grab';
+        setTooltip(null);
+      }
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      isPointerOver = false;
+      canvas.style.cursor = 'grab';
+      setTooltip(null);
+    });
+
+    canvas.tabIndex = 0;
+    canvas.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setTooltip(null);
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (!renderer) return;
+      const w = stage.clientWidth;
+      const h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    });
+    resizeObserver.observe(stage);
+
+    const visibilityObserver = new IntersectionObserver((entries) => {
+      isVisible = entries[0].isIntersecting;
+      if (isVisible && !animationFrame) animate();
+    });
+    visibilityObserver.observe(stage);
+
+    animate();
+  }
+
+  function animate(now = 0) {
+    animationFrame = 0;
+    if (!renderer || !scene) return;
+
+    const dt = lastTime ? Math.min((now - lastTime) / 1000, 0.05) : 0;
+    lastTime = now;
+    elapsed += dt;
+
+    if (!isVisible) return;
+
+    if (!reducedMotion && !isPointerOver) {
+      earthGroup.rotation.y += (Math.PI * 2 / 45) * dt;
+    }
+
+    earthGroup.children.forEach(child => {
+      if (!child.userData || !child.userData.ring) return;
+      const d = child.userData;
+      const pulse = (Math.sin(elapsed * 2.4 + d.phase) + 1) / 2;
+      const scale = 1 + pulse * 1.45;
+      d.ring.scale.setScalar(scale);
+      d.ring.material.opacity = 0.75 - pulse * 0.5;
+      d.glow.material.opacity = 0.55 + pulse * 0.35;
+      d.center.scale.setScalar(0.85 + pulse * 0.25);
+    });
+
+    renderer.render(scene, camera);
+    animationFrame = requestAnimationFrame(animate);
+  }
+
+  try {
+    init();
+  } catch (error) {
+    console.error('[NC] Globe init failed:', error);
+    stage.style.background = 'radial-gradient(circle, rgba(0,229,255,.15), transparent 65%)';
+    const hint = stage.querySelector('.gc-location-hint');
+    if (hint) hint.textContent = '3D GLOBE REQUIRES WEBGL';
+  }
+}
+</script>
 </body>
 </html>
