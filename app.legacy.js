@@ -293,22 +293,39 @@ function showApp() {
       }
 
       // 3. KYC не отправлен → порядок: онбординг → KYC
-      if (vStatus !== 'approved') {
-        // 3a. Сначала онбординг (карта) — только для banking
-        if (!hasCard && accountType !== 'exchange') {
-          if (side) side.style.display = 'none';
-          if (main) main.style.display = 'none';
-          document.getElementById('onboard').classList.add('on');
-          return;
-        }
-        // 3b. Потом KYC (документы)
-        if (side) side.style.display = 'none';
-        if (main) main.style.display = 'none';
-        var vScreen = document.getElementById('verifyScreen');
-        if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
-        showVerifyStep(1);
-        return;
-      }
+if (vStatus !== 'approved') {
+  var userEmail = localStorage.getItem('user_email') || '';
+  var kycDone = localStorage.getItem('nc_kyc_done_' + userEmail) === '1';
+
+  // 3a. Сначала онбординг (карта) — только для banking
+  if (!hasCard && accountType !== 'exchange') {
+    if (side) side.style.display = 'none';
+    if (main) main.style.display = 'none';
+    document.getElementById('onboard').classList.add('on');
+    return;
+  }
+
+  // 3b. Если KYC уже отправлялся — показываем pending, а не форму
+  if (kycDone && (vStatus === null || vStatus === 'pending')) {
+    if (side) side.style.display = 'none';
+    if (main) main.style.display = 'none';
+    showPendingScreen();
+    return;
+  }
+
+  // 3c. Показываем форму только если не отправляли
+  if (side) side.style.display = 'none';
+  if (main) main.style.display = 'none';
+  var vScreen = document.getElementById('verifyScreen');
+  if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
+  showVerifyStep(1);
+  return;
+}
+
+// 🛡️ FIX: если approved — чистим флаг
+if (vStatus === 'approved') {
+  localStorage.removeItem('nc_kyc_done_' + (localStorage.getItem('user_email') || ''));
+}
 
       // 4. KYC approved, но карты нет → онбординг
       if (vStatus === 'approved' && !hasCard && accountType !== 'exchange') {
