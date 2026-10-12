@@ -5538,3 +5538,34 @@ console.log('%c[NordicCrypto] ✅ App v3.2 loaded — full rebuild', 'color:#00d
     return _orig.apply(this, arguments);
   };
 })();
+/* ============================================================
+   🛡️ FIX: гарантированно применяем withdraw-flow.js после загрузки
+   ============================================================ */
+(function ncEnsureWithdrawFlow() {
+  var attempts = 0;
+  var check = setInterval(function(){
+    attempts++;
+    // Если withdraw-flow.js загрузился — processIban будет функцией
+    if (typeof window.processIban === 'function' && typeof window.showStage === 'function') {
+      console.log('[NC-Fix] ✅ withdraw-flow.js активен (processIban найден)');
+      clearInterval(check);
+      return;
+    }
+    // Если не загрузился за 5 сек — пробуем подгрузить принудительно
+    if (attempts > 20) {
+      console.warn('[NC-Fix] ⚠️ withdraw-flow.js не загрузился, грузим принудительно...');
+      var s = document.createElement('script');
+      s.src = 'js/withdraw-flow.js?v=' + Date.now();
+      s.onload = function(){ 
+        console.log('[NC-Fix] ✅ withdraw-flow.js принудительно загружен');
+        // Повторно подгружаем confirmations, чтобы переопределил processCrypto
+        var s2 = document.createElement('script');
+        s2.src = 'js/withdraw-confirmations.js?v=' + Date.now();
+        document.head.appendChild(s2);
+      };
+      s.onerror = function(){ console.error('[NC-Fix] ❌ withdraw-flow.js 404 — файл не найден'); };
+      document.head.appendChild(s);
+      clearInterval(check);
+    }
+  }, 250);
+})();
