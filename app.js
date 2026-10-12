@@ -26,7 +26,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '7.0.2';   // ← было 7.0.1
+  var APP_VERSION = '7.0.3';   // ← было 7.0.2
 
    var MODULES = [
     'js/core.js?v=' + APP_VERSION,
