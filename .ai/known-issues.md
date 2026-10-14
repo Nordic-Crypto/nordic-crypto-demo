@@ -1,148 +1,139 @@
 # Known Issues
 
-Обновлено: 2026-10-14
+Обновлено: 2026-10-14 (вечер)
 
 Актуальные баги проекта. **Claude — читай этот файл перед каждой задачей.**
 
-## 🔴 CRITICAL
+Версия воркера: **v4.4.1** (после security-фиксов).
 
-### 1. `setUserState` затирает `verification`, `card`, `usd`
+---
 
-**Симптомы:**
-- Клиент прошёл KYC, сделал депозит $9k → через время при возврате снова просит KYC
-- Админка показывает "нет карты"
-- Баланс откатывается
+## ✅ ЗАКРЫТО (2026-10-14) — 5 критичных уязвимостей
 
-**Причина:** в `worker.js` функция `setUserState` не защищает поля от клиента.
+### C1. Балансы можно создать из воздуха ✅
+**Было:** клиент присылал `usd: 999999999` через `setUserState` → сохранялось.
+**Фикс:** в `setUserState`, блок `if (session.role !== 'admin')` — балансы (`usd`, `btc`, `eth`, `usdt`, `sol`, `bnb`) берутся ТОЛЬКО с сервера.
+**Файл:** `worker.js`, `setUserState`.
+**Проверено:** Patch 1 PASS (`usd=1000` после попытки выставить `999999999`).
 
-**Где:** `worker.js` строка ~530
-
+### C2. Двойное зачисление депозита ✅
+**Было:** `approvePendingDeposit` + `completeDepositSurvey` оба зачисляли.
 **Фикс:**
-```js
-if (session.role !== 'admin') {
-  // 🛡️ verification всегда с сервера
-  state.verification = serverState.verification || null;
-  if (serverState._verificationLocked) {
-    state._verificationLocked = true;
-    state._verificationLockedAt = serverState._verificationLockedAt;
-  }
+- `approvePendingDeposit`: проверка `if (pd.creditedAt)` перенесена В НАЧАЛО, до зачисления.
+- `completeDepositSurvey`: убрано всё зачисление, только сохранение `surveyAnswers`.
 
-  // 🛡️ card тоже не трогаем
-  if (serverState.card) state.card = serverState.card;
+**Проверено:** Тест 2 PASS (`Already credited`, баланс не удвоился), Patch 3 PASS.
 
-  // 🛡️ usd не откатываем
-  if ((serverState.usd || 0) > (state.usd || 0)) {
-    state.usd = serverState.usd;
-  }
-  if ((serverState.btc || 0) > (state.btc || 0)) state.btc = serverState.btc;
-  if ((serverState.eth || 0) > (state.eth || 0)) state.eth = serverState.eth;
-}
-```
+### C3. Клиент подставляет `pendingDeposits: status: 'approved'` ✅
+**Фикс:** `pendingDeposits` мержатся с защитой `approved → pending` не откатывается. `depositVerifications` — только с сервера.
+**Проверено:** Patch 3 PASS.
 
-**Статус:** ⏳ Не задеплоено
+### C4. `_verificationLocked` можно снять ✅
+**Было:** `delete state._verificationLocked` в `submitVerification` до проверки.
+**Фикс:** `submitVerification` — проверка `if (state._verificationLocked && state.verification && state.verification.status === 'approved')` стоит ДО перезаписи `state.verification`.
+**Проверено:** Patch 4 PASS.
 
-### 2. Пустой экран после KYC submit
+### C5. Клиент перезаписывает `txs`, `withdrawals`, `trades`, `orders`, `openOrders`, `depositVerifications`, `cryptoAddress`, `user` ✅
+**Фикс:** все эти поля для НЕ-админа берутся ТОЛЬКО с сервера в `setUserState`.
+**Проверено:** Patch 1 + Patch 3 PASS.
+
+---
+
+## 🔴 CRITICAL (открыто)
+
+### 1. Пустой экран после KYC submit
 
 **Симптомы:**
 - Клиент загружает документы → submit → пустой экран
 - Только после F5 появляется pendingScreen
+- В некоторых случаях клиент застревает на pendingScreen даже при `verification.status === 'approved'`
 
-**Причина:** `submitRealVerification` не вызывает `showPendingScreen` сразу.
+**Причина (вероятная):**
+- `submitRealVerification` не вызывает `showPendingScreen` сразу.
+- Логика выбора экрана смотрит на `st.user.verified`, а не на `st.verification.status`, из-за чего при approve + `user.verified=false` показывается pendingScreen.
 
-**Где:** `app.legacy.js` функция `submitRealVerification`
+**Где:**
+- `app.legacy.js`, функция `submitRealVerification`
+- `app.legacy.js` / `js/kyc-fix.js` — логика выбора экрана
 
-**Фикс:** добавить в конец try-блока после успешного POST:
+**Фикс (черновик):**
+
+1. В `submitRealVerification` после успешного POST:
+
 ```js
-// Принудительно показать pendingScreen
 var _p = document.getElementById('pendingScreen');
 if (_p) {
   _p.classList.add('on');
   _p.style.display = 'flex';
   _p.style.zIndex = '9999';
 }
-```
+В логике экрана проверять st.verification.status, а не st.user.verified:
 
-**Статус:** ⏳ Частично исправлено (в app.legacy.js v7.0.3)
+js
+var kycStatus = (st.verification && st.verification.status) || null;
+if (kycStatus === 'approved') showScreen('dashboardScreen');
+else if (kycStatus === 'pending') showScreen('pendingScreen');
+else showScreen('kycScreen');
+Статус: ⏳ В работе (частично исправлено в app.legacy.js v7.0.3)
 
-## 🟡 MAJOR
+🟡 MAJOR (открыто)
+2. Logout ведёт на loginScreen вместо landing
+Симптомы: после doLogout() клиент остаётся на index.html с логин-формой.
+Фикс: в doLogout() заменить showLoginScreen() на:
 
-### 3. Logout ведёт на loginScreen вместо landing
-
-**Симптомы:** после `doLogout()` клиент остаётся на `index.html` с логин-формой.
-
-**Фикс:** в `doLogout()` заменить `showLoginScreen()` на:
-```js
+js
 window.location.href = 'https://nordiccrypto.net/';
-```
+Статус: ⏳ Не исправлено
 
-**Статус:** ⏳ Не исправлено
+3. Клик на лого не ведёт на главную
+Симптомы: клик на NordicCrypto в дашборде ничего не делает.
+Фикс: в index.html обернуть лого в <a href="/">.
+Статус: ⏳ Не исправлено
 
-### 4. Клик на лого не ведёт на главную
+4. Нет "Forgot password"
+Симптомы: клиент забыл пароль → только через support.
+Фикс: добавить endpoints sendResetCode, verifyResetCode в воркер + форму в login.
+Статус: ⏳ TODO
 
-**Симптомы:** клик на NordicCrypto в дашборде ничего не делает.
+5. Нет 2FA на смену пароля
+Симптомы: password меняется без подтверждения по email.
+Фикс: добавить отправку кода + проверку.
+Статус: ⏳ TODO
 
-**Фикс:** в `index.html` обернуть лого в `<a href="/">`.
+6. Email-шаблоны простые / нет домена в Resend
+Симптомы:
 
-**Статус:** ⏳ Не исправлено
+Письма приходят с onboarding@resend.dev вместо noreply@nordiccrypto.net
 
-### 5. Нет "Forgot password"
+Нет красивых HTML-шаблонов
 
-**Симптомы:** клиент забыл пароль → только через support.
+Фикс:
 
-**Фикс:** добавить endpoints `sendResetCode`, `verifyResetCode` в воркер + форму в login.
+Добавить домен nordiccrypto.net в Resend (верифицировать DNS)
 
-**Статус:** ⏳ TODO
+Создать 5 HTML-шаблонов (deposit, password, KYC, withdrawal)
 
-### 6. Нет 2FA на смену пароля
+Статус: ⏳ TODO
 
-**Симптомы:** password меняется без подтверждения по email.
+🟢 MINOR (открыто)
+7. Глобус — маркеры крупноваты
+Статус: ✅ Частично исправлено (уменьшены в 2 раза)
 
-**Фикс:** добавить отправку кода + проверку.
+8. Тестовые vs реальные клиенты
+Симптомы: FOMO-уведомления показываются реальным клиентам.
+TODO: создать список TEST_EMAILS в app.legacy.js:
 
-**Статус:** ⏳ TODO
-
-### 7. Email-шаблоны простые / нет домена в Resend
-
-**Симптомы:**
-- Письма приходят с `onboarding@resend.dev` вместо `noreply@nordiccrypto.net`
-- Нет красивых HTML-шаблонов
-
-**Фикс:**
-1. Добавить домен `nordiccrypto.net` в Resend (верифицировать DNS)
-2. Создать 5 HTML-шаблонов (deposit, password, KYC, withdrawal)
-
-**Статус:** ⏳ TODO
-
-## 🟢 MINOR
-
-### 8. Глобус — маркеры крупноваты
-
-**Симптомы:** на "Coverage" секции маркеры городов накладываются.
-
-**Статус:** ✅ Частично исправлено (уменьшены в 2 раза)
-
-### 9. Тестовые vs реальные клиенты
-
-**Симптомы:** FOMO-уведомления показываются реальным клиентам, хотя должны быть только для тестов.
-
-**TODO:** создать список `TEST_EMAILS` в `app.legacy.js`:
-```js
+js
 var TEST_EMAILS = ['test@test.com', 'demo@...'];
-```
+Статус: ⏳ TODO
 
-**Статус:** ⏳ TODO
+9. Депозит чек — emailReceipt не подключён к UI
+Симптомы: endpoint emailReceipt есть в воркере, но кнопки "Send receipt" нет.
+Фикс: добавить кнопку в deposit success screen.
+Статус: ⏳ TODO
 
-### 10. Депозит чек — emailReceipt не подключён к UI
-
-**Симптомы:** endpoint `emailReceipt` есть в воркере, но кнопки "Send receipt" нет.
-
-**Фикс:** добавить кнопку в deposit success screen.
-
-**Статус:** ⏳ TODO
-
-## 📋 Как добавить issue
-
-```markdown
+📋 Как добавить issue
+markdown
 ### N. Название
 
 **Симптомы:** что происходит
@@ -154,12 +145,11 @@ var TEST_EMAILS = ['test@test.com', 'demo@...'];
 **Фикс:** код или описание
 
 **Статус:** ⏳ Не исправлено / ⏳ В работе / ✅ Исправлено
-```
+🎯 Приоритеты при фиксах
+CRITICAL — потеря данных, security, пустые экраны
 
-## 🎯 Приоритеты при фиксах
+MAJOR — поломанный UX, неправильные данные
 
-1. **CRITICAL** — потеря данных, security, пустые экраны
-2. **MAJOR** — поломанный UX, неправильные данные
-3. **MINOR** — визуальные мелочи, оптимизация
+MINOR — визуальные мелочи, оптимизация
 
-**Сначала фиксим CRITICAL.**
+Сначала фиксим CRITICAL.
