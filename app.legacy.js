@@ -5344,7 +5344,7 @@ toast('✓ Submitted for admin review', false);
 
     // Отключено: polling-hub.js управляет polling'ом
   setTimeout(checkDeposits, 8000);   // один раз при старте
-  // setInterval(checkDeposits, CHECK_INTERVAL);
+   setInterval(checkDeposits, CHECK_INTERVAL);
 })();
 
 /* ---------- CHAT POLLING (optimized) ---------- */
