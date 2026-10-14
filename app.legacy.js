@@ -666,7 +666,23 @@ if (timeSinceUpdate < 120000 && localUsd > newUsd) {
     if (d.notifications) st.notifications = d.notifications;
     if (d.user) st.user = d.user;
     if (d.balanceHistory) st.balanceHistory = d.balanceHistory;
-    if (d.withdrawals) st.withdrawals = d.withdrawals;
+    // 🛡️ FIX: не даём серверу обнулить локальные withdrawals, если они свежее
+if (d.withdrawals) {
+  var _wm = {};
+  (d.withdrawals || []).forEach(function(w){ if (w && w.id) _wm[w.id] = w; });
+  (st.withdrawals || []).forEach(function(w){
+    if (!w || !w.id) return;
+    var existing = _wm[w.id];
+    // если на сервере этого wd ещё нет — оставляем локальный
+    if (!existing) { _wm[w.id] = w; return; }
+    // если на сервере pending, а локально pending — оставляем локальный (свежее)
+    // если на сервере approved/rejected — берём серверный (источник истины)
+    if (existing.status !== 'pending') { _wm[w.id] = existing; }
+    else { _wm[w.id] = w; }
+  });
+  st.withdrawals = Object.keys(_wm).map(function(k){ return _wm[k]; })
+    .sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
+}
     if (d.chat) st.chat = d.chat;
     if (d.ticket !== undefined) st.ticket = d.ticket;
     if (d.cryptoAddress) st.cryptoAddress = d.cryptoAddress;
