@@ -378,8 +378,8 @@ async function doLogout() {
   var np = document.getElementById('notifPanel'); if (np) np.classList.remove('on');
   var abb = document.getElementById('adminBackBar'); if (abb) abb.style.display = 'none';
 
-  document.querySelectorAll('.mask').forEach(function(m){ m.style.display = ''; });
-  showLoginScreen();
+    document.querySelectorAll('.mask').forEach(function(m){ m.style.display = ''; });
+  window.location.href = 'https://nordiccrypto.net/';
 }
 
 function initLoginLogout() {
@@ -1901,15 +1901,6 @@ window.submitRealVerification = async function() {
       _p.style.zIndex = '9999';
       _p.style.visibility = 'visible';
       _p.style.opacity = '1';
-    }
-
-    var _p = document.getElementById('pendingScreen');
-    if (_p) {
-      _p.classList.add('on');
-      _p.style.display = 'flex';
-      _p.style.position = 'fixed';
-      _p.style.inset = '0';
-      _p.style.zIndex = '2900';
     }
 
     var _side = document.getElementById('sideBar'); if (_side) _side.style.display = 'none';
