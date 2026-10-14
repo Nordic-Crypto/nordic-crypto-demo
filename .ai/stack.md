@@ -42,3 +42,56 @@
 - **Coinbase** — резервный источник курсов (без ключа)
 
 ## 🔐 Environment Variables (Cloudflare)
+NORDIC_KV — KV namespace binding
+NORDIC_R2 — R2 bucket binding
+RESEND_API_KEY — Resend email
+ETHERSCAN_KEY — Etherscan API
+ALLOWED_ORIGINS — CORS whitelist (csv)
+
+🔑 Auth Flow
+Client: POST /?action=register → получает token (UUID-UUID)
+
+Token сохраняется в localStorage.session_token
+
+Каждый запрос: POST /?action=... с {token, ...}
+
+Worker: getSession(token) → проверяет session_{token} в KV
+
+Session TTL: 7 дней, fp = sha256(ip + ua)
+
+💾 KV Data Model
+users (JSON object) — все пользователи:
+{
+  "user@email.com": {
+    "email": "user@email.com",
+    "name": "User Name",
+    "role": "user",
+    "passwordHash": "sha256...",
+    "createdAt": 1234567890,
+    "verified": false,
+    "deleted": false
+  }
+}
+
+session_<token> — сессия:
+{
+  "token": "...",
+  "email": "...",
+  "role": "user",
+  "fp": "sha256",
+  "createdAt": 123,
+  "expiresAt": 456
+}
+
+user_state_<email> — состояние
+См. worker-api.md → DEFAULT_STATE
+
+Остальные ключи:
+rl_<scope>_<id>              — rate limit bucket
+kyc/<email>/<type>_<ts>.jpg  — R2 (документы KYC)
+metrics_<date>               — метрики за день
+audit_<date>                 — audit log
+maintenance_status           — статус техработ
+last_prices                  — кэш цен
+last_multiPrices             — кэш multi-цен
+multiPrices_v2               — кэш multi-цен (новый формат)
