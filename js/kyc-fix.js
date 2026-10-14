@@ -1,10 +1,17 @@
 /* ============================================================
-   KYC SCREEN FIX v2 — принудительно показывает pendingScreen
+   KYC SCREEN FIX v3 — синхронизация DOM с verification.status
    ============================================================ */
 (function () {
   'use strict';
 
-  function forceVisible(el, zIndex) {
+  var DEBUG = true;
+
+  function log() {
+    if (DEBUG) console.log.apply(console, ['[NC-Fix v3]'].concat([].slice.call(arguments)));
+  }
+
+  // Принудительно показать элемент поверх всего
+  function showEl(el, zIndex) {
     if (!el) return;
     el.style.display = 'flex';
     el.style.visibility = 'visible';
@@ -15,77 +22,89 @@
     el.classList.add('on');
   }
 
+  // Спрятать элемент
+  function hideEl(el) {
+    if (!el) return;
+    el.style.display = 'none';
+    el.classList.remove('on');
+  }
+
+  // Спрятать всё, кроме целевого
+  function hideAllExcept(targetId) {
+    var ids = ['loginScreen', 'pendingScreen', 'verifyScreen', 'rejectedScreen', 'onboard', 'mainApp'];
+    ids.forEach(function (id) {
+      if (id === targetId) return;
+      var el = document.getElementById(id);
+      if (el) hideEl(el);
+    });
+    var sb = document.getElementById('sideBar');
+    if (sb && targetId !== 'mainApp') hideEl(sb);
+  }
+
+  // Главная функция: сверяем DOM с данными
   function applyFix() {
-    var login    = document.getElementById('loginScreen');
-    var pending  = document.getElementById('pendingScreen');
-    var verify   = document.getElementById('verifyScreen');
-    var rejected = document.getElementById('rejectedScreen');
-    var onboard  = document.getElementById('onboard');
-    var main     = document.getElementById('mainApp');
-    var sidebar  = document.getElementById('sideBar');
+    // 1. Если st ещё не загружен — выходим
+    if (typeof st === 'undefined' || !st) return;
 
-    if (!pending) return;
+    // 2. Получаем статус KYC из данных (а не из DOM!)
+    var kycStatus = (st.verification && st.verification.status) || null;
+    var locked = !!st._verificationLocked;
 
-    // Проверяем ТОЛЬКО по классу "on" — надёжнее
-    var pendingActive = pending.classList.contains('on');
-    var rejectedActive = rejected && rejected.classList.contains('on');
-    var verifyActive = verify && verify.classList.contains('on');
-    var mainActive = main && (main.style.display === 'flex' || main.classList.contains('on'));
+    // 3. Куда должны показывать
+    var targetScreen = null;
+    if (kycStatus === 'approved') {
+      targetScreen = 'mainApp';          // ← дашборд
+    } else if (kycStatus === 'pending') {
+      targetScreen = 'pendingScreen';    // ← в процессе
+    } else if (kycStatus === 'rejected') {
+      targetScreen = 'rejectedScreen';   // ← отклонено
+    }
+    // kycStatus === null → ничего не форсим (пусть app.legacy решает)
 
-    // 1. Если показан pendingScreen — прячем ВСЁ остальное
-    if (pendingActive) {
-      if (login)    { login.style.display = 'none'; login.style.pointerEvents = 'none'; }
-      if (sidebar)  sidebar.style.display = 'none';
-      if (main)     main.style.display = 'none';
-      if (verify)   { verify.style.display = 'none'; verify.classList.remove('on'); }
-      if (onboard)  onboard.classList.remove('on');
-      if (rejected) { rejected.style.display = 'none'; rejected.classList.remove('on'); }
-      forceVisible(pending, 9999);
+    if (!targetScreen) return;
+
+    var target = document.getElementById(targetScreen);
+    if (!target) return;
+
+    // 4. Уже показан нужный? Тогда ничего не делаем
+    if (target.classList.contains('on') && target.style.display !== 'none') {
       return;
     }
 
-    // 2. Если показан rejectedScreen — прячем ВСЁ остальное
-    if (rejectedActive) {
-      if (login)   { login.style.display = 'none'; login.style.pointerEvents = 'none'; }
-      if (sidebar) sidebar.style.display = 'none';
-      if (main)    main.style.display = 'none';
-      if (verify)  { verify.style.display = 'none'; verify.classList.remove('on'); }
-      if (pending) pending.style.display = 'none';
-      if (onboard) onboard.classList.remove('on');
-      forceVisible(rejected, 9999);
-      return;
-    }
+    // 5. Форсим
+    log('KYC=' + kycStatus + ' → форсим ' + targetScreen);
+    hideAllExcept(targetScreen);
+    showEl(target, kycStatus === 'approved' ? 1 : 9999);
 
-    // 3. Если verifyScreen показан — тоже убираем логин
-    if (verifyActive) {
-      if (login)   { login.style.display = 'none'; login.style.pointerEvents = 'none'; }
-      if (pending) pending.style.display = 'none';
-      if (rejected) rejected.style.display = 'none';
-      return;
-    }
-
-    // 4. Если mainApp показан — убираем pending и login
-    if (mainActive) {
-      if (login)   { login.style.display = 'none'; login.style.pointerEvents = 'none'; }
-      if (pending) pending.style.display = 'none';
-      if (rejected) rejected.style.display = 'none';
-      if (verify) { verify.style.display = 'none'; }
+    // Побочка: если approved — прячем login и pending, показываем sidebar
+    if (kycStatus === 'approved') {
+      hideEl(document.getElementById('loginScreen'));
+      hideEl(document.getElementById('pendingScreen'));
+      var sb = document.getElementById('sideBar');
+      if (sb) { sb.style.display = ''; sb.classList.remove('off'); }
     }
   }
 
-  // Запуск: при загрузке + каждые 300ms (быстрее реагирует)
+  // Запуск: только 1 раз при загрузке + после ключевых событий
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', applyFix);
   } else {
     applyFix();
   }
-  setInterval(applyFix, 300);
 
-  // 🎁 Отлавливаем moment когда showPendingScreen вызывается
-  document.addEventListener('nc:auth:login', function() {
+  // Реагируем на события, а не крутим таймер
+  document.addEventListener('nc:auth:login', function () {
     setTimeout(applyFix, 500);
     setTimeout(applyFix, 1500);
   });
 
-  console.log('[NC-Fix] 🛡️ KYC screen fix v2 loaded (300ms interval)');
+  document.addEventListener('nc:kyc:submit', function () {
+    setTimeout(applyFix, 300);
+    setTimeout(applyFix, 1200);
+  });
+
+  // Плюс редкий поллинг на случай, если события не сработали (раз в 2 сек)
+  setInterval(applyFix, 2000);
+
+  log('🛡️ KYC screen fix v3 loaded (event-based + 2s fallback)');
 })();
