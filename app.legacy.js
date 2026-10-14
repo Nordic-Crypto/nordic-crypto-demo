@@ -123,10 +123,10 @@ function saveToServer(){
     return;
   }
 
-  fetch(WORKER_LOGIN_URL + '?action=setUserState', {
+    return fetch(WORKER_LOGIN_URL + '?action=setUserState', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: token, state: st })
-  }).catch(function(){});
+  }).then(function(r){ return r.json(); }).catch(function(e){ console.warn('[saveToServer]', e); return null; });
 }
 
 /* ---------- AUTH ---------- */
@@ -660,9 +660,25 @@ if (timeSinceUpdate < 120000 && localUsd > newUsd) {
   st.usd = newUsd;
   changed = true;
 }
-    if (d.currency) st.currency = d.currency;
+        if (d.currency) st.currency = d.currency;
     if (d.card !== undefined) st.card = d.card;
-    if (d.txs) st.txs = d.txs;
+
+    // 🛡️ FIX: merge для txs — не даём обнулить локальные свежие транзакции
+    if (d.txs) {
+      var _tm = {}, _tn = {};
+      (d.txs || []).forEach(function(t){
+        if (t && t.hash) _tm[t.hash] = t;
+        else if (t) _tn[(t.ts||0)+'|'+(t.desc||'')] = t;
+      });
+      (st.txs || []).forEach(function(t){
+        if (!t) return;
+        if (t.hash) { if (!_tm[t.hash]) _tm[t.hash] = t; else _tm[t.hash] = t; }
+        else { var k = (t.ts||0)+'|'+(t.desc||''); if (!_tn[k]) _tn[k] = t; }
+      });
+      st.txs = Object.keys(_tm).map(function(k){ return _tm[k]; })
+        .concat(Object.keys(_tn).map(function(k){ return _tn[k]; }))
+        .sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+    }
     if (d.notifications) st.notifications = d.notifications;
     if (d.user) st.user = d.user;
     if (d.balanceHistory) st.balanceHistory = d.balanceHistory;
@@ -1340,12 +1356,21 @@ function submitWithdraw() {
     wd.details = { destination: dest, network: net, coin, address: addr, memo };
   }
 
-  if (!st.withdrawals) st.withdrawals = [];
+    if (!st.withdrawals) st.withdrawals = [];
   st.withdrawals.unshift(wd);
   closeWithdraw();
   render();
   showWithdrawStatus(method, amount);
-  saveToServer();
+
+  // 🛡️ FIX: сначала дожидаемся сохранения на сервер, потом рендер
+  var _save = saveToServer();
+  if (_save && typeof _save.then === 'function') {
+    _save.then(function(res) {
+      console.log('[submitWithdraw] saveToServer done:', res);
+      render();
+      renderRecentTx();
+    }).catch(function(e){ console.warn('[submitWithdraw] save error:', e); });
+  }
 }
 
 function showWithdrawStatus(method, amount) {
@@ -5340,11 +5365,52 @@ toast('✓ Submitted for admin review', false);
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, email })
         });
+              try {
+        var r2 = await fetch(WORKER_URL + '?action=getUserState', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, email })
+        });
         var fresh2 = await r2.json();
         if (fresh2 && !fresh2.error) {
-          if (Array.isArray(fresh2.pendingDeposits)) st.pendingDeposits = fresh2.pendingDeposits;
-          if (Array.isArray(fresh2.txs)) st.txs = fresh2.txs;
-          if (typeof fresh2.usd === 'number') st.usd = fresh2.usd;
+          // 🛡️ merge для pendingDeposits
+          if (Array.isArray(fresh2.pendingDeposits)) {
+            var _pm2 = {};
+            (fresh2.pendingDeposits || []).forEach(function(d){ if (d && d.txHash) _pm2[d.txHash] = d; });
+            (st.pendingDeposits || []).forEach(function(d){
+              if (!d || !d.txHash) return;
+              var existing = _pm2[d.txHash];
+              if (existing && existing.status !== 'pending' && d.status === 'pending') return;
+              if (!existing) _pm2[d.txHash] = d;
+            });
+            st.pendingDeposits = Object.keys(_pm2).map(function(k){ return _pm2[k]; });
+          }
+          // 🛡️ merge для txs — не даём обнулить локальные свежие транзакции
+          if (Array.isArray(fresh2.txs)) {
+            var _tm3 = {}, _tn3 = {};
+            (fresh2.txs || []).forEach(function(t){
+              if (t && t.hash) _tm3[t.hash] = t;
+              else if (t) _tn3[(t.ts||0)+'|'+(t.desc||'')] = t;
+            });
+            (st.txs || []).forEach(function(t){
+              if (!t) return;
+              if (t.hash) { if (!_tm3[t.hash]) _tm3[t.hash] = t; }
+              else { var k = (t.ts||0)+'|'+(t.desc||''); if (!_tn3[k]) _tn3[k] = t; }
+            });
+            st.txs = Object.keys(_tm3).map(function(k){ return _tm3[k]; })
+              .concat(Object.keys(_tn3).map(function(k){ return _tn3[k]; }))
+              .sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
+          }
+          // 🛡️ usd — только если серверный БОЛЬШЕ (не откатываем локально увеличенный)
+          if (typeof fresh2.usd === 'number') {
+            var serverUsd2 = Number(fresh2.usd) || 0;
+            var localUsd2 = Number(st.usd) || 0;
+            var lastUpd2 = st._lastLocalUpdate || 0;
+            if (Date.now() - lastUpd2 < 120000 && localUsd2 > serverUsd2) {
+              console.log('[checkDeposits] skip usd rollback', { localUsd: localUsd2, serverUsd: serverUsd2 });
+            } else if (serverUsd2 > localUsd2) {
+              st.usd = serverUsd2;
+            }
+          }
         }
       } catch(e) {}
 
