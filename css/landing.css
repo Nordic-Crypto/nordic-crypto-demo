@@ -944,3 +944,77 @@ body.theme-light .section h2{color:#0f172a;}
 body.theme-light .section h2 .dim{color:#94a3b8;}
 body.theme-light .theme-toggle{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08);color:#475569;}
 body.theme-light .theme-toggle:hover{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.4);color:#0891b2;}
+/* 🎁 BONUS: Stats — премиум */
+.stats {
+  padding: 80px 0 !important;
+  background: radial-gradient(600px 200px at 50% 50%, rgba(0,229,255,.05), transparent 70%) !important;
+  position: relative;
+}
+.stats::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 60%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,.4), transparent);
+}
+.stat-v {
+  font-size: clamp(2.2rem, 5vw, 3.4rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.05em !important;
+  background: linear-gradient(110deg, #fff 0%, #7dd3fc 45%, #a78bfa 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  text-shadow: 0 4px 40px rgba(0,229,255,.3);
+  filter: drop-shadow(0 0 30px rgba(0,229,255,.4));
+  line-height: 1 !important;
+}
+.stat-l {
+  font-size: .72rem !important;
+  letter-spacing: .18em !important;
+  font-weight: 800 !important;
+  margin-top: 12px !important;
+}
+
+/* 🎁 BONUS: Hero — крупнее, мощнее */
+.hero-h1 {
+  font-size: clamp(2.8rem, 6.5vw, 4.8rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: -.055em !important;
+  line-height: 1.0 !important;
+}
+.hero-p {
+  font-size: 1.15rem !important;
+  max-width: 560px !important;
+}
+
+/* 🎁 BONUS: CTA кнопки — glow */
+.btn.primary.xl {
+  padding: 16px 32px !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 15px 40px -10px rgba(0,229,255,.7), inset 0 0 20px rgba(255,255,255,.1) !important;
+}
+.btn.primary.xl:hover {
+  box-shadow: 0 20px 50px -10px rgba(0,229,255,.9), inset 0 0 25px rgba(255,255,255,.15) !important;
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* 🎁 BONUS: tag — ярче */
+.tag {
+  padding: 8px 18px !important;
+  font-size: .7rem !important;
+  letter-spacing: .18em !important;
+  background: linear-gradient(135deg, rgba(0,229,255,.12), rgba(124,58,237,.12)) !important;
+  border-color: rgba(0,229,255,.3) !important;
+}
+
+/* 🎁 BONUS: Section h2 — крупнее */
+.section h2 {
+  font-size: clamp(2rem, 4.5vw, 3rem) !important;
+  letter-spacing: -.045em !important;
+}
+
+/* 🎁 BONUS: FAQ — glow на open */
+.faq-item[open] {
+  box-shadow: 0 30px 80px -20px rgba(0,229,255,.4), 0 0 0 1px rgba(0,229,255,.3) !important;
+}
