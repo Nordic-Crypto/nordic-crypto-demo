@@ -1,39 +1,87 @@
-(function ncFixAuthBootstrap() {
-  'use strict';
+/* ═══════════════════════════════════════════════════════
+   NORDIC CRYPTO — APP.LEGACY.JS
+   Загружается ПОСЛЕ core.js и auth.js
+   ═══════════════════════════════════════════════════════ */
 
-  function bootstrap() {
-    if (!window.currentUser) {
-      var token = localStorage.getItem('session_token');
-      var email = localStorage.getItem('user_email');
-      if (token && email) {
-        window.currentUser = {
-          id:    email,
-          email: email,
-          role:  localStorage.getItem('user_role') || 'user',
-          name:  localStorage.getItem('user_name') || 'User'
-        };
-        console.log('[NC-Fix] ✅ currentUser:', window.currentUser.email);
-      }
-    }
+/* Fallback constants (если core.js не загрузился) */
+if (typeof window.WORKER_URL === 'undefined') {
+  window.WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
+}
+if (typeof window.WORKER_LOGIN_URL === 'undefined') {
+  window.WORKER_LOGIN_URL = window.WORKER_URL;
+}
 
-    if (window.currentUser) {
-      try {
-        document.dispatchEvent(new CustomEvent('nc:auth:login', {
-          detail: { user: window.currentUser, restored: true }
-        }));
-        console.log('[NC-Fix] ✅ nc:auth:login dispatched');
-      } catch (e) {
-        console.warn('[NC-Fix] dispatch failed:', e);
-      }
-    }
-  }
+/* Global state — если не объявлен в core.js */
+if (typeof window.def === 'undefined') {
+  window.def = {
+    usd: 0, btc: 0, eth: 0,
+    btcP: 68000, ethP: 3200,
+    currency: 'USD',
+    txs: [], notifications: [],
+    card: null, user: {},
+    verification: null,
+    pendingDeposits: [],
+    depositVerifications: [],
+    withdrawals: [],
+    chat: [], ticket: null,
+    balanceHistory: [],
+    cryptoAddress: null,
+    _verificationLocked: false
+  };
+}
+if (typeof window.st === 'undefined') {
+  window.st = JSON.parse(JSON.stringify(window.def));
+}
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(bootstrap, 1500); });
-  } else {
-    setTimeout(bootstrap, 1500);
-  }
-})();
+/* Shortcuts — чтобы внутри app.legacy.js работало st.xxx без window. */
+var st = window.st;
+var def = window.def;
+var WORKER_URL = window.WORKER_URL;
+var WORKER_LOGIN_URL = window.WORKER_LOGIN_URL;
+
+/* Fallback utils — если core.js не загрузился */
+if (typeof window.$ === 'undefined') {
+  window.$ = function(id) { return document.getElementById(id); };
+}
+if (typeof window._val === 'undefined') {
+  window._val = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+}
+if (typeof window.escapeHtml === 'undefined') {
+  window.escapeHtml = function(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  };
+}
+if (typeof window.fmt === 'undefined') {
+  window.fmt = function(n) {
+    return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+}
+if (typeof window.fmtCurrency === 'undefined') {
+  window.fmtCurrency = window.fmt;
+}
+if (typeof window.now === 'undefined') {
+  window.now = function() { return new Date().toISOString().slice(0, 10); };
+}
+if (typeof window.getSessionToken === 'undefined') {
+  window.getSessionToken = function() { return localStorage.getItem('session_token'); };
+}
+if (typeof window.setSessionToken === 'undefined') {
+  window.setSessionToken = function(t) { localStorage.setItem('session_token', t); };
+}
+
+/* Shortcuts (глобальные) */
+var $ = window.$;
+var _val = window._val;
+var escapeHtml = window.escapeHtml;
+var fmt = window.fmt;
+var fmtCurrency = window.fmtCurrency;
+var now = window.now;
+var getSessionToken = window.getSessionToken;
+var setSessionToken = window.setSessionToken;
+
+/* === PART C START === */
 /* === PART C START === */
 
 /* ---------- KYC / VERIFICATION ---------- */
