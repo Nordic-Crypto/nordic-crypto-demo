@@ -3012,6 +3012,21 @@ select.wd-input{background-color:#0f1420;color:#e8f4ff}
   .trade-header { padding: 20px 20px 16px; }
   .trade-body { padding: 20px; }
 }
+  
+/* 🛡️ FIX: force-hide tracking steps if no order */
+#orderTrack.hidden,
+#orderTrack[style*="display: none"] {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Если внутри .step-dot случайно вылез — спрячь */
+body:not(.has-order) .step-dot {
+  display: none !important;
+}
+  
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
