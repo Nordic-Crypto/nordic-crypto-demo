@@ -15,9 +15,24 @@
         console.log('[NC-Fix] ✅ currentUser:', window.currentUser.email);
       }
     }
-    ...
+
+    if (window.currentUser) {
+      try {
+        document.dispatchEvent(new CustomEvent('nc:auth:login', {
+          detail: { user: window.currentUser, restored: true }
+        }));
+        console.log('[NC-Fix] ✅ nc:auth:login dispatched');
+      } catch (e) {
+        console.warn('[NC-Fix] dispatch failed:', e);
+      }
+    }
   }
-  ...
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(bootstrap, 1500); });
+  } else {
+    setTimeout(bootstrap, 1500);
+  }
 })();
 /* === PART C START === */
 
