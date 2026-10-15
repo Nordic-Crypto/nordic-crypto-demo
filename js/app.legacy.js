@@ -361,7 +361,20 @@ async function doLogout() {
   var abb = document.getElementById('adminBackBar'); if (abb) abb.style.display = 'none';
 
   document.querySelectorAll('.mask').forEach(function (m) { m.style.display = ''; });
-  showLoginScreen();
+      // 🎁 BONUS: красивый logout screen с задержкой
+  var overlay = document.createElement('div');
+  overlay.id = 'logoutOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,229,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(139,92,246,.14),transparent 60%),#0a0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#fff;opacity:0;transition:opacity .4s ease;';
+  overlay.innerHTML =
+    '<div style="text-align:center;max-width:400px;padding:40px;">' +
+      '<div style="width:80px;height:80px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 20px 50px -10px rgba(16,185,129,.7);">✓</div>' +
+      '<h1 style="font-size:1.8rem;font-weight:800;margin-bottom:12px;background:linear-gradient(100deg,#fff,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent;">Signed out</h1>' +
+      '<p style="color:#94a3b8;font-size:.95rem;margin-bottom:32px;">You have been securely logged out of your account.</p>' +
+      '<button onclick="window.location.href=\'landing.html\'" style="width:100%;padding:16px;background:linear-gradient(135deg,#00e5ff,#8b5cf6);border:none;border-radius:14px;color:#fff;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;box-shadow:0 15px 35px -10px rgba(0,229,255,.5);">Back to home →</button>' +
+      '<button onclick="window.location.reload()" style="width:100%;padding:14px;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#b6c1d1;font-weight:700;font-size:.9rem;cursor:pointer;font-family:inherit;">Sign in again</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  setTimeout(function () { overlay.style.opacity = '1'; }, 50);
 }
 
 function initLoginLogout() {
