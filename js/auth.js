@@ -121,7 +121,28 @@
 
         window.hideLoginScreen();
         showAppSafe();
+      // 🛡️ ADMIN PANEL AUTO-OPEN
+if (data.user.role === 'admin') {
+  console.log('[Auth] Admin login detected — opening admin panel');
+  setTimeout(function() {
+    if (typeof window.showAdminPanel === 'function') {
+      window.showAdminPanel();
+    } else {
+      console.error('[Auth] showAdminPanel not defined!');
+    }
+  }, 500);
+  return;  // ← админ не должен видеть главный экран
+}
         emitLogin(data.user, data.token, false);
+         // 🛡️ ADMIN AUTO-OPEN on session restore
+if (data.user.role === 'admin') {
+  setTimeout(function() {
+    if (typeof window.showAdminPanel === 'function') {
+      window.showAdminPanel();
+    }
+  }, 500);
+  return;
+}
         window.startInactivityTimer();
         tryWelcomeBonus(data.user);
 
