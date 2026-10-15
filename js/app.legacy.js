@@ -2509,6 +2509,15 @@ function placeOrder() {
 }
 
 function renderOrder() {
+  // 🛡️ FIX: force hide if no order
+  var trackEl = document.getElementById('orderTrack');
+  if (!st.order) {
+    if (trackEl) { trackEl.classList.add('hidden'); trackEl.style.display = 'none'; }
+    var formEl = document.getElementById('orderForm');
+    if (formEl) { formEl.classList.remove('hidden'); formEl.style.display = ''; }
+    return;
+  }
+  // ... остальной код как было
   var formEl = $('orderForm');
   var trackEl = $('orderTrack');
   if (!formEl || !trackEl) return;
