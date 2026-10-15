@@ -1130,12 +1130,45 @@ function renderBalanceChart() {
 /* ═══════════════════ STATS ═══════════════════ */
 function renderStats() {
   var txs = st.txs || [];
+
+  // 🛡️ FIX: helper — определяем "внешний депозит" (не bonus, не refund, не admin adjustment)
+  function isExternalDeposit(t) {
+    if (!t || !(t.amt > 0)) return false;
+    var d = String(t.desc || '').toLowerCase();
+    // refund / admin adjustment / bonus — НЕ депозиты
+    if (d.indexOf('refund') !== -1) return false;
+    if (d.indexOf('admin adjustment') !== -1) return false;
+    if (d.indexOf('bonus') !== -1) return false;
+    if (d.indexOf('adjustment') !== -1) return false;
+    // crypto deposit с hash — депозит
+    if (t.hash) return true;
+    // "PART of ... ETH FROM CRYPTO.COM" / "Crypto deposit" — депозит
+    if (d.indexOf('deposit') !== -1) return true;
+    if (d.indexOf('from crypto.com') !== -1) return true;
+    if (d.indexOf('part of') !== -1) return true;
+    return false;
+  }
+
+  // 🛡️ FIX: helper — определяем "internal" tx (refund, bonus, adjustment)
+  function isInternal(t) {
+    if (t.internal === true) return true;
+    var d = String(t.desc || '').toLowerCase();
+    if (d.indexOf('refund') !== -1) return true;
+    if (d.indexOf('admin adjustment') !== -1) return true;
+    if (d.indexOf('bonus') !== -1) return true;
+    if (d.indexOf('adjustment') !== -1) return true;
+    return false;
+  }
+
   var income = 0, spending = 0;
   for (var i = 0; i < txs.length; i++) {
-    var amt = txs[i].amt || 0;
-    if (amt > 0) income += amt;
+    var t = txs[i];
+    var amt = t.amt || 0;
+    // 🛡️ FIX: internal tx НЕ считаем в income
+    if (amt > 0 && !isInternal(t)) income += amt;
     else if (amt < 0) spending += Math.abs(amt);
   }
+
   var incomeEl = document.getElementById('statIncome');
   if (incomeEl) incomeEl.textContent = fmtCurrency(income);
   var spendEl = document.getElementById('statSpending');
@@ -1148,14 +1181,17 @@ function renderStats() {
       daysEl.textContent = Math.max(1, Math.ceil((Date.now() - st.card.createdAt) / (24 * 60 * 60 * 1000)));
     } else { daysEl.textContent = '1'; }
   }
+
   var now30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
   var inc30 = 0, sp30 = 0, cnt30 = 0;
   for (var k = 0; k < txs.length; k++) {
     var t30 = txs[k].ts || 0;
     if (t30 >= now30) {
       cnt30++;
-      var a30 = txs[k].amt || 0;
-      if (a30 > 0) inc30 += a30;
+      var tk = txs[k];
+      var a30 = tk.amt || 0;
+      // 🛡️ FIX: internal tx НЕ считаем в income 30d
+      if (a30 > 0 && !isInternal(tk)) inc30 += a30;
       else if (a30 < 0) sp30 += Math.abs(a30);
     }
   }
@@ -1166,8 +1202,12 @@ function renderStats() {
   if (elSp30) elSp30.textContent = sp30 > 0 ? '-' + fmtCurrency(sp30) : '—';
   if (elCnt30) elCnt30.textContent = cnt30;
 
+  // 🛡️ FIX: sumDeposits — только ВНЕШНИЕ депозиты (не refund, не bonus)
   var sumDeposits = 0;
-  for (var p = 0; p < txs.length; p++) if (txs[p].amt > 0) sumDeposits += txs[p].amt;
+  for (var p = 0; p < txs.length; p++) {
+    if (isExternalDeposit(txs[p])) sumDeposits += txs[p].amt;
+  }
+
   var pnlEl = document.getElementById('pnlLine');
   if (pnlEl && sumDeposits > 0) {
     var pnl = st.usd - sumDeposits;
@@ -1193,7 +1233,6 @@ function renderStats() {
     if (pnlExplainEl2) pnlExplainEl2.style.display = 'none';
   }
 }
-
 /* ═══════════════════ WITHDRAW ═══════════════════ */
 function openWithdraw() {
   var modal = document.getElementById('withdrawModal');
