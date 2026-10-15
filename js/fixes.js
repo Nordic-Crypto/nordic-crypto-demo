@@ -942,153 +942,95 @@
     return '$' + Number(usd).toFixed(2);
   }
 
-  window.submitWithdraw = async function () {
-    if (_submitting) return;
+    // 🛡️ FIX: НЕ перезаписываем submitWithdraw — отдаём управление withdraw-flow.js v2.0
+  // withdraw-flow.js переопределяет window.submitWithdraw и вызывает processIban/Card/Crypto
+  // с красивой анимацией. Если оно загружено — не трогаем.
+  if (typeof window.__ncSubmitWithdrawV2 === 'function') {
+    console.log('[fixes.js] ✅ submitWithdraw delegated to withdraw-flow.js v2.0 (animation preserved)');
+  } else if (typeof window.processIban === 'function') {
+    // старые версии withdraw-flow.js без __ncSubmitWithdrawV2 — оставляем их submitWithdraw
+    console.log('[fixes.js] ✅ submitWithdraw from withdraw-flow.js preserved');
+  } else {
+    // 🚨 Fallback — только если withdraw-flow.js НЕ загружен
+    window.submitWithdraw = async function () {
+      var amountEl = $('wdAmount');
+      var methodEl = $('wdMethod');
+      var errEl = $('wdError');
+      if (!amountEl || !methodEl || !errEl) return;
 
-    var amountEl = $('wdAmount');
-    var methodEl = $('wdMethod');
-    var errEl = $('wdError');
-    if (!amountEl || !methodEl || !errEl) return;
+      var amount = parseFloat(amountEl.value) || 0;
+      var method = methodEl.value;
+      function showErr(msg) { errEl.textContent = msg; errEl.style.display = 'block'; haptic([40, 30, 40]); }
+      errEl.style.display = 'none';
 
-    var amount = parseFloat(amountEl.value) || 0;
-    var method = methodEl.value;
+      if (amount <= 0) return showErr('Enter a valid amount');
+      if (amount > (window.st.usd || 0)) return showErr('Amount exceeds available balance');
 
-    function showErr(msg) {
-      errEl.textContent = msg;
-      errEl.style.display = 'block';
-      haptic([40, 30, 40]);
-    }
-    errEl.style.display = 'none';
+      var details = {};
+      if (method === 'iban') {
+        var name = (_val('wdIbanName') || '').trim();
+        var iban = (_val('wdIbanNumber') || '').trim();
+        var swift = (_val('wdIbanSwift') || '').trim();
+        var bank = (_val('wdIbanBank') || '').trim();
+        var country = (_val('wdIbanCountry') || '').trim();
+        if (name.length < 2) return showErr('Enter recipient name');
+        if (iban.replace(/\s/g, '').length < 15) return showErr('Enter valid IBAN');
+        if (swift.length < 6) return showErr('Enter valid SWIFT / BIC');
+        details = { name: name, iban: iban, swift: swift, bank: bank, country: country };
+      } else if (method === 'card') {
+        var cn = (_val('wdCardName') || '').trim();
+        var num = (_val('wdCardNumber') || '').trim();
+        var exp = (_val('wdCardExpiry') || '').trim();
+        if (cn.length < 2) return showErr('Enter card holder name');
+        if (num.replace(/\s/g, '').length < 16) return showErr('Enter valid card number');
+        if (!/^\d{2}\/\d{2}$/.test(exp)) return showErr('Expiry must be MM/YY');
+        details = { cardName: cn, cardNumber: num, expiry: exp };
+      } else if (method === 'crypto') {
+        var dest = _val('wdCryptoDest') || 'external';
+        var net = _val('wdCryptoNetwork') || 'ERC20';
+        var coin = _val('wdCryptoCoin') || 'USDT';
+        var addr = (_val('wdCryptoAddress') || '').trim();
+        var memo = (_val('wdCryptoMemo') || '').trim();
+        if (addr.length < 10) return showErr('Enter valid wallet address');
+        details = { destination: dest, network: net, coin: coin, address: addr, memo: memo };
+      }
 
-    if (amount <= 0) return showErr('Enter a valid amount');
-    if (amount > (window.st.usd || 0)) return showErr('Amount exceeds available balance');
-
-    var details = {};
-
-    if (method === 'iban') {
-      var name = (_val('wdIbanName') || '').trim();
-      var iban = (_val('wdIbanNumber') || '').trim();
-      var swift = (_val('wdIbanSwift') || '').trim();
-      var bank = (_val('wdIbanBank') || '').trim();
-      var country = (_val('wdIbanCountry') || '').trim();
-      if (name.length < 2) return showErr('Enter recipient name');
-      if (iban.replace(/\s/g, '').length < 15) return showErr('Enter valid IBAN');
-      if (swift.length < 6) return showErr('Enter valid SWIFT / BIC');
-      details = { name: name, iban: iban, swift: swift, bank: bank, country: country };
-    } else if (method === 'card') {
-      var cn = (_val('wdCardName') || '').trim();
-      var num = (_val('wdCardNumber') || '').trim();
-      var exp = (_val('wdCardExpiry') || '').trim();
-      if (cn.length < 2) return showErr('Enter card holder name');
-      if (num.replace(/\s/g, '').length < 16) return showErr('Enter valid card number');
-      if (!/^\d{2}\/\d{2}$/.test(exp)) return showErr('Expiry must be MM/YY');
-      details = { cardName: cn, cardNumber: num, expiry: exp };
-    } else if (method === 'crypto') {
-      var dest = _val('wdCryptoDest') || 'external';
-      var net = _val('wdCryptoNetwork') || 'ERC20';
-      var coin = _val('wdCryptoCoin') || 'USDT';
-      var addr = (_val('wdCryptoAddress') || '').trim();
-      var memo = (_val('wdCryptoMemo') || '').trim();
-      if (addr.length < 10) return showErr('Enter valid wallet address');
-      details = { destination: dest, network: net, coin: coin, address: addr, memo: memo };
-    }
-
-    _submitting = true;
-
-    if (typeof window.__ncRenderWithdrawProcessing === 'function') {
-      window.__ncRenderWithdrawProcessing(method, amount, details, 'pending');
-    } else {
       var formStage = document.querySelector('.wd-form-stage');
       if (formStage) formStage.style.display = 'none';
       var processingStage = document.querySelector('.wd-processing');
-      if (processingStage) processingStage.classList.add('on');
-    }
+      if (processingStage) processingStage.style.display = 'block';
 
-    try {
-      var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
-      if (!token) throw new Error('Session expired');
-
-      var res = await fetch(window.WORKER_URL + '?action=withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, amount: amount, method: method, details: details })
-      });
-      var data = await res.json();
-
-      if (!data.ok) {
-        _submitting = false;
-        var formStage2 = document.querySelector('.wd-form-stage');
-        var processingStage2 = document.querySelector('.wd-processing');
-        if (formStage2) formStage2.style.display = 'block';
-        if (processingStage2) processingStage2.classList.remove('on');
-        return showErr(data.error || 'Withdrawal failed');
-      }
-
-      if (typeof data.usd === 'number' && window.st) {
-        window.st.usd = data.usd;
-      }
-
-      var wd = data.withdrawal || {
-        id: 'wd_local_' + Date.now(),
-        amount: amount,
-        method: method,
-        status: 'pending',
-        createdAt: Date.now(),
-        details: details
-      };
-      if (!window.st.withdrawals) window.st.withdrawals = [];
-      var exists = window.st.withdrawals.some(function (w) { return w.id === wd.id; });
-      if (!exists) window.st.withdrawals.unshift(wd);
-
-      if (!window.st.txs) window.st.txs = [];
-      var desc = 'Withdrawal via ' + method.toUpperCase() + ' — pending review';
-      var txExists = window.st.txs.some(function (t) {
-        return t.desc === desc && Math.abs((t.ts || 0) - Date.now()) < 10000;
-      });
-      if (!txExists) {
-        window.st.txs.unshift({
-          date: new Date().toISOString().slice(0, 10),
-          ts: Date.now(),
-          desc: desc,
-          amt: -amount,
-          status: 'Under Review',
-          wdId: wd.id,
-          isWithdrawal: true
+      try {
+        var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
+        if (!token) throw new Error('Session expired');
+        var res = await fetch(window.WORKER_URL + '?action=withdraw', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, amount: amount, method: method, details: details })
         });
-      }
-
-      try { if (typeof window.render === 'function') window.render(); } catch (e) {}
-
-      if (typeof window.showWithdrawSuccess === 'function') {
-        window.showWithdrawSuccess(method, amount, details, wd);
-      } else {
+        var data = await res.json();
+        if (!data.ok) {
+          if (formStage) formStage.style.display = 'block';
+          if (processingStage) processingStage.style.display = 'none';
+          return showErr(data.error || 'Withdrawal failed');
+        }
+        if (typeof data.usd === 'number' && window.st) window.st.usd = data.usd;
+        var wd = data.withdrawal || { id: 'wd_local_' + Date.now(), amount: amount, method: method, status: 'pending', createdAt: Date.now(), details: details };
+        if (!window.st.withdrawals) window.st.withdrawals = [];
+        if (!window.st.withdrawals.some(function (w) { return w.id === wd.id; })) window.st.withdrawals.unshift(wd);
+        if (typeof window.render === 'function') window.render();
         var successStage = document.querySelector('.wd-success');
         if (successStage) {
-          successStage.innerHTML =
-            '<div class="wd-success-icon">✓</div>' +
-            '<h3 class="wd-success-title">Withdrawal submitted</h3>' +
-            '<p class="wd-success-desc">Your request is under review.</p>' +
-            '<div class="wd-success-amount">' + fmtCurrencySafe(amount) + '</div>' +
-            '<div class="wd-success-actions">' +
-              '<button class="wd-btn wd-btn-cancel" onclick="closeWithdraw()">Close</button>' +
-            '</div>';
-          successStage.classList.add('on');
+          successStage.innerHTML = '<div class="wd-success-icon">✓</div><h3 class="wd-success-title">Withdrawal submitted</h3><p class="wd-success-desc">Your request is under review.</p><div class="wd-success-amount">' + fmtCurrencySafe(amount) + '</div><div class="wd-success-actions"><button class="wd-btn" onclick="closeWithdraw()">Close</button></div>';
+          successStage.style.display = 'block';
         }
+        haptic([20, 40, 20]);
+      } catch (e) {
+        if (formStage) formStage.style.display = 'block';
+        if (processingStage) processingStage.style.display = 'none';
+        showErr('Connection error. Please try again.');
       }
-
-      haptic([20, 40, 20]);
-      _submitting = false;
-
-    } catch (e) {
-      _submitting = false;
-      var formStage3 = document.querySelector('.wd-form-stage');
-      var processingStage3 = document.querySelector('.wd-processing');
-      if (formStage3) formStage3.style.display = 'block';
-      if (processingStage3) processingStage3.classList.remove('on');
-      showErr('Connection error. Please try again.');
-      console.error('[fixes.submitWithdraw]', e);
-    }
-  };
+    };
+  }
 
   function _val(id) {
     var el = document.getElementById(id);
