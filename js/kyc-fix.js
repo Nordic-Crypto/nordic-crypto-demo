@@ -88,9 +88,9 @@
     var el = document.getElementById(target);
     if (!el) return;
 
-    // Уже правильно показан — ничего не делаем
+       // 🛡️ FIX: если уже правильно показан — не трогаем (и для overlay тоже)
     var isOn = el.classList.contains('on') && el.style.display !== 'none';
-    if (isOn && !opts.overlay) return;
+    if (isOn) return;
 
     // Проверяем что "лишние" экраны спрятаны
     if (!opts.overlay) {
