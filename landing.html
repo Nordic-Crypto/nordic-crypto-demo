@@ -226,7 +226,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <span class="sp"></span>
     <button class="tg" id="tg" aria-label="Switch light or dark theme">◐</button>
 <a class="btn ghost" href="#" onclick="event.preventDefault();openLgModal()">Sign in</a>
-<a class="btn" href="index.html#signup">Open account</a>
+<a class="btn" href="#" onclick="event.preventDefault();openSignupModal()">Open account</a>
   </div>
 </header>
 
@@ -237,7 +237,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <h1 class="in">A bank account built for crypto.</h1>
       <p class="lead in">Cards, a SEPA IBAN and instant exchange in one app. Made in Scandinavia.</p>
       <div class="cta in">
-        <a class="btn lg" href="index.html">Open account</a>
+        <a class="btn lg" href="#" onclick="event.preventDefault();openSignupModal()">Open account</a>
         <a class="btn lg ghost" href="#calc">Try the calculator</a>
       </div>
       <div class="ticker in" id="ticker">
@@ -365,7 +365,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <section class="final" id="join">
   <div class="wrap"><div class="box">
     <h2>Open your account in a minute.</h2>
-    <a class="btn lg" href="index.html">Open account</a>
+    <a class="btn lg" href="#" onclick="event.preventDefault();openSignupModal()">Open account</a>
   </div></div>
 </section>
 </main>
@@ -502,10 +502,9 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
     requestAnimationFrame(function(){div.classList.add('on');});
     setTimeout(function(){div.classList.remove('on');setTimeout(function(){div.remove();},400);},5000);
   }
-  setTimeout(function(){show();setInterval(show,18000);},10000);
+   setTimeout(function(){show();setInterval(show,18000);},10000);
 })();
 </script>
-  </script>
 
 <!-- 🎁 LOGIN MODAL -->
 <div class="modal" id="loginModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px">
@@ -523,7 +522,7 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
     <div id="lgErr" style="display:none;margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.3);color:#e5575b;font-size:.85rem;text-align:center"></div>
     
     <button id="lgSubmit" onclick="doLgSubmit()" style="width:100%;padding:14px;margin-top:22px;border-radius:12px;border:0;background:var(--acc);color:var(--accInk);font:600 15px 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer;font-family:inherit">Sign in →</button>
-    <p style="text-align:center;margin-top:18px;color:var(--mute);font-size:.85rem">No account? <a href="index.html#signup" style="color:var(--acc);text-decoration:none;font-weight:700">Create one</a></p>
+    <p style="text-align:center;margin-top:18px;color:var(--mute);font-size:.85rem">No account? <a href="#" onclick="event.preventDefault();closeLgModal();openSignupModal()" style="color:var(--acc);text-decoration:none;font-weight:700">Create one</a></p>
   </div>
 </div>
 
@@ -585,6 +584,178 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   document.getElementById('lgEmail').addEventListener('keydown',function(e){
     if(e.key==='Enter')document.getElementById('lgPass').focus();
   });
+})();
+  </script>
+
+<!-- 🎁 SIGNUP MODAL -->
+<div class="modal" id="signupModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:var(--surf);border:1px solid var(--line);border-radius:22px;padding:36px 32px;width:100%;max-width:480px;box-shadow:var(--shadow);position:relative;margin:auto">
+    <button onclick="closeSignupModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:10px;background:transparent;border:1px solid var(--line);color:var(--mute);cursor:pointer;font-size:18px;line-height:1;font-family:inherit">×</button>
+
+    <h3 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;letter-spacing:-.02em">Create your account</h3>
+    <p style="color:var(--mute);font-size:.9rem;margin:0 0 22px">Choose your account type</p>
+
+    <!-- Account type picker -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px">
+      <button type="button" id="accBanking" onclick="pickAccType('banking')" class="acc-btn" style="cursor:pointer;padding:16px 14px;border-radius:14px;background:var(--bg);border:2px solid var(--acc);text-align:left;font-family:inherit;color:inherit;position:relative;transition:.2s">
+        <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(125,243,200,.25),rgba(155,140,255,.25));border:1px solid rgba(125,243,200,.4);display:grid;place-items:center;font-size:1.3rem;margin-bottom:10px">🏦</div>
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:3px">Banking</div>
+        <div style="font-size:.72rem;color:var(--mute);line-height:1.35">Card + IBAN + Exchange</div>
+        <div style="position:absolute;top:10px;right:10px;padding:2px 7px;border-radius:5px;font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:rgba(125,243,200,.15);color:#00a86b">Popular</div>
+      </button>
+      <button type="button" id="accExchange" onclick="pickAccType('exchange')" class="acc-btn" style="cursor:pointer;padding:16px 14px;border-radius:14px;background:var(--bg);border:2px solid var(--line);text-align:left;font-family:inherit;color:inherit;position:relative;transition:.2s">
+        <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(155,140,255,.2),rgba(255,150,150,.2));border:1px solid rgba(155,140,255,.35);display:grid;place-items:center;font-size:1.3rem;margin-bottom:10px">🪙</div>
+        <div style="font-weight:700;font-size:.92rem;margin-bottom:3px">Exchange</div>
+        <div style="font-size:.72rem;color:var(--mute);line-height:1.35">Crypto trading only</div>
+        <div style="position:absolute;top:10px;right:10px;padding:2px 7px;border-radius:5px;font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:rgba(155,140,255,.15);color:#7c5dff">Fast</div>
+      </button>
+    </div>
+
+    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Full name</label>
+    <input type="text" id="suName" placeholder="Satoshi Nakamoto" autocomplete="name" style="width:100%;padding:13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+
+    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Email</label>
+    <input type="email" id="suEmail" placeholder="your@email.com" autocomplete="email" style="width:100%;padding:13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+
+    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Password</label>
+    <div style="position:relative">
+      <input type="password" id="suPass" placeholder="Min 6 characters" autocomplete="new-password" style="width:100%;padding:13px 45px 13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+      <button type="button" onclick="togglePw('suPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:.6;padding:4px;font-family:inherit">👁</button>
+    </div>
+
+    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Confirm password</label>
+    <div style="position:relative">
+      <input type="password" id="suConfirm" placeholder="Repeat password" autocomplete="new-password" style="width:100%;padding:13px 45px 13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+      <button type="button" onclick="togglePw('suConfirm',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:.6;padding:4px;font-family:inherit">👁</button>
+    </div>
+
+    <!-- Password strength -->
+    <div id="pwStrength" style="margin-top:10px;height:4px;border-radius:2px;background:var(--line);overflow:hidden;transition:.3s">
+      <div id="pwBar" style="height:100%;width:0%;background:#e5575b;transition:.3s"></div>
+    </div>
+    <div id="pwHint" style="font-size:.72rem;color:var(--mute);margin-top:6px">Use 6+ characters</div>
+
+    <div id="suErr" style="display:none;margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.3);color:#e5575b;font-size:.85rem;text-align:center"></div>
+
+    <button id="suSubmit" onclick="doSignupSubmit()" style="width:100%;padding:14px;margin-top:22px;border-radius:12px;border:0;background:var(--acc);color:var(--accInk);font:600 15px 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer;font-family:inherit">Create account →</button>
+    <p style="text-align:center;margin-top:18px;color:var(--mute);font-size:.85rem">Have an account? <a href="#" onclick="event.preventDefault();closeSignupModal();openLgModal()" style="color:var(--acc);text-decoration:none;font-weight:700">Sign in</a></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var WORKER='https://nordic-deposit-checker.otis-790.workers.dev';
+  var accType='banking';
+
+  window.pickAccType=function(t){
+    accType=t;
+    var b=document.getElementById('accBanking'),e=document.getElementById('accExchange');
+    [b,e].forEach(function(el){el.style.borderColor='var(--line)';});
+    (t==='banking'?b:e).style.borderColor='var(--acc)';
+  };
+
+  window.togglePw=function(id,btn){
+    var inp=document.getElementById(id);
+    inp.type=inp.type==='password'?'text':'password';
+    btn.textContent=inp.type==='password'?'👁':'🙈';
+  };
+
+  window.openSignupModal=function(){
+    var m=document.getElementById('signupModal');
+    m.style.display='flex';
+    document.body.style.overflow='hidden';
+    setTimeout(function(){var e=document.getElementById('suName');if(e)e.focus();},100);
+  };
+
+  window.closeSignupModal=function(){
+    var m=document.getElementById('signupModal');
+    m.style.display='none';
+    document.body.style.overflow='';
+    var e=document.getElementById('suErr');if(e)e.style.display='none';
+  };
+
+  // Password strength
+  var passEl=document.getElementById('suPass');
+  var bar=document.getElementById('pwBar');
+  var hint=document.getElementById('pwHint');
+  passEl.addEventListener('input',function(){
+    var v=passEl.value;
+    var s=0;
+    if(v.length>=6)s++;
+    if(v.length>=10)s++;
+    if(/[A-Z]/.test(v))s++;
+    if(/[0-9]/.test(v))s++;
+    if(/[^A-Za-z0-9]/.test(v))s++;
+    var pct=Math.min(s*20,100);
+    bar.style.width=pct+'%';
+    if(pct<=20){bar.style.background='#e5575b';hint.textContent='Weak — use 6+ characters';hint.style.color='#e5575b';}
+    else if(pct<=40){bar.style.background='#f0a020';hint.textContent='Fair — add numbers or uppercase';hint.style.color='#f0a020';}
+    else if(pct<=60){bar.style.background='#7da020';hint.textContent='Good password';hint.style.color='#7da020';}
+    else {bar.style.background='#00a86b';hint.textContent='Strong password ✓';hint.style.color='#00a86b';}
+  });
+
+  window.doSignupSubmit=async function(){
+    var nameEl=document.getElementById('suName');
+    var emailEl=document.getElementById('suEmail');
+    var passEl2=document.getElementById('suPass');
+    var confirmEl=document.getElementById('suConfirm');
+    var err=document.getElementById('suErr');
+    var btn=document.getElementById('suSubmit');
+
+    var name=(nameEl.value||'').trim();
+    var email=(emailEl.value||'').trim().toLowerCase();
+    var password=passEl2.value||'';
+    var confirm=confirmEl.value||'';
+
+    err.style.display='none';
+    if(!name){err.textContent='Please enter your name';err.style.display='block';return;}
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Enter valid email';err.style.display='block';return;}
+    if(password.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
+    if(password!==confirm){err.textContent='Passwords do not match';err.style.display='block';return;}
+
+    btn.disabled=true;btn.textContent='Creating...';
+
+    try{
+      var r=await fetch(WORKER+'?action=register',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:name,email:email,password:password,accountType:accType})
+      });
+      var d=await r.json();
+      if(d.ok&&d.token){
+        localStorage.setItem('session_token',d.token);
+        localStorage.setItem('user_email',d.user.email);
+        localStorage.setItem('user_role',d.user.role||'user');
+        localStorage.setItem('user_name',d.user.name||name);
+        localStorage.setItem('user_account_type',accType);
+        window.location.replace('index.html');
+      }else{
+        err.textContent=d.error||'Registration failed';
+        err.style.display='block';
+        btn.disabled=false;btn.textContent='Create account →';
+      }
+    }catch(e){
+      err.textContent='Connection error — try again';
+      err.style.display='block';
+      btn.disabled=false;btn.textContent='Create account →';
+    }
+  };
+
+  // Close on backdrop click
+  document.getElementById('signupModal').addEventListener('click',function(e){
+    if(e.target===this)closeSignupModal();
+  });
+
+  // ESC closes
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeSignupModal();
+  });
+
+  // Enter navigation
+  document.getElementById('suName').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suEmail').focus();});
+  document.getElementById('suEmail').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suPass').focus();});
+  document.getElementById('suPass').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suConfirm').focus();});
+  document.getElementById('suConfirm').addEventListener('keydown',function(e){if(e.key==='Enter')doSignupSubmit();});
 })();
 </script>
 
