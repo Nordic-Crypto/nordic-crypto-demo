@@ -4276,8 +4276,18 @@ async function adminRejectWithdrawal(email, wdId) {
     if (!wd) throw new Error('Not found');
     if (wd.status !== 'pending') throw new Error('Already ' + wd.status);
     wd.status = 'rejected';
-    wd.reason = reason;
-    wd.reviewedAt = Date.now();
+wd.reason = reason;
+wd.reviewedAt = Date.now();
+
+// 🛡️ FIX: возвращаем деньги на баланс клиента
+state.usd = (state.usd || 0) + (Number(wd.amount) || 0);
+
+// 🛡️ Удаляем pending tx
+if (Array.isArray(state.txs)) {
+  state.txs = state.txs.filter(function(t) {
+    return !(t.isWithdrawal && t.wdId === wdId && t.status === 'Under Review');
+  });
+}
     if (!state.notifications) state.notifications = [];
     state.notifications.unshift({ id: 'n_' + Date.now(), ts: Date.now(), text: '❌ Withdrawal rejected — $' + wd.amount + '. Reason: ' + reason, read: false });
     await fetch(WORKER_URL + '?action=setUserState', {
