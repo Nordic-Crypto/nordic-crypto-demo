@@ -2157,11 +2157,24 @@ setInterval(async function () {
 
   if (!anyVisible && vStatus !== 'pending' && vStatus !== null) return;
 
-  var freshV = await checkVerificationStatus();
-  if (!freshV) return;
+    var freshV = await checkVerificationStatus();
+
+  // 🛡️ FIX: НЕ обнуляем st.verification если сервер не ответил
+  if (!freshV) {
+    console.warn('[NC watchdog] checkVerificationStatus вернул null — st.verification НЕ трогаем');
+    return;
+  }
 
   if (!st.verification) st.verification = {};
   var oldStatus = st.verification.status;
+
+  // 🛡️ FIX: если было pending, а сервер вернул не-pending — не перезаписываем сразу
+  // (это может быть кэш или race condition)
+  if (oldStatus === 'pending' && freshV.status !== 'pending' && freshV.status !== 'approved' && freshV.status !== 'rejected') {
+    console.warn('[NC watchdog] стоп: status был pending, сервер вернул ' + freshV.status + ' — игнорируем');
+    return;
+  }
+
   st.verification = Object.assign({}, st.verification, freshV);
 
   if (freshV.status === 'approved') {
