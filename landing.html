@@ -221,7 +221,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <body>
 <header>
   <div class="wrap nav">
-    <a class="logo" href="#top"><i></i>NordicCrypto</a>
+    <a class="logo" href="#top">
+  <img src="logo.png" alt="NordicCrypto" style="width:28px;height:28px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'">
+  NordicCrypto
+</a>
     <nav class="links"><a href="#features">Features</a><a href="#cards">Cards</a><a href="#calc">Calculator</a><a href="#fees">Fees</a><a href="#faq">FAQ</a></nav>
     <span class="sp"></span>
     <button class="tg" id="tg" aria-label="Switch light or dark theme">◐</button>
@@ -241,10 +244,25 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
         <a class="btn lg ghost" href="#calc">Try the calculator</a>
       </div>
       <div class="ticker in" id="ticker">
-        <div class="tick"><i class="btc">₿</i><span>BTC</span><span class="pr" id="tkBTC">$—</span><span class="ch" id="tkBTCchg">—</span></div>
-        <div class="tick"><i class="eth">Ξ</i><span>ETH</span><span class="pr" id="tkETH">$—</span><span class="ch" id="tkETHchg">—</span></div>
-        <div class="tick"><i class="sol">◎</i><span>SOL</span><span class="pr" id="tkSOL">$—</span><span class="ch" id="tkSOLchg">—</span></div>
-      </div>
+  <div class="tick">
+    <i class="btc" style="background:transparent;padding:0">
+      <svg viewBox="0 0 32 32" width="22" height="22"><circle cx="16" cy="16" r="16" fill="#f7931a"/><path fill="#fff" d="M22.5 14.1c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2v0l-2.2-.6-.4 1.7s1.2.3 1.2.3c.6.2.8.6.7.9l-.7 2.9c0 .1.1.1.2.2l-.2-.1-.9 4.1c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.8 2.1.5c.4.1.8.2 1.1.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.7.5 4.7.3 5.6-2.1.7-2 0-3.1-1.5-3.8 1.1-.3 1.9-1 2.1-2.4zm-3.6 3.2c-.5 2-3.8.9-4.9.6l.9-3.5c1.1.3 4.5.8 4 2.9zm.5-3.2c-.4 1.8-3.2.9-4.1.7l.8-3.2c.9.2 3.8.6 3.3 2.5z"/></svg>
+    </i>
+    <span>BTC</span><span class="pr" id="tkBTC">$—</span><span class="ch" id="tkBTCchg">—</span>
+  </div>
+  <div class="tick">
+    <i class="eth" style="background:transparent;padding:0">
+      <svg viewBox="0 0 32 32" width="22" height="22"><circle cx="16" cy="16" r="16" fill="#627eea"/><path fill="#fff" d="M16 3.8L8.2 16.1L16 20.4L23.8 16.1L16 3.8Z" opacity=".95"/><path fill="#fff" d="M16 3.8L8.2 16.1L16 13.4V3.8Z" opacity=".7"/><path fill="#fff" d="M8.2 17.7L16 28.2L23.8 17.7L16 22L8.2 17.7Z" opacity=".85"/><path fill="#fff" d="M16 22L23.8 17.7L16 15.1V22Z" opacity=".6"/></svg>
+    </i>
+    <span>ETH</span><span class="pr" id="tkETH">$—</span><span class="ch" id="tkETHchg">—</span>
+  </div>
+  <div class="tick">
+    <i class="sol" style="background:transparent;padding:0">
+      <svg viewBox="0 0 32 32" width="22" height="22"><defs><linearGradient id="solgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9945FF"/><stop offset="0.5" stop-color="#14F195"/><stop offset="1" stop-color="#00D1FF"/></linearGradient></defs><circle cx="16" cy="16" r="16" fill="url(#solgrad)"/><path fill="#fff" d="M10.1 21.6h11.2c.2 0 .3.1.2.3l-1.9 1.9c-.1.1-.3.2-.5.2H7.9c-.2 0-.3-.1-.2-.3l1.9-1.9c.15-.1.35-.2.5-.2zm11.2-5H10.1c-.2 0-.3-.1-.2-.3l1.9-1.9c.1-.1.3-.2.5-.2h11.2c.2 0 .3.1.2.3l-1.9 1.9c-.1.1-.3.2-.5.2zm-11.2-5h11.2c.2 0 .3.1.2.3l-1.9 1.9c-.1.1-.3.2-.5.2H7.9c-.2 0-.3-.1-.2-.3l1.9-1.9c.15-.1.35-.2.5-.2z"/></svg>
+    </i>
+    <span>SOL</span><span class="pr" id="tkSOL">$—</span><span class="ch" id="tkSOLchg">—</span>
+  </div>
+</div>
     </div>
     <div class="stage in" id="stage">
       <div class="float">
@@ -255,8 +273,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
           <div class="cbot"><span>E. Larsson</span><b>VISA</b></div>
         </div>
       </div>
-      <div class="gl g2"><span class="dot"></span><span>Received<b>+0.012 BTC</b></span></div>
-      <div class="gl g1"><span class="dot"></span><span>SEPA transfer<b>€ 240.00 sent</b></span></div>
+      <div class="gl g2">
+  <span class="dot" style="background:linear-gradient(135deg,#f7931a,#ffbd4c);color:#fff;font-size:15px;font-weight:900;display:grid;place-items:center">₿</span>
+  <span>Received<b>+0.012 BTC</b></span>
+</div>
+<div class="gl g1">
+  <span class="dot" style="background:linear-gradient(135deg,#1f6fe0,#7eb8f5);color:#fff;font-size:15px;font-weight:900;display:grid;place-items:center">€</span>
+  <span>SEPA transfer<b>€ 240.00 sent</b></span>
+</div>
     </div>
   </div>
 </div>
