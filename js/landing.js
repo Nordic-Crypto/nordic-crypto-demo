@@ -84,8 +84,10 @@
     revealEls.forEach(function (el) { el.classList.add('in'); });
   }
 
-  /* ---------- COUNT-UP (universal: .stat-v[data-count], .cs-val[data-count]) ---------- */
+   /* ---------- COUNT-UP (universal + fallback) ---------- */
   function animateCount(el) {
+    if (el._animated) return;
+    el._animated = true;
     var target = parseFloat(el.getAttribute('data-count'));
     var dec = parseInt(el.getAttribute('data-decimals') || '0', 10);
     var pre = el.getAttribute('data-prefix') || '';
@@ -101,15 +103,40 @@
     }
     requestAnimationFrame(step);
   }
+
   var countEls = document.querySelectorAll('.stat-v[data-count], .cs-val[data-count]');
+  console.log('[Count-up] found', countEls.length, 'elements');
+
+  // 🛡️ FIX: сразу запускаем если элемент уже виден + IO для остальных
   if ('IntersectionObserver' in window) {
     var sio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (e.isIntersecting) { animateCount(e.target); sio.unobserve(e.target); }
+        if (e.isIntersecting) {
+          animateCount(e.target);
+          sio.unobserve(e.target);
+        }
       });
-    }, { threshold: 0.4 });
-    countEls.forEach(function (el) { sio.observe(el); });
+    }, { threshold: 0.1, rootMargin: '50px 0px' });
+    countEls.forEach(function (el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        // Уже виден — анимируем сразу
+        animateCount(el);
+      } else {
+        sio.observe(el);
+      }
+    });
+    // 🛡️ FALLBACK: через 3 сек проверить что все анимировались
+    setTimeout(function () {
+      countEls.forEach(function (el) {
+        if (!el._animated) {
+          console.warn('[Count-up] fallback for', el);
+          animateCount(el);
+        }
+      });
+    }, 3000);
   } else {
+    // Нет IO — анимируем всех
     countEls.forEach(function (el) { animateCount(el); });
   }
 
