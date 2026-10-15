@@ -607,8 +607,9 @@ if (amount > __balance) {
       reviewedBy: '',
       details: details
     };
-    if (!window.st.withdrawals) window.st.withdrawals = [];
-    window.st.withdrawals.unshift(wd);
+    if (!window.st) window.st = { withdrawals: [], txs: [], usd: 0 };
+if (!window.st.withdrawals) window.st.withdrawals = [];
+window.st.withdrawals.unshift(wd);
 
     if (typeof window.saveToServer === 'function') window.saveToServer();
     if (typeof window.render === 'function') window.render();
