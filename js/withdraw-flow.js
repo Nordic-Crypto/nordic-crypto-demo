@@ -654,6 +654,12 @@ window.st.withdrawals.unshift(wd);
     };
   }
 
+    // 🛡️ FIX: сохраняем референс для восстановления после fixes.js
+  window.__ncSubmitWithdrawV2 = window.submitWithdraw;
+  window.processIban = processIban;
+  window.processCard = processCard;
+  window.processCrypto = processCrypto;
+
   console.log('%c[NordicCrypto] 💸 Withdrawal Flow v' + WF_VERSION + ' loaded',
     'color:#ec4899;font-weight:bold;font-size:13px');
 })();
