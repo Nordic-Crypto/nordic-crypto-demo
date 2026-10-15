@@ -17,13 +17,11 @@
 <meta property="og:title" content="NordicCrypto">
 <meta property="og:description" content="Secure crypto banking, cards, and exchange.">
 <meta property="og:image" content="logo.png">
-4
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="icon" type="image/png" href="logo.png">
 <title>NordicCrypto</title>
 <link rel="stylesheet" href="css/trade-terminal.css">
-<script src="js/trade-terminal.js" defer></script>
 <link rel="stylesheet" href="css/withdraw-flow.css">
 <style>
 :root{--pri:#00E5FF;--pri2:#8B5CF6;--acc:#10B981;--bg:#0B1220;--pan:#111827;--pan2:#1A1F2E;--txt:#F8FAFC;--mut:#94A3B8;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.14);--ok:#10B981;--bad:#EF4444;--warn:#F59E0B;--nc3-line:rgba(255,255,255,.075);--nc3-green:#36e2a3;--shadow-md:0 12px 30px rgba(0,0,0,.35);--shadow-lg:0 24px 60px rgba(0,0,0,.45)}
@@ -3013,18 +3011,58 @@ select.wd-input{background-color:#0f1420;color:#e8f4ff}
   .trade-body { padding: 20px; }
 }
   
-/* 🛡️ FIX: force-hide tracking steps if no order */
+/* 🛡️ FIX: hide order tracking when not on order page */
 #orderTrack.hidden,
-#orderTrack[style*="display: none"] {
+#orderTrack[style*="display: none"],
+#orderTrack[style*="display:none"] {
   display: none !important;
   visibility: hidden !important;
   position: absolute !important;
   left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
 }
 
-/* Если внутри .step-dot случайно вылез — спрячь */
-body:not(.has-order) .step-dot {
+#orderTrack.hidden *,
+#orderTrack[style*="display: none"] *,
+#orderTrack[style*="display:none"] * {
   display: none !important;
+}
+
+.pg:not(.on) .step-dot,
+.pg:not(.on) .progress-steps,
+body:not(.has-order) .step-dot,
+body:not(.has-order) .progress-steps {
+  display: none !important;
+  visibility: hidden !important;
+}
+/* 🛡️ FIX: hide order track steps if no active order */
+#orderTrack.hidden,
+#orderTrack[style*="display: none"],
+#orderTrack[style*="display:none"] {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+#orderTrack.hidden *,
+#orderTrack[style*="display: none"] *,
+#orderTrack[style*="display:none"] * {
+  display: none !important;
+}
+
+/* Также спрятать .step-dot вне order page */
+.pg:not(.on) .step-dot,
+body:not(.has-order) .progress-steps {
+  display: none !important;
+  visibility: hidden !important;
 }
   
 </style>
