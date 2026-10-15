@@ -2173,16 +2173,28 @@ setInterval(async function () {
       if (typeof applyAccountType === 'function') applyAccountType();
       if (typeof gateByVerification === 'function') gateByVerification();
     });
-  } else if (freshV.status === 'rejected') {
-    showRejectedScreen(freshV.reason);
-  } else if (freshV.status === 'pending') {
+   } else if (freshV.status === 'pending') {
     var email2 = localStorage.getItem('user_email');
     var isLocallyApproved = localStorage.getItem('nc_kyc_approved_' + email2) === '1';
     if (isLocallyApproved) return;
-    if (p && !p.classList.contains('on')) {
+    
+    // 🛡️ FIX: force показать pending во весь экран
+    if (p) {
       p.classList.add('on');
-      p.style.display = 'flex';
+      p.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;z-index:99999 !important;position:fixed !important;inset:0 !important;';
     }
+    
+    // Скрыть всё остальное
+    var vv = document.getElementById('verifyScreen');
+    if (vv) { vv.classList.remove('on'); vv.style.display = 'none'; }
+    var rr2 = document.getElementById('rejectedScreen');
+    if (rr2) { rr2.classList.remove('on'); rr2.style.display = 'none'; }
+    var oo = document.getElementById('onboard');
+    if (oo) { oo.classList.remove('on'); oo.style.display = 'none'; }
+    var s1 = document.getElementById('sideBar');
+    if (s1) s1.style.display = 'none';
+    var m1 = document.getElementById('mainApp');
+    if (m1) m1.style.display = 'none';
   }
 }, 5000);
 
