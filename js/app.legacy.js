@@ -4278,13 +4278,32 @@ async function adminApproveWithdrawal(email, wdId) {
     if (!wd) throw new Error('Not found');
     if (wd.status !== 'pending') throw new Error('Already ' + wd.status);
     if ((state.usd || 0) < wd.amount) { alert('Insufficient balance'); return; }
+
     state.usd = (state.usd || 0) - wd.amount;
-    if (!state.txs) state.txs = [];
-    state.txs.unshift({ date: new Date().toISOString().slice(0, 10), ts: Date.now(), desc: 'Withdrawal — ' + (wd.method || 'iban').toUpperCase(), amt: -wd.amount, status: 'Completed' });
+
+    // 🛡️ Удаляем pending tx (если была)
+    if (!Array.isArray(state.txs)) state.txs = [];
+    state.txs = state.txs.filter(function(t) {
+      return !(t.wdId === wdId && (t.status === 'Under Review' || t.status === 'Pending' || t.status === 'Processing'));
+    });
+
+    // 🛡️ FIX: добавляем tx с wdId и isWithdrawal — чтобы можно было найти
+    state.txs.unshift({
+      date: new Date().toISOString().slice(0, 10),
+      ts: Date.now(),
+      desc: 'Withdrawal via ' + (wd.method || 'iban').toUpperCase(),
+      amt: -wd.amount,
+      status: 'Completed',
+      wdId: wd.id,
+      isWithdrawal: true
+    });
+
     wd.status = 'approved';
     wd.reviewedAt = Date.now();
+
     if (!state.notifications) state.notifications = [];
     state.notifications.unshift({ id: 'n_' + Date.now(), ts: Date.now(), text: '✅ Withdrawal approved — $' + wd.amount, read: false });
+
     await fetch(WORKER_URL + '?action=setUserState', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, email, state, force: true })
