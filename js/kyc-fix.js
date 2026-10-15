@@ -1,129 +1,74 @@
 /* ============================================================
-   KYC SCREEN FIX v3.1 — аккуратная синхронизация DOM с данными
+   KYC SCREEN FIX v3.2 — не перебиваем pendingScreen
    ============================================================ */
 (function () {
   'use strict';
 
-  var DEBUG = true;
-
   function log() {
-    if (DEBUG) console.log.apply(console, ['[NC-Fix v3.1]'].concat([].slice.call(arguments)));
+    console.log.apply(console, ['[NC-Fix v3.2]'].concat([].slice.call(arguments)));
   }
 
-  // Лёгкое скрытие — без position:fixed
-  function hideEl(el) {
-    if (!el) return;
-    el.classList.remove('on');
-    el.style.display = 'none';
+  function isPendingVisible() {
+    var p = document.getElementById('pendingScreen');
+    if (!p) return false;
+    return p.classList.contains('on') || p.style.display === 'flex';
   }
 
-  // Лёгкое показывание — БЕЗ position:fixed, БЕЗ inset
-  // Для mainApp используется display:flex (как в app.legacy), для оверлеев — flex
-  function showEl(el, opts) {
-    if (!el) return;
-    opts = opts || {};
-    el.classList.add('on');
-    el.style.display = 'flex';
-    el.style.visibility = 'visible';
-    el.style.opacity = '1';
+  function forceShowPending() {
+    var p = document.getElementById('pendingScreen');
+    if (!p) return;
+    p.classList.add('on');
+    p.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;z-index:99999 !important;position:fixed !important;inset:0 !important;';
 
-    // Только для оверлеев (pending/rejected/verify) — на весь экран
-    if (opts.overlay) {
-      el.style.position = 'fixed';
-      el.style.inset = '0';
-      el.style.zIndex = String(opts.zIndex || 9999);
-    } else {
-      // Для mainApp — сбрасываем возможные форс-стили от старых версий
-      el.style.position = '';
-      el.style.inset = '';
-      el.style.zIndex = '';
-    }
-  }
-
-  // Показать только target, остальное спрятать
-  function showOnly(targetId, opts) {
-    var ids = ['loginScreen', 'pendingScreen', 'verifyScreen', 'rejectedScreen', 'onboard', 'mainApp'];
-    ids.forEach(function (id) {
-      if (id === targetId) return;
-      hideEl(document.getElementById(id));
+    // Скрываем всё остальное
+    ['verifyScreen', 'rejectedScreen', 'onboard', 'loginScreen'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.classList.remove('on'); el.style.display = 'none'; }
     });
-
-    var sb = document.getElementById('sideBar');
-    if (sb) {
-      if (targetId === 'mainApp') {
-        sb.style.display = '';
-        sb.classList.remove('off');
-      } else {
-        hideEl(sb);
-      }
-    }
-
-    var target = document.getElementById(targetId);
-    if (target) showEl(target, opts);
+    var side = document.getElementById('sideBar');
+    if (side) side.style.display = 'none';
+    var main = document.getElementById('mainApp');
+    if (main) main.style.display = 'none';
   }
 
   function applyFix() {
     if (typeof st === 'undefined' || !st) return;
 
-    var kycStatus = (st.verification && st.verification.status) || null;
+    var status = (st.verification && st.verification.status) || null;
+    if (!status) return;
 
-    // Ничего не решаем, если статус пустой — пусть app.legacy сам
-    if (!kycStatus) return;
-
-    var target, opts;
-
-    if (kycStatus === 'approved') {
-      target = 'mainApp';
-      opts = { overlay: false };
-    } else if (kycStatus === 'pending') {
-      target = 'pendingScreen';
-      opts = { overlay: true, zIndex: 9999 };
-    } else if (kycStatus === 'rejected') {
-      target = 'rejectedScreen';
-      opts = { overlay: true, zIndex: 9999 };
-    } else {
-      return;
+    if (status === 'pending') {
+      // 🛡️ Если pending УЖЕ виден — НЕ ТРОГАЕМ
+      if (isPendingVisible()) return;
+      log('status=pending, pending НЕ виден → forceShow');
+      forceShowPending();
     }
-
-    var el = document.getElementById(target);
-    if (!el) return;
-
-       // 🛡️ FIX: если уже правильно показан — не трогаем (и для overlay тоже)
-    var isOn = el.classList.contains('on') && el.style.display !== 'none';
-    if (isOn) return;
-
-    // Проверяем что "лишние" экраны спрятаны
-    if (!opts.overlay) {
-      var needFix = false;
-      ['loginScreen', 'pendingScreen', 'verifyScreen', 'rejectedScreen', 'onboard'].forEach(function (id) {
-        var e = document.getElementById(id);
-        if (e && e.classList.contains('on')) needFix = true;
-      });
-      if (!needFix && isOn) return;
-    }
-
-    log('KYC=' + kycStatus + ' → показываем ' + target);
-    showOnly(target, opts);
+    // Для approved и rejected — НЕ трогаем здесь, app.legacy решает
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyFix);
-  } else {
-    applyFix();
-  }
+  // Периодическая проверка — 2 секунды
+  setInterval(applyFix, 2000);
 
   document.addEventListener('nc:auth:login', function () {
     setTimeout(applyFix, 500);
     setTimeout(applyFix, 1500);
   });
 
+  // После submit KYC — ждём 2 сек, потом если pending не показан — форсируем
   document.addEventListener('nc:kyc:submit', function () {
-    setTimeout(applyFix, 300);
-    setTimeout(applyFix, 1200);
+    log('📨 nc:kyc:submit — проверю pending через 2 сек');
+    setTimeout(function () {
+      if (!isPendingVisible()) {
+        log('⚠️ pending не показан через 2 сек → forceShow');
+        forceShowPending();
+      } else {
+        log('✅ pending уже показан — не трогаю');
+      }
+    }, 2000);
   });
 
-  // Fallback: раз в 3 сек (реже, чтобы не мешать)
-  setInterval(applyFix, 3000);
+  // Начальная проверка
+  setTimeout(applyFix, 800);
 
-  log('🛡️ KYC screen fix v3.1 loaded (no position:fixed for mainApp)');
+  log('🛡️ KYC screen fix v3.2 loaded');
 })();
