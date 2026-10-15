@@ -4830,5 +4830,19 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="js/maintenance-mode.js?v=20261008"></script>
 <script src="js/admin-maintenance-buttons.js?v=20261008"></script>
 <script src="js/kyc-fix.js?v=20261008"></script>
+
+<!-- 🛡️ FIX: восстанавливаем submitWithdraw из withdraw-flow.js v2.0 (перезаписан fixes.js) -->
+<script>
+  (function () {
+    if (typeof window.__ncSubmitWithdrawV2 === 'function') {
+      window.submitWithdraw = window.__ncSubmitWithdrawV2;
+      console.log('%c[FIX] ✅ submitWithdraw restored to v2.0 (animation works)',
+        'color:#10b981;font-weight:bold');
+    } else {
+      console.warn('[FIX] __ncSubmitWithdrawV2 not found — withdraw-flow.js not loaded?');
+    }
+  })();
+</script>
+</body>
 </body>
 </html>
