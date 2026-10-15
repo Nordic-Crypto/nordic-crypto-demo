@@ -1793,21 +1793,30 @@ async function uploadKycFile(file, docType) {
   if (!data.ok) throw new Error(data.error || 'Upload failed');
   return data.key;
 }
-
 window.submitRealVerification = async function () {
+  // 🛡️ FIX 1: защита от двойного клика
+  if (window._kycSubmitting) return;
+  window._kycSubmitting = true;
+
   var btn = document.getElementById('verifyNext3');
   if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
 
+  // Удаляем старый overlay если есть
   document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
 
+  // Создаём overlay
   var loadingOverlay = document.createElement('div');
   loadingOverlay.id = 'kycLoadingOverlay';
-  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;color:#e7edf5;';
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#e7edf5;';
   loadingOverlay.innerHTML =
     '<div style="width:60px;height:60px;border:4px solid rgba(0,212,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:kycSpin 1s linear infinite;margin-bottom:24px;"></div>' +
     '<div style="font-size:20px;font-weight:700;">Uploading documents...</div>' +
+    '<div style="font-size:13px;color:#94a3b8;margin-top:10px;">Please wait, do not close this tab</div>' +
     '<style>@keyframes kycSpin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(loadingOverlay);
+
+  // 🛡️ FIX 2: КЛЮЧЕВОЕ — даём браузеру отрисовать overlay ПЕРЕД тяжёлой загрузкой
+  await new Promise(function (r) { setTimeout(r, 80); });
 
   try {
     var token = getSessionToken();
@@ -1817,10 +1826,16 @@ window.submitRealVerification = async function () {
     var selfieEl = document.getElementById('selfieFile');
     var docFile = docEl && docEl.files ? docEl.files[0] : null;
     var selfieFile = selfieEl && selfieEl.files ? selfieEl.files[0] : null;
-    var street = document.getElementById('vStreet').value.trim();
-    var city = document.getElementById('vCity').value.trim();
-    var zip = document.getElementById('vZip').value.trim();
-    var country = document.getElementById('vCountry').value;
+
+    // 🛡️ FIX 3: безопасное чтение полей (не упадёт если элемента нет)
+    var streetEl = document.getElementById('vStreet');
+    var cityEl = document.getElementById('vCity');
+    var zipEl = document.getElementById('vZip');
+    var countryEl = document.getElementById('vCountry');
+    var street = streetEl ? streetEl.value.trim() : '';
+    var city = cityEl ? cityEl.value.trim() : '';
+    var zip = zipEl ? zipEl.value.trim() : '';
+    var country = countryEl ? countryEl.value : '';
 
     if (!docFile) throw new Error('Please upload document');
     if (!selfieFile) throw new Error('Please upload selfie');
@@ -1834,31 +1849,32 @@ window.submitRealVerification = async function () {
     st.verification.status = 'pending';
     st.verification.docType = docType;
     st.verification.docKeys = [docKey, selfieKey];
-    st.verification.personalInfo = { street, city, zip, country };
+    st.verification.personalInfo = { street: street, city: city, zip: zip, country: country };
     st.verification.submittedAt = Date.now();
 
     var r = await fetch(WORKER_URL + '?action=submitVerification', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        token, docType, docKeys: [docKey, selfieKey],
-        personalInfo: { street, city, zip, country }
+        token: token, docType: docType, docKeys: [docKey, selfieKey],
+        personalInfo: { street: street, city: city, zip: zip, country: country }
       })
     });
     var data = await r.json();
     if (!data.ok) throw new Error(data.error || 'Submit failed');
 
     var email = localStorage.getItem('user_email');
-    localStorage.setItem('nc_kyc_done_' + email, '1');
+    if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
 
+    // Удаляем overlay
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
 
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('sideBar').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('verifyScreen').classList.remove('on');
-    document.getElementById('verifyScreen').style.display = 'none';
-    document.getElementById('onboard').classList.remove('on');
-    document.getElementById('rejectedScreen').classList.remove('on');
+    // Скрываем всё
+    var loginEl = document.getElementById('loginScreen'); if (loginEl) loginEl.style.display = 'none';
+    var sideEl = document.getElementById('sideBar'); if (sideEl) sideEl.style.display = 'none';
+    var mainEl = document.getElementById('mainApp'); if (mainEl) mainEl.style.display = 'none';
+    var vScreen = document.getElementById('verifyScreen'); if (vScreen) { vScreen.classList.remove('on'); vScreen.style.display = 'none'; }
+    var onboardEl = document.getElementById('onboard'); if (onboardEl) onboardEl.classList.remove('on');
+    var rejEl = document.getElementById('rejectedScreen'); if (rejEl) rejEl.classList.remove('on');
 
     hideVerifyScreen();
     showPendingScreen();
@@ -1875,10 +1891,14 @@ window.submitRealVerification = async function () {
     }
 
     if (typeof toast === 'function') toast('Documents submitted! Waiting for approval.');
+
   } catch (e) {
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast(e.message, true);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
+  } finally {
+    // 🛡️ FIX 4: всегда сбрасываем флаг
+    window._kycSubmitting = false;
   }
 };
 
