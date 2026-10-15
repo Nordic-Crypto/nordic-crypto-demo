@@ -533,7 +533,25 @@
     errEl.style.display = 'none';
 
     if (amount <= 0) return showErr('Enter a valid amount');
-    if (amount > window.st.usd) return showErr('Amount exceeds available balance');
+
+// 🛡️ FIX: безопасная проверка баланса
+var __balance = 0;
+if (window.st && typeof window.st.usd === 'number') {
+  __balance = window.st.usd;
+} else if (typeof st !== 'undefined' && st && typeof st.usd === 'number') {
+  __balance = st.usd;
+} else {
+  console.warn('[withdraw] Cannot read balance:', {
+    windowSt: typeof window.st,
+    windowStUsd: window.st && window.st.usd,
+    st: typeof st
+  });
+  return showErr('Cannot read balance. Please refresh the page.');
+}
+
+if (amount > __balance) {
+  return showErr('Insufficient balance. Available: $' + __balance.toFixed(2));
+}
 
     var details = {};
 
