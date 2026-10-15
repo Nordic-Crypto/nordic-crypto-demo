@@ -4473,7 +4473,17 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 </div>
   
+<!-- ═══════════════════════════════════════════════════════
+     NORDIC CRYPTO — MODULE LOADER
+     Порядок ВАЖЕН: core → auth → app.legacy
+     ═══════════════════════════════════════════════════════ -->
+<script src="js/core.js?v=20261008"></script>
+<script src="js/auth.js?v=20261008"></script>
 <script src="js/app.legacy.js?v=20261008"></script>
+<script>
+// Отключаем Service Worker и чистим кэш
+...
+</script>
 <script>
 // Отключаем Service Worker и чистим кэш (чтобы всегда была свежая версия)
 if ('serviceWorker' in navigator) {
