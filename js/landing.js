@@ -519,3 +519,23 @@
   console.log('%c[NordicCrypto] ✅ Landing v7.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
   track('landing_view', { v: '6.0' });
 })();
+// 🎨 Theme Toggle
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  
+  // Загружаем сохранённую тему
+  var saved = localStorage.getItem('nc-theme') || 'dark';
+  if (saved === 'light') {
+    document.body.classList.add('theme-light');
+  }
+  
+  // Обработчик клика
+  btn.onclick = function(){
+    var isLight = document.body.classList.toggle('theme-light');
+    localStorage.setItem('nc-theme', isLight ? 'light' : 'dark');
+    console.log('[Theme] switched to', isLight ? 'light' : 'dark');
+  };
+  
+  console.log('[Theme] toggle ready, current:', saved);
+})();
