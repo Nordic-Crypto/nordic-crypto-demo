@@ -1,3 +1,24 @@
+(function ncFixAuthBootstrap() {
+  'use strict';
+
+  function bootstrap() {
+    if (!window.currentUser) {
+      var token = localStorage.getItem('session_token');
+      var email = localStorage.getItem('user_email');
+      if (token && email) {
+        window.currentUser = {
+          id:    email,
+          email: email,
+          role:  localStorage.getItem('user_role') || 'user',
+          name:  localStorage.getItem('user_name') || 'User'
+        };
+        console.log('[NC-Fix] ✅ currentUser:', window.currentUser.email);
+      }
+    }
+    ...
+  }
+  ...
+})();
 /* === PART C START === */
 
 /* ---------- KYC / VERIFICATION ---------- */
@@ -1844,39 +1865,6 @@ setInterval(function(){
 /* FIX: currentUser + nc:auth:login */
 (function ncFixAuthBootstrap() {
   'use strict';
-  /* ═══════════════════════════════════════════════════
-   БАЗОВЫЕ ПЕРЕМЕННЫЕ — НЕ УДАЛЯТЬ!
-   ═══════════════════════════════════════════════════ */
-var WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
-var WORKER_LOGIN_URL = WORKER_URL;
-
-var def = {
-  usd: 0, btc: 0, eth: 0,
-  btcP: 68000, ethP: 3200,
-  currency: 'USD',
-  txs: [], notifications: [],
-  card: null, user: {},
-  verification: null,
-  pendingDeposits: [],
-  depositVerifications: [],
-  withdrawals: [],
-  chat: [], ticket: null,
-  balanceHistory: [],
-  cryptoAddress: null,
-  _verificationLocked: false
-};
-var st = JSON.parse(JSON.stringify(def));
-
-var stateLoaded = false;
-var mode = null;
-var cvvVisible = false;
-var cvvTimer = null;
-var onbType = 'Visa';
-var onbCur = 'USD';
-var selectedDesign = 'cosmic';
-var autoCheckTimer = null;
-var autoCheckKnown = {};
-var tt = null;
 
   function bootstrap() {
     if (!window.currentUser) {
