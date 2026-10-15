@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <title>NordicCrypto — Banking for the crypto generation</title>
 <meta name="description" content="A bank-style account for crypto: cards, a SEPA IBAN and instant exchange in one app.">
 <meta property="og:title" content="NordicCrypto — Banking for the crypto generation">
@@ -413,8 +413,30 @@ function calc(){var v=parseFloat(a.value)||0,out=v*usd[f.value]/cr[c.value];
 r.textContent=out.toLocaleString('en-US',{maximumFractionDigits:out<1?6:out<100?4:2})+' '+c.value;
 t.textContent='1 '+c.value+' = $'+cr[c.value].toLocaleString('en-US');}
 a.oninput=f.onchange=c.onchange=calc;calc();
-var tg=document.getElementById('tg'),root=document.documentElement;
-tg.onclick=function(){var dark=root.getAttribute('data-theme')?root.getAttribute('data-theme')==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;root.setAttribute('data-theme',dark?'light':'dark');};
+// 🎯 Тема: загружаем сохранённую, иначе — тёмная по умолчанию
+(function initTheme(){
+  var root=document.documentElement;
+  var saved=localStorage.getItem('nc-theme');
+
+  if (saved === 'light') {
+    root.setAttribute('data-theme', 'light');
+  } else if (saved === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+  } else {
+    // 🎯 По умолчанию — ТЁМНАЯ
+    root.setAttribute('data-theme', 'dark');
+  }
+
+  var tg=document.getElementById('tg');
+  if (!tg) return;
+  tg.onclick=function(){
+    var now=root.getAttribute('data-theme');
+    var next=(now === 'dark') ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('nc-theme', next);
+    console.log('[Theme]', next);
+  };
+})();
 })();
 </script>
 <script>
