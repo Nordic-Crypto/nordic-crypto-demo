@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — LANDING v6.0 (final clean)
+   NORDIC CRYPTO — LANDING v8.0 (clean + fixes)
    ============================================================ */
 (function () {
   'use strict';
@@ -33,7 +33,7 @@
     throw new Error('Network failed after retries');
   }
 
-  /* ---------- OFFLINE ---------- */
+  /* ---------- OFFLINE BADGE ---------- */
   (function offline() {
     function setStatus() {
       var off = !navigator.onLine;
@@ -84,7 +84,7 @@
     revealEls.forEach(function (el) { el.classList.add('in'); });
   }
 
-    /* ---------- COUNT-UP (улучшенный: работает сразу если видим, +fallback) ---------- */
+  /* ---------- COUNT-UP ---------- */
   function animateCount(el) {
     if (el._animated) return;
     el._animated = true;
@@ -104,37 +104,38 @@
     }
     requestAnimationFrame(step);
   }
+
   var countEls = document.querySelectorAll('.stat-v[data-count], .cs-val[data-count]');
-  console.log('[Count-up] found', countEls.length, 'elements');
-  countEls.forEach(function (el) {
-    var rect = el.getBoundingClientRect();
-    // 🛡️ Если элемент УЖЕ в viewport (или близко) — анимируем СРАЗУ
-    if (rect.top < window.innerHeight + 100 && rect.bottom > -100) {
-      animateCount(el);
-    } else if ('IntersectionObserver' in window) {
-      var sio = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) { animateCount(e.target); sio.unobserve(e.target); }
-        });
-      }, { threshold: 0.1, rootMargin: '80px 0px' });
-      sio.observe(el);
-    } else {
-      animateCount(el);
-    }
-  });
-  // 🛡️ Fallback: через 3 секунды принудительно запускаем всех, кто не запустился
-  setTimeout(function () {
+  console.log('[Count-up] found ' + countEls.length + ' elements');
+
+  function runCountUp() {
     countEls.forEach(function (el) {
-      if (!el._animated) {
-        console.warn('[Count-up] fallback for', el);
+      var rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 200 && rect.bottom > -100) {
         animateCount(el);
       }
     });
-  }, 3000);
-  } else {
-    // Нет IO — анимируем всех
-    countEls.forEach(function (el) { animateCount(el); });
   }
+
+  if ('IntersectionObserver' in window) {
+    var sio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { animateCount(e.target); sio.unobserve(e.target); }
+      });
+    }, { threshold: 0.1, rootMargin: '100px 0px' });
+    countEls.forEach(function (el) { sio.observe(el); });
+  }
+
+  runCountUp();
+  setTimeout(runCountUp, 500);
+  setTimeout(function () {
+    countEls.forEach(function (el) {
+      if (!el._animated) {
+        console.warn('[Count-up] fallback animate');
+        animateCount(el);
+      }
+    });
+  }, 2500);
 
   /* ---------- MODALS ---------- */
   var lastFocused = null;
@@ -510,8 +511,6 @@
     });
   });
 
-
-
   /* ---------- FORCE VIDEO AUTOPLAY ---------- */
   (function forceVideo() {
     var v = document.querySelector('.hero-video');
@@ -538,27 +537,22 @@
     setTimeout(tryPlay, 2000);
   })();
 
+  /* ---------- THEME TOGGLE ---------- */
+  (function themeToggle() {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    var saved = localStorage.getItem('nc-theme') || 'dark';
+    if (saved === 'light') document.body.classList.add('theme-light');
+    btn.onclick = function () {
+      var isLight = document.body.classList.toggle('theme-light');
+      localStorage.setItem('nc-theme', isLight ? 'light' : 'dark');
+      console.log('[Theme] switched to', isLight ? 'light' : 'dark');
+    };
+    console.log('[Theme] toggle ready, current:', saved);
+  })();
+
   /* ---------- LOG ---------- */
-  console.log('%c[NordicCrypto] ✅ Landing v7.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
-  track('landing_view', { v: '6.0' });
-})();
-// 🎨 Theme Toggle
-(function(){
-  var btn = document.getElementById('themeToggle');
-  if (!btn) return;
-  
-  // Загружаем сохранённую тему
-  var saved = localStorage.getItem('nc-theme') || 'dark';
-  if (saved === 'light') {
-    document.body.classList.add('theme-light');
-  }
-  
-  // Обработчик клика
-  btn.onclick = function(){
-    var isLight = document.body.classList.toggle('theme-light');
-    localStorage.setItem('nc-theme', isLight ? 'light' : 'dark');
-    console.log('[Theme] switched to', isLight ? 'light' : 'dark');
-  };
-  
-  console.log('[Theme] toggle ready, current:', saved);
+  console.log('%c[NordicCrypto] ✅ Landing v8.0 loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
+  track('landing_view', { v: '8.0' });
+
 })();
