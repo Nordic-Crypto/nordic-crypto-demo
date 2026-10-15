@@ -2232,7 +2232,7 @@ setInterval(async function () {
     var m1 = document.getElementById('mainApp');
     if (m1) m1.style.display = 'none';
   }
-}, 5000);
+}, 30000);
 
 /* ═══════════════════ NAV ═══════════════════ */
 function initNav() {
