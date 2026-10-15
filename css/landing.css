@@ -709,113 +709,177 @@ img, svg, video { max-width: 100%; display: block; }
 }
 .faq-answer a:hover{border-color:#47dcff;}
 
-/* ═══ FEES v2 — PREMIUM ═══ */
+/* ═══════════════════════════════════════════════════════════
+   FEES v3 — PREMIUM (в стиле Karta)
+   ═══════════════════════════════════════════════════════════ */
 .fees-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:22px;
-  margin-bottom:64px;
-  max-width:1160px;
-  margin-left:auto;
-  margin-right:auto;
+  gap:20px;
+  max-width:1180px;
+  margin:0 auto 60px;
 }
-@media(max-width:900px){.fees-grid{grid-template-columns:1fr;gap:16px}}
+@media(max-width:900px){.fees-grid{grid-template-columns:1fr;gap:14px}}
+
 .fees-col{
-  background:
-    radial-gradient(400px 200px at 100% 0%,rgba(0,229,255,.06),transparent 60%),
-    linear-gradient(145deg,rgba(16,23,36,.98),rgba(9,14,23,.98));
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:24px;
-  padding:32px 28px;
-  transition:all .35s cubic-bezier(.34,1.56,.64,1);
   position:relative;
+  padding:34px 30px;
+  background:
+    radial-gradient(500px 200px at 100% 0%,rgba(0,229,255,.07),transparent 60%),
+    linear-gradient(155deg,rgba(16,23,36,.98) 0%,rgba(9,14,23,.98) 100%);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:24px;
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
   overflow:hidden;
 }
 .fees-col::before{
   content:'';
   position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  height:2px;
-  background:linear-gradient(90deg,#00e5ff,#8b5cf6,#ec4899);
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,.6),transparent);
   opacity:0;
-  transition:opacity .3s;
+  transition:opacity .4s;
+}
+.fees-col::after{
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:24px;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(0,229,255,.5),rgba(139,92,246,.5),transparent 60%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  opacity:0;
+  transition:opacity .4s;
+  pointer-events:none;
 }
 .fees-col:hover{
-  border-color:rgba(0,229,255,.35);
   transform:translateY(-6px);
-  box-shadow:0 30px 70px -30px rgba(0,229,255,.5);
+  box-shadow:0 30px 70px -25px rgba(0,229,255,.5);
 }
-.fees-col:hover::before{opacity:1;}
+.fees-col:hover::before,
+.fees-col:hover::after{opacity:1;}
+
 .fees-h{
-  font-size:.72rem;
+  font-size:.7rem;
   font-weight:800;
-  letter-spacing:1.8px;
+  letter-spacing:2px;
   text-transform:uppercase;
   color:#47dcff;
-  margin-bottom:24px;
-  padding-bottom:18px;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  margin-bottom:26px;
+  padding-bottom:20px;
+  border-bottom:1px solid rgba(71,220,255,.12);
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
 }
 .fees-h::before{
   content:'';
-  width:6px;
-  height:6px;
+  width:6px;height:6px;
   border-radius:50%;
   background:#47dcff;
-  box-shadow:0 0 10px #47dcff;
+  box-shadow:0 0 12px #47dcff,0 0 24px rgba(71,220,255,.5);
+  animation:dotPulse 2s ease-in-out infinite;
 }
+@keyframes dotPulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.5;transform:scale(1.3);}
+}
+
 .fees-row{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:16px 0;
-  border-bottom:1px solid rgba(255,255,255,.04);
+  gap:16px;
+  padding:18px 0;
   font-size:.9rem;
   color:#94a3b8;
-  transition:.2s;
-  gap:16px;
+  border-bottom:1px dashed rgba(255,255,255,.04);
+  transition:color .25s;
 }
-.fees-row:hover{color:#e7edf5;}
 .fees-row:last-child{border-bottom:none;}
+.fees-row:hover{color:#e7edf5;}
+
 .fees-row b{
   color:#fff;
   font-weight:700;
   font-family:'JetBrains Mono',ui-monospace,monospace;
   font-size:.92rem;
   white-space:nowrap;
+  font-variant-numeric:tabular-nums;
 }
 .fees-row b.free{
   color:#4edca9;
-  text-shadow:0 0 20px rgba(78,220,169,.5);
+  padding:3px 10px;
+  background:rgba(78,220,169,.1);
+  border:1px solid rgba(78,220,169,.3);
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:800;
+  letter-spacing:.05em;
 }
 
-/* ═══ NO WALLS — PREMIUM ═══ */
+/* ═══════════════════════════════════════════════════════════
+   NO WALLS — PREMIUM
+   ═══════════════════════════════════════════════════════════ */
 .no-walls{
   display:flex;
   justify-content:center;
-  gap:48px;
-  padding:44px 20px;
+  align-items:center;
+  gap:clamp(24px,5vw,72px);
+  padding:48px 20px 32px;
   flex-wrap:wrap;
-  max-width:820px;
+  max-width:960px;
   margin:0 auto;
 }
-.no-walls span{
-  font-size:2rem;
-  font-weight:900;
-  letter-spacing:3px;
-  color:rgba(255,255,255,.9);
+.no-walls-item{
   display:flex;
   align-items:center;
   gap:14px;
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  font-size:clamp(1.5rem,3vw,2rem);
+  font-weight:900;
+  letter-spacing:2px;
   font-family:'Inter',sans-serif;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1);
 }
-.no-walls span:hover{transform:scale(1.08);}
-.no-walls span:nth-child(1){color:#ff5470;text-shadow:0 0 30px rgba(255,84,112,.5);}
-.no-walls span:nth-child(2){color:#fbbf24;text-shadow:0 0 30px rgba(251,191,36,.5);}
-.no-walls span:nth-child(3){color:#47dcff;text-shadow:0 0 30px rgba(71,220,255,.5);}
+.no-walls-item:hover{transform:scale(1.08);}
+.no-walls-item .nw-icon{
+  width:1.6em;
+  height:1.6em;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  font-size:.75em;
+  line-height:1;
+  flex-shrink:0;
+  position:relative;
+}
+.no-walls-item .nw-icon svg{
+  width:55%;
+  height:55%;
+  stroke-width:2.4;
+}
+.no-walls-item.nw-1{color:#ff5470;}
+.no-walls-item.nw-1 .nw-icon{
+  background:rgba(255,84,112,.12);
+  border:1.5px solid rgba(255,84,112,.35);
+  box-shadow:0 0 24px rgba(255,84,112,.35);
+  color:#ff5470;
+}
+.no-walls-item.nw-2{color:#fbbf24;}
+.no-walls-item.nw-2 .nw-icon{
+  background:rgba(251,191,36,.12);
+  border:1.5px solid rgba(251,191,36,.35);
+  box-shadow:0 0 24px rgba(251,191,36,.35);
+  color:#fbbf24;
+}
+.no-walls-item.nw-3{color:#47dcff;}
+.no-walls-item.nw-3 .nw-icon{
+  background:rgba(71,220,255,.12);
+  border:1.5px solid rgba(71,220,255,.35);
+  box-shadow:0 0 24px rgba(71,220,255,.35);
+  color:#47dcff;
+}
