@@ -1939,12 +1939,25 @@ window.submitRealVerification = async function () {
 
 function showPendingScreen() {
   var s = document.getElementById('pendingScreen');
-  if (s) s.classList.add('on');
-  if (typeof window.__ncPausePolling === 'function') window.__ncPausePolling(300000);
-  var r = document.getElementById('rejectedScreen');
-  if (r) r.classList.remove('on');
-  var v = document.getElementById('verifyScreen');
-  if (v) v.classList.remove('on');
+  if (s) {
+    s.classList.add('on');
+    // 🛡️ FIX: force display через inline-style (не зависит от CSS)
+    s.style.display = 'flex';
+    s.style.visibility = 'visible';
+    s.style.opacity = '1';
+    s.style.zIndex = '9999';
+    s.style.position = 'fixed';
+    s.style.inset = '0';
+  }
+  
+  // Скрываем все остальные
+  ['verifyScreen', 'rejectedScreen', 'onboard'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('on');
+      el.style.display = 'none';
+    }
+  });
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
   if (side) side.style.display = 'none';
