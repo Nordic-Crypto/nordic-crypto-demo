@@ -1921,8 +1921,15 @@ window.submitRealVerification = async function () {
       _p.style.opacity = '1';
     }
 
-    if (typeof toast === 'function') toast('Documents submitted! Waiting for approval.');
+        if (typeof toast === 'function') toast('Documents submitted! Waiting for approval.');
     console.log('[KYC] ✅ DONE');
+
+    // 🛡️ FIX: сообщаем kyc-fix.js что submit прошёл
+    try {
+      document.dispatchEvent(new CustomEvent('nc:kyc:submit', {
+        detail: { status: 'pending', ts: Date.now() }
+      }));
+    } catch (e) {}
 
   } catch (e) {
     clearTimeout(watchdog);
