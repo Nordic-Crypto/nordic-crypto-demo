@@ -540,6 +540,22 @@ function render() {
   if (n - _lastRender < 150) return;
   _lastRender = n;
   _renderAll();
+
+  // 🛡️ FIX: watchdog — если status=pending, гарантируем показ pendingScreen
+  try {
+    var v = st && st.verification && st.verification.status;
+    if (v === 'pending') {
+      var p = document.getElementById('pendingScreen');
+      if (p) {
+        var visible = p.classList.contains('on') && p.style.display !== 'none';
+        if (!visible) {
+          p.classList.add('on');
+          p.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;z-index:99999 !important;position:fixed !important;inset:0 !important;';
+          console.warn('[NC watchdog] pendingScreen был скрыт → восстановлен');
+        }
+      }
+    }
+  } catch (e) {}
 }
 
 function _renderAll() {
