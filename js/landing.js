@@ -84,11 +84,12 @@
     revealEls.forEach(function (el) { el.classList.add('in'); });
   }
 
-   /* ---------- COUNT-UP (universal + fallback) ---------- */
+    /* ---------- COUNT-UP (улучшенный: работает сразу если видим, +fallback) ---------- */
   function animateCount(el) {
     if (el._animated) return;
     el._animated = true;
     var target = parseFloat(el.getAttribute('data-count'));
+    if (isNaN(target)) return;
     var dec = parseInt(el.getAttribute('data-decimals') || '0', 10);
     var pre = el.getAttribute('data-prefix') || '';
     var suf = el.getAttribute('data-suffix') || '';
@@ -103,38 +104,33 @@
     }
     requestAnimationFrame(step);
   }
-
   var countEls = document.querySelectorAll('.stat-v[data-count], .cs-val[data-count]');
   console.log('[Count-up] found', countEls.length, 'elements');
-
-  // 🛡️ FIX: сразу запускаем если элемент уже виден + IO для остальных
-  if ('IntersectionObserver' in window) {
-    var sio = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          animateCount(e.target);
-          sio.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '50px 0px' });
+  countEls.forEach(function (el) {
+    var rect = el.getBoundingClientRect();
+    // 🛡️ Если элемент УЖЕ в viewport (или близко) — анимируем СРАЗУ
+    if (rect.top < window.innerHeight + 100 && rect.bottom > -100) {
+      animateCount(el);
+    } else if ('IntersectionObserver' in window) {
+      var sio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { animateCount(e.target); sio.unobserve(e.target); }
+        });
+      }, { threshold: 0.1, rootMargin: '80px 0px' });
+      sio.observe(el);
+    } else {
+      animateCount(el);
+    }
+  });
+  // 🛡️ Fallback: через 3 секунды принудительно запускаем всех, кто не запустился
+  setTimeout(function () {
     countEls.forEach(function (el) {
-      var rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        // Уже виден — анимируем сразу
+      if (!el._animated) {
+        console.warn('[Count-up] fallback for', el);
         animateCount(el);
-      } else {
-        sio.observe(el);
       }
     });
-    // 🛡️ FALLBACK: через 3 сек проверить что все анимировались
-    setTimeout(function () {
-      countEls.forEach(function (el) {
-        if (!el._animated) {
-          console.warn('[Count-up] fallback for', el);
-          animateCount(el);
-        }
-      });
-    }, 3000);
+  }, 3000);
   } else {
     // Нет IO — анимируем всех
     countEls.forEach(function (el) { animateCount(el); });
