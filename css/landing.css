@@ -883,3 +883,64 @@ img, svg, video { max-width: 100%; display: block; }
   box-shadow:0 0 24px rgba(71,220,255,.35);
   color:#47dcff;
 }
+/* ═══════════════════════════════════════════════════════════
+   THEME TOGGLE
+   ═══════════════════════════════════════════════════════════ */
+.theme-toggle{
+  width:40px;height:40px;
+  border-radius:50%;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  color:#e7edf5;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.3s;
+  position:relative;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.theme-toggle:hover{
+  background:rgba(71,220,255,.08);
+  border-color:rgba(71,220,255,.3);
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(0,229,255,.2);
+}
+.theme-toggle svg{
+  width:18px;height:18px;
+  position:absolute;
+  transition:.4s cubic-bezier(.34,1.56,.64,1);
+}
+.theme-toggle .tt-sun{opacity:0;transform:rotate(-90deg) scale(.6);}
+.theme-toggle .tt-moon{opacity:1;transform:rotate(0deg) scale(1);}
+body.theme-light .theme-toggle .tt-sun{opacity:1;transform:rotate(0deg) scale(1);}
+body.theme-light .theme-toggle .tt-moon{opacity:0;transform:rotate(90deg) scale(.6);}
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT THEME (basic)
+   ═══════════════════════════════════════════════════════════ */
+body.theme-light{
+  --bg:#f8fafc;
+  --txt:#0f172a;
+  --mut:#64748b;
+  --bd:rgba(0,0,0,.08);
+  --bd2:rgba(0,0,0,.12);
+  background:#f8fafc;
+  color:#0f172a;
+}
+body.theme-light::before{opacity:.3;}
+body.theme-light .header{background:rgba(255,255,255,.85);border-bottom-color:rgba(0,0,0,.06);}
+body.theme-light .header .nav a{color:#475569;}
+body.theme-light .header .nav a:hover{color:#0f172a;}
+body.theme-light .b{background:#fff;border-color:rgba(0,0,0,.06);}
+body.theme-light .b h3{color:#0f172a;}
+body.theme-light .fees-col,
+body.theme-light .faq-item{background:#fff;border-color:rgba(0,0,0,.08);}
+body.theme-light .fees-row{color:#475569;border-bottom-color:rgba(0,0,0,.05);}
+body.theme-light .fees-row b{color:#0f172a;}
+body.theme-light .faq-item summary{color:#0f172a;}
+body.theme-light .faq-answer{color:#475569;}
+body.theme-light .mut{color:#64748b;}
+body.theme-light .section h2{color:#0f172a;}
+body.theme-light .section h2 .dim{color:#94a3b8;}
+body.theme-light .theme-toggle{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08);color:#475569;}
+body.theme-light .theme-toggle:hover{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.4);color:#0891b2;}
