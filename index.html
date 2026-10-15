@@ -437,6 +437,27 @@ select.fc option{background:#0f1420;color:#e8f4ff}
 @keyframes confettiFly{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0deg)}10%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1) rotate(var(--rot))}}
 .verify-screen{position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,212,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(124,58,237,.14),transparent 60%),var(--bg);display:none;justify-content:center;align-items:center;z-index:2900;overflow-y:auto;padding:40px 20px}
 .verify-screen.on{display:flex}
+/* 🛡️ FIX: pendingScreen/rejected/verify force-show */
+#pendingScreen.on,
+#rejectedScreen.on,
+#verifyScreen.on,
+.verify-screen.on{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  z-index:99999 !important;
+  position:fixed !important;
+  inset:0 !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+#pendingScreen.on *,
+#rejectedScreen.on *,
+#verifyScreen.on *,
+.verify-screen.on *{
+  visibility:visible !important;
+  opacity:1 !important;
+}
 .verify-step{display:none;width:100%;max-width:520px;animation:verifyFadeIn .45s ease}
 .verify-step.on{display:block}
 @keyframes verifyFadeIn{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -3065,26 +3086,6 @@ body:not(.has-order) .progress-steps {
   visibility: hidden !important;
 }
 
-// 🛡️ FIX: force-show pendingScreen
-(function () {
-  var style = document.createElement('style');
-  style.textContent = `
-    #pendingScreen.on {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      z-index: 9999 !important;
-      position: fixed !important;
-      inset: 0 !important;
-    }
-    #pendingScreen.on * {
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-  `;
-  document.head.appendChild(style);
-  console.log('[NC-FIX] pendingScreen CSS override injected');
-})();
   
 </style>
 <script>
