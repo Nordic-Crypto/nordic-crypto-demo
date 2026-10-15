@@ -1794,29 +1794,41 @@ async function uploadKycFile(file, docType) {
   return data.key;
 }
 window.submitRealVerification = async function () {
-  // 🛡️ FIX 1: защита от двойного клика
   if (window._kycSubmitting) return;
   window._kycSubmitting = true;
 
   var btn = document.getElementById('verifyNext3');
   if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
 
-  // Удаляем старый overlay если есть
   document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
 
-  // Создаём overlay
   var loadingOverlay = document.createElement('div');
   loadingOverlay.id = 'kycLoadingOverlay';
   loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#e7edf5;';
   loadingOverlay.innerHTML =
     '<div style="width:60px;height:60px;border:4px solid rgba(0,212,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:kycSpin 1s linear infinite;margin-bottom:24px;"></div>' +
-    '<div style="font-size:20px;font-weight:700;">Uploading documents...</div>' +
-    '<div style="font-size:13px;color:#94a3b8;margin-top:10px;">Please wait, do not close this tab</div>' +
+    '<div style="font-size:20px;font-weight:700;" id="kycStatusText">Uploading documents...</div>' +
+    '<div style="font-size:13px;color:#94a3b8;margin-top:10px;" id="kycStatusSub">Please wait, do not close this tab</div>' +
     '<style>@keyframes kycSpin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(loadingOverlay);
 
-  // 🛡️ FIX 2: КЛЮЧЕВОЕ — даём браузеру отрисовать overlay ПЕРЕД тяжёлой загрузкой
+  function setStatus(main, sub) {
+    var m = document.getElementById('kycStatusText');
+    var s = document.getElementById('kycStatusSub');
+    if (m) m.textContent = main;
+    if (s) s.textContent = sub || '';
+  }
+
   await new Promise(function (r) { setTimeout(r, 80); });
+
+  // 🛡️ FIX: глобальный таймаут 60 сек — если что-то висит, покажем ошибку
+  var watchdog = setTimeout(function () {
+    document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
+    if (typeof toast === 'function') toast('Upload timeout. Try smaller files or check connection.', true);
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
+    window._kycSubmitting = false;
+    alert('KYC Upload TIMEOUT\n\nЧто делать:\n1. F12 → Network → проверь запросы uploadKycDoc\n2. F12 → Console → проверь красные ошибки\n3. Уменьши размер файлов (max 3MB)\n4. Проверь интернет');
+  }, 60000);
 
   try {
     var token = getSessionToken();
@@ -1827,7 +1839,6 @@ window.submitRealVerification = async function () {
     var docFile = docEl && docEl.files ? docEl.files[0] : null;
     var selfieFile = selfieEl && selfieEl.files ? selfieEl.files[0] : null;
 
-    // 🛡️ FIX 3: безопасное чтение полей (не упадёт если элемента нет)
     var streetEl = document.getElementById('vStreet');
     var cityEl = document.getElementById('vCity');
     var zipEl = document.getElementById('vZip');
@@ -1841,13 +1852,33 @@ window.submitRealVerification = async function () {
     if (!selfieFile) throw new Error('Please upload selfie');
     if (!street || !city || !zip) throw new Error('Please fill address');
 
-    var docType = verifyData.docType || 'Passport';
+    // 🛡️ FIX: проверяем размер файлов ДО отправки
+    var MAX_BYTES = 3 * 1024 * 1024; // 3MB
+    if (docFile.size > MAX_BYTES) {
+      throw new Error('Document too large (' + (docFile.size/1024/1024).toFixed(1) + 'MB). Max 3MB.');
+    }
+    if (selfieFile.size > MAX_BYTES) {
+      throw new Error('Selfie too large (' + (selfieFile.size/1024/1024).toFixed(1) + 'MB). Max 3MB.');
+    }
+
+    console.log('[KYC] Starting upload. Doc:', docFile.size, 'bytes; Selfie:', selfieFile.size, 'bytes');
+
+    setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
+    console.log('[KYC] Uploading passport...');
     var docKey = await uploadKycFile(docFile, 'passport');
+    console.log('[KYC] ✅ passport uploaded:', docKey);
+
+    setStatus('Uploading selfie (2/2)...', 'Almost done');
+    console.log('[KYC] Uploading selfie...');
     var selfieKey = await uploadKycFile(selfieFile, 'selfie');
+    console.log('[KYC] ✅ selfie uploaded:', selfieKey);
+
+    setStatus('Submitting verification...', 'Contacting server');
+    console.log('[KYC] Submitting verification...');
 
     if (!st.verification) st.verification = {};
     st.verification.status = 'pending';
-    st.verification.docType = docType;
+    st.verification.docType = verifyData.docType || 'Passport';
     st.verification.docKeys = [docKey, selfieKey];
     st.verification.personalInfo = { street: street, city: city, zip: zip, country: country };
     st.verification.submittedAt = Date.now();
@@ -1855,20 +1886,20 @@ window.submitRealVerification = async function () {
     var r = await fetch(WORKER_URL + '?action=submitVerification', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        token: token, docType: docType, docKeys: [docKey, selfieKey],
+        token: token, docType: verifyData.docType || 'Passport', docKeys: [docKey, selfieKey],
         personalInfo: { street: street, city: city, zip: zip, country: country }
       })
     });
     var data = await r.json();
+    console.log('[KYC] ✅ submitVerification response:', data);
     if (!data.ok) throw new Error(data.error || 'Submit failed');
 
     var email = localStorage.getItem('user_email');
     if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
 
-    // Удаляем overlay
+    clearTimeout(watchdog);
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
 
-    // Скрываем всё
     var loginEl = document.getElementById('loginScreen'); if (loginEl) loginEl.style.display = 'none';
     var sideEl = document.getElementById('sideBar'); if (sideEl) sideEl.style.display = 'none';
     var mainEl = document.getElementById('mainApp'); if (mainEl) mainEl.style.display = 'none';
@@ -1891,13 +1922,17 @@ window.submitRealVerification = async function () {
     }
 
     if (typeof toast === 'function') toast('Documents submitted! Waiting for approval.');
+    console.log('[KYC] ✅ DONE');
 
   } catch (e) {
+    clearTimeout(watchdog);
+    console.error('[KYC] ❌ ERROR:', e);
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast(e.message, true);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
+    alert('KYC Error: ' + e.message);
   } finally {
-    // 🛡️ FIX 4: всегда сбрасываем флаг
+    clearTimeout(watchdog);
     window._kycSubmitting = false;
   }
 };
