@@ -3064,6 +3064,27 @@ body:not(.has-order) .progress-steps {
   display: none !important;
   visibility: hidden !important;
 }
+
+// 🛡️ FIX: force-show pendingScreen
+(function () {
+  var style = document.createElement('style');
+  style.textContent = `
+    #pendingScreen.on {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 9999 !important;
+      position: fixed !important;
+      inset: 0 !important;
+    }
+    #pendingScreen.on * {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+  `;
+  document.head.appendChild(style);
+  console.log('[NC-FIX] pendingScreen CSS override injected');
+})();
   
 </style>
 <script>
