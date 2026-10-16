@@ -5196,11 +5196,10 @@ function applyAccountType() {
       exDash.style.display = 'block';
       exDash.classList.add('on');
 
-      try {
+           try {
         if (typeof renderExchangeDash === 'function') renderExchangeDash();
       } catch (e) {
         console.warn('[applyAccountType] renderExchangeDash failed:', e);
-        exDash.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8">Exchange dashboard error. Contact support.</div>';
       }
     } else {
       if (dash) { dash.style.display = 'block'; dash.classList.add('on'); }
