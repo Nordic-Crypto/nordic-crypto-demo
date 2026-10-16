@@ -6175,7 +6175,7 @@ document.addEventListener('DOMContentLoaded', function(){
             }).catch(function(){});
           }
         } catch(e) { console.error('[logout]', e); }
-        setTimeout(function(){ window.location.href = 'landing.html'; }, 200);
+        window.location.replace('landing.html');
       });
     });
   }
