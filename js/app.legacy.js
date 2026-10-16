@@ -340,7 +340,6 @@ function showApp() {
     if (typeof showVerifyStep === 'function') showVerifyStep(1);
   });
 }
-
 async function doLogout() {
   var token = getSessionToken();
   if (token) {
