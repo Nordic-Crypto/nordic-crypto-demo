@@ -5660,6 +5660,57 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   ncFixPendingScreen();
   setInterval(ncFixPendingScreen, 400);
+    // 🛡️ FIX: Log out кнопка внутри pendingScreen
+  function ncWireLogout() {
+    ['btnLogoutPending', 'btnLogoutRejected'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (!btn || btn.__ncWired) return;
+      btn.__ncWired = true;
+      btn.addEventListener('click', function() {
+        console.log('🚪 Logout via ' + id);
+        try {
+          var tk = localStorage.getItem('session_token') || '';
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('user_email');
+          localStorage.removeItem('user_name');
+          localStorage.removeItem('session_expires');
+          localStorage.removeItem('nc_current_user');
+          // Уведомляем Worker
+          if (tk && typeof fetch === 'function') {
+            var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL :
+                    'https://nordiccrypto.workers.dev';
+            fetch(W + '?action=logout', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ token: tk })
+            }).catch(function(){});
+          }
+        } catch(e) { console.error('[logout]', e); }
+        setTimeout(function(){ window.location.href = 'landing.html'; }, 200);
+      });
+    });
+  }
+  ncWireLogout();
+  setInterval(ncWireLogout, 800);
+
+  // 🛡️ FIX: Check status кнопка
+  function ncWireCheckStatus() {
+    var btn = document.getElementById('btnCheckKycStatus');
+    if (!btn || btn.__ncWired) return;
+    btn.__ncWired = true;
+    btn.addEventListener('click', function() {
+      console.log('🔄 Check status clicked');
+      // Триггерим проверку через app.legacy (если есть)
+      if (typeof window.checkKycStatus === 'function') {
+        window.checkKycStatus();
+      } else {
+        // Fallback — перезагрузка
+        window.location.reload();
+      }
+    });
+  }
+  ncWireCheckStatus();
+  setInterval(ncWireCheckStatus, 800);
 })();
 </script>
 </body>
