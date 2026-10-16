@@ -5956,6 +5956,20 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="js/admin-maintenance-buttons.js?v=20261008"></script>
 <script src="js/kyc-fix.js?v=20261008"></script>
 
+  <!-- 🛡️ Скрываем /app.html из URL (показываем как /) -->
+<script>
+(function(){
+  // Только если мы НЕ на лендинге и НЕ в админке
+  if (window.location.pathname.indexOf('app.html') !== -1) {
+    if (window.history && window.history.replaceState) {
+      try {
+        window.history.replaceState(null, '', '/');
+      } catch(e) { /* ignore */ }
+    }
+  }
+})();
+</script>
+
 <!-- 🛡️ FIX: восстанавливаем submitWithdraw из withdraw-flow.js v2.0 (перезаписан fixes.js) -->
 <script>
   (function () {
