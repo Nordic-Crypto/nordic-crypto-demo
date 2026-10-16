@@ -82,57 +82,103 @@ function getDepositWallet(coin) {
 }
 
 /* ═══════════════════ SERVER SYNC ═══════════════════ */
+/* 🛡️ v7.1: stateTrusted = true только если сервер реально вернул данные клиента.
+   Если загрузка не удалась — НИКОГДА не сохраняем дефолтный state поверх данных на сервере. */
+var stateTrusted = false;
+window.__ncLoadFailed = false;
+
+function _ncNormalizeState(data) {
+  var d = JSON.parse(JSON.stringify(def));
+  if (data && typeof data === 'object') { for (var k in data) { if (Object.prototype.hasOwnProperty.call(data, k)) d[k] = data[k]; } }
+  if (!d.txs) d.txs = [];
+  if (!d.balanceHistory) d.balanceHistory = [];
+  if (!d.withdrawals) d.withdrawals = [];
+  if (!d.pendingDeposits) d.pendingDeposits = [];
+  if (!d.depositVerifications) d.depositVerifications = [];
+  if (!d.card || typeof d.card !== 'object') d.card = null;
+  if (!d.chat) d.chat = [];
+  if (!d.ticket) d.ticket = null;
+  if (!d.typing) d.typing = {};
+  if (!d.verification) d.verification = null;
+  if (!d.user || typeof d.user !== 'object') d.user = { verified: false, accountType: null, iban: null };
+  return d;
+}
+
+function _ncFetchState(body, attempt) {
+  var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+  return fetch(WORKER_LOGIN_URL + '?action=getUserState', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: ctl ? ctl.signal : undefined
+  }).then(function (r) { clearTimeout(timer); return r.json(); })
+    .catch(function (err) {
+      clearTimeout(timer);
+      if (attempt < 1) return new Promise(function (res) { setTimeout(res, 800); }).then(function () { return _ncFetchState(body, attempt + 1); });
+      throw err;
+    });
+}
+
 function loadFromServer(cb, targetEmail) {
   var token = getSessionToken();
   if (!token) {
     st = JSON.parse(JSON.stringify(def));
     stateLoaded = true;
+    stateTrusted = false;
     if (cb) cb();
     return;
   }
   var body = { token: token };
   if (targetEmail) body.email = targetEmail;
-  fetch(WORKER_LOGIN_URL + '?action=getUserState', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
-    .then(function (r) { return r.json(); })
+  window.__ncLoadFailed = false;
+
+  _ncFetchState(body, 0)
     .then(function (data) {
-      st = (data && data.ok === false) ? JSON.parse(JSON.stringify(def)) : (data || JSON.parse(JSON.stringify(def)));
-      if (!st.txs) st.txs = [];
-      if (!st.balanceHistory) st.balanceHistory = [];
-      if (!st.withdrawals) st.withdrawals = [];
-      if (!st.pendingDeposits) st.pendingDeposits = [];
-      if (!st.depositVerifications) st.depositVerifications = [];
-      if (!st.card || typeof st.card !== 'object') st.card = null;
-      if (!st.chat) st.chat = [];
-      if (!st.ticket) st.ticket = null;
-      if (!st.typing) st.typing = {};
-      if (!st.verification) st.verification = null;
-      if (!st.user) st.user = { verified: false, accountType: null, iban: null };
+      var errText = data && data.ok === false ? String(data.error || '') : '';
+      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+        // сессия умерла — честно выходим на логин, ничего не затираем
+        clearSessionToken();
+        localStorage.removeItem('user_email'); localStorage.removeItem('user_role');
+        window.__ncLoadFailed = false;
+        stateTrusted = false; stateLoaded = false;
+        try { showLoginScreen(); } catch (e) {}
+        return;
+      }
+      if (errText && !/not.?found|no.?state|empty|new.?user/i.test(errText)) {
+        throw new Error('server: ' + errText);
+      }
+      st = _ncNormalizeState(data && data.ok === false ? null : data);
       stateLoaded = true;
+      stateTrusted = true;
+      try { localStorage.setItem('nc_state_backup:' + (targetEmail || localStorage.getItem('user_email') || ''), JSON.stringify({ t: Date.now(), s: st })); } catch (e) {}
 
-      var form = document.getElementById('chatTicketForm');
-      var conv = document.getElementById('chatConversation');
-      if (form) form.style.display = 'flex';
-      if (conv) conv.style.display = 'none';
-      var emailEl = document.getElementById('tkEmail');
-      if (emailEl) emailEl.value = targetEmail || localStorage.getItem('user_email') || '';
-      var topicEl = document.getElementById('chatTicketTopic');
-      if (topicEl) topicEl.textContent = 'Support';
+      try {
+        var form = document.getElementById('chatTicketForm');
+        var conv = document.getElementById('chatConversation');
+        if (form) form.style.display = 'flex';
+        if (conv) conv.style.display = 'none';
+        var emailEl = document.getElementById('tkEmail');
+        if (emailEl) emailEl.value = targetEmail || localStorage.getItem('user_email') || '';
+        var topicEl = document.getElementById('chatTicketTopic');
+        if (topicEl) topicEl.textContent = 'Support';
+      } catch (e) { console.warn('[NC] chat init', e); }
 
-      render();
-      if (cb) cb();
+      // ошибка рендера больше НЕ сбрасывает state и НЕ блокирует показ экрана
+      try { render(); } catch (e) { console.warn('[NC] render error (non-fatal)', e); }
+      if (cb) { try { cb(); } catch (e) { console.error('[NC] post-load callback', e); if (window.NCBoot) window.NCBoot.fail('callback', e); } }
     })
-    .catch(function () {
-      st = JSON.parse(JSON.stringify(def));
+    .catch(function (err) {
+      console.error('[NC] loadFromServer failed — данные на сервере НЕ тронуты', err);
+      window.__ncLoadFailed = true;
+      stateTrusted = false;     // блокирует saveToServer
       stateLoaded = true;
-      render();
+      if (window.NCBoot) window.NCBoot.fail('load', err, function () { loadFromServer(cb, targetEmail); });
     });
 }
 
 function saveToServer() {
+  if (!stateTrusted) { console.warn('[NC] save skipped: state not loaded from server'); return; }
   if (window.adminViewingEmail) return;
   if (localStorage.getItem('user_role') === 'admin') return;
   var token = getSessionToken();
@@ -263,12 +309,14 @@ function hideLoginScreen() {
 }
 
 function showApp() {
-  if (isAdmin()) { showAdminPanel(); return; }
+  if (window.NCBoot) window.NCBoot.loading('Loading your account…');
+  if (isAdmin()) { try { showAdminPanel(); } finally { if (window.NCBoot) window.NCBoot.done(); } return; }
 
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
 
   loadFromServer(function () {
+    if (window.NCBoot) window.NCBoot.done();
     function safe(fn) { try { if (typeof fn === 'function') fn(); } catch (e) { console.warn('[NC init]', e); } }
     safe(loadPrices);
     safe(loadExchangeRates);
@@ -865,7 +913,7 @@ function deleteNotification(id) {
   st.notifications = st.notifications.filter(function (n) { return String(n.id) !== String(id); });
   if (st.notifications.length < before) {
     var token = getSessionToken();
-    if (token && stateLoaded) {
+    if (token && stateLoaded && stateTrusted) {
       fetch(WORKER_URL + '?action=setUserState', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, state: st, email: window.adminViewingEmail || undefined, force: true, wipeNotifs: true })
