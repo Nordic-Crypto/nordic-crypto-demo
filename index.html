@@ -1327,7 +1327,7 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
         localStorage.setItem('user_email',d.user.email);
         localStorage.setItem('user_role',d.user.role||'user');
         localStorage.setItem('user_name',d.user.name||'User');
-        window.location.replace('index.html');
+        window.location.replace('app.html');
       }else{
         err.textContent=d.error||'Login failed';
         err.style.display='block';
