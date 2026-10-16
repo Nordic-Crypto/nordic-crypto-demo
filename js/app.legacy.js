@@ -5189,7 +5189,7 @@ function applyAccountType() {
   var dash = document.getElementById('dash');
   var exDash = document.getElementById('exchangeDash');
 
- if (isExchange) {
+   if (isExchange) {
     if (dash) { dash.style.display = 'none'; dash.classList.remove('on'); }
 
     if (exDash) {
