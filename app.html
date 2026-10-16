@@ -3619,6 +3619,427 @@ body:not(.has-order) .progress-steps {
   #signupMask .signup-side::before,
   #signupMask .signup-loading .spinner { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 ONBOARDING — premium vshell-style
+   ═══════════════════════════════════════════════════════════ */
+
+#onboard {
+  padding: 0 !important;
+  background: radial-gradient(60% 50% at 80% 0%, rgba(155,140,255,.22), transparent 70%),
+              radial-gradient(50% 40% at 0% 100%, rgba(125,243,200,.16), transparent 70%),
+              #060a12 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  overflow-y: auto !important;
+}
+#onboard.on { display: flex !important; }
+
+#onboard .onb-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+@media (min-width: 920px) {
+  #onboard .onb-shell { grid-template-columns: minmax(340px,460px) 1fr; }
+}
+
+/* ─── Левая колонка — маркетинг ─── */
+#onboard .onb-side {
+  display: none;
+  position: relative;
+  flex-direction: column;
+  gap: 18px;
+  padding: 48px 44px;
+  border-right: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+  overflow: hidden;
+  color: #edf2f9;
+}
+@media (min-width: 920px) {
+  #onboard .onb-side { display: flex; }
+}
+#onboard .onb-side::before {
+  content: "";
+  position: absolute;
+  width: 440px; height: 440px;
+  left: -140px; bottom: -160px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(125,243,200,.35), rgba(155,140,255,.35), transparent 65%);
+  filter: blur(60px);
+  animation: onbSpin 22s linear infinite;
+}
+@keyframes onbSpin { to { transform: rotate(360deg); } }
+#onboard .onb-side > * { position: relative; }
+
+#onboard .onb-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; font-size: 20px; letter-spacing: -.04em; color: #edf2f9;
+}
+#onboard .onb-logo i {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: conic-gradient(from 200deg, #7df3c8, #9b8cff, #9fd3ff, #7df3c8);
+  display: inline-block;
+}
+
+#onboard .onb-side h2 {
+  margin: 28px 0 0;
+  font-size: 42px; line-height: 1.04; letter-spacing: -.04em; color: #edf2f9;
+}
+#onboard .onb-side > p {
+  margin: 0; color: #93a0b5; font-size: 16px; max-width: 32ch;
+}
+
+#onboard .onb-steps {
+  list-style: none; margin: 30px 0 0; padding: 0;
+  counter-reset: onbSn;
+}
+#onboard .onb-steps li {
+  position: relative;
+  padding: 0 0 30px 56px;
+  color: #93a0b5;
+  min-height: 66px;
+}
+#onboard .onb-steps li::before {
+  content: counter(onbSn);
+  counter-increment: onbSn;
+  position: absolute; left: 0; top: 0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-weight: 700;
+  background: #0a1120;
+  border: 1.5px solid rgba(255,255,255,.12);
+  transition: background .4s, color .4s, box-shadow .4s;
+}
+#onboard .onb-steps li:not(:last-child)::after {
+  content: "";
+  position: absolute; left: 18px; top: 44px; bottom: 6px;
+  width: 2px; background: rgba(255,255,255,.12);
+}
+#onboard .onb-steps b {
+  display: block; color: #edf2f9; font-size: 17px; margin-bottom: 2px;
+}
+#onboard .onb-steps span { font-size: 14px; }
+
+/* Активный шаг подсвечивается */
+#onboard[data-step="1"] .onb-steps li:nth-child(1)::before,
+#onboard[data-step="2"] .onb-steps li:nth-child(2)::before,
+#onboard[data-step="3"] .onb-steps li:nth-child(3)::before {
+  background: linear-gradient(135deg, #7df3c8, #9b8cff);
+  color: #06101f;
+  border-color: transparent;
+  box-shadow: 0 0 0 7px rgba(125,243,200,.12);
+}
+#onboard[data-step="2"] .onb-steps li:nth-child(1)::before,
+#onboard[data-step="3"] .onb-steps li:nth-child(-n+2)::before {
+  content: "✓";
+  background: #7df3c8;
+  color: #06101f;
+  border-color: transparent;
+}
+
+#onboard .onb-trust {
+  margin-top: auto;
+  display: grid; gap: 12px;
+  color: #93a0b5; font-size: 14px;
+}
+#onboard .onb-trust span { display: flex; align-items: center; gap: 10px; }
+#onboard .onb-trust svg { color: #7df3c8; }
+
+/* ─── Правая колонка — форма ─── */
+#onboard .onb-main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 18px;
+  overflow-y: auto;
+}
+#onboard .onb-main::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask: radial-gradient(70% 60% at 50% 40%, #000, transparent);
+  mask: radial-gradient(70% 60% at 50% 40%, #000, transparent);
+}
+#onboard .onb-main > * { position: relative; }
+
+/* Прогресс-полоска сверху */
+#onboard .onb-prog {
+  display: flex; gap: 8px;
+  width: min(500px, 100%);
+  margin: 0 auto 20px;
+}
+#onboard .onb-prog i {
+  flex: 1; height: 4px; border-radius: 4px;
+  background: rgba(255,255,255,.12);
+  position: relative; overflow: hidden;
+}
+#onboard .onb-prog i::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, #7df3c8, #9b8cff);
+  transform: scaleX(0);
+  transform-origin: 0 0;
+  transition: transform .5s;
+}
+#onboard[data-step="1"] .onb-prog i:nth-child(1)::after,
+#onboard[data-step="2"] .onb-prog i:nth-child(-n+2)::after,
+#onboard[data-step="3"] .onb-prog i::after { transform: none; }
+
+/* ─── Переопределяем старый .onb-box ─── */
+#onboard .onb-step {
+  display: none;
+  width: 100%;
+  max-width: 540px;
+  animation: onbFadeIn .45s ease;
+}
+#onboard .onb-step.on { display: block; }
+@keyframes onbFadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#onboard .onb-box {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 36px 32px;
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  border: 1px solid rgba(255,255,255,.12);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 50px 100px -40px rgba(0,0,0,.8);
+  position: relative;
+  color: #edf2f9;
+  text-align: center;
+}
+
+#onboard .onb-box .onb-logo {
+  justify-content: center;
+  margin-bottom: 28px;
+  font-size: 20px;
+}
+#onboard .onb-box .onb-logo .blogo {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+#onboard .welcome-icon {
+  font-size: 3.5rem;
+  margin: 20px 0 24px;
+}
+
+#onboard .onb-box h1 {
+  font-size: clamp(24px, 3.5vw, 30px);
+  letter-spacing: -.03em;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  color: #edf2f9;
+  font-weight: 800;
+}
+#onboard .onb-box h1 + p {
+  margin: 0 0 24px;
+  color: #93a0b5;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Поля */
+#onboard .fg { margin-bottom: 16px; text-align: left; }
+#onboard .fg label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #93a0b5;
+}
+#onboard .fc {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #edf2f9;
+  font: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color .2s, box-shadow .2s;
+}
+#onboard .fc:focus {
+  outline: none;
+  border-color: #7df3c8;
+  box-shadow: 0 0 0 4px rgba(125,243,200,.15);
+}
+#onboard .fc::placeholder { color: #4b5769; }
+#onboard select.fc {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2393a0b5' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+#onboard select.fc option { background: #0f1720; color: #edf2f9; }
+
+/* Кнопки */
+#onboard .btn {
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  font: 600 16px "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform .15s, opacity .2s, box-shadow .2s;
+}
+#onboard .btn.b1 {
+  background: linear-gradient(90deg, #7df3c8, #9fd3ff);
+  color: #06101f;
+  border-color: transparent;
+  box-shadow: 0 16px 34px -14px rgba(125,243,200,.7);
+}
+#onboard .btn.b1:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 40px -14px rgba(125,243,200,.85);
+}
+#onboard .btn.b2 {
+  background: transparent;
+  color: #edf2f9;
+  border: 1px solid rgba(255,255,255,.12);
+}
+#onboard .btn.b2:hover { background: rgba(255,255,255,.05); }
+
+/* Навигация (Back/Continue) */
+#onboard .onb-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ─── Card design picker ─── */
+#onboard .design-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+#onboard .design-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: rgba(255,255,255,.03);
+  color: #93a0b5;
+  font: 600 12px "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: pointer;
+  transition: transform .2s, border-color .2s, color .2s;
+}
+#onboard .design-opt:hover { transform: translateY(-2px); }
+#onboard .design-opt.on {
+  border-color: #7df3c8;
+  color: #edf2f9;
+  background: rgba(125,243,200,.08);
+  box-shadow: 0 0 0 4px rgba(125,243,200,.1);
+}
+#onboard .design-opt.on::after {
+  content: "✓";
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #7df3c8;
+  color: #06101f;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid; place-items: center;
+}
+#onboard .design-preview {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.586;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+}
+
+/* ─── Card type buttons ─── */
+#onboard .type-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#onboard .type-btn {
+  padding: 14px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.12);
+  color: #edf2f9;
+  font: 600 14px "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+#onboard .type-btn:hover { border-color: rgba(125,243,200,.4); }
+#onboard .type-btn.on {
+  border-color: #7df3c8;
+  background: rgba(125,243,200,.1);
+  color: #7df3c8;
+  box-shadow: 0 0 0 4px rgba(125,243,200,.12);
+}
+
+/* ─── Currency buttons ─── */
+#onboard .cur-btns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+#onboard .cur-btn {
+  padding: 14px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.12);
+  color: #edf2f9;
+  font: 600 14px "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+#onboard .cur-btn:hover { border-color: rgba(125,243,200,.4); }
+#onboard .cur-btn.on {
+  border-color: #7df3c8;
+  background: rgba(125,243,200,.1);
+  color: #7df3c8;
+  box-shadow: 0 0 0 4px rgba(125,243,200,.12);
+}
+
+/* Мобильный */
+@media (max-width: 600px) {
+  #onboard .onb-box { padding: 26px 22px; border-radius: 24px; }
+  #onboard .design-picker { grid-template-columns: repeat(2, 1fr); }
+  #onboard .cur-btns { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #onboard .onb-side::before { animation: none !important; }
+}
   
 </style>
 <script>
@@ -4131,82 +4552,108 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 
 <!-- ONBOARDING -->
-<div class="onboard" id="onboard">
-  <div class="onb-step on" id="onbStep1">
-    <div class="onb-box" style="text-align:center;padding:44px 38px">
-      <div class="onb-logo" style="justify-content:center"><div class="blogo"><img src="logo.png" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>Nordic<span style="color:var(--pri)">Crypto</span></div>
-      <div class="welcome-icon">💎</div>
-      <h1 style="font-size:1.8rem;margin-bottom:14px">Welcome to your<br>personal crypto banking</h1>
-      <p style="color:var(--mut);font-size:.95rem;margin-bottom:28px">Your secure gateway to digital assets.</p>
-      <button class="btn b1" id="onbNext1" style="width:100%;justify-content:center;padding:16px;font-size:1rem;margin-top:24px">Get started →</button>
-    </div>
-  </div>
-  <div class="onb-step" id="onbStep2">
-    <div class="onb-box">
-      <div class="onb-logo"><div class="blogo"><img src="logo.png" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>Nordic<span style="color:var(--pri)">Crypto</span></div>
-      <h1>Enter your name</h1>
-      <p style="color:var(--mut);margin-bottom:26px">This will appear on your card.</p>
-      <div class="fg"><label>First name</label><input class="fc" id="onbFirst" placeholder="Satoshi" maxlength="20"></div>
-      <div class="fg"><label>Middle name (optional)</label><input class="fc" id="onbMiddle" placeholder="N" maxlength="20"></div>
-      <div class="fg"><label>Last name</label><input class="fc" id="onbLast" placeholder="Nakamoto" maxlength="20"></div>
-      <div class="fg">
-        <label>Country</label>
-        <select class="fc" id="onbCountry">
-          <option value="SE">🇸🇪 Sweden (SEK)</option><option value="NO">🇳🇴 Norway (NOK)</option>
-          <option value="DK">🇩🇰 Denmark (DKK)</option><option value="FI">🇫🇮 Finland (EUR)</option>
-          <option value="DE">🇩🇪 Germany (EUR)</option><option value="FR">🇫🇷 France (EUR)</option>
-          <option value="ES">🇪🇸 Spain (EUR)</option><option value="IT">🇮🇹 Italy (EUR)</option>
-          <option value="NL">🇳🇱 Netherlands (EUR)</option><option value="GB">🇬🇧 United Kingdom (GBP)</option>
-          <option value="US">🇺🇸 United States (USD)</option>
-        </select>
+<div class="onboard" id="onboard" data-step="1">
+  <div class="onb-shell">
+    <!-- ЛЕВАЯ КОЛОНКА -->
+    <aside class="onb-side">
+      <div class="onb-logo"><i></i>NordicCrypto</div>
+      <h2 id="onbSideTitle">Welcome<br>aboard.</h2>
+      <p id="onbSideSub">Let's set up your personal crypto banking in 3 quick steps.</p>
+      <ol class="onb-steps">
+        <li><b>Welcome</b><span>Meet NordicCrypto</span></li>
+        <li><b>Your details</b><span>Name and country</span></li>
+        <li><b>Choose card</b><span>Design &amp; currency</span></li>
+      </ol>
+      <div class="onb-trust">
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Encrypted connection</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Bank-grade security</span>
       </div>
-      <div class="onb-nav">
-        <button class="btn b2" id="onbBack2" style="flex:1;justify-content:center">← Back</button>
-        <button class="btn b1" id="onbNext2" style="flex:2;justify-content:center">Continue →</button>
-      </div>
-    </div>
-  </div>
-  <div class="onb-step" id="onbStep3">
-    <div class="onb-box">
-      <h1 id="onbStep3Title">Almost done!</h1>
-      <p style="color:var(--mut);margin-bottom:26px">Choose your card type and currency.</p>
-      <div class="fg">
-        <label>Choose design</label>
-        <div class="design-picker" id="designPicker">
-          <button type="button" class="design-opt on" data-design="cosmic"><div class="design-preview cosmic"></div><span>Cosmic</span></button>
-          <button type="button" class="design-opt" data-design="purple"><div class="design-preview purple"></div><span>Purple</span></button>
-          <button type="button" class="design-opt" data-design="silver"><div class="design-preview silver"></div><span>Silver</span></button>
-          <button type="button" class="design-opt" data-design="black"><div class="design-preview black"></div><span>Black</span></button>
-          <button type="button" class="design-opt" data-design="gold"><div class="design-preview gold"></div><span>Gold</span></button>
-          <button type="button" class="design-opt" data-design="ocean"><div class="design-preview ocean"></div><span>Ocean</span></button>
-          <button type="button" class="design-opt" data-design="mountain"><div class="design-preview mountain"></div><span>Mountain</span></button>
-          <button type="button" class="design-opt" data-design="aurora"><div class="design-preview aurora"></div><span>Aurora</span></button>
-          <button type="button" class="design-opt" data-design="city"><div class="design-preview city"></div><span>City</span></button>
+    </aside>
+
+    <!-- ПРАВАЯ КОЛОНКА -->
+    <main class="onb-main">
+      <div class="onb-prog" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- STEP 1 -->
+      <div class="onb-step on" id="onbStep1">
+        <div class="onb-box">
+          <div class="onb-logo"><div class="blogo"><img src="logo.png" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div>Nordic<span style="color:#7df3c8">Crypto</span></div>
+          <div class="welcome-icon">💎</div>
+          <h1>Welcome to your<br>personal crypto banking</h1>
+          <p>Your secure gateway to digital assets.</p>
+          <button class="btn b1" id="onbNext1" style="width:100%;margin-top:8px">Get started →</button>
         </div>
       </div>
-      <div class="fg">
-        <label>Card type</label>
-        <div class="type-btns">
-          <button class="type-btn on" data-type="Visa">Visa</button>
-          <button class="type-btn" data-type="Mastercard">Mastercard</button>
+
+      <!-- STEP 2 -->
+      <div class="onb-step" id="onbStep2">
+        <div class="onb-box">
+          <h1>Enter your name</h1>
+          <p>This will appear on your card.</p>
+          <div class="fg"><label>First name</label><input class="fc" id="onbFirst" placeholder="Satoshi" maxlength="20"></div>
+          <div class="fg"><label>Middle name (optional)</label><input class="fc" id="onbMiddle" placeholder="N" maxlength="20"></div>
+          <div class="fg"><label>Last name</label><input class="fc" id="onbLast" placeholder="Nakamoto" maxlength="20"></div>
+          <div class="fg">
+            <label>Country</label>
+            <select class="fc" id="onbCountry">
+              <option value="SE">🇸🇪 Sweden (SEK)</option><option value="NO">🇳🇴 Norway (NOK)</option>
+              <option value="DK">🇩🇰 Denmark (DKK)</option><option value="FI">🇫🇮 Finland (EUR)</option>
+              <option value="DE">🇩🇪 Germany (EUR)</option><option value="FR">🇫🇷 France (EUR)</option>
+              <option value="ES">🇪🇸 Spain (EUR)</option><option value="IT">🇮🇹 Italy (EUR)</option>
+              <option value="NL">🇳🇱 Netherlands (EUR)</option><option value="GB">🇬🇧 United Kingdom (GBP)</option>
+              <option value="US">🇺🇸 United States (USD)</option>
+            </select>
+          </div>
+          <div class="onb-nav">
+            <button class="btn b2" id="onbBack2" style="flex:1">← Back</button>
+            <button class="btn b1" id="onbNext2" style="flex:2">Continue →</button>
+          </div>
         </div>
       </div>
-      <div class="fg">
-        <label>Currency</label>
-        <div class="cur-btns">
-          <button class="cur-btn on" data-cur="USD">USD</button>
-          <button class="cur-btn" data-cur="EUR">EUR</button>
-          <button class="cur-btn" data-cur="SEK">SEK</button>
-          <button class="cur-btn" data-cur="NOK">NOK</button>
-          <button class="cur-btn" data-cur="DKK">DKK</button>
-          <button class="cur-btn" data-cur="GBP">GBP</button>
+
+      <!-- STEP 3 -->
+      <div class="onb-step" id="onbStep3">
+        <div class="onb-box">
+          <h1 id="onbStep3Title">Almost done!</h1>
+          <p>Choose your card type and currency.</p>
+          <div class="fg">
+            <label>Choose design</label>
+            <div class="design-picker" id="designPicker">
+              <button type="button" class="design-opt on" data-design="cosmic"><div class="design-preview cosmic"></div><span>Cosmic</span></button>
+              <button type="button" class="design-opt" data-design="purple"><div class="design-preview purple"></div><span>Purple</span></button>
+              <button type="button" class="design-opt" data-design="silver"><div class="design-preview silver"></div><span>Silver</span></button>
+              <button type="button" class="design-opt" data-design="black"><div class="design-preview black"></div><span>Black</span></button>
+              <button type="button" class="design-opt" data-design="gold"><div class="design-preview gold"></div><span>Gold</span></button>
+              <button type="button" class="design-opt" data-design="ocean"><div class="design-preview ocean"></div><span>Ocean</span></button>
+              <button type="button" class="design-opt" data-design="mountain"><div class="design-preview mountain"></div><span>Mountain</span></button>
+              <button type="button" class="design-opt" data-design="aurora"><div class="design-preview aurora"></div><span>Aurora</span></button>
+              <button type="button" class="design-opt" data-design="city"><div class="design-preview city"></div><span>City</span></button>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Card type</label>
+            <div class="type-btns">
+              <button class="type-btn on" data-type="Visa">Visa</button>
+              <button class="type-btn" data-type="Mastercard">Mastercard</button>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Currency</label>
+            <div class="cur-btns">
+              <button class="cur-btn on" data-cur="USD">USD</button>
+              <button class="cur-btn" data-cur="EUR">EUR</button>
+              <button class="cur-btn" data-cur="SEK">SEK</button>
+              <button class="cur-btn" data-cur="NOK">NOK</button>
+              <button class="cur-btn" data-cur="DKK">DKK</button>
+              <button class="cur-btn" data-cur="GBP">GBP</button>
+            </div>
+          </div>
+          <button class="btn b1" style="width:100%;margin-top:8px" id="btnCreateCard">✨ Create my card</button>
         </div>
       </div>
-      <button class="btn b1" style="width:100%;justify-content:center;padding:16px;font-size:1rem;margin-top:16px" id="btnCreateCard">✨ Create my card</button>
-    </div>
+    </main>
   </div>
 </div>
-
 <!-- PENDING SCREEN -->
 <div class="verify-screen" id="pendingScreen">
   <div class="vshell">
