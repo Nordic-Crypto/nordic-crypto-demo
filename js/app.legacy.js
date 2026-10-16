@@ -302,13 +302,16 @@ function showApp() {
         showRejectedScreen(st.verification.reason);
         return;
       }
-      if (vStatus !== 'approved') {
-        if (!st.card && accountType !== 'exchange') {
-          if (side) side.style.display = 'none';
-          if (main) main.style.display = 'none';
-          document.getElementById('onboard').classList.add('on');
-          return;
-        }
+      if (!st.card && accountType !== 'exchange') {
+  if (side) side.style.display = 'none';
+  if (main) main.style.display = 'none';
+  var onbEl = document.getElementById('onboard');
+  if (onbEl) {
+    onbEl.classList.add('on');
+    if (typeof goToOnbStep === 'function') goToOnbStep(1);
+  }
+  return;
+}
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
         var vScreen = document.getElementById('verifyScreen');
@@ -2898,6 +2901,31 @@ function updateOnbPreview() {
 }
 
 function initOnboarding() {
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 ШАГ 2: сброс на шаг 1 при каждом показе онбординга
+  // ═══════════════════════════════════════════════════════════
+  var _ob = document.getElementById('onboard');
+  if (_ob && _ob.classList.contains('on')) {
+    if (typeof goToOnbStep === 'function') goToOnbStep(1);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 ШАГ 4: обработчики Design picker в онбординге
+  // ═══════════════════════════════════════════════════════════
+  var designBtns = document.querySelectorAll('#designPicker .design-opt');
+  for (var d = 0; d < designBtns.length; d++) {
+    designBtns[d].onclick = function () {
+      for (var k = 0; k < designBtns.length; k++) designBtns[k].classList.remove('on');
+      this.classList.add('on');
+      selectedDesign = this.getAttribute('data-design');
+    };
+  }
+  var defDesign = document.querySelector('#designPicker .design-opt[data-design="cosmic"]');
+  if (defDesign) defDesign.classList.add('on');
+
+  // ── дальше идёт твой существующий код ──
+  var typeBtns = document.querySelectorAll('.type-btn');
+  // ... остальное НЕ ТРОГАЕШЬ   
   var typeBtns = document.querySelectorAll('.type-btn');
   for (var t = 0; t < typeBtns.length; t++) {
     typeBtns[t].onclick = function () {
@@ -2960,10 +2988,31 @@ function initOnboarding() {
 }
 
 function goToOnbStep(n) {
-  var steps = document.querySelectorAll('.onb-step');
+  // 1. Переключаем шаги
+  var steps = document.querySelectorAll('#onboard .onb-step');
   for (var i = 0; i < steps.length; i++) steps[i].classList.remove('on');
   var target = document.getElementById('onbStep' + n);
   if (target) target.classList.add('on');
+
+  // 2. data-step на #onboard (для CSS прогресс-бара и подсветки шагов)
+  var ob = document.getElementById('onboard');
+  if (ob) ob.setAttribute('data-step', String(n));
+
+  // 3. Левая колонка — заголовок + подзаголовок
+  var t = document.getElementById('onbSideTitle');
+  var s = document.getElementById('onbSideSub');
+  if (t && s) {
+    if (n === 1) {
+      t.innerHTML = 'Welcome<br>aboard.';
+      s.textContent = "Let's set up your personal crypto banking in 3 quick steps.";
+    } else if (n === 2) {
+      t.innerHTML = 'Tell us<br>about you.';
+      s.textContent = 'Your name will appear on the card.';
+    } else if (n === 3) {
+      t.innerHTML = 'Choose your<br>card.';
+      s.textContent = 'Pick a design, card type and currency.';
+    }
+  }
 }
 
 function getFullName() {
