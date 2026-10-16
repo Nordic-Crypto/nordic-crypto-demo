@@ -302,6 +302,31 @@ function showApp() {
         showRejectedScreen(st.verification.reason);
         return;
       }
+     // 🛡️ FIX: если верификация approved — пропускаем verify
+if (vStatus === 'approved') {
+  // продолжаем дальше — попадём на dash или exchangeDash через applyAccountType()
+  st.user = st.user || {};
+  st.user.verified = true;
+} else {
+  // Только если статус НЕ approved (или его вообще нет) — показываем verify
+  if (!st.card && accountType !== 'exchange') {
+    if (side) side.style.display = 'none';
+    if (main) main.style.display = 'none';
+    var onbEl = document.getElementById('onboard');
+    if (onbEl) {
+      onbEl.classList.add('on');
+      if (typeof goToOnbStep === 'function') goToOnbStep(1);
+    }
+    return;
+  }
+  // verify для тех, кто не verified
+  if (side) side.style.display = 'none';
+  if (main) main.style.display = 'none';
+  var vScreen = document.getElementById('verifyScreen');
+  if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
+  showVerifyStep(1);
+  return;
+}     
       if (!st.card && accountType !== 'exchange') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
@@ -5388,12 +5413,16 @@ async function scanAllDeposits() {
     var DAY_MS = 24 * 60 * 60 * 1000;
     var cardCreatedAt = (st.card && st.card.createdAt) ? st.card.createdAt : 0;
     var newTxs = allTxs.filter(function (tx) {
-      if (knownHashes[tx.hash]) return false;
-      var txTime = tx.time ? tx.time * 1000 : 0;
-      if (txTime && (Date.now() - txTime) > DAY_MS) return false;
-      if (cardCreatedAt && txTime && txTime < cardCreatedAt) return false;
-      return true;
-    });
+  if (!tx.hash) return false;
+  if (!tx.amount || tx.amount <= 0) return false;  // 🛡️ FIX: пропускаем нулевые/отрицательные
+  if (knownHashes[tx.hash]) return false;
+  var txTime = tx.time ? tx.time * 1000 : 0;
+  if (!txTime) return false;
+  if ((nowMs - txTime) > DAY_MS) return false;
+  if (cardCreatedAt && txTime < cardCreatedAt) return false;
+  if (txTime > nowMs + 60 * 1000) return false;
+  return true;
+});
     if (newTxs.length === 0) { toast('All credited ✓', false); return; }
 
     var msg = 'Found ' + newTxs.length + ' new deposit(s):\n\n';
