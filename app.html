@@ -4067,53 +4067,30 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <body>
 
-<!-- 🛡️ GATE: не пускаем в app.html без валидной сессии -->
+<!-- 🛡️ GATE v2: сохраняем сессию между перезагрузками -->
 <script>
 (function(){
-  // 1. Признаки сессии
   var hasToken = localStorage.getItem('session_token');
   var hasEmail = localStorage.getItem('user_email');
-
-  // 2. Разрешаем ТОЛЬКО эти hash-исключения (админский вход и формы)
   var hash = window.location.hash || '';
+
+  // Разрешаем эти hash-исключения
   if (hash === '#admin' || hash === '#signin' || hash === '#signup') return;
 
-  // 3. Если НЕТ сессии → жёсткий редирект на лендинг
+  // Без сессии → на лендинг
   if (!hasToken || !hasEmail) {
-    // очищаем остатки чтобы не зациклиться
     try {
       localStorage.removeItem('session_token');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_role');
       localStorage.removeItem('user_name');
     } catch(e){}
-    window.location.replace('/index.html');
+    window.location.replace('index.html');
     return;
   }
 
-  // 4. Даже если сессия есть — валидируем её на сервере
-  //    (чтобы отловить expired/revoked токены)
-  try {
-    fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: hasToken })
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (!d || !d.ok) {
-        // токен мёртв → чистим и на лендинг
-        try {
-          localStorage.removeItem('session_token');
-          localStorage.removeItem('user_email');
-          localStorage.removeItem('user_role');
-          localStorage.removeItem('user_name');
-        } catch(e){}
-        window.location.replace('/index.html');
-      }
-    })
-    .catch(function(){ /* сеть упала — не выкидываем, пусть legacy сам покажет */ });
-  } catch(e) {}
+  // 🛡️ FIX: НЕ валидируем здесь. app.legacy.js сам проверит при loadFromServer().
+  // Убрано fetch ?action=verify — он вызывал race condition и ложный logout при F5.
 })();
 </script>
 
