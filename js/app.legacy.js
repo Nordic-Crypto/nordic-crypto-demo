@@ -2923,7 +2923,6 @@ function initOnboarding() {
   var defDesign = document.querySelector('#designPicker .design-opt[data-design="cosmic"]');
   if (defDesign) defDesign.classList.add('on');
 
-  // ── дальше идёт твой существующий код ──
   var typeBtns = document.querySelectorAll('.type-btn');
   for (var t = 0; t < typeBtns.length; t++) {
     typeBtns[t].onclick = function () {
