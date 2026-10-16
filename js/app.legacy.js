@@ -134,15 +134,16 @@ function loadFromServer(cb, targetEmail) {
   window.__ncLoadFailed = false;
 
   _ncFetchState(body, 0)
-    .then(function (data) {
-      var errText = data && data.ok === false ? String(data.error || '') : '';
-      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
-        // сессия умерла — честно выходим на логин, ничего не затираем
+          if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+        // сессия умерла — выходим на логин, НО завершаем boot корректно
         clearSessionToken();
         localStorage.removeItem('user_email'); localStorage.removeItem('user_role');
         window.__ncLoadFailed = false;
-        stateTrusted = false; stateLoaded = false;
+        stateTrusted = false;
+        stateLoaded = true;                          // 🛡️ ДОБАВЛЕНО
+        if (window.NCBoot) window.NCBoot.done();     // 🛡️ ДОБАВЛЕНО — снимаем overlay
         try { showLoginScreen(); } catch (e) {}
+        if (cb) { try { cb(); } catch (e) {} }       // 🛡️ ДОБАВЛЕНО — завершаем showApp
         return;
       }
       if (errText && !/not.?found|no.?state|empty|new.?user/i.test(errText)) {
