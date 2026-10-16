@@ -295,6 +295,7 @@ function showApp() {
     if (vStatus === 'approved' && st.user) {
       localStorage.setItem('nc_kyc_approved_' + localStorage.getItem('user_email'), '1');
     }
+         console.log('%c[NordicCrypto] 🎯 vStatus=' + vStatus + ' accountType=' + accountType, 'color:#9b8cff');
           if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
       // pending → показываем pendingScreen
       if (vStatus === 'pending') {
