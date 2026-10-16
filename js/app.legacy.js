@@ -345,16 +345,22 @@ async function doLogout() {
       });
     } catch (e) {}
   }
+
+  // 🛡️ FIX: чистим ВСЁ сразу
   clearSessionToken();
   localStorage.removeItem('user_email');
   localStorage.removeItem('user_role');
   localStorage.removeItem('user_name');
+  localStorage.removeItem('session_expires');
+  localStorage.removeItem('nc_current_user');
+
   clearInterval(sessionTimer);
   clearInterval(countdownTimer);
   hideInactivityModal();
   window.adminViewingEmail = null;
   window._exPricesCache = null;
 
+  // Скрываем все модалки
   document.querySelectorAll('.mask').forEach(function (m) { m.classList.remove('on'); });
   document.querySelectorAll('.inactivity-overlay, .dep-verify-overlay, .notif-overlay, .verify-screen, .onboard, .onb-anim-stage').forEach(function (m) { m.classList.remove('on'); });
 
@@ -363,73 +369,24 @@ async function doLogout() {
   var abb = document.getElementById('adminBackBar'); if (abb) abb.style.display = 'none';
 
   document.querySelectorAll('.mask').forEach(function (m) { m.style.display = ''; });
-      // 🎁 BONUS: красивый logout screen с задержкой
+
+  // 🎁 Красивый logout screen
   var overlay = document.createElement('div');
   overlay.id = 'logoutOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,229,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(139,92,246,.14),transparent 60%),#0a0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#fff;opacity:0;transition:opacity .4s ease;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,229,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(139,92,246,.14),transparent 60%),#0a0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#fff;opacity:1;';
   overlay.innerHTML =
     '<div style="text-align:center;max-width:400px;padding:40px;">' +
       '<div style="width:80px;height:80px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 20px 50px -10px rgba(16,185,129,.7);">✓</div>' +
       '<h1 style="font-size:1.8rem;font-weight:800;margin-bottom:12px;background:linear-gradient(100deg,#fff,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent;">Signed out</h1>' +
       '<p style="color:#94a3b8;font-size:.95rem;margin-bottom:32px;">You have been securely logged out of your account.</p>' +
-      '<button onclick="window.location.href=\'landing.html\'" style="width:100%;padding:16px;background:linear-gradient(135deg,#00e5ff,#8b5cf6);border:none;border-radius:14px;color:#fff;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;box-shadow:0 15px 35px -10px rgba(0,229,255,.5);">Back to home →</button>' +
-      '<button onclick="window.location.reload()" style="width:100%;padding:14px;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#b6c1d1;font-weight:700;font-size:.9rem;cursor:pointer;font-family:inherit;">Sign in again</button>' +
+      '<button onclick="window.location.href=\'index.html\'" style="width:100%;padding:16px;background:linear-gradient(135deg,#00e5ff,#8b5cf6);border:none;border-radius:14px;color:#fff;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;box-shadow:0 15px 35px -10px rgba(0,229,255,.5);">Back to home →</button>' +
     '</div>';
   document.body.appendChild(overlay);
-  setTimeout(function () { overlay.style.opacity = '1'; }, 50);
-}
 
-function initLoginLogout() {
-  var toggle = document.getElementById('passToggle');
-  if (toggle) toggle.onclick = function () {
-    var pwd = document.getElementById('loginPassword');
-    pwd.type = pwd.type === 'password' ? 'text' : 'password';
-    this.textContent = pwd.type === 'password' ? '👁' : '🙈';
-  };
-  var btnLogin = document.getElementById('btnLogin');
-  if (btnLogin) btnLogin.onclick = doLogin;
-  var emailEl = document.getElementById('loginEmail');
-  var passEl = document.getElementById('loginPassword');
-  if (emailEl) emailEl.onkeydown = function (e) { if (e.key === 'Enter') doLogin(); };
-  if (passEl) passEl.onkeydown = function (e) { if (e.key === 'Enter') doLogin(); };
-  var forgot = document.getElementById('forgotPass');
-  if (forgot) forgot.onclick = function (e) { e.preventDefault(); alert('Contact support: support@nordiccrypto.com'); };
-  var btnStillHere = document.getElementById('btnStillHere');
-  var btnLogout = document.getElementById('btnLogoutNow');
-  if (btnStillHere) btnStillHere.onclick = function () { hideInactivityModal(); resetInactivityTimer(); };
-  if (btnLogout) btnLogout.onclick = function () { doLogout(); };
-}
-
-var _inactivityListenersAttached = false;
-function startInactivityTimer() {
-  clearTimeout(sessionTimer);
-  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
-  if (_inactivityListenersAttached) return;
-  _inactivityListenersAttached = true;
-  ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'].forEach(function (evt) {
-    document.addEventListener(evt, resetInactivityTimer, { passive: true });
-  });
-}
-
-function resetInactivityTimer() {
-  var modal = document.getElementById('inactivityOverlay');
-  if (modal && modal.classList.contains('on')) return;
-  clearTimeout(sessionTimer);
-  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
-}
-
-function showInactivityModal() {
-  var overlay = document.getElementById('inactivityOverlay');
-  if (!overlay) return;
-  overlay.classList.add('on');
-  countdownLeft = LOGOUT_COUNTDOWN;
-  updateCountdown();
-  clearInterval(countdownTimer);
-  countdownTimer = setInterval(function () {
-    countdownLeft--;
-    updateCountdown();
-    if (countdownLeft <= 0) { clearInterval(countdownTimer); doLogout(); }
-  }, 1000);
+  // 🛡️ FIX: страховка — если overlay не сработает, всё равно уйдём
+  setTimeout(function () {
+    window.location.replace('/index.html');
+  }, 3000);
 }
 
 function updateCountdown() {
