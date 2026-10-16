@@ -1,11 +1,5 @@
 /* ============================================================
-   NC BOOT GUARD v1.0
-   Цель: клиент НИКОГДА не видит пустой экран после входа.
-   - показывает "Loading…" пока грузятся данные
-   - если загрузка упала → экран с кнопками Retry / Sign out
-   - watchdog: если через 8 сек после входа нет ни одного видимого экрана → тот же экран ошибки
-   - ничего не пишет на сервер и не трогает данные клиента
-   Подключать СРАЗУ ПОСЛЕ app.legacy.js
+   NC BOOT GUARD v1.1 — не блокирует уже загруженный UI
    ============================================================ */
 (function () {
   'use strict';
@@ -34,10 +28,8 @@
       '#' + OVERLAY_ID + ' button{font-weight:600;font-size:.95rem;font-family:inherit;padding:13px 22px;border-radius:12px;cursor:pointer;border:1px solid rgba(255,255,255,.16);' +
       'background:transparent;color:inherit;min-height:46px}' +
       '#' + OVERLAY_ID + ' button.nb-pri{background:linear-gradient(135deg,#00d4ff,#7c3aed);border-color:transparent;color:#fff}' +
-      '#' + OVERLAY_ID + ' button:focus-visible{outline:2px solid #9fd3ff;outline-offset:2px}' +
       '#' + OVERLAY_ID + ' .nb-note{margin-top:18px;font-size:.8rem;color:#6f7d94}' +
-      '@keyframes ncbSpin{to{transform:rotate(360deg)}}' +
-      '@media (prefers-reduced-motion:reduce){#' + OVERLAY_ID + ' .nb-spin{animation-duration:2.4s}}';
+      '@keyframes ncbSpin{to{transform:rotate(360deg)}}';
     var el = document.createElement('style');
     el.id = 'ncBootStyles';
     el.textContent = css;
@@ -50,8 +42,6 @@
     if (o) return o;
     o = document.createElement('div');
     o.id = OVERLAY_ID;
-    o.setAttribute('role', 'status');
-    o.setAttribute('aria-live', 'polite');
     document.body.appendChild(o);
     return o;
   }
@@ -65,7 +55,7 @@
   function signOut() {
     if (typeof window.doLogout === 'function') { window.doLogout(); return; }
     try {
-      ['session_token', 'user_email', 'user_role', 'user_name', 'session_expires', 'nc_current_user']
+      ['session_token','user_email','user_role','user_name','session_expires','nc_current_user']
         .forEach(function (k) { localStorage.removeItem(k); });
     } catch (e) {}
     window.location.replace('index.html');
@@ -73,7 +63,7 @@
 
   function loading(msg) {
     var o = ensureOverlay();
-    o.innerHTML = '<div class="nb-card"><div class="nb-spin" aria-hidden="true"></div>' +
+    o.innerHTML = '<div class="nb-card"><div class="nb-spin"></div>' +
       '<h1>' + esc(msg || 'Loading…') + '</h1><p>This takes a few seconds.</p></div>';
     o.className = 'on';
     waiting = true;
@@ -98,8 +88,8 @@
       ? 'Check your internet connection, then try again. Your data is safe.'
       : 'Your data is safe and nothing was changed. Try again, or sign out and sign back in.';
     o.innerHTML = '<div class="nb-card"><h1>' + title + '</h1><p>' + text + '</p>' +
-      '<div class="nb-row"><button class="nb-pri" id="ncbRetry" type="button">Try again</button>' +
-      '<button id="ncbOut" type="button">Sign out</button></div>' +
+      '<div class="nb-row"><button class="nb-pri" id="ncbRetry">Try again</button>' +
+      '<button id="ncbOut">Sign out</button></div>' +
       '<div class="nb-note">Code: ' + esc(kind) + '</div></div>';
     o.className = 'on';
     var r = $('ncbRetry'), s = $('ncbOut');
@@ -114,11 +104,16 @@
     if (s) s.onclick = signOut;
   }
 
-  /* ---------- watchdog: есть ли хоть что-то видимое ---------- */
+  /* 🛡️ FIX: проверяем размеры, а не только display */
   function shown(el) {
     if (!el) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 10 || r.height < 10) return false;
     var cs = window.getComputedStyle(el);
-    return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity || '1') > 0.05;
+    if (cs.display === 'none') return false;
+    if (cs.visibility === 'hidden') return false;
+    if (parseFloat(cs.opacity || '1') < 0.05) return false;
+    return true;
   }
 
   function somethingVisible() {
@@ -126,11 +121,8 @@
     for (var i = 0; i < ids.length; i++) {
       var el = $(ids[i]);
       if (!el) continue;
-      var isScreen = ids[i] !== 'sideBar' && ids[i] !== 'mainApp';
-      if (isScreen ? (el.classList.contains('on') && shown(el)) : shown(el)) return true;
+      if (shown(el)) return true;
     }
-    var login = $('loginScreen');
-    if (login && !login.classList.contains('hidden') && shown(login)) return true;
     return false;
   }
 
@@ -144,31 +136,20 @@
       var o = $(OVERLAY_ID);
       var overlayShowsError = o && o.classList.contains('on') && $('ncbRetry');
       if (overlayShowsError) return;
-      // если всё ещё "Loading" или экран пуст — показать ошибку с Retry
+
+      // 🛡️ FIX: не показываем ошибку если что-то видно
+      if (somethingVisible()) { done(); return; }
+
       if (waiting || (hasSession() && !somethingVisible())) {
         fail('timeout', new Error('no visible screen after ' + WATCHDOG_MS + 'ms'));
       }
     }, WATCHDOG_MS);
   }
 
-  /* ---------- события ---------- */
   document.addEventListener('nc:auth:login', function () {
     if (hasSession()) armWatchdog();
   });
 
-  window.addEventListener('unhandledrejection', function (e) {
-    try { console.warn('[NCBoot] unhandled rejection', e.reason); } catch (x) {}
-  });
-
-  // после возврата на вкладку: если сессия есть, а экрана нет — лечим
-  document.addEventListener('visibilitychange', function () {
-    if (document.hidden) return;
-    var o = $(OVERLAY_ID);
-    if (o && o.classList.contains('on')) return;
-    if (hasSession() && !somethingVisible()) armWatchdog();
-  });
-
-  // страховка при обычной загрузке страницы с живой сессией
   window.addEventListener('load', function () {
     if (hasSession()) setTimeout(function () {
       var o = $(OVERLAY_ID);
@@ -176,6 +157,14 @@
       if (!somethingVisible()) armWatchdog();
     }, 1500);
   });
+
+  // 🛡️ FIX: каждые 3 сек проверяем, не появился ли UI — если да, убираем overlay
+  setInterval(function () {
+    var o = $(OVERLAY_ID);
+    if (!o || !o.classList.contains('on')) return;
+    if ($('ncbRetry')) return; // это экран ошибки — не трогаем
+    if (somethingVisible()) done();
+  }, 3000);
 
   window.NCBoot = { loading: loading, done: done, fail: fail, somethingVisible: somethingVisible };
 })();
