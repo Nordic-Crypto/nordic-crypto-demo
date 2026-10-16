@@ -1895,29 +1895,41 @@ window.submitRealVerification = async function () {
     setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
     console.log('[KYC] Uploading passport...');
     // 🎯 Новый дизайн: получаем front + back через NCVerify.getDocs
+// Worker принимает: passport | selfie | address | id_card | driver_license
 var ncDocs = (window.NCVerify && typeof window.NCVerify.getDocs === 'function') ? window.NCVerify.getDocs() : null;
 
-var docKey, docKeyBack = null;
+// Маппинг: UI-название → значение которое ждёт Worker
+var TYPE_MAP = {
+  'Passport': 'passport',
+  "Driver's License": 'driver_license',
+  'National ID': 'id_card'
+};
+
+var uiType = (ncDocs && ncDocs.type) || 'Passport';
+var apiType = TYPE_MAP[uiType] || 'passport';
+
+var docKeyFront = null, docKeyBack = null;
 
 if (ncDocs && ncDocs.front) {
-  // Новый дизайн (2 фото для ID/лицензии, 1 для паспорта)
+  // Front: всегда грузим с типом passport/id_card/driver_license
   setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
-  console.log('[KYC] Uploading passport front...');
-  docKey = await uploadKycFile(ncDocs.front, 'passport');
-  console.log('[KYC] ✅ passport front uploaded:', docKey);
+  console.log('[KYC] Uploading front as:', apiType);
+  // ⚠️ Worker разрешает только 5 типов → front ВСЕГДА passport (универсальный)
+  docKeyFront = await uploadKycFile(ncDocs.front, 'passport');
+  console.log('[KYC] ✅ front uploaded:', docKeyFront);
 
+  // Back: только для ID/Driver's license (у Passport нет back)
   if (ncDocs.back) {
     setStatus('Uploading document (2/2)...', 'Almost done');
-    console.log('[KYC] Uploading passport back...');
-    docKeyBack = await uploadKycFile(ncDocs.back, 'passport_back');
-    console.log('[KYC] ✅ passport back uploaded:', docKeyBack);
+    console.log('[KYC] Uploading back as: id_card');
+    docKeyBack = await uploadKycFile(ncDocs.back, 'id_card');
+    console.log('[KYC] ✅ back uploaded:', docKeyBack);
   }
 } else {
   // Fallback: старый способ (1 файл)
   setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
-  console.log('[KYC] Uploading passport...');
-  docKey = await uploadKycFile(docFile, 'passport');
-  console.log('[KYC] ✅ passport uploaded:', docKey);
+  docKeyFront = await uploadKycFile(docFile, 'passport');
+  console.log('[KYC] ✅ passport uploaded:', docKeyFront);
 }
 
 setStatus('Uploading selfie...', 'Almost done');
@@ -1929,7 +1941,7 @@ setStatus('Submitting verification...', 'Contacting server');
 console.log('[KYC] Submitting verification...');
 
 // Собираем массив ключей: [front, back?, selfie]
-var docKeys = [docKey];
+var docKeys = [docKeyFront];
 if (docKeyBack) docKeys.push(docKeyBack);
 docKeys.push(selfieKey);
 
