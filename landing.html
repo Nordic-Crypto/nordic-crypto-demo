@@ -954,7 +954,427 @@ details:hover {
   #signupModal .signup-side::before,
   #signupModal .signup-loading .spinner { animation: none !important; }
 }
-  
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 SIGNUP MODAL — premium (vshell-style) для landing.html
+   ═══════════════════════════════════════════════════════════ */
+
+#signupModal {
+  padding: 0 !important;
+  background: radial-gradient(60% 50% at 80% 0%, rgba(155,140,255,.22), transparent 70%),
+              radial-gradient(50% 40% at 0% 100%, rgba(125,243,200,.16), transparent 70%),
+              #060a12 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+#signupModal[style*="display: flex"],
+#signupModal[style*="display:flex"] { display: flex !important; }
+
+#signupModal .signup-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+@media (min-width: 920px) {
+  #signupModal .signup-shell { grid-template-columns: minmax(340px,460px) 1fr; }
+}
+
+#signupModal .signup-side {
+  display: none;
+  position: relative;
+  flex-direction: column;
+  gap: 18px;
+  padding: 48px 44px;
+  border-right: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+  overflow: hidden;
+  color: #edf2f9;
+}
+@media (min-width: 920px) {
+  #signupModal .signup-side { display: flex; }
+}
+#signupModal .signup-side::before {
+  content: "";
+  position: absolute;
+  width: 440px; height: 440px;
+  left: -140px; bottom: -160px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent, rgba(125,243,200,.35), rgba(155,140,255,.35), transparent 65%);
+  filter: blur(60px);
+  animation: ncSignupSpin 22s linear infinite;
+}
+@keyframes ncSignupSpin { to { transform: rotate(360deg); } }
+#signupModal .signup-side > * { position: relative; }
+
+#signupModal .signup-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; font-size: 20px; letter-spacing: -.04em; color: #edf2f9;
+}
+#signupModal .signup-logo i {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: conic-gradient(from 200deg, #7df3c8, #9b8cff, #9fd3ff, #7df3c8);
+  display: inline-block;
+}
+#signupModal .signup-side h2 {
+  margin: 28px 0 0;
+  font-size: 42px; line-height: 1.04; letter-spacing: -.04em; color: #edf2f9;
+}
+#signupModal .signup-side > p {
+  margin: 0; color: #93a0b5; font-size: 16px; max-width: 32ch;
+}
+
+#signupModal .signup-steps {
+  list-style: none; margin: 30px 0 0; padding: 0;
+  counter-reset: ncSn;
+}
+#signupModal .signup-steps li {
+  position: relative;
+  padding: 0 0 30px 56px;
+  color: #93a0b5;
+  min-height: 66px;
+}
+#signupModal .signup-steps li::before {
+  content: counter(ncSn);
+  counter-increment: ncSn;
+  position: absolute; left: 0; top: 0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-weight: 700;
+  background: #0a1120;
+  border: 1.5px solid rgba(255,255,255,.12);
+}
+#signupModal .signup-steps li:not(:last-child)::after {
+  content: "";
+  position: absolute; left: 18px; top: 44px; bottom: 6px;
+  width: 2px; background: rgba(255,255,255,.12);
+}
+#signupModal .signup-steps li:first-child::before {
+  background: linear-gradient(135deg, #7df3c8, #9b8cff);
+  color: #06101f;
+  border-color: transparent;
+  box-shadow: 0 0 0 7px rgba(125,243,200,.12);
+}
+#signupModal .signup-steps b {
+  display: block; color: #edf2f9; font-size: 17px; margin-bottom: 2px;
+}
+#signupModal .signup-steps span { font-size: 14px; }
+
+#signupModal .signup-trust {
+  margin-top: auto;
+  display: grid; gap: 12px;
+  color: #93a0b5; font-size: 14px;
+}
+#signupModal .signup-trust span { display: flex; align-items: center; gap: 10px; }
+#signupModal .signup-trust svg { color: #7df3c8; }
+
+#signupModal .signup-main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 18px;
+  overflow-y: auto;
+}
+#signupModal .signup-main::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask: radial-gradient(70% 60% at 50% 40%, #000, transparent);
+  mask: radial-gradient(70% 60% at 50% 40%, #000, transparent);
+}
+#signupModal .signup-main > * { position: relative; }
+
+#signupModal .signup-box {
+  width: min(520px, 100%);
+  margin: auto;
+  padding: 36px 32px;
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  border: 1px solid rgba(255,255,255,.12);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 50px 100px -40px rgba(0,0,0,.8);
+  position: relative;
+  color: #edf2f9;
+}
+
+#signupModal .signup-close {
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #93a0b5;
+  font-size: 20px;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: all .2s;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+#signupModal .signup-close:hover {
+  background: rgba(255,84,112,.15);
+  border-color: rgba(255,84,112,.3);
+  color: #ff5470;
+}
+
+#signupModal h1.signup-title {
+  font-size: clamp(24px, 3.5vw, 30px);
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  margin: 0 0 8px;
+  color: #edf2f9;
+  font-weight: 700;
+}
+#signupModal .signup-sub {
+  margin: 0 0 24px;
+  color: #93a0b5;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+#signupModal .type-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+#signupModal .type-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: #edf2f9;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+#signupModal .type-opt:hover { transform: translateY(-2px); }
+#signupModal .type-opt.on {
+  border-color: #7df3c8;
+  background: rgba(125,243,200,.08);
+  box-shadow: 0 0 0 4px rgba(125,243,200,.1);
+}
+#signupModal .type-opt.on::after {
+  content: "✓";
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #7df3c8;
+  color: #06101f;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid; place-items: center;
+}
+#signupModal .type-opt-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+#signupModal .type-opt-badge.popular {
+  background: rgba(125,243,200,.15);
+  color: #7df3c8;
+}
+#signupModal .type-opt-badge.fast {
+  background: rgba(155,140,255,.15);
+  color: #c4b5fd;
+}
+#signupModal .type-opt-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, #7df3c8, #9b8cff);
+  color: #06101f;
+  font-size: 20px;
+}
+#signupModal .type-opt-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #edf2f9;
+}
+#signupModal .type-opt-sub {
+  font-size: 12px;
+  color: #93a0b5;
+  line-height: 1.4;
+}
+
+#signupModal .signup-field {
+  margin-bottom: 16px;
+}
+#signupModal .signup-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #93a0b5;
+}
+#signupModal .signup-field .field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+#signupModal .signup-field .field-icon {
+  position: absolute;
+  left: 14px;
+  width: 18px; height: 18px;
+  color: #64748b;
+  pointer-events: none;
+  transition: color .2s;
+  z-index: 1;
+}
+#signupModal .signup-field input {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #edf2f9;
+  font: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color .2s, box-shadow .2s;
+}
+#signupModal .signup-field input:focus {
+  outline: none;
+  border-color: #7df3c8;
+  box-shadow: 0 0 0 4px rgba(125,243,200,.15);
+}
+#signupModal .signup-field input::placeholder { color: #4b5769; }
+#signupModal .signup-field .field-wrap:focus-within .field-icon { color: #7df3c8; }
+#signupModal .signup-field .field-toggle {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #93a0b5;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  z-index: 1;
+}
+#signupModal .field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #7c9cbb;
+}
+
+#signupModal .signup-error {
+  background: rgba(255,84,112,.1);
+  border: 1px solid rgba(255,84,112,.3);
+  color: #ff8a8a;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-top: 14px;
+  text-align: center;
+}
+
+#signupModal .signup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+#signupModal .signup-btn {
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  font: 600 16px "Schibsted Grotesk", system-ui, sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform .15s, opacity .2s, box-shadow .2s;
+  flex: 1;
+}
+#signupModal .signup-btn.b1 {
+  background: linear-gradient(90deg, #7df3c8, #9fd3ff);
+  color: #06101f;
+  border-color: transparent;
+  box-shadow: 0 16px 34px -14px rgba(125,243,200,.7);
+}
+#signupModal .signup-btn.b1:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 40px -14px rgba(125,243,200,.85);
+}
+#signupModal .signup-btn.b1:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+#signupModal .signup-btn.b2 {
+  background: transparent;
+  color: #edf2f9;
+  border: 1px solid rgba(255,255,255,.12);
+  flex: 0 0 auto;
+  padding: 0 20px;
+}
+#signupModal .signup-btn.b2:hover { background: rgba(255,255,255,.05); }
+
+#signupModal .signup-footer {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: #93a0b5;
+}
+#signupModal .signup-footer a {
+  color: #7df3c8;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+#signupModal #pwStrength {
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.1);
+  overflow: hidden;
+}
+#signupModal #pwBar {
+  height: 100%;
+  width: 0%;
+  background: #ff5470;
+  transition: .3s;
+}
+#signupModal #pwHint {
+  font-size: 12px;
+  color: #7c9cbb;
+  margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  #signupModal .signup-box { padding: 26px 22px; border-radius: 24px; }
+  #signupModal .type-picker { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #signupModal .signup-side::before { animation: none !important; }
+}  
 </style>
 </head>
 <body>
@@ -1373,56 +1793,93 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   </script>
 
 <!-- 🎁 SIGNUP MODAL -->
-<div class="modal" id="signupModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;overflow-y:auto">
-  <div style="background:var(--surf);border:1px solid var(--line);border-radius:22px;padding:36px 32px;width:100%;max-width:480px;box-shadow:var(--shadow);position:relative;margin:auto">
-    <button onclick="closeSignupModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:10px;background:transparent;border:1px solid var(--line);color:var(--mute);cursor:pointer;font-size:18px;line-height:1;font-family:inherit">×</button>
+<div class="modal" id="signupModal" style="display:none">
+  <div class="signup-shell">
+    <aside class="signup-side">
+      <div class="signup-logo"><i></i>NordicCrypto</div>
+      <h2>Join the<br>future.</h2>
+      <p>Create your account in under a minute. Start with banking or exchange — switch anytime.</p>
+      <ol class="signup-steps">
+        <li><b>Create account</b><span>Pick Banking or Exchange</span></li>
+        <li><b>Verify identity</b><span>Quick KYC — 3 photos</span></li>
+        <li><b>Start banking</b><span>Cards, IBAN &amp; crypto</span></li>
+      </ol>
+      <div class="signup-trust">
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Encrypted connection</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Bank-grade security</span>
+      </div>
+    </aside>
 
-    <h3 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;letter-spacing:-.02em">Create your account</h3>
-    <p style="color:var(--mute);font-size:.9rem;margin:0 0 22px">Choose your account type</p>
+    <main class="signup-main">
+      <div class="signup-box">
+        <button type="button" class="signup-close" onclick="closeSignupModal()">×</button>
 
-    <!-- Account type picker -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px">
-      <button type="button" id="accBanking" onclick="pickAccType('banking')" style="cursor:pointer;padding:16px 14px;border-radius:14px;background:var(--bg);border:2px solid var(--acc);text-align:left;font-family:inherit;color:inherit;position:relative;transition:.2s">
-        <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(125,243,200,.25),rgba(155,140,255,.25));border:1px solid rgba(125,243,200,.4);display:grid;place-items:center;font-size:1.3rem;margin-bottom:10px">🏦</div>
-        <div style="font-weight:700;font-size:.92rem;margin-bottom:3px">Banking</div>
-        <div style="font-size:.72rem;color:var(--mute);line-height:1.35">Card + IBAN + Exchange</div>
-        <div style="position:absolute;top:10px;right:10px;padding:2px 7px;border-radius:5px;font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:rgba(125,243,200,.15);color:#00a86b">Popular</div>
-      </button>
-      <button type="button" id="accExchange" onclick="pickAccType('exchange')" style="cursor:pointer;padding:16px 14px;border-radius:14px;background:var(--bg);border:2px solid var(--line);text-align:left;font-family:inherit;color:inherit;position:relative;transition:.2s">
-        <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,rgba(155,140,255,.2),rgba(255,150,150,.2));border:1px solid rgba(155,140,255,.35);display:grid;place-items:center;font-size:1.3rem;margin-bottom:10px">🪙</div>
-        <div style="font-weight:700;font-size:.92rem;margin-bottom:3px">Exchange</div>
-        <div style="font-size:.72rem;color:var(--mute);line-height:1.35">Crypto trading only</div>
-        <div style="position:absolute;top:10px;right:10px;padding:2px 7px;border-radius:5px;font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:rgba(155,140,255,.15);color:#7c5dff">Fast</div>
-      </button>
-    </div>
+        <h1 class="signup-title">Create your account</h1>
+        <p class="signup-sub">Choose your account type and get started in minutes.</p>
 
-    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Full name</label>
-    <input type="text" id="suName" placeholder="Satoshi Nakamoto" autocomplete="name" style="width:100%;padding:13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+        <div class="type-picker" id="suTypePicker">
+          <button type="button" class="type-opt on" data-type="banking" onclick="pickAccType('banking')">
+            <span class="type-opt-badge popular">POPULAR</span>
+            <span class="type-opt-icon">🏦</span>
+            <span class="type-opt-name">Banking</span>
+            <span class="type-opt-sub">Card + IBAN + Exchange</span>
+          </button>
+          <button type="button" class="type-opt" data-type="exchange" onclick="pickAccType('exchange')">
+            <span class="type-opt-badge fast">FAST</span>
+            <span class="type-opt-icon">₿</span>
+            <span class="type-opt-name">Exchange</span>
+            <span class="type-opt-sub">Crypto trading only</span>
+          </button>
+        </div>
 
-    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Email</label>
-    <input type="email" id="suEmail" placeholder="your@email.com" autocomplete="email" style="width:100%;padding:13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
+        <div class="signup-field">
+          <label>Full name</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-3.8 4.2-5.5 8-5.5s6.8 1.7 8 5.5"/></svg>
+            <input type="text" id="suName" placeholder="Satoshi Nakamoto" autocomplete="name">
+          </div>
+        </div>
 
-    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Password</label>
-    <div style="position:relative">
-      <input type="password" id="suPass" placeholder="Min 6 characters" autocomplete="new-password" style="width:100%;padding:13px 45px 13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
-      <button type="button" onclick="togglePw('suPass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:.6;padding:4px;font-family:inherit">👁</button>
-    </div>
+        <div class="signup-field">
+          <label>Email</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="suEmail" placeholder="your@email.com" autocomplete="email">
+          </div>
+        </div>
 
-    <label style="display:block;font-size:.72rem;color:var(--mute);font-weight:700;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em">Confirm password</label>
-    <div style="position:relative">
-      <input type="password" id="suConfirm" placeholder="Repeat password" autocomplete="new-password" style="width:100%;padding:13px 45px 13px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:.95rem;font-family:inherit;outline:none;box-sizing:border-box">
-      <button type="button" onclick="togglePw('suConfirm',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:.6;padding:4px;font-family:inherit">👁</button>
-    </div>
+        <div class="signup-field">
+          <label>Password</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="suPass" placeholder="Min 6 characters" autocomplete="new-password">
+            <button type="button" class="field-toggle" onclick="togglePw('suPass',this)">👁</button>
+          </div>
+        </div>
 
-    <div id="pwStrength" style="margin-top:10px;height:4px;border-radius:2px;background:var(--line);overflow:hidden;transition:.3s">
-      <div id="pwBar" style="height:100%;width:0%;background:#e5575b;transition:.3s"></div>
-    </div>
-    <div id="pwHint" style="font-size:.72rem;color:var(--mute);margin-top:6px">Use 6+ characters</div>
+        <div class="signup-field">
+          <label>Confirm password</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="suConfirm" placeholder="Repeat password" autocomplete="new-password">
+            <button type="button" class="field-toggle" onclick="togglePw('suConfirm',this)">👁</button>
+          </div>
+          <div id="pwStrength"><div id="pwBar"></div></div>
+          <div id="pwHint">Use 6+ characters</div>
+        </div>
 
-    <div id="suErr" style="display:none;margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.3);color:#e5575b;font-size:.85rem;text-align:center"></div>
+        <div class="signup-error" id="suErr" style="display:none"></div>
 
-    <button id="suSubmit" onclick="doSignupSubmit()" style="width:100%;padding:14px;margin-top:22px;border-radius:12px;border:0;background:var(--acc);color:var(--accInk);font:600 15px 'Schibsted Grotesk',system-ui,sans-serif;cursor:pointer;font-family:inherit">Create account →</button>
-    <p style="text-align:center;margin-top:18px;color:var(--mute);font-size:.85rem">Have an account? <a href="#" onclick="event.preventDefault();closeSignupModal();openLgModal()" style="color:var(--acc);text-decoration:none;font-weight:700">Sign in</a></p>
+        <div class="signup-actions">
+          <button class="signup-btn b2" type="button" onclick="closeSignupModal()">Cancel</button>
+          <button class="signup-btn b1" id="suSubmit" onclick="doSignupSubmit()">Create account →</button>
+        </div>
+
+        <div class="signup-footer">
+          Already have an account? <a href="#" onclick="event.preventDefault();closeSignupModal();openLgModal()">Sign in</a>
+        </div>
+      </div>
+    </main>
   </div>
 </div>
 
