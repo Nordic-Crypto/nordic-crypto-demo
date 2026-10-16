@@ -1,13 +1,17 @@
 /* ============================================================
-   NC BOOT GUARD v1.1 — не блокирует уже загруженный UI
+   NC BOOT GUARD v1.2
+   - Ждёт, пока loadFromServer завершится (сам факт запроса)
+   - Не показывает ошибку, пока идёт загрузка
+   - Показывает "Try again" только при РЕАЛЬНОМ сбое
    ============================================================ */
 (function () {
   'use strict';
 
   var OVERLAY_ID = 'ncBootOverlay';
-  var WATCHDOG_MS = 20000;
   var watchdogTimer = null;
   var waiting = false;
+  var loadStartedAt = 0;
+  var LOAD_MIN_MS = 45000; // 45 сек — запас на медленный Worker
 
   function $(id) { return document.getElementById(id); }
 
@@ -67,6 +71,7 @@
       '<h1>' + esc(msg || 'Loading…') + '</h1><p>This takes a few seconds.</p></div>';
     o.className = 'on';
     waiting = true;
+    loadStartedAt = Date.now();
     armWatchdog();
   }
 
@@ -104,11 +109,11 @@
     if (s) s.onclick = signOut;
   }
 
-  /* 🛡️ FIX: проверяем размеры, а не только display */
+  /* Что-то видно на экране? */
   function shown(el) {
     if (!el) return false;
     var r = el.getBoundingClientRect();
-    if (r.width < 10 || r.height < 10) return false;
+    if (r.width < 50 || r.height < 50) return false;
     var cs = window.getComputedStyle(el);
     if (cs.display === 'none') return false;
     if (cs.visibility === 'hidden') return false;
@@ -117,11 +122,9 @@
   }
 
   function somethingVisible() {
-    var ids = ['sideBar', 'mainApp', 'adminPanel', 'pendingScreen', 'rejectedScreen', 'verifyScreen', 'onboard'];
+    var ids = ['sideBar','mainApp','adminPanel','pendingScreen','rejectedScreen','verifyScreen','onboard'];
     for (var i = 0; i < ids.length; i++) {
-      var el = $(ids[i]);
-      if (!el) continue;
-      if (shown(el)) return true;
+      if (shown($(ids[i]))) return true;
     }
     return false;
   }
@@ -134,37 +137,56 @@
     clearTimeout(watchdogTimer);
     watchdogTimer = setTimeout(function () {
       var o = $(OVERLAY_ID);
-      var overlayShowsError = o && o.classList.contains('on') && $('ncbRetry');
-      if (overlayShowsError) return;
+      var isErrorScreen = o && o.classList.contains('on') && $('ncbRetry');
+      if (isErrorScreen) return;
 
-      // 🛡️ FIX: не показываем ошибку если что-то видно
+      // ✅ ГЛАВНОЕ: если что-то видно — закрываем overlay
       if (somethingVisible()) { done(); return; }
 
-      if (waiting || (hasSession() && !somethingVisible())) {
-        fail('timeout', new Error('no visible screen after ' + WATCHDOG_MS + 'ms'));
+      // ✅ ГЛАВНОЕ: если идёт загрузка — ждём дальше (не показываем ошибку)
+      if (typeof window.st === 'undefined' || !window.stateLoaded) {
+        // state ещё не загружен — ждём
+        armWatchdog();
+        return;
       }
-    }, WATCHDOG_MS);
+
+      // ✅ Если state загружен, но экран не показан — даём ещё 5 сек
+      var elapsed = Date.now() - loadStartedAt;
+      if (elapsed < LOAD_MIN_MS) { armWatchdog(); return; }
+
+      // Только теперь ошибка
+      fail('timeout', new Error('no visible screen after ' + elapsed + 'ms'));
+    }, 3000);
   }
 
+  /* Событие: auth login */
   document.addEventListener('nc:auth:login', function () {
     if (hasSession()) armWatchdog();
   });
 
-  window.addEventListener('load', function () {
-    if (hasSession()) setTimeout(function () {
-      var o = $(OVERLAY_ID);
-      if (o && o.classList.contains('on')) return;
-      if (!somethingVisible()) armWatchdog();
-    }, 1500);
+  /* Событие: state загружен — сразу закрываем overlay */
+  document.addEventListener('nc:state:loaded', function () {
+    if (somethingVisible()) done();
   });
 
-  // 🛡️ FIX: каждые 3 сек проверяем, не появился ли UI — если да, убираем overlay
+  /* На загрузке страницы с живой сессией */
+  window.addEventListener('load', function () {
+    if (!hasSession()) return;
+    setTimeout(function () {
+      var o = $(OVERLAY_ID);
+      if (o && o.classList.contains('on') && $('ncbRetry')) return;
+      if (!somethingVisible()) armWatchdog();
+      else done();
+    }, 2000);
+  });
+
+  /* Каждые 2 сек — если видно UI, закрываем overlay */
   setInterval(function () {
     var o = $(OVERLAY_ID);
     if (!o || !o.classList.contains('on')) return;
-    if ($('ncbRetry')) return; // это экран ошибки — не трогаем
+    if ($('ncbRetry')) return; // это экран ошибки
     if (somethingVisible()) done();
-  }, 3000);
+  }, 2000);
 
   window.NCBoot = { loading: loading, done: done, fail: fail, somethingVisible: somethingVisible };
 })();
