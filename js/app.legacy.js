@@ -208,16 +208,15 @@ function showLoginError(msg) {
 }
 
 async function checkSession() {
+  // 🛡️ Не показываем verify если st ещё не загружен
+  if (!stateLoaded) {
+    console.log('[NC] checkSession: state not loaded yet, skipping');
+    return;
+  }
   var token = getSessionToken();
   var email = localStorage.getItem('user_email');
   if (!token) { showLoginScreen(); return; }
-
-  if (email) {
-    hideLoginScreen();
-    showApp();
-    startInactivityTimer();
-  }
-
+  // Проверяем только токен, БЕЗ UI-логики
   try {
     var res = await fetch(WORKER_LOGIN_URL + '?action=verify', {
       method: 'POST',
@@ -230,6 +229,9 @@ async function checkSession() {
       localStorage.setItem('user_role', data.user.role || 'user');
     } else {
       console.warn('[session] verify failed:', data);
+      clearSessionToken();
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_role');
     }
   } catch (e) { console.warn('[session] error:', e); }
 }
