@@ -3680,7 +3680,7 @@ async function startTicket() {
     if (typeof initOnboarding === 'function') initOnboarding();
     if (typeof initNav === 'function') initNav();
 
-    if (typeof checkSession === 'function') checkSession();
+        // if (typeof checkSession === 'function') checkSession();
 
     setTimeout(function () { var ctx = getAudioCtx(); if (ctx && ctx.state === 'suspended') ctx.resume(); }, 500);
     setInterval(function () { var ctx = getAudioCtx(); if (ctx && ctx.state === 'suspended') ctx.resume(); }, 30000);
