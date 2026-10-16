@@ -134,16 +134,19 @@ function loadFromServer(cb, targetEmail) {
   window.__ncLoadFailed = false;
 
   _ncFetchState(body, 0)
-          if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+    .then(function (data) {
+      var errText = data && data.ok === false ? String(data.error || '') : '';
+      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
         // сессия умерла — выходим на логин, НО завершаем boot корректно
         clearSessionToken();
-        localStorage.removeItem('user_email'); localStorage.removeItem('user_role');
+        localStorage.removeItem('user_email');
+        localStorage.removeItem('user_role');
         window.__ncLoadFailed = false;
         stateTrusted = false;
-        stateLoaded = true;                          // 🛡️ ДОБАВЛЕНО
-        if (window.NCBoot) window.NCBoot.done();     // 🛡️ ДОБАВЛЕНО — снимаем overlay
+        stateLoaded = true;                          // 🛡️
+        if (window.NCBoot) window.NCBoot.done();     // 🛡️ снимаем overlay
         try { showLoginScreen(); } catch (e) {}
-        if (cb) { try { cb(); } catch (e) {} }       // 🛡️ ДОБАВЛЕНО — завершаем showApp
+        if (cb) { try { cb(); } catch (e) {} }       // 🛡️ завершаем showApp
         return;
       }
       if (errText && !/not.?found|no.?state|empty|new.?user/i.test(errText)) {
@@ -152,7 +155,13 @@ function loadFromServer(cb, targetEmail) {
       st = _ncNormalizeState(data && data.ok === false ? null : data);
       stateLoaded = true;
       stateTrusted = true;
-      try { localStorage.setItem('nc_state_backup:' + (targetEmail || localStorage.getItem('user_email') || ''), JSON.stringify({ t: Date.now(), s: st })); } catch (e) {}
+
+      try {
+        localStorage.setItem(
+          'nc_state_backup:' + (targetEmail || localStorage.getItem('user_email') || ''),
+          JSON.stringify({ t: Date.now(), s: st })
+        );
+      } catch (e) {}
 
       try {
         var form = document.getElementById('chatTicketForm');
@@ -165,16 +174,24 @@ function loadFromServer(cb, targetEmail) {
         if (topicEl) topicEl.textContent = 'Support';
       } catch (e) { console.warn('[NC] chat init', e); }
 
-      // ошибка рендера больше НЕ сбрасывает state и НЕ блокирует показ экрана
       try { render(); } catch (e) { console.warn('[NC] render error (non-fatal)', e); }
-      if (cb) { try { cb(); } catch (e) { console.error('[NC] post-load callback', e); if (window.NCBoot) window.NCBoot.fail('callback', e); } }
+
+      if (cb) {
+        try { cb(); }
+        catch (e) {
+          console.error('[NC] post-load callback', e);
+          if (window.NCBoot) window.NCBoot.fail('callback', e);
+        }
+      }
     })
     .catch(function (err) {
       console.error('[NC] loadFromServer failed — данные на сервере НЕ тронуты', err);
       window.__ncLoadFailed = true;
-      stateTrusted = false;     // блокирует saveToServer
+      stateTrusted = false;
       stateLoaded = true;
-      if (window.NCBoot) window.NCBoot.fail('load', err, function () { loadFromServer(cb, targetEmail); });
+      if (window.NCBoot) {
+        window.NCBoot.fail('load', err, function () { loadFromServer(cb, targetEmail); });
+      }
     });
 }
 
