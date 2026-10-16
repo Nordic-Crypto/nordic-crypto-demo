@@ -32,17 +32,23 @@
   }
 
   function applyFix() {
-    if (typeof st === 'undefined' || !st) return;
+  if (typeof st === 'undefined' || !st) return;
+  var status = (st.verification && st.verification.status) || null;
+  if (status !== 'pending') return;  // 🛡️ работаем ТОЛЬКО с pending
 
-    var status = (st.verification && st.verification.status) || null;
-    if (!status) return;
+  // Если pendingScreen УЖЕ виден — не трогаем
+  if (isPendingVisible()) return;
 
-    if (status === 'pending') {
-      // 🛡️ Если pending УЖЕ виден — НЕ ТРОГАЕМ
-      if (isPendingVisible()) return;
-      log('status=pending, pending НЕ виден → forceShow');
-      forceShowPending();
-    }
+  // 🛡️ НЕ форсируем, если mainApp/sideBar уже видны (approved)
+  var main = document.getElementById('mainApp');
+  var side = document.getElementById('sideBar');
+  if (main && main.style.display === 'flex') return;
+  if (side && side.style.display === 'flex') return;
+
+  // Только теперь форсируем
+  log('status=pending, app скрыт → forceShow');
+  forceShowPending();
+}
     // Для approved и rejected — НЕ трогаем здесь, app.legacy решает
   }
 
