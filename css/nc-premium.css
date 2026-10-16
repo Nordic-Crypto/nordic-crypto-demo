@@ -1,0 +1,122 @@
+/* ============================================================
+   NC PREMIUM v1.0 — дизайн-слой поверх существующего CSS
+   Только добавляет и уточняет. Не удаляет ничего из старых стилей,
+   не трогает JS-логику. Подключать ПОСЛЕ основного <style>.
+   ============================================================ */
+
+/* ---------- 0. Токены ---------- */
+:root{
+  --nc-ease:cubic-bezier(.2,.7,.2,1);
+  --nc-r-sm:10px; --nc-r-md:14px; --nc-r-lg:20px;
+  --nc-glow:0 0 0 1px rgba(0,229,255,.28),0 10px 30px -10px rgba(0,229,255,.35);
+  --nc-card:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+}
+
+/* ---------- 1. Пустой экран: гарантия видимости контента ----------
+   Раньше шаги внутри pending/rejected получали .on через setInterval.
+   Теперь это решается чистым CSS и работает всегда. */
+#pendingScreen .verify-step,
+#rejectedScreen .verify-step{display:block}
+
+/* login: пока скрыт — не перехватывает клики и не рисуется */
+.login-screen.hidden{visibility:hidden}
+
+/* ---------- 2. Базовая полировка ---------- */
+html{-webkit-text-size-adjust:100%}
+body{text-rendering:optimizeLegibility}
+::selection{background:rgba(0,229,255,.28)}
+
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:2px solid var(--pri);outline-offset:2px;border-radius:8px}
+
+button,.btn{transition:transform .15s var(--nc-ease),box-shadow .2s var(--nc-ease),background-color .2s,border-color .2s,opacity .2s}
+button:not(:disabled):active{transform:translateY(1px) scale(.99)}
+button:disabled{opacity:.55;cursor:not-allowed}
+
+input,select,textarea{transition:border-color .2s,box-shadow .2s,background-color .2s}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(0,229,255,.6)!important;
+  box-shadow:0 0 0 4px rgba(0,229,255,.12)}
+
+/* ---------- 3. Вход ---------- */
+.login-screen{backdrop-filter:blur(2px)}
+.login-screen input{min-height:48px;border-radius:var(--nc-r-md)}
+.login-screen button[type="button"],.login-screen .btn-primary,#btnLogin{
+  min-height:50px;border-radius:var(--nc-r-md);font-weight:700;letter-spacing:.005em}
+#loginError{border-radius:var(--nc-r-sm);line-height:1.45}
+
+/* ---------- 4. Экраны проверки (KYC / pending / rejected) ---------- */
+.verify-box{
+  background:var(--nc-card);
+  border:1px solid var(--bd2);
+  border-radius:var(--nc-r-lg);
+  box-shadow:var(--shadow-lg)}
+.vtl li{transition:opacity .3s}
+.verify-icon{box-shadow:var(--nc-glow)}
+
+/* ---------- 5. Админ-панель ---------- */
+.admin-panel{background:
+  radial-gradient(900px 480px at 8% -10%,rgba(0,229,255,.07),transparent 60%),
+  radial-gradient(800px 460px at 100% 110%,rgba(139,92,246,.08),transparent 60%),
+  var(--bg)}
+
+.admin-sidebar{
+  background:linear-gradient(180deg,rgba(17,24,39,.96),rgba(11,18,32,.96));
+  border-right:1px solid var(--bd)}
+.admin-brand{font-weight:800;letter-spacing:-.02em}
+
+.admin-nav-item{
+  border-radius:var(--nc-r-sm);
+  transition:background-color .2s,color .2s,transform .15s var(--nc-ease);
+  position:relative}
+.admin-nav-item:hover{background:rgba(255,255,255,.05)}
+.admin-nav-item.on,.admin-nav-item.active{
+  background:linear-gradient(90deg,rgba(0,229,255,.14),rgba(139,92,246,.10));
+  box-shadow:inset 2px 0 0 var(--pri)}
+.admin-nav-badge{border-radius:999px;min-width:20px;text-align:center;font-variant-numeric:tabular-nums}
+
+.admin-top{
+  background:rgba(11,18,32,.82);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--bd);
+  position:sticky;top:0;z-index:5}
+
+.admin-stats{gap:14px}
+.admin-stat-card,
+.admin-client-card,
+.admin-section,
+.admin-system{
+  background:var(--nc-card);
+  border:1px solid var(--bd);
+  border-radius:var(--nc-r-lg);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 34px -22px rgba(0,0,0,.7)}
+.admin-stat-value{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.admin-stat-label{color:var(--mut)}
+
+.admin-client-card{transition:border-color .2s,transform .2s var(--nc-ease),box-shadow .2s}
+.admin-client-card:hover{border-color:rgba(0,229,255,.32);box-shadow:var(--nc-glow)}
+.admin-client-field-label{color:var(--mut)}
+.admin-client-field-value{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.admin-client-actions{gap:8px;flex-wrap:wrap}
+.admin-client-actions button{min-height:38px;border-radius:var(--nc-r-sm)}
+.admin-client-badge{border-radius:999px}
+.admin-empty{color:var(--mut);padding:40px 16px;text-align:center}
+
+/* таблицы и длинные значения не ломают страницу */
+.admin-content{min-width:0}
+.admin-content table{display:block;max-width:100%;overflow-x:auto}
+
+/* ---------- 6. Мобильные ---------- */
+@media (max-width:760px){
+  .admin-client-grid{grid-template-columns:1fr 1fr}
+  .admin-client-actions button{flex:1 1 calc(50% - 8px)}
+  .admin-top{padding-left:14px;padding-right:14px}
+}
+@media (max-width:480px){
+  .admin-client-grid{grid-template-columns:1fr}
+}
+
+/* ---------- 7. Доступность: меньше движения ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
