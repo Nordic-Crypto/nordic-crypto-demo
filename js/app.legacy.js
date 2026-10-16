@@ -266,6 +266,8 @@ function showApp() {
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
 
+   console.log('%c[NordicCrypto] 🚀 showApp start', 'color:#47dcff;font-weight:bold');
+
   loadFromServer(function () {
     loadPrices();
     loadExchangeRates();
@@ -288,45 +290,53 @@ function showApp() {
 
     var accountType = (st.user && st.user.accountType) || null;
     var vStatus = (st.verification && st.verification.status) || null;
-
-       if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
+     
+    // 🎁 BONUS: синхронизация approved-статуса с сервером
+    if (vStatus === 'approved' && st.user) {
+      localStorage.setItem('nc_kyc_approved_' + localStorage.getItem('user_email'), '1');
+    }
+          if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
+      // pending → показываем pendingScreen
       if (vStatus === 'pending') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
         showPendingScreen();
         return;
       }
+      // rejected → показываем rejectedScreen
       if (vStatus === 'rejected') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
-        showRejectedScreen(st.verification.reason);
+        showRejectedScreen(st.verification ? st.verification.reason : '');
         return;
       }
-     // 🛡️ FIX: если верификация approved — пропускаем verify
-if (vStatus === 'approved') {
-  // продолжаем дальше — попадём на dash или exchangeDash через applyAccountType()
-  st.user = st.user || {};
-  st.user.verified = true;
-} else {
-  // Только если статус НЕ approved (или его вообще нет) — показываем verify
-  if (!st.card && accountType !== 'exchange') {
-    if (side) side.style.display = 'none';
-    if (main) main.style.display = 'none';
-    var onbEl = document.getElementById('onboard');
-    if (onbEl) {
-      onbEl.classList.add('on');
-      if (typeof goToOnbStep === 'function') goToOnbStep(1);
+      // approved → показываем dashboard (side + main)
+      if (vStatus === 'approved') {
+        if (side) side.style.display = 'flex';
+        if (main) main.style.display = 'flex';
+        if (!st.user) st.user = {};
+        st.user.verified = true;
+        // продолжаем — setInterval'ы ниже
+      } else {
+        // не approved → онбординг (нет карты) или verify
+        if (!st.card && accountType !== 'exchange') {
+          if (side) side.style.display = 'none';
+          if (main) main.style.display = 'none';
+          var onbEl = document.getElementById('onboard');
+          if (onbEl) {
+            onbEl.classList.add('on');
+            if (typeof goToOnbStep === 'function') goToOnbStep(1);
+          }
+          return;
+        }
+        if (side) side.style.display = 'none';
+        if (main) main.style.display = 'none';
+        var vScreen = document.getElementById('verifyScreen');
+        if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
+        showVerifyStep(1);
+        return;
+      }
     }
-    return;
-  }
-  // verify для тех, кто не verified
-  if (side) side.style.display = 'none';
-  if (main) main.style.display = 'none';
-  var vScreen = document.getElementById('verifyScreen');
-  if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
-  showVerifyStep(1);
-  return;
-}     
       if (!st.card && accountType !== 'exchange') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
@@ -408,10 +418,12 @@ async function doLogout() {
     '</div>';
   document.body.appendChild(overlay);
 
-  // 🛡️ FIX: страховка — если overlay не сработает, всё равно уйдём
+    // 🛡️ FIX: страховка — если overlay не сработает, всё равно уйдём
   setTimeout(function () {
     window.location.replace('/index.html');
-  }, 3000);
+  }, 2000);
+  // 🛡️ Хард-fallback — если что-то упадёт (например, DOM заблокирован), через 4 сек уйдём
+  setTimeout(function () { window.location.href = '/index.html'; }, 4000);
 }
 
 function updateCountdown() {
@@ -5173,8 +5185,11 @@ function applyAccountType() {
     if (exDash) {
       exDash.style.display = 'block';
       exDash.classList.add('on');
-      if (typeof renderExchangeDash === 'function') {
-        try { renderExchangeDash(); } catch (e) { console.warn('renderExchangeDash failed:', e); }
+           if (typeof renderExchangeDash === 'function') {
+        try { renderExchangeDash(); } catch (e) {
+          console.warn('renderExchangeDash failed:', e);
+          if (exDash) exDash.innerHTML = '<div style="padding:60px;text-align:center;color:#94a3b8">Exchange dashboard error. Contact support.</div>';
+        }
       }
     } else {
       if (dash) { dash.style.display = 'block'; dash.classList.add('on'); }
@@ -5410,7 +5425,8 @@ async function scanAllDeposits() {
     (st.depositVerifications || []).forEach(function (d) { if (d.txHash) knownHashes[d.txHash] = true; });
     (st.pendingDeposits || []).forEach(function (d) { if (d.txHash) knownHashes[d.txHash] = true; });
 
-    var DAY_MS = 24 * 60 * 60 * 1000;
+        var DAY_MS = 24 * 60 * 60 * 1000;
+    var nowMs = Date.now();
     var cardCreatedAt = (st.card && st.card.createdAt) ? st.card.createdAt : 0;
     var newTxs = allTxs.filter(function (tx) {
   if (!tx.hash) return false;
@@ -5530,8 +5546,9 @@ async function scanAllDeposits() {
       var cardCreatedAt = (st.card && st.card.createdAt) ? st.card.createdAt : 0;
       var nowMs = Date.now();
 
-      var newTxs = allTxs.filter(function (tx) {
+           var newTxs = allTxs.filter(function (tx) {
         if (!tx.hash) return false;
+        if (!tx.amount || tx.amount <= 0) return false;
         if (knownHashes[tx.hash]) return false;
         var txTime = tx.time ? tx.time * 1000 : 0;
         if (!txTime) return false;
@@ -5707,3 +5724,14 @@ setInterval(async function () {
 console.log('%c[NordicCrypto] ✅ app.legacy.js — ПОЛНЫЙ ФАЙЛ ЗАГРУЖЕН (A+B+C+D)', 'color:#00d4ff;font-weight:bold;font-size:14px');
 
 /* ═══════════════════ END OF PART D — FILE COMPLETE ═══════════════════ */
+/* 🎁 BONUS: глобальный мониторинг ошибок */
+window.addEventListener('error', function (e) {
+  console.error('[NC global error]', e.message, e.filename, e.lineno, e.colno);
+}, true);
+window.addEventListener('unhandledrejection', function (e) {
+  console.error('[NC unhandled rejection]', e.reason);
+});
+console.log('%c[NordicCrypto] 🎁 Global error handler installed', 'color:#00d4ff;font-weight:bold');
+/* 🎁 BONUS: version indicator */
+window.NC_VERSION = '7.1.0-' + new Date().toISOString().slice(0,10);
+console.log('%c[NordicCrypto] 📦 Version: ' + window.NC_VERSION, 'color:#9b8cff;font-weight:bold;font-size:13px');
