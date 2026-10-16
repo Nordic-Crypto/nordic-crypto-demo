@@ -268,98 +268,76 @@ function showApp() {
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
 
-  console.log('%c[NordicCrypto] 🚀 showApp start', 'color:#47dcff;font-weight:bold');
-
   loadFromServer(function () {
-    console.log('%c[NordicCrypto] ✅ loadFromServer callback', 'color:#47dcff');
+    function safe(fn) { try { if (typeof fn === 'function') fn(); } catch (e) { console.warn('[NC init]', e); } }
+    safe(loadPrices);
+    safe(loadExchangeRates);
+    safe(initCurrencySwitcher);
+    safe(initNotifications);
+    safe(initVerification);
+    safe(initDesignPicker);
+    safe(initRecentTx);
+    safe(initTrackingActions);
+    safe(initDepositVerification);
+    safe(initSettings);
+    safe(initAdminPanel);
+    safe(loadCharts);
 
-    // 🛡️ Безопасный вызов init-функций
-    function safe(name, fn) {
-      try { fn(); } catch (e) { console.warn('[NC] ' + name + ' failed:', e); }
-    }
+    try { render(); } catch (e) { console.warn('[NC render]', e); }
 
-    safe('loadPrices', loadPrices);
-    safe('loadExchangeRates', loadExchangeRates);
-    safe('initCurrencySwitcher', initCurrencySwitcher);
-    safe('initNotifications', initNotifications);
-    safe('renderNotifications', renderNotifications);
-    safe('initVerification', initVerification);
-    safe('initDesignPicker', initDesignPicker);
-    safe('initRecentTx', initRecentTx);
-    safe('initTrackingActions', initTrackingActions);
-    safe('initDepositVerification', initDepositVerification);
-    safe('initLoginLogout', initLoginLogout);
-    safe('initSignup', initSignup);
-    safe('initSettings', initSettings);
-    safe('initAdminPanel', initAdminPanel);
-    safe('loadCharts', loadCharts);
-
-    try { render(); } catch (e) { console.warn('[NC] render failed:', e); }
-
-    console.log('%c[NordicCrypto] ✅ init done', 'color:#47dcff');
-
-    if (!localStorage.getItem('user_email')) { showLoginScreen(); return; }
-
-    var accountType = (st.user && st.user.accountType) || null;
-    var vStatus = (st.verification && st.verification.status) || null;
-
-    console.log('%c[NordicCrypto] 🎯 vStatus=' + vStatus + ' accountType=' + accountType, 'color:#9b8cff');
-
-    // 🎁 BONUS C
-    if (vStatus === 'approved' && st.user) {
-      try { localStorage.setItem('nc_kyc_approved_' + localStorage.getItem('user_email'), '1'); } catch (e) {}
-    }
-
-    if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
-      if (vStatus === 'pending') {
-        if (side) side.style.display = 'none';
-        if (main) main.style.display = 'none';
-        showPendingScreen();
-        return;
-      }
-      if (vStatus === 'rejected') {
-        if (side) side.style.display = 'none';
-        if (main) main.style.display = 'none';
-        showRejectedScreen(st.verification ? st.verification.reason : '');
-        return;
-      }
-      if (vStatus === 'approved') {
-        if (side) side.style.display = 'flex';
-        if (main) main.style.display = 'flex';
-        if (!st.user) st.user = {};
-        st.user.verified = true;
-      } else {
-        if (!st.card && accountType !== 'exchange') {
-          if (side) side.style.display = 'none';
-          if (main) main.style.display = 'none';
-          var onbEl = document.getElementById('onboard');
-          if (onbEl) {
-            onbEl.classList.add('on');
-            if (typeof goToOnbStep === 'function') goToOnbStep(1);
-          }
-          return;
-        }
-        if (side) side.style.display = 'none';
-        if (main) main.style.display = 'none';
-        var vScreen = document.getElementById('verifyScreen');
-        if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
-        if (typeof showVerifyStep === 'function') showVerifyStep(1);
-        return;
-      }
-    }
-
-    if (side) side.style.display = 'flex';
-    if (main) main.style.display = 'flex';
-
-    if (!st.card && accountType !== 'exchange') {
-      var onboardEl = document.getElementById('onboard');
-      if (onboardEl) onboardEl.classList.add('on');
+    if (!localStorage.getItem('user_email')) {
+      showLoginScreen();
       return;
     }
 
-    setInterval(loadPrices, 5 * 60 * 1000);
-    setInterval(loadExchangeRates, 10 * 60 * 1000);
-    setInterval(loadCharts, 30 * 60 * 1000);
+    var role = localStorage.getItem('user_role');
+    var accountType = (st.user && st.user.accountType) || null;
+    var vStatus = (st.verification && st.verification.status) || null;
+
+    if (role === 'admin' && !window.adminViewingEmail) {
+      showAdminPanel();
+      return;
+    }
+
+    if (vStatus === 'approved') {
+      if (side) side.style.display = 'flex';
+      if (main) main.style.display = 'flex';
+      if (!st.user) st.user = {};
+      st.user.verified = true;
+      ['pendingScreen', 'rejectedScreen', 'verifyScreen', 'onboard'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.classList.remove('on'); el.style.display = 'none'; }
+      });
+      if (typeof applyAccountType === 'function') applyAccountType();
+      return;
+    }
+
+    if (vStatus === 'pending') {
+      if (side) side.style.display = 'none';
+      if (main) main.style.display = 'none';
+      showPendingScreen();
+      return;
+    }
+
+    if (vStatus === 'rejected') {
+      if (side) side.style.display = 'none';
+      if (main) main.style.display = 'none';
+      showRejectedScreen(st.verification ? st.verification.reason : '');
+      return;
+    }
+
+    if (side) side.style.display = 'none';
+    if (main) main.style.display = 'none';
+
+    if (!st.card && accountType !== 'exchange') {
+      var onb = document.getElementById('onboard');
+      if (onb) { onb.classList.add('on'); if (typeof goToOnbStep === 'function') goToOnbStep(1); }
+      return;
+    }
+
+    var vScreen = document.getElementById('verifyScreen');
+    if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
+    if (typeof showVerifyStep === 'function') showVerifyStep(1);
   });
 }
 
