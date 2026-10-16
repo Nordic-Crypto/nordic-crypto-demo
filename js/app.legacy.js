@@ -1894,37 +1894,65 @@ window.submitRealVerification = async function () {
 
     setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
     console.log('[KYC] Uploading passport...');
-    var docKey = await uploadKycFile(docFile, 'passport');
-    console.log('[KYC] ✅ passport uploaded:', docKey);
+    // 🎯 Новый дизайн: получаем front + back через NCVerify.getDocs
+var ncDocs = (window.NCVerify && typeof window.NCVerify.getDocs === 'function') ? window.NCVerify.getDocs() : null;
 
-    setStatus('Uploading selfie (2/2)...', 'Almost done');
-    console.log('[KYC] Uploading selfie...');
-    var selfieKey = await uploadKycFile(selfieFile, 'selfie');
-    console.log('[KYC] ✅ selfie uploaded:', selfieKey);
+var docKey, docKeyBack = null;
 
-    setStatus('Submitting verification...', 'Contacting server');
-    console.log('[KYC] Submitting verification...');
+if (ncDocs && ncDocs.front) {
+  // Новый дизайн (2 фото для ID/лицензии, 1 для паспорта)
+  setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
+  console.log('[KYC] Uploading passport front...');
+  docKey = await uploadKycFile(ncDocs.front, 'passport');
+  console.log('[KYC] ✅ passport front uploaded:', docKey);
 
-    if (!st.verification) st.verification = {};
-    st.verification.status = 'pending';
-    st.verification.docType = verifyData.docType || 'Passport';
-    st.verification.docKeys = [docKey, selfieKey];
-    st.verification.personalInfo = { street: street, city: city, zip: zip, country: country };
-    st.verification.submittedAt = Date.now();
+  if (ncDocs.back) {
+    setStatus('Uploading document (2/2)...', 'Almost done');
+    console.log('[KYC] Uploading passport back...');
+    docKeyBack = await uploadKycFile(ncDocs.back, 'passport_back');
+    console.log('[KYC] ✅ passport back uploaded:', docKeyBack);
+  }
+} else {
+  // Fallback: старый способ (1 файл)
+  setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
+  console.log('[KYC] Uploading passport...');
+  docKey = await uploadKycFile(docFile, 'passport');
+  console.log('[KYC] ✅ passport uploaded:', docKey);
+}
 
-    var r = await fetch(WORKER_URL + '?action=submitVerification', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: token, docType: verifyData.docType || 'Passport', docKeys: [docKey, selfieKey],
-        personalInfo: { street: street, city: city, zip: zip, country: country }
-      })
-    });
-    var data = await r.json();
-    console.log('[KYC] ✅ submitVerification response:', data);
-    if (!data.ok) throw new Error(data.error || 'Submit failed');
+setStatus('Uploading selfie...', 'Almost done');
+console.log('[KYC] Uploading selfie...');
+var selfieKey = await uploadKycFile(selfieFile, 'selfie');
+console.log('[KYC] ✅ selfie uploaded:', selfieKey);
 
-    var email = localStorage.getItem('user_email');
-    if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
+setStatus('Submitting verification...', 'Contacting server');
+console.log('[KYC] Submitting verification...');
+
+// Собираем массив ключей: [front, back?, selfie]
+var docKeys = [docKey];
+if (docKeyBack) docKeys.push(docKeyBack);
+docKeys.push(selfieKey);
+
+if (!st.verification) st.verification = {};
+st.verification.status = 'pending';
+st.verification.docType = verifyData.docType || 'Passport';
+st.verification.docKeys = docKeys;
+st.verification.personalInfo = { street: street, city: city, zip: zip, country: country };
+st.verification.submittedAt = Date.now();
+
+var r = await fetch(WORKER_URL + '?action=submitVerification', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    token: token, docType: verifyData.docType || 'Passport', docKeys: docKeys,
+    personalInfo: { street: street, city: city, zip: zip, country: country }
+  })
+});
+var data = await r.json();
+console.log('[KYC] ✅ submitVerification response:', data);
+if (!data.ok) throw new Error(data.error || 'Submit failed');
+
+var email = localStorage.getItem('user_email');
+if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
 
     clearTimeout(watchdog);
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
