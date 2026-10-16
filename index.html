@@ -451,12 +451,17 @@ select.fc option{background:#0f1420;color:#e8f4ff}
   align-items:center !important;
   justify-content:center !important;
 }
+/* 🛡️ FIX: НЕ применяем * ко всем детям — иначе все verify-step видны */
 #pendingScreen.on *,
-#rejectedScreen.on *,
-#verifyScreen.on *,
-.verify-screen.on *{
-  visibility:visible !important;
-  opacity:1 !important;
+#rejectedScreen.on * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* А для verifyScreen — только сам экран, БЕЗ * */
+#verifyScreen.on {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .verify-step{display:none;width:100%;max-width:520px;animation:verifyFadeIn .45s ease}
 .verify-step.on{display:block}
