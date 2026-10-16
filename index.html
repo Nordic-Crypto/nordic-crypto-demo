@@ -6200,6 +6200,52 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   ncWireCheckStatus();
   setInterval(ncWireCheckStatus, 800);
+    // ═══════════════════════════════════════════════════════════
+  // 🎨 SIGNUP — переключатель Banking/Exchange + UI
+  // ═══════════════════════════════════════════════════════════
+  (function ncSignupUI() {
+    var picker = document.getElementById('suTypePicker');
+    var suAccountType = 'banking';   // default
+
+    if (picker) {
+      picker.querySelectorAll('.type-opt').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          picker.querySelectorAll('.type-opt').forEach(function (b) {
+            b.classList.remove('on');
+          });
+          btn.classList.add('on');
+          suAccountType = btn.getAttribute('data-type') || 'banking';
+          // сохраним в глобал, чтобы app.legacy мог прочитать
+          window.__ncSignupAccountType = suAccountType;
+        });
+      });
+      window.__ncSignupAccountType = 'banking';
+    }
+
+    // Toggle password visibility
+    function wireToggle(btnId, inputId) {
+      var btn = document.getElementById(btnId);
+      var inp = document.getElementById(inputId);
+      if (!btn || !inp || btn.__wired) return;
+      btn.__wired = true;
+      btn.addEventListener('click', function () {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+      });
+    }
+    wireToggle('suPassToggle', 'suPassword');
+    wireToggle('suConfirmToggle', 'suConfirm');
+
+    // Close button → скрыть signup
+    var closeBtn = document.getElementById('suClose');
+    if (closeBtn && !closeBtn.__wired) {
+      closeBtn.__wired = true;
+      closeBtn.addEventListener('click', function () {
+        var m = document.getElementById('signupMask');
+        if (m) { m.classList.remove('on'); m.style.display = 'none'; }
+      });
+    }
+  })();
 })();
 </script>
 </body>
