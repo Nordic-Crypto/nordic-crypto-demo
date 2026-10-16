@@ -185,7 +185,7 @@ async function doLogin() {
       localStorage.setItem('user_name', niceName);
       hideLoginScreen();
       showApp();
-      startInactivityTimer();
+      if (typeof startInactivityTimer === 'function') startInactivityTimer();
       playChime();
     } else {
       loginForm.style.display = 'block';
