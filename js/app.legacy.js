@@ -410,6 +410,25 @@ async function doLogout() {
   setTimeout(function () { window.location.href = '/index.html'; }, 4000);
 }
 
+var _inactivityListenersAttached = false;
+
+function startInactivityTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
+  if (_inactivityListenersAttached) return;
+  _inactivityListenersAttached = true;
+  ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'].forEach(function (evt) {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  });
+}
+
+function resetInactivityTimer() {
+  var modal = document.getElementById('inactivityOverlay');
+  if (modal && modal.classList.contains('on')) return;
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
+}
+
 function updateCountdown() {
   var el = document.getElementById('inactivityTimer');
   if (el) el.textContent = countdownLeft;
@@ -420,6 +439,40 @@ function hideInactivityModal() {
   if (overlay) overlay.classList.remove('on');
   clearInterval(countdownTimer);
 }
+
+var _inactivityListenersAttached = false;
+
+function startInactivityTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
+  if (_inactivityListenersAttached) return;
+  _inactivityListenersAttached = true;
+  ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'].forEach(function (evt) {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  });
+}
+
+function resetInactivityTimer() {
+  var modal = document.getElementById('inactivityOverlay');
+  if (modal && modal.classList.contains('on')) return;
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
+}
+
+function showInactivityModal() {
+  var overlay = document.getElementById('inactivityOverlay');
+  if (!overlay) return;
+  overlay.classList.add('on');
+  countdownLeft = LOGOUT_COUNTDOWN;
+  updateCountdown();
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(function () {
+    countdownLeft--;
+    updateCountdown();
+    if (countdownLeft <= 0) { clearInterval(countdownTimer); doLogout(); }
+  }, 1000);
+}
+
 
 /* ═══════════════════ SETTINGS ═══════════════════ */
 function initSettings() {
