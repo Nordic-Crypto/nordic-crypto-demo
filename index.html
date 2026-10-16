@@ -5205,6 +5205,16 @@ document.addEventListener('DOMContentLoaded', function(){
     });
     dl.addEventListener('pointerleave', function () { live.style.transform = ''; });
   }
+    // 🛡️ FIX: убираем старый inline display:none с KYC слотов
+  // (kyc-fix.js ставит display:none, из-за чего front слот схлопывается)
+  function ncFixSlots() {
+    ['docUpload', 'docUploadBack', 'selfieUpload'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && el.style.display === 'none') el.style.display = '';
+    });
+  }
+  setInterval(ncFixSlots, 150);
+  ncFixSlots();
 })();
 </script>
 </body>
