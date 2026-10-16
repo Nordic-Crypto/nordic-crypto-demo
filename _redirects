@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════════
+# NordicCrypto — чистые URL (без .html)
+# ═══════════════════════════════════════════════════════════
+
+# Главная → landing
+/                    /landing.html      200
+/index               /index.html        200
+
+# Чистые URL
+/landing             /landing.html      200
+/app                 /index.html        200
+/signup              /signup.html       200
+/login               /login.html        200
+
+# Admin
+/admin               /index.html#admin  200
+
+# Fallback: любой неизвестный путь → landing
+/*                   /landing.html      404
