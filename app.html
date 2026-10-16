@@ -4074,23 +4074,14 @@ document.addEventListener('DOMContentLoaded', function(){
   var hasEmail = localStorage.getItem('user_email');
   var hash = window.location.hash || '';
 
-  // Разрешаем эти hash-исключения
   if (hash === '#admin' || hash === '#signin' || hash === '#signup') return;
 
-  // Без сессии → на лендинг
+  // 🛡️ FIX: НЕ удаляем ничего. Просто редиректим, если сессии нет.
+  // Удаление тут маскировало баг boot-guard'а (см. ниже) и мешало восстановлению.
   if (!hasToken || !hasEmail) {
-    try {
-      localStorage.removeItem('session_token');
-      localStorage.removeItem('user_email');
-      localStorage.removeItem('user_role');
-      localStorage.removeItem('user_name');
-    } catch(e){}
     window.location.replace('index.html');
     return;
   }
-
-  // 🛡️ FIX: НЕ валидируем здесь. app.legacy.js сам проверит при loadFromServer().
-  // Убрано fetch ?action=verify — он вызывал race condition и ложный logout при F5.
 })();
 </script>
 
