@@ -488,12 +488,6 @@ function startInactivityTimer() {
   });
 }
 
-function resetInactivityTimer() {
-  var modal = document.getElementById('inactivityOverlay');
-  if (modal && modal.classList.contains('on')) return;
-  clearTimeout(sessionTimer);
-  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
-}
 
 function showInactivityModal() {
   var overlay = document.getElementById('inactivityOverlay');
