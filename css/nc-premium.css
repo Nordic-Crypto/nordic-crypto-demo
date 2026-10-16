@@ -120,3 +120,47 @@ input:focus,select:focus,textarea:focus{
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+/* ═══════════════════════════════════════════════════════
+   🛡️ FIX v2026-10-18 — восстановление высот top/body
+   Проблема: .top и .body внутри #mainApp схлопывались в 0×0
+   Причина: flex-контейнер .main не задавал явные размеры детям
+   ═══════════════════════════════════════════════════════ */
+
+/* .main (родитель) — flex-колонка на всю высоту */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* .top (шапка) — фиксированная высота, не сжимается */
+.main > .top,
+#mainApp > .top {
+  flex: 0 0 auto !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  max-height: 70px !important;
+}
+
+/* .body (контент) — растягивается, скроллится */
+.main > .body,
+#mainApp > .body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: block !important;
+}
+
+/* Сама mainApp — на всю высоту */
+#mainApp,
+.main {
+  min-height: 100vh;
+  height: 100vh;
+}
