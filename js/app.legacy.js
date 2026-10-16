@@ -302,24 +302,24 @@ function showApp() {
         showRejectedScreen(st.verification.reason);
         return;
       }
-      if (!st.card && accountType !== 'exchange') {
-  if (side) side.style.display = 'none';
-  if (main) main.style.display = 'none';
-  var onbEl = document.getElementById('onboard');
-  if (onbEl) {
-    onbEl.classList.add('on');
-    if (typeof goToOnbStep === 'function') goToOnbStep(1);
-  }
-  return;
-}
+            if (!st.card && accountType !== 'exchange') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
-        var vScreen = document.getElementById('verifyScreen');
-        if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
-        showVerifyStep(1);
+        var onbEl = document.getElementById('onboard');
+        if (onbEl) {
+          onbEl.classList.add('on');
+          if (typeof goToOnbStep === 'function') goToOnbStep(1);
+        }
         return;
       }
+      if (side) side.style.display = 'none';
+      if (main) main.style.display = 'none';
+      var vScreen = document.getElementById('verifyScreen');
+      if (vScreen) { vScreen.classList.add('on'); vScreen.style.display = 'flex'; }
+      showVerifyStep(1);
+      return;
     }
+  }
 
     if (side) side.style.display = 'flex';
     if (main) main.style.display = 'flex';
