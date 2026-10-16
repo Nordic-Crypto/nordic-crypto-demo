@@ -2925,8 +2925,6 @@ function initOnboarding() {
 
   // ── дальше идёт твой существующий код ──
   var typeBtns = document.querySelectorAll('.type-btn');
-  // ... остальное НЕ ТРОГАЕШЬ   
-  var typeBtns = document.querySelectorAll('.type-btn');
   for (var t = 0; t < typeBtns.length; t++) {
     typeBtns[t].onclick = function () {
       for (var k = 0; k < typeBtns.length; k++) typeBtns[k].classList.remove('on');
