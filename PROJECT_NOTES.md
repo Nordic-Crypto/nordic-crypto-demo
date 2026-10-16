@@ -1,28 +1,33 @@
-# NordicCrypto — Notes
+# NordicCrypto — контекст проекта
 
-## Где что
-- Лендинг: `index.html`
-- Кабинет: `app.html`  
+## Стек
+- Frontend: HTML + CSS + JS
 - Хостинг: GitHub Pages
+- Backend: Cloudflare Worker
 - Домен: nordiccrypto.net
-- Worker: nordic-deposit-checker.otis-790.workers.dev
+- Репо: Nordic-Crypto/nordic-crypto-demo
 
-## Что работает
-- KYC: 3 шага ✅
-- Pending / Rejected: премиум ✅
-- Signup: премиум в index.html ✅  
-- Login: премиум в landing.html ✅
-- Log out: редирект на лендинг ✅
-- Clean URL ✅
+## Файлы
+- index.html → лендинг
+- app.html → кабинет
+- js/app.legacy.js → монолит
+- js/kyc-fix.js → KYC fix
+
+## Что сделано
+1. ✅ KYC redesign
+2. ✅ Pending screen
+3. ✅ Rejected screen  
+4. ✅ Signup modal
+5. ✅ Log out → landing
+6. ✅ Clean URL
 
 ## Что дальше
-- Signup на landing.html → премиум
-- Admin CRM
-- SSE вместо polling
-- Dashboard улучшения
+1. Signup на landing → премиум
+2. Admin CRM
+3. SSE вместо polling
+4. Dashboard улучшения
 
 ## Стиль
 - accent: #7df3c8 → #9b8cff
 - bg: #060a12
-- radius: 32px / 16px
 - font: Schibsted Grotesk
