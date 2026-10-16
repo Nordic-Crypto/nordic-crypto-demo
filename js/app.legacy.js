@@ -5192,14 +5192,11 @@ function applyAccountType() {
   if (isExchange) {
     if (dash) { dash.style.display = 'none'; dash.classList.remove('on'); }
 
-    if (exDash) {
+        if (exDash) {
       exDash.style.display = 'block';
       exDash.classList.add('on');
-
-           try {
-        if (typeof renderExchangeDash === 'function') renderExchangeDash();
-      } catch (e) {
-        console.warn('[applyAccountType] renderExchangeDash failed:', e);
+      if (typeof renderExchangeDash === 'function') {
+        try { renderExchangeDash(); } catch (e) { console.warn('renderExchangeDash failed:', e); }
       }
     } else {
       if (dash) { dash.style.display = 'block'; dash.classList.add('on'); }
