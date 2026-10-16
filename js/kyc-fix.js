@@ -1,11 +1,11 @@
 /* ============================================================
-   KYC SCREEN FIX v3.4 — не перебиваем pendingScreen
+   KYC SCREEN FIX v3.5 — не перебиваем pendingScreen
    ============================================================ */
 (function () {
   'use strict';
 
   function log() {
-    console.log.apply(console, ['[NC-Fix v3.4]'].concat([].slice.call(arguments)));
+    console.log.apply(console, ['[NC-Fix v3.5]'].concat([].slice.call(arguments)));
   }
 
   function isPendingVisible() {
@@ -32,6 +32,9 @@
 
   function applyFix() {
     if (typeof st === 'undefined' || !st) return;
+    if (window.__ncLoadFailed) return;                       // экран ошибки загрузки важнее
+    var boot = document.getElementById('ncBootOverlay');
+    if (boot && boot.classList.contains('on')) return;       // идёт загрузка/ошибка — не вмешиваемся
     var status = (st.verification && st.verification.status) || null;
     if (status !== 'pending') return;
     if (isPendingVisible()) return;
@@ -66,5 +69,5 @@
 
   setTimeout(applyFix, 800);
 
-  log('🛡️ KYC screen fix v3.4 loaded');
+  log('🛡️ KYC screen fix v3.5 loaded');
 })();
