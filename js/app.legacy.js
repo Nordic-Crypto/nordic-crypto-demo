@@ -289,7 +289,7 @@ function showApp() {
     var accountType = (st.user && st.user.accountType) || null;
     var vStatus = (st.verification && st.verification.status) || null;
 
-    if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
+       if (localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail) {
       if (vStatus === 'pending') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
@@ -302,7 +302,7 @@ function showApp() {
         showRejectedScreen(st.verification.reason);
         return;
       }
-            if (!st.card && accountType !== 'exchange') {
+      if (!st.card && accountType !== 'exchange') {
         if (side) side.style.display = 'none';
         if (main) main.style.display = 'none';
         var onbEl = document.getElementById('onboard');
@@ -319,7 +319,6 @@ function showApp() {
       showVerifyStep(1);
       return;
     }
-  }
 
     if (side) side.style.display = 'flex';
     if (main) main.style.display = 'flex';
