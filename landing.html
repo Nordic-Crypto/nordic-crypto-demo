@@ -1474,11 +1474,13 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   var accType='banking';
 
   window.pickAccType=function(t){
-    accType=t;
-    var b=document.getElementById('accBanking'),e=document.getElementById('accExchange');
-    [b,e].forEach(function(el){el.style.borderColor='var(--line)';});
-    (t==='banking'?b:e).style.borderColor='var(--acc)';
-  };
+  accType=t;
+  var picker = document.getElementById('suTypePicker');
+  if (!picker) return;
+  picker.querySelectorAll('.type-opt').forEach(function(btn){
+    btn.classList.toggle('on', btn.getAttribute('data-type') === t);
+  });
+};
 
   window.togglePw=function(id,btn){
     var inp=document.getElementById(id);
