@@ -4064,17 +4064,55 @@ document.addEventListener('DOMContentLoaded', function(){
 </head>
 <body>
 
-<!-- 🛡️ FIX: если не залогинен → на лендинг -->
+<body>
+
+<!-- 🛡️ GATE: не пускаем в app.html без валидной сессии -->
 <script>
 (function(){
+  // 1. Признаки сессии
   var hasToken = localStorage.getItem('session_token');
   var hasEmail = localStorage.getItem('user_email');
+
+  // 2. Разрешаем ТОЛЬКО эти hash-исключения (админский вход и формы)
+  var hash = window.location.hash || '';
+  if (hash === '#admin' || hash === '#signin' || hash === '#signup') return;
+
+  // 3. Если НЕТ сессии → жёсткий редирект на лендинг
   if (!hasToken || !hasEmail) {
-  if (window.location.hash === '#admin') return;
-  if (window.location.hash === '#signin') return;
-  if (window.location.hash === '#signup') return;
-  window.location.replace('index.html');
-}
+    // очищаем остатки чтобы не зациклиться
+    try {
+      localStorage.removeItem('session_token');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_name');
+    } catch(e){}
+    window.location.replace('/index.html');
+    return;
+  }
+
+  // 4. Даже если сессия есть — валидируем её на сервере
+  //    (чтобы отловить expired/revoked токены)
+  try {
+    fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: hasToken })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || !d.ok) {
+        // токен мёртв → чистим и на лендинг
+        try {
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('user_email');
+          localStorage.removeItem('user_role');
+          localStorage.removeItem('user_name');
+        } catch(e){}
+        window.location.replace('/index.html');
+      }
+    })
+    .catch(function(){ /* сеть упала — не выкидываем, пусть legacy сам покажет */ });
+  } catch(e) {}
 })();
 </script>
 
