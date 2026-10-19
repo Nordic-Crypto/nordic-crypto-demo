@@ -4611,7 +4611,15 @@ function adminAddBalance(email, name) {
   if (desc) desc.textContent = name + ' (' + email + ')';
   if (amtEl) amtEl.value = '';
   if (noteEl) noteEl.value = '';
-  if (mask) mask.classList.add('on');
+  
+  // 🛡️ FIX: force display — иначе mask перекрывает кнопки, но окно не показывается
+  if (mask) {
+    mask.classList.add('on');
+    mask.style.display = 'flex';
+    mask.style.zIndex = '99999';
+    mask.style.position = 'fixed';
+    mask.style.inset = '0';
+  }
 }
 
 function adminDeleteUser(email, name) {
