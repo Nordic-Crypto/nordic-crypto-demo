@@ -134,26 +134,24 @@ function loadFromServer(cb, targetEmail) {
   window.__ncLoadFailed = false;
 
   _ncFetchState(body, 0)
-          // 🛡️ FIX: воркер возвращает ok: undefined вместо true
-      // Считаем ответ успешным, если НЕТ явной ошибки
+    .then(function (data) {
       var isServerError = data && data.ok === false;
       var errText = isServerError ? String(data.error || '') : '';
-        // сессия умерла — выходим на логин, НО завершаем boot корректно
+      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
         clearSessionToken();
         localStorage.removeItem('user_email');
         localStorage.removeItem('user_role');
         window.__ncLoadFailed = false;
         stateTrusted = false;
-        stateLoaded = true;                          // 🛡️
-        if (window.NCBoot) window.NCBoot.done();     // 🛡️ снимаем overlay
+        stateLoaded = true;
+        if (window.NCBoot) window.NCBoot.done();
         try { showLoginScreen(); } catch (e) {}
-        if (cb) { try { cb(); } catch (e) {} }       // 🛡️ завершаем showApp
+        if (cb) { try { cb(); } catch (e) {} }
         return;
       }
       if (errText && !/not.?found|no.?state|empty|new.?user/i.test(errText)) {
         throw new Error('server: ' + errText);
       }
-            // 🛡️ FIX: если ok !== true, но данные есть — всё равно берём их
       var stateData = (data && (data.ok === true || data.btc !== undefined || data.usd !== undefined)) ? data : null;
       st = _ncNormalizeState(stateData);
       stateLoaded = true;
@@ -179,7 +177,13 @@ function loadFromServer(cb, targetEmail) {
 
       try { render(); } catch (e) { console.warn('[NC] render error (non-fatal)', e); }
 
-      
+      if (cb) {
+        try { cb(); }
+        catch (e) {
+          console.error('[NC] post-load callback', e);
+          if (window.NCBoot) window.NCBoot.fail('callback', e);
+        }
+      }
     })
     .catch(function (err) {
       console.error('[NC] loadFromServer failed — данные на сервере НЕ тронуты', err);
