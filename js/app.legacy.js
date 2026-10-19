@@ -4852,16 +4852,7 @@ function initAdminPanel() {
     m.style.display = 'none';  // ← добавить
   }
 };
-     // 🛡️ FIX: закрытие для IBAN, Reset Password, Crypto Address
-  var ibanCancelBtn = document.querySelector('#adminIbanModal button[onclick*="remove"]');
-  // Модалки создаются динамически — их Cancel уже использует .remove(), но сбросим display:
-  document.addEventListener('click', function(e) {
-    var t = e.target;
-    if (t && t.id === 'adminIbanSave') return;
-    var modal = t && t.closest && t.closest('#adminIbanModal, #adminResetPassModal, #adminCryptoAddrModal');
-    if (modal) return;
-  });
-
+   
   if (balanceSave) balanceSave.onclick = async function () {
     var amount = Number(document.getElementById('adminBalanceAmount').value);
     var note = document.getElementById('adminBalanceNote').value.trim();
