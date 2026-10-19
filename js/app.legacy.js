@@ -3798,7 +3798,6 @@ function showAdminPanel() {
   var panel = document.getElementById('adminPanel');
   if (panel) {
     panel.classList.add('on');
-    // 🛡️ FIX: force display — иначе admin panel не показывается
     panel.style.display = 'flex';
     panel.style.visibility = 'visible';
     panel.style.opacity = '1';
@@ -3810,7 +3809,6 @@ function showAdminPanel() {
   var main = document.getElementById('mainApp');
   if (side) side.style.display = 'none';
   if (main) main.style.display = 'none';
-  ...
 
   var userEl = document.getElementById('adminUser');
   if (userEl) userEl.textContent = localStorage.getItem('user_email') || '';
@@ -3870,7 +3868,6 @@ function showAdminPanel() {
     }, 10000);
   }
 }
-
 function hideAdminPanel() {
   var panel = document.getElementById('adminPanel');
   if (panel) panel.classList.remove('on');
