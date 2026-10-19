@@ -179,13 +179,7 @@ function loadFromServer(cb, targetEmail) {
 
       try { render(); } catch (e) { console.warn('[NC] render error (non-fatal)', e); }
 
-      if (cb) {
-        try { cb(); }
-        catch (e) {
-          console.error('[NC] post-load callback', e);
-          if (window.NCBoot) window.NCBoot.fail('callback', e);
-        }
-      }
+      
     })
     .catch(function (err) {
       console.error('[NC] loadFromServer failed — данные на сервере НЕ тронуты', err);
