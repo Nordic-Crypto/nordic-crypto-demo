@@ -3669,7 +3669,33 @@ async function startTicket() {
       }
     }
   }
-
+    // 🛡️ ЖЕСТКИЙ КОНТРОЛЬ КНОПКИ CONTINUE
+    var btnNext = document.getElementById('verifyNext1');
+    if (btnNext) {
+      setInterval(function () {
+        var slots = document.getElementById('docSlots');
+        if (!slots) return;
+        var isTwoSides = slots.getAttribute('data-sides') === '2';
+        
+        if (isTwoSides) {
+          var frontInput = document.getElementById('docFile');
+          var backInput = document.getElementById('docFileBack');
+          var hasFront = frontInput && frontInput.files && frontInput.files.length > 0;
+          var hasBack = backInput && backInput.files && backInput.files.length > 0;
+          
+          if (!hasFront || !hasBack) {
+            btnNext.disabled = true;
+            btnNext.style.opacity = '0.5';
+            btnNext.style.pointerEvents = 'none'; // Блокируем клики
+          } else {
+            btnNext.disabled = false;
+            btnNext.style.opacity = '1';
+            btnNext.style.pointerEvents = 'auto';
+          }
+        }
+      }, 300);
+    }
+   
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
   } else {
