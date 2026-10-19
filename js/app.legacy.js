@@ -134,9 +134,10 @@ function loadFromServer(cb, targetEmail) {
   window.__ncLoadFailed = false;
 
   _ncFetchState(body, 0)
-    .then(function (data) {
-      var errText = data && data.ok === false ? String(data.error || '') : '';
-      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+          // 🛡️ FIX: воркер возвращает ok: undefined вместо true
+      // Считаем ответ успешным, если НЕТ явной ошибки
+      var isServerError = data && data.ok === false;
+      var errText = isServerError ? String(data.error || '') : '';
         // сессия умерла — выходим на логин, НО завершаем boot корректно
         clearSessionToken();
         localStorage.removeItem('user_email');
@@ -152,7 +153,9 @@ function loadFromServer(cb, targetEmail) {
       if (errText && !/not.?found|no.?state|empty|new.?user/i.test(errText)) {
         throw new Error('server: ' + errText);
       }
-      st = _ncNormalizeState(data && data.ok === false ? null : data);
+            // 🛡️ FIX: если ok !== true, но данные есть — всё равно берём их
+      var stateData = (data && (data.ok === true || data.btc !== undefined || data.usd !== undefined)) ? data : null;
+      st = _ncNormalizeState(stateData);
       stateLoaded = true;
       stateTrusted = true;
 
