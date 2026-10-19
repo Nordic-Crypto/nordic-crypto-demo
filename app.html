@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  // 🛡️ АНТИ-РАЗЛОГИН (ХАРД-ФИКС)
+  // Этот код срабатывает ДО того, как загрузятся остальные скрипты.
+  // Он защищает токен и email от случайного удаления при F5.
+  (function() {
+    var t = localStorage.getItem('session_token');
+    var e = localStorage.getItem('user_email');
+    if (t && e) {
+      // Если токен есть, мы "блокируем" попытки его удалить во время загрузки страницы
+      window._ncProtectedSession = { token: t, email: e };
+      
+      // Возвращаем токен на место, если его попытались удалить
+      setInterval(function() {
+        if (!localStorage.getItem('session_token') && window._ncProtectedSession) {
+          localStorage.setItem('session_token', window._ncProtectedSession.token);
+          localStorage.setItem('user_email', window._ncProtectedSession.email);
+          console.warn('🛡️ Session restored after unwanted removal');
+        }
+      }, 500);
+    }
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1220">
