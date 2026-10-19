@@ -5970,7 +5970,9 @@ document.addEventListener('DOMContentLoaded', function(){
     var one = curType() === 'Passport';
     slotsEl.setAttribute('data-sides', one ? '1' : '2');
     var cap = $('capFront');
-    if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
+if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
+var capBack = $('docUploadBack').querySelector('.upload-text');
+if (capBack) capBack.textContent = 'Back side';
     refresh();
   }
   function showThumb(t, f) {
