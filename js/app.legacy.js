@@ -3681,6 +3681,12 @@ async function startTicket() {
     var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
+             // 🛡️ FIX: Если при загрузке app.html сессия есть — показать приложение
+      if (typeof showApp === 'function' && localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
+        setTimeout(function() {
+          showApp();
+        }, 100);
+      }
     }
   }
 
