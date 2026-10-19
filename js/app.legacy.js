@@ -2276,96 +2276,9 @@ function flashTitleOnApprove() {
   });
 }
 
-setInterval(async function () {
-  var p = document.getElementById('pendingScreen');
-  var v = document.getElementById('verifyScreen');
-  var r = document.getElementById('rejectedScreen');
-
-  var anyVisible =
-    (p && (p.classList.contains('on') || p.style.display === 'flex')) ||
-    (v && (v.classList.contains('on') || v.style.display === 'flex')) ||
-    (r && (r.classList.contains('on') || r.style.display === 'flex'));
-
-  var vStatus = (st.verification && st.verification.status) || null;
-
-  if (!anyVisible && vStatus !== 'pending' && vStatus !== null) return;
-
-    var freshV = await checkVerificationStatus();
-
-  // 🛡️ FIX: НЕ обнуляем st.verification если сервер не ответил
-  if (!freshV) {
-    console.warn('[NC watchdog] checkVerificationStatus вернул null — st.verification НЕ трогаем');
-    return;
-  }
-
-  if (!st.verification) st.verification = {};
-  var oldStatus = st.verification.status;
-
-  // 🛡️ FIX: если было pending, а сервер вернул не-pending — не перезаписываем сразу
-  // (это может быть кэш или race condition)
-  if (oldStatus === 'pending' && freshV.status !== 'pending' && freshV.status !== 'approved' && freshV.status !== 'rejected') {
-    console.warn('[NC watchdog] стоп: status был pending, сервер вернул ' + freshV.status + ' — игнорируем');
-    return;
-  }
-
-  st.verification = Object.assign({}, st.verification, freshV);
-
-  if (freshV.status === 'approved') {
-    var email = localStorage.getItem('user_email');
-    if (email) localStorage.setItem('nc_kyc_approved_' + email, '1');
-
-    if (!window._kycApprovedShown) {
-      window._kycApprovedShown = true;
-      if (typeof toast === 'function') toast('✅ Verification approved!');
-      if (typeof playChime === 'function') playChime();
-      if (typeof addNotification === 'function') {
-        addNotification('🎉 Your identity has been verified!', '✅');
-      }
-      if (typeof flashTitleOnApprove === 'function') flashTitleOnApprove();
-      if (typeof spawnConfetti === 'function') spawnConfetti();
-    }
-
-    loadFromServer(function () {
-      if (p) { p.classList.remove('on'); p.style.display = 'none'; p.style.zIndex = ''; }
-      if (r) { r.classList.remove('on'); r.style.display = 'none'; r.style.zIndex = ''; }
-      if (v) { v.classList.remove('on'); v.style.display = 'none'; v.style.zIndex = ''; }
-
-      var loginEl = document.getElementById('loginScreen');
-      if (loginEl) { loginEl.style.display = 'none'; loginEl.style.pointerEvents = 'none'; }
-
-      var side = document.getElementById('sideBar');
-      var main = document.getElementById('mainApp');
-      if (side) side.style.display = 'flex';
-      if (main) main.style.display = 'flex';
-
-      render();
-      if (typeof applyAccountType === 'function') applyAccountType();
-      if (typeof gateByVerification === 'function') gateByVerification();
-    });
-   } else if (freshV.status === 'pending') {
-    var email2 = localStorage.getItem('user_email');
-    var isLocallyApproved = localStorage.getItem('nc_kyc_approved_' + email2) === '1';
-    if (isLocallyApproved) return;
-    
-    // 🛡️ FIX: force показать pending во весь экран
-    if (p) {
-      p.classList.add('on');
-      p.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;z-index:99999 !important;position:fixed !important;inset:0 !important;';
-    }
-    
-    // Скрыть всё остальное
-    var vv = document.getElementById('verifyScreen');
-    if (vv) { vv.classList.remove('on'); vv.style.display = 'none'; }
-    var rr2 = document.getElementById('rejectedScreen');
-    if (rr2) { rr2.classList.remove('on'); rr2.style.display = 'none'; }
-    var oo = document.getElementById('onboard');
-    if (oo) { oo.classList.remove('on'); oo.style.display = 'none'; }
-    var s1 = document.getElementById('sideBar');
-    if (s1) s1.style.display = 'none';
-    var m1 = document.getElementById('mainApp');
-    if (m1) m1.style.display = 'none';
-  }
-}, 5000);
+// 🛡️ FIX: этот watchdog был причиной null-ошибок в консоли
+// и лишних запросов getUserState. Отключаем его полностью.
+// Все проверки статуса делает loadFromServer при загрузке.
 
 /* ═══════════════════ NAV ═══════════════════ */
 function initNav() {
