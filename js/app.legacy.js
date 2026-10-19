@@ -1734,7 +1734,13 @@ function initDesignPicker() {
         all[k].classList.toggle('on', all[k].getAttribute('data-design') === current);
       }
       var mask = document.getElementById('designMask');
-      if (mask) mask.classList.add('on');
+        if (mask) {
+    mask.classList.add('on');
+    mask.style.display = 'flex';
+    mask.style.zIndex = '999999';  // ← выше, чем adminPanel (99999)
+    mask.style.position = 'fixed';
+    mask.style.inset = '0';
+  }
     };
   }
   var btnSave = document.getElementById('designSave');
