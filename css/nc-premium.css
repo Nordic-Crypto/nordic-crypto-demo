@@ -4,6 +4,17 @@
    не трогает JS-логику. Подключать ПОСЛЕ основного <style>.
    ============================================================ */
 
+/* ---------- 00. СЛОИ (stacking) — починка "мёртвых" кнопок админки ----------
+   Раньше админ-панель получала inline z-index:99999, а модалки (.mask = 7000,
+   динамические = 10001) и toast (2000) оказывались ПОД ней: окна открывались,
+   но были невидимы, поэтому казалось, что View / Cancel / Approve не работают.
+   Теперь панель на своём месте, а всё интерактивное — выше неё. */
+#adminPanel{z-index:4500!important}
+.mask{z-index:100100!important}
+.dep-verify-overlay{z-index:100100!important}
+.toast{z-index:100300!important}
+.inactivity-overlay{z-index:100400!important}
+
 /* ---------- 0. Токены ---------- */
 :root{
   --nc-ease:cubic-bezier(.2,.7,.2,1);
@@ -119,48 +130,4 @@ input:focus,select:focus,textarea:focus{
 /* ---------- 7. Доступность: меньше движения ---------- */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
-}
-/* ═══════════════════════════════════════════════════════
-   🛡️ FIX v2026-10-18 — восстановление высот top/body
-   Проблема: .top и .body внутри #mainApp схлопывались в 0×0
-   Причина: flex-контейнер .main не задавал явные размеры детям
-   ═══════════════════════════════════════════════════════ */
-
-/* .main (родитель) — flex-колонка на всю высоту */
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-height: 100vh;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* .top (шапка) — фиксированная высота, не сжимается */
-.main > .top,
-#mainApp > .top {
-  flex: 0 0 auto !important;
-  height: 70px !important;
-  min-height: 70px !important;
-  max-height: 70px !important;
-}
-
-/* .body (контент) — растягивается, скроллится */
-.main > .body,
-#mainApp > .body {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  display: block !important;
-}
-
-/* Сама mainApp — на всю высоту */
-#mainApp,
-.main {
-  min-height: 100vh;
-  height: 100vh;
 }
