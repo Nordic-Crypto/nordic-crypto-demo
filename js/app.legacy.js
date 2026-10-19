@@ -3795,11 +3795,21 @@ document.addEventListener('visibilitychange', async function () {
 /* ═══════════════════ ADMIN PANEL ═══════════════════ */
 function showAdminPanel() {
   var panel = document.getElementById('adminPanel');
-  if (panel) panel.classList.add('on');
+  if (panel) {
+    panel.classList.add('on');
+    // 🛡️ FIX: force display — иначе admin panel не показывается
+    panel.style.display = 'flex';
+    panel.style.visibility = 'visible';
+    panel.style.opacity = '1';
+    panel.style.zIndex = '99999';
+    panel.style.position = 'fixed';
+    panel.style.inset = '0';
+  }
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
   if (side) side.style.display = 'none';
   if (main) main.style.display = 'none';
+  ...
 
   var userEl = document.getElementById('adminUser');
   if (userEl) userEl.textContent = localStorage.getItem('user_email') || '';
