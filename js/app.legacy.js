@@ -2648,8 +2648,8 @@ function confirmModal() {
 
   st.usd -= a;
   var desc = (m === 'Credit Card')
-    ? 'Card transfer to ' + dest.slice(0, 18) + '...'
-    : 'Transfer via ' + m + ' to ' + dest.slice(0, 18) + '...';
+     ? 'Card transfer to ' + dest.slice(0, 18)
+      : 'Transfer via ' + m + ' to ' + dest.slice(0, 18);
   addTx(desc, -a, 'Under Review');
   addNotification('Transfer sent: ' + fmtCurrency(a) + ' via ' + m, '📤');
   toast('Transfer submitted — under review');
