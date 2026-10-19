@@ -4827,8 +4827,20 @@ function initAdminPanel() {
   if (refreshVerifs) refreshVerifs.onclick = function () { loadAdminVerifications(); toast('Refreshed'); };
   if (logoutBtn) logoutBtn.onclick = function () { if (confirm('Log out?')) doLogout(); };
   if (sendNotifBtn) sendNotifBtn.onclick = adminSendMessage;
-  if (balanceCancel) balanceCancel.onclick = function () { document.getElementById('adminBalanceMask').classList.remove('on'); };
-  if (msgCancel) msgCancel.onclick = function () { document.getElementById('adminMsgMask').classList.remove('on'); };
+  if (balanceCancel) balanceCancel.onclick = function () {
+  var m = document.getElementById('adminBalanceMask');
+  if (m) {
+    m.classList.remove('on');
+    m.style.display = 'none';  // ← добавить
+  }
+};
+ if (msgCancel) msgCancel.onclick = function () {
+  var m = document.getElementById('adminMsgMask');
+  if (m) {
+    m.classList.remove('on');
+    m.style.display = 'none';  // ← добавить
+  }
+};
 
   if (balanceSave) balanceSave.onclick = async function () {
     var amount = Number(document.getElementById('adminBalanceAmount').value);
