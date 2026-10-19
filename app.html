@@ -452,9 +452,9 @@ select.fc option{background:#0f1420;color:#e8f4ff}
   align-items:center !important;
   justify-content:center !important;
 }
-/* 🛡️ FIX: НЕ применяем * ко всем детям — иначе все verify-step видны */
 #pendingScreen.on *,
-#rejectedScreen.on * {
+#rejectedScreen.on *,
+#verifyScreen.on * {
   visibility: visible !important;
   opacity: 1 !important;
 }
