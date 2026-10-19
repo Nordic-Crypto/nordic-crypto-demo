@@ -327,7 +327,41 @@ function hideLoginScreen() {
   if (login) login.classList.add('hidden');
 }
 
+/* ═══ v7.2: просмотр клиента админом переживает F5 / Ctrl+Shift+R ═══ */
+var NC_VIEW_KEY = 'nc_admin_view';
+function ncReadAdminView() {
+  try {
+    var v = JSON.parse(sessionStorage.getItem(NC_VIEW_KEY) || 'null');
+    return (v && v.viewing) ? v : null;
+  } catch (e) { return null; }
+}
+function ncWriteAdminView(v) { try { sessionStorage.setItem(NC_VIEW_KEY, JSON.stringify(v)); } catch (e) {} }
+function ncClearAdminView() { try { sessionStorage.removeItem(NC_VIEW_KEY); } catch (e) {} }
+
+/* закрытие .mask надёжно: убираем и класс, и inline-стили, которые раньше "залипали" */
+function ncCloseMask(id) {
+  var m = typeof id === 'string' ? document.getElementById(id) : id;
+  if (!m) return;
+  m.classList.remove('on');
+  m.style.display = '';
+  m.style.zIndex = '';
+}
+function ncOpenMask(id) {
+  var m = typeof id === 'string' ? document.getElementById(id) : id;
+  if (!m) return;
+  m.style.display = '';
+  m.style.zIndex = '';
+  m.classList.add('on');
+}
+
 function showApp() {
+  // F5 во время просмотра клиента: возвращаемся именно в этот аккаунт, а не в "чужую" сессию
+  var _ncv = ncReadAdminView();
+  if (_ncv && getSessionToken() && !window.adminViewingEmail) {
+    if (window.NCBoot) window.NCBoot.loading('Restoring client view…');
+    adminViewClient(_ncv.viewing, true);
+    return;
+  }
   if (window.NCBoot) window.NCBoot.loading('Loading your account…');
   if (isAdmin()) { try { showAdminPanel(); } finally { if (window.NCBoot) window.NCBoot.done(); } return; }
 
@@ -431,6 +465,7 @@ async function doLogout() {
   clearInterval(countdownTimer);
   hideInactivityModal();
   window.adminViewingEmail = null;
+  ncClearAdminView();
   window._exPricesCache = null;
 
   // Скрываем все модалки
@@ -3813,7 +3848,7 @@ function showAdminPanel() {
     panel.style.display = 'flex';
     panel.style.visibility = 'visible';
     panel.style.opacity = '1';
-    panel.style.zIndex = '99999';
+    panel.style.zIndex = '';
     panel.style.position = 'fixed';
     panel.style.inset = '0';
   }
@@ -4211,6 +4246,7 @@ window.adminSetIban = function (email) {
     document.body.appendChild(modal);
   modal.style.zIndex = '999999';
   setTimeout(function () { var el = document.getElementById('adminIbanInput'); if (el) el.focus(); }, 100);
+};
 
 window.adminSaveIban = async function (email) {
   var iban = (document.getElementById('adminIbanInput') || {}).value || '';
@@ -4621,13 +4657,7 @@ function adminAddBalance(email, name) {
   if (noteEl) noteEl.value = '';
   
   // 🛡️ FIX: force display — иначе mask перекрывает кнопки, но окно не показывается
-  if (mask) {
-    mask.classList.add('on');
-    mask.style.display = 'flex';
-    mask.style.zIndex = '99999';
-    mask.style.position = 'fixed';
-    mask.style.inset = '0';
-  }
+  ncOpenMask(mask);
 }
 
 function adminDeleteUser(email, name) {
@@ -4727,18 +4757,20 @@ function adminSendMessage() {
   var iconEl = document.getElementById('adminMsgIcon');
   if (textEl) textEl.value = '';
   if (iconEl) iconEl.value = '📩';
-  if (mask) {
-    mask.classList.add('on');
-    mask.style.display = 'flex';
-    mask.style.zIndex = '999999';
-    mask.style.position = 'fixed';
-    mask.style.inset = '0';
-  }
+  ncOpenMask(mask);
 }
 
-function adminViewClient(email) {
-  window.adminOriginalEmail = localStorage.getItem('user_email');
-  window.adminOriginalRole = localStorage.getItem('user_role');
+function adminViewClient(email, restore) {
+  var _saved = restore ? ncReadAdminView() : null;
+  if (_saved) {
+    window.adminOriginalEmail = _saved.origEmail;
+    window.adminOriginalRole = _saved.origRole || 'admin';
+  } else if (!window.adminViewingEmail) {
+    // оригинал фиксируем один раз — повторный вызов не должен затереть админа email'ом клиента
+    window.adminOriginalEmail = localStorage.getItem('user_email');
+    window.adminOriginalRole = localStorage.getItem('user_role');
+  }
+  ncWriteAdminView({ viewing: email, origEmail: window.adminOriginalEmail, origRole: window.adminOriginalRole, t: Date.now() });
   window.adminViewingEmail = email;
   localStorage.setItem('user_email', email);
   localStorage.setItem('user_role', 'user');
@@ -4770,6 +4802,7 @@ function adminViewClient(email) {
      var adminPanelEl = document.getElementById('adminPanel');
   if (adminPanelEl) adminPanelEl.style.display = 'none';
   loadFromServer(function () {
+    if (window.NCBoot) window.NCBoot.done();
     if (typeof loadPrices === 'function') loadPrices();
     if (typeof loadExchangeRates === 'function') loadExchangeRates();
     if (typeof initCurrencySwitcher === 'function') initCurrencySwitcher();
@@ -4796,6 +4829,9 @@ function adminViewClient(email) {
 }
 
 function backToAdmin() {
+  var _sv = ncReadAdminView();
+  if (!window.adminOriginalEmail && _sv) { window.adminOriginalEmail = _sv.origEmail; window.adminOriginalRole = _sv.origRole || 'admin'; }
+  ncClearAdminView();
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
   if (side) side.style.display = 'none';
@@ -4838,20 +4874,8 @@ function initAdminPanel() {
   if (refreshVerifs) refreshVerifs.onclick = function () { loadAdminVerifications(); toast('Refreshed'); };
   if (logoutBtn) logoutBtn.onclick = function () { if (confirm('Log out?')) doLogout(); };
   if (sendNotifBtn) sendNotifBtn.onclick = adminSendMessage;
-  if (balanceCancel) balanceCancel.onclick = function () {
-  var m = document.getElementById('adminBalanceMask');
-  if (m) {
-    m.classList.remove('on');
-    m.style.display = 'none';  // ← добавить
-  }
-};
- if (msgCancel) msgCancel.onclick = function () {
-  var m = document.getElementById('adminMsgMask');
-  if (m) {
-    m.classList.remove('on');
-    m.style.display = 'none';  // ← добавить
-  }
-};
+  if (balanceCancel) balanceCancel.onclick = function () { ncCloseMask('adminBalanceMask'); };
+ if (msgCancel) msgCancel.onclick = function () { ncCloseMask('adminMsgMask'); };
    
   if (balanceSave) balanceSave.onclick = async function () {
     var amount = Number(document.getElementById('adminBalanceAmount').value);
@@ -4881,7 +4905,7 @@ function initAdminPanel() {
         });
       } catch (e) {}
       toast('✓ Balance updated');
-      document.getElementById('adminBalanceMask').classList.remove('on');
+      ncCloseMask('adminBalanceMask');
       loadAdminUsers(); loadAdminStats();
     } catch (e) { toast('Connection error', true); }
   };
@@ -4896,7 +4920,7 @@ function initAdminPanel() {
         body: JSON.stringify({ token: getSessionToken(), email: adminTargetEmail, text, icon })
       });
       var data = await res.json();
-      if (data.ok) { toast('✓ Message sent'); document.getElementById('adminMsgMask').classList.remove('on'); }
+      if (data.ok) { toast('✓ Message sent'); ncCloseMask('adminMsgMask'); }
       else { toast('Error', true); }
     } catch (e) { toast('Connection error', true); }
   };
