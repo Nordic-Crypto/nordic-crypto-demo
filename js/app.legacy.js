@@ -137,11 +137,13 @@ function loadFromServer(cb, targetEmail) {
     .then(function (data) {
       var isServerError = data && data.ok === false;
       var errText = isServerError ? String(data.error || '') : '';
-      if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
-        clearSessionToken();
-        localStorage.removeItem('user_email');
-        localStorage.removeItem('user_role');
-        window.__ncLoadFailed = false;
+            if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+        // 🛡️ FIX: НЕ УДАЛЯЕМ ТОКЕН ПРИ F5.
+        // Если сервер вернул ошибку, просто показываем экран логина, но токен оставляем в браузере.
+        // Токен удаляется ТОЛЬКО при нажатии кнопки "Log out".
+        console.warn('[NC] Server returned auth error, but we keep the session token to prevent F5 logout.');
+        
+        window.__ncLoadFailed = true;
         stateTrusted = false;
         stateLoaded = true;
         if (window.NCBoot) window.NCBoot.done();
