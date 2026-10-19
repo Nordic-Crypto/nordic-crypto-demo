@@ -3,6 +3,35 @@
 <head>
 
 <meta charset="UTF-8">
+<script>
+  // 🛡️ ФИКС: не выкидывать при F5
+  window.addEventListener('beforeunload', function() {
+    var token = localStorage.getItem('session_token');
+    var email = localStorage.getItem('user_email');
+    if (token && email) {
+      sessionStorage.setItem('nc_f5_recovery', JSON.stringify({
+        token: token, email: email, ts: Date.now()
+      }));
+    }
+  });
+
+  (function() {
+    var recovery = sessionStorage.getItem('nc_f5_recovery');
+    if (recovery) {
+      try {
+        var r = JSON.parse(recovery);
+        if (r.token && Date.now() - r.ts < 60000) {
+          if (!localStorage.getItem('session_token')) {
+            localStorage.setItem('session_token', r.token);
+          }
+          if (!localStorage.getItem('user_email')) {
+            localStorage.setItem('user_email', r.email);
+          }
+        }
+      } catch(e) {}
+    }
+  })();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1220">
 <meta name="color-scheme" content="dark">
@@ -5907,17 +5936,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   <!-- 🛡️ Скрываем /app.html из URL (показываем как /) -->
 <script>
-(function(){
-  // Только если мы НЕ на лендинге и НЕ в админке
-  if (window.location.pathname.indexOf('app.html') !== -1) {
-    if (window.history && window.history.replaceState) {
-      try {
-        window.history.replaceState(null, '', '/');
-      } catch(e) { /* ignore */ }
-    }
-  }
-})();
-</script>
+
 
 <!-- 🛡️ FIX: восстанавливаем submitWithdraw из withdraw-flow.js v2.0 (перезаписан fixes.js) -->
 <script>
