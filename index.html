@@ -1643,10 +1643,6 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
 <script>
 // 🛡️ Auto-clean URL from hash on reload
 (function(){
-...
-<script>
-// 🛡️ Auto-clean URL from hash on reload
-(function(){
   if (location.hash && sessionStorage.getItem('nc_hash_cleaned_' + location.hash)) {
     history.replaceState(null, '', location.pathname + location.search);
   } else if (location.hash) {
@@ -1654,5 +1650,6 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   }
 })();
 </script>
+  
 </body>
 </html>
