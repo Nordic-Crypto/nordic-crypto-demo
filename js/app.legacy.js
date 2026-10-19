@@ -273,7 +273,6 @@ function showLoginError(msg) {
 }
 
 async function checkSession() {
-  // 🛡️ Не показываем verify если st ещё не загружен
   if (!stateLoaded) {
     console.log('[NC] checkSession: state not loaded yet, skipping');
     return;
@@ -281,7 +280,6 @@ async function checkSession() {
   var token = getSessionToken();
   var email = localStorage.getItem('user_email');
   if (!token) { showLoginScreen(); return; }
-  // Проверяем только токен, БЕЗ UI-логики
   try {
     var res = await fetch(WORKER_LOGIN_URL + '?action=verify', {
       method: 'POST',
@@ -355,7 +353,6 @@ function ncOpenMask(id) {
 }
 
 function showApp() {
-  // F5 во время просмотра клиента: возвращаемся именно в этот аккаунт, а не в "чужую" сессию
   var _ncv = ncReadAdminView();
   if (_ncv && getSessionToken() && !window.adminViewingEmail) {
     if (window.NCBoot) window.NCBoot.loading('Restoring client view…');
@@ -453,7 +450,6 @@ async function doLogout() {
     } catch (e) {}
   }
 
-  // 🛡️ FIX: чистим ВСЁ сразу
   clearSessionToken();
   localStorage.removeItem('user_email');
   localStorage.removeItem('user_role');
@@ -468,7 +464,6 @@ async function doLogout() {
   ncClearAdminView();
   window._exPricesCache = null;
 
-  // Скрываем все модалки
   document.querySelectorAll('.mask').forEach(function (m) { m.classList.remove('on'); });
   document.querySelectorAll('.inactivity-overlay, .dep-verify-overlay, .notif-overlay, .verify-screen, .onboard, .onb-anim-stage').forEach(function (m) { m.classList.remove('on'); });
 
@@ -478,7 +473,6 @@ async function doLogout() {
 
   document.querySelectorAll('.mask').forEach(function (m) { m.style.display = ''; });
 
-  // 🎁 Красивый logout screen
   var overlay = document.createElement('div');
   overlay.id = 'logoutOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,229,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(139,92,246,.14),transparent 60%),#0a0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#fff;opacity:1;';
@@ -491,11 +485,7 @@ async function doLogout() {
     '</div>';
   document.body.appendChild(overlay);
 
-    // 🛡️ FIX: страховка — если overlay не сработает, всё равно уйдём
-  setTimeout(function () {
-    window.location.replace('/index.html');
-  }, 2000);
-  // 🛡️ Хард-fallback — если что-то упадёт (например, DOM заблокирован), через 4 сек уйдём
+  setTimeout(function () { window.location.replace('/index.html'); }, 2000);
   setTimeout(function () { window.location.href = '/index.html'; }, 4000);
 }
 
@@ -528,19 +518,6 @@ function hideInactivityModal() {
   if (overlay) overlay.classList.remove('on');
   clearInterval(countdownTimer);
 }
-
-var _inactivityListenersAttached = false;
-
-function startInactivityTimer() {
-  clearTimeout(sessionTimer);
-  sessionTimer = setTimeout(showInactivityModal, SESSION_TIMEOUT_MS);
-  if (_inactivityListenersAttached) return;
-  _inactivityListenersAttached = true;
-  ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'].forEach(function (evt) {
-    document.addEventListener(evt, resetInactivityTimer, { passive: true });
-  });
-}
-
 
 function showInactivityModal() {
   var overlay = document.getElementById('inactivityOverlay');
@@ -670,7 +647,6 @@ function render() {
   _lastRender = n;
   _renderAll();
 
-  // 🛡️ FIX: watchdog — если status=pending, гарантируем показ pendingScreen
   try {
     var v = st && st.verification && st.verification.status;
     if (v === 'pending') {
@@ -1276,25 +1252,20 @@ function renderBalanceChart() {
 function renderStats() {
   var txs = st.txs || [];
 
-  // 🛡️ FIX: helper — определяем "внешний депозит" (не bonus, не refund, не admin adjustment)
   function isExternalDeposit(t) {
     if (!t || !(t.amt > 0)) return false;
     var d = String(t.desc || '').toLowerCase();
-    // refund / admin adjustment / bonus — НЕ депозиты
     if (d.indexOf('refund') !== -1) return false;
     if (d.indexOf('admin adjustment') !== -1) return false;
     if (d.indexOf('bonus') !== -1) return false;
     if (d.indexOf('adjustment') !== -1) return false;
-    // crypto deposit с hash — депозит
     if (t.hash) return true;
-    // "PART of ... ETH FROM CRYPTO.COM" / "Crypto deposit" — депозит
     if (d.indexOf('deposit') !== -1) return true;
     if (d.indexOf('from crypto.com') !== -1) return true;
     if (d.indexOf('part of') !== -1) return true;
     return false;
   }
 
-  // 🛡️ FIX: helper — определяем "internal" tx (refund, bonus, adjustment)
   function isInternal(t) {
     if (t.internal === true) return true;
     var d = String(t.desc || '').toLowerCase();
@@ -1309,7 +1280,6 @@ function renderStats() {
   for (var i = 0; i < txs.length; i++) {
     var t = txs[i];
     var amt = t.amt || 0;
-    // 🛡️ FIX: internal tx НЕ считаем в income
     if (amt > 0 && !isInternal(t)) income += amt;
     else if (amt < 0) spending += Math.abs(amt);
   }
@@ -1335,7 +1305,6 @@ function renderStats() {
       cnt30++;
       var tk = txs[k];
       var a30 = tk.amt || 0;
-      // 🛡️ FIX: internal tx НЕ считаем в income 30d
       if (a30 > 0 && !isInternal(tk)) inc30 += a30;
       else if (a30 < 0) sp30 += Math.abs(a30);
     }
@@ -1347,7 +1316,6 @@ function renderStats() {
   if (elSp30) elSp30.textContent = sp30 > 0 ? '-' + fmtCurrency(sp30) : '—';
   if (elCnt30) elCnt30.textContent = cnt30;
 
-  // 🛡️ FIX: sumDeposits — только ВНЕШНИЕ депозиты (не refund, не bonus)
   var sumDeposits = 0;
   for (var p = 0; p < txs.length; p++) {
     if (isExternalDeposit(txs[p])) sumDeposits += txs[p].amt;
@@ -1772,7 +1740,7 @@ function initDesignPicker() {
         if (mask) {
     mask.classList.add('on');
     mask.style.display = 'flex';
-    mask.style.zIndex = '999999';  // ← выше, чем adminPanel (99999)
+    mask.style.zIndex = '999999';
     mask.style.position = 'fixed';
     mask.style.inset = '0';
   }
@@ -1972,7 +1940,6 @@ window.submitRealVerification = async function () {
 
   await new Promise(function (r) { setTimeout(r, 80); });
 
-  // 🛡️ FIX: глобальный таймаут 60 сек — если что-то висит, покажем ошибку
   var watchdog = setTimeout(function () {
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast('Upload timeout. Try smaller files or check connection.', true);
@@ -2003,8 +1970,7 @@ window.submitRealVerification = async function () {
     if (!selfieFile) throw new Error('Please upload selfie');
     if (!street || !city || !zip) throw new Error('Please fill address');
 
-    // 🛡️ FIX: проверяем размер файлов ДО отправки
-    var MAX_BYTES = 3 * 1024 * 1024; // 3MB
+    var MAX_BYTES = 3 * 1024 * 1024;
     if (docFile.size > MAX_BYTES) {
       throw new Error('Document too large (' + (docFile.size/1024/1024).toFixed(1) + 'MB). Max 3MB.');
     }
@@ -2016,11 +1982,8 @@ window.submitRealVerification = async function () {
 
     setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
     console.log('[KYC] Uploading passport...');
-    // 🎯 Новый дизайн: получаем front + back через NCVerify.getDocs
-// Worker принимает: passport | selfie | address | id_card | driver_license
 var ncDocs = (window.NCVerify && typeof window.NCVerify.getDocs === 'function') ? window.NCVerify.getDocs() : null;
 
-// Маппинг: UI-название → значение которое ждёт Worker
 var TYPE_MAP = {
   'Passport': 'passport',
   "Driver's License": 'driver_license',
@@ -2033,14 +1996,11 @@ var apiType = TYPE_MAP[uiType] || 'passport';
 var docKeyFront = null, docKeyBack = null;
 
 if (ncDocs && ncDocs.front) {
-  // Front: всегда грузим с типом passport/id_card/driver_license
   setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
   console.log('[KYC] Uploading front as:', apiType);
-  // ⚠️ Worker разрешает только 5 типов → front ВСЕГДА passport (универсальный)
   docKeyFront = await uploadKycFile(ncDocs.front, 'passport');
   console.log('[KYC] ✅ front uploaded:', docKeyFront);
 
-  // Back: только для ID/Driver's license (у Passport нет back)
   if (ncDocs.back) {
     setStatus('Uploading document (2/2)...', 'Almost done');
     console.log('[KYC] Uploading back as: id_card');
@@ -2048,7 +2008,6 @@ if (ncDocs && ncDocs.front) {
     console.log('[KYC] ✅ back uploaded:', docKeyBack);
   }
 } else {
-  // Fallback: старый способ (1 файл)
   setStatus('Uploading document (1/2)...', 'This may take 10-30 seconds');
   docKeyFront = await uploadKycFile(docFile, 'passport');
   console.log('[KYC] ✅ passport uploaded:', docKeyFront);
@@ -2062,7 +2021,6 @@ console.log('[KYC] ✅ selfie uploaded:', selfieKey);
 setStatus('Submitting verification...', 'Contacting server');
 console.log('[KYC] Submitting verification...');
 
-// Собираем массив ключей: [front, back?, selfie]
 var docKeys = [docKeyFront];
 if (docKeyBack) docKeys.push(docKeyBack);
 docKeys.push(selfieKey);
@@ -2115,7 +2073,6 @@ if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
         if (typeof toast === 'function') toast('Documents submitted! Waiting for approval.');
     console.log('[KYC] ✅ DONE');
 
-    // 🛡️ FIX: сообщаем kyc-fix.js что submit прошёл
     try {
       document.dispatchEvent(new CustomEvent('nc:kyc:submit', {
         detail: { status: 'pending', ts: Date.now() }
@@ -2139,7 +2096,6 @@ function showPendingScreen() {
   var s = document.getElementById('pendingScreen');
   if (s) {
     s.classList.add('on');
-    // 🛡️ FIX: force display через inline-style (не зависит от CSS)
     s.style.display = 'flex';
     s.style.visibility = 'visible';
     s.style.opacity = '1';
@@ -2148,7 +2104,6 @@ function showPendingScreen() {
     s.style.inset = '0';
   }
   
-  // Скрываем все остальные
   ['verifyScreen', 'rejectedScreen', 'onboard'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) {
@@ -2317,10 +2272,6 @@ function flashTitleOnApprove() {
     }
   });
 }
-
-// 🛡️ FIX: этот watchdog был причиной null-ошибок в консоли
-// и лишних запросов getUserState. Отключаем его полностью.
-// Все проверки статуса делает loadFromServer при загрузке.
 
 /* ═══════════════════ NAV ═══════════════════ */
 function initNav() {
@@ -2752,7 +2703,6 @@ function placeOrder() {
 }
 
 function renderOrder() {
-  // 🛡️ FIX: force hide if no order
   var trackEl = document.getElementById('orderTrack');
   if (!st.order) {
     if (trackEl) { trackEl.classList.add('hidden'); trackEl.style.display = 'none'; }
@@ -2760,7 +2710,6 @@ function renderOrder() {
     if (formEl) { formEl.classList.remove('hidden'); formEl.style.display = ''; }
     return;
   }
-  // ... остальной код как было
   var formEl = $('orderForm');
   var trackEl = $('orderTrack');
   if (!formEl || !trackEl) return;
@@ -2933,17 +2882,11 @@ function updateOnbPreview() {
 }
 
 function initOnboarding() {
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 ШАГ 2: сброс на шаг 1 при каждом показе онбординга
-  // ═══════════════════════════════════════════════════════════
   var _ob = document.getElementById('onboard');
   if (_ob && _ob.classList.contains('on')) {
     if (typeof goToOnbStep === 'function') goToOnbStep(1);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 ШАГ 4: обработчики Design picker в онбординге
-  // ═══════════════════════════════════════════════════════════
   var designBtns = document.querySelectorAll('#designPicker .design-opt');
   for (var d = 0; d < designBtns.length; d++) {
     designBtns[d].onclick = function () {
@@ -3017,17 +2960,14 @@ function initOnboarding() {
 }
 
 function goToOnbStep(n) {
-  // 1. Переключаем шаги
   var steps = document.querySelectorAll('#onboard .onb-step');
   for (var i = 0; i < steps.length; i++) steps[i].classList.remove('on');
   var target = document.getElementById('onbStep' + n);
   if (target) target.classList.add('on');
 
-  // 2. data-step на #onboard (для CSS прогресс-бара и подсветки шагов)
   var ob = document.getElementById('onboard');
   if (ob) ob.setAttribute('data-step', String(n));
 
-  // 3. Левая колонка — заголовок + подзаголовок
   var t = document.getElementById('onbSideTitle');
   var s = document.getElementById('onbSideSub');
   if (t && s) {
@@ -3674,8 +3614,6 @@ async function startTicket() {
     if (typeof initOnboarding === 'function') initOnboarding();
     if (typeof initNav === 'function') initNav();
 
-        // if (typeof checkSession === 'function') checkSession();
-
     setTimeout(function () { var ctx = getAudioCtx(); if (ctx && ctx.state === 'suspended') ctx.resume(); }, 500);
     setInterval(function () { var ctx = getAudioCtx(); if (ctx && ctx.state === 'suspended') ctx.resume(); }, 30000);
 
@@ -3722,7 +3660,6 @@ async function startTicket() {
     var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
-             // 🛡️ FIX: Если при загрузке app.html сессия есть — показать приложение
       if (typeof showApp === 'function' && localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
         setTimeout(function() {
           showApp();
@@ -4544,13 +4481,11 @@ async function adminApproveWithdrawal(email, wdId) {
 
     state.usd = (state.usd || 0) - wd.amount;
 
-    // 🛡️ Удаляем pending tx (если была)
     if (!Array.isArray(state.txs)) state.txs = [];
     state.txs = state.txs.filter(function(t) {
       return !(t.wdId === wdId && (t.status === 'Under Review' || t.status === 'Pending' || t.status === 'Processing'));
     });
 
-    // 🛡️ FIX: добавляем tx с wdId и isWithdrawal — чтобы можно было найти
     state.txs.unshift({
       date: new Date().toISOString().slice(0, 10),
       ts: Date.now(),
@@ -4600,10 +4535,8 @@ async function adminRejectWithdrawal(email, wdId) {
 wd.reason = reason;
 wd.reviewedAt = Date.now();
 
-// 🛡️ FIX: возвращаем деньги на баланс клиента
 state.usd = (state.usd || 0) + (Number(wd.amount) || 0);
 
-// 🛡️ Удаляем pending tx
 if (Array.isArray(state.txs)) {
   state.txs = state.txs.filter(function(t) {
     return !(t.isWithdrawal && t.wdId === wdId && t.status === 'Under Review');
@@ -4656,7 +4589,6 @@ function adminAddBalance(email, name) {
   if (amtEl) amtEl.value = '';
   if (noteEl) noteEl.value = '';
   
-  // 🛡️ FIX: force display — иначе mask перекрывает кнопки, но окно не показывается
   ncOpenMask(mask);
 }
 
@@ -4766,7 +4698,6 @@ function adminViewClient(email, restore) {
     window.adminOriginalEmail = _saved.origEmail;
     window.adminOriginalRole = _saved.origRole || 'admin';
   } else if (!window.adminViewingEmail) {
-    // оригинал фиксируем один раз — повторный вызов не должен затереть админа email'ом клиента
     window.adminOriginalEmail = localStorage.getItem('user_email');
     window.adminOriginalRole = localStorage.getItem('user_role');
   }
@@ -5502,7 +5433,7 @@ async function scanAllDeposits() {
     var cardCreatedAt = (st.card && st.card.createdAt) ? st.card.createdAt : 0;
     var newTxs = allTxs.filter(function (tx) {
   if (!tx.hash) return false;
-  if (!tx.amount || tx.amount <= 0) return false;  // 🛡️ FIX: пропускаем нулевые/отрицательные
+  if (!tx.amount || tx.amount <= 0) return false;
   if (knownHashes[tx.hash]) return false;
   var txTime = tx.time ? tx.time * 1000 : 0;
   if (!txTime) return false;
