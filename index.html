@@ -745,7 +745,7 @@ details:hover {
 #signupModal .type-opt-badge {
   position: absolute;
   top: 14px;
-  right: 40px;   /* ← сдвинули левее, чтобы не мешать галочке */
+  right: 40px;
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 10px;
@@ -1561,17 +1561,9 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   document.getElementById('suConfirm').addEventListener('keydown',function(e){if(e.key==='Enter')doSignupSubmit();});
 })();
 </script>
-    // Enter navigation
-  document.getElementById('suName').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suEmail').focus();});
-  document.getElementById('suEmail').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suPass').focus();});
-  document.getElementById('suPass').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suConfirm').focus();});
-  document.getElementById('suConfirm').addEventListener('keydown',function(e){if(e.key==='Enter')doSignupSubmit();});
-})();
-</script>
 
-<!-- ⬇️ ВСТАВЬ СЮДА СВОЙ ФУТЕР ⬇️ -->
-
-<footer style="background:#060a12; color:#93a0b5; font-size:13px; padding:60px 24px 40px; border-top:1px solid rgba(255,255,255,0.1); line-height:1.6;">
+<!-- ⬇️ НОВЫЙ ЮРИДИЧЕСКИЙ ФУТЕР ⬇️ -->
+<footer style="background:#060a12; color:#93a0b5; font-size:13px; padding:60px 24px 40px; border-top:1px solid rgba(255,255,255,0.1); line-height:1.6; text-align:left;">
   <div style="max-width:1180px; margin:0 auto;">
     
     <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:24px;">
@@ -1637,8 +1629,7 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
 
   </div>
 </footer>
-
-<!-- ⬆️ КОНЕЦ ФУТЕРА ⬆️ -->
+<!-- ⬆️ КОНЕЦ НОВОГО ФУТЕРА ⬆️ -->
 
 <script>
 // 🛡️ Auto-clean URL from hash on reload
