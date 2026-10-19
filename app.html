@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-  // 🛡️ АНТИ-РАЗЛОГИН (ХАРД-ФИКС)
-  // Этот код срабатывает ДО того, как загрузятся остальные скрипты.
-  // Он защищает токен и email от случайного удаления при F5.
+ <script>
+  // 🛡️ СУПЕР-ХАРД-ФИКС ОТ ВЫКИДЫВАНИЯ ПРИ F5
   (function() {
-    var t = localStorage.getItem('session_token');
-    var e = localStorage.getItem('user_email');
-    if (t && e) {
-      // Если токен есть, мы "блокируем" попытки его удалить во время загрузки страницы
-      window._ncProtectedSession = { token: t, email: e };
-      
-      // Возвращаем токен на место, если его попытались удалить
-      setInterval(function() {
-        if (!localStorage.getItem('session_token') && window._ncProtectedSession) {
-          localStorage.setItem('session_token', window._ncProtectedSession.token);
-          localStorage.setItem('user_email', window._ncProtectedSession.email);
-          console.warn('🛡️ Session restored after unwanted removal');
+    var token = localStorage.getItem('session_token');
+    var email = localStorage.getItem('user_email');
+    
+    if (token && email) {
+      // Замораживаем localStorage, чтобы никто не мог удалить токен
+      var originalRemoveItem = localStorage.removeItem;
+      localStorage.removeItem = function(key) {
+        if (key === 'session_token' || key === 'user_email' || key === 'user_role' || key === 'user_name') {
+          console.warn('🛡️ БЛОКИРОВКА: Попытка удалить ключ ' + key + ' предотвращена!');
+          return; // Игнорируем удаление
         }
-      }, 500);
+        return originalRemoveItem.apply(this, arguments);
+      };
+
+      // Также блокируем clear()
+      var originalClear = localStorage.clear;
+      localStorage.clear = function() {
+        console.warn('🛡️ БЛОКИРОВКА: Попытка очистить весь localStorage предотвращена!');
+        return;
+      };
     }
   })();
 </script>
