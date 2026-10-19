@@ -4208,9 +4208,9 @@ window.adminSetIban = function (email) {
     '<button onclick="document.getElementById(\'adminIbanModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
     '</div>' +
     '</div>';
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
+  modal.style.zIndex = '999999';
   setTimeout(function () { var el = document.getElementById('adminIbanInput'); if (el) el.focus(); }, 100);
-};
 
 window.adminSaveIban = async function (email) {
   var iban = (document.getElementById('adminIbanInput') || {}).value || '';
@@ -4273,7 +4273,8 @@ window.adminResetPassword = function (email, name) {
     '<button onclick="document.getElementById(\'adminResetPassModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
     '</div>' +
     '</div>';
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
+  modal.style.zIndex = '999999';
 
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghjkmnpqrstuvwxyz';
   var generated = '';
@@ -4345,7 +4346,8 @@ function adminSetCryptoAddress(email, name) {
     '<button onclick="document.getElementById(\'adminCryptoAddrModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">Cancel</button>' +
     '</div>' +
     '</div>';
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
+  modal.style.zIndex = '999999';
 
   var token = getSessionToken();
   if (token) {
@@ -4725,7 +4727,13 @@ function adminSendMessage() {
   var iconEl = document.getElementById('adminMsgIcon');
   if (textEl) textEl.value = '';
   if (iconEl) iconEl.value = '📩';
-  if (mask) mask.classList.add('on');
+  if (mask) {
+    mask.classList.add('on');
+    mask.style.display = 'flex';
+    mask.style.zIndex = '999999';
+    mask.style.position = 'fixed';
+    mask.style.inset = '0';
+  }
 }
 
 function adminViewClient(email) {
@@ -4756,8 +4764,11 @@ function adminViewClient(email) {
   } else {
     backBar.querySelector('span').textContent = '👁 Viewing as Admin — ' + (email || '');
   }
-  backBar.style.display = 'flex';
+    backBar.style.display = 'flex';
+  backBar.style.zIndex = '999999';
 
+     var adminPanelEl = document.getElementById('adminPanel');
+  if (adminPanelEl) adminPanelEl.style.display = 'none';
   loadFromServer(function () {
     if (typeof loadPrices === 'function') loadPrices();
     if (typeof loadExchangeRates === 'function') loadExchangeRates();
@@ -4841,6 +4852,15 @@ function initAdminPanel() {
     m.style.display = 'none';  // ← добавить
   }
 };
+     // 🛡️ FIX: закрытие для IBAN, Reset Password, Crypto Address
+  var ibanCancelBtn = document.querySelector('#adminIbanModal button[onclick*="remove"]');
+  // Модалки создаются динамически — их Cancel уже использует .remove(), но сбросим display:
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    if (t && t.id === 'adminIbanSave') return;
+    var modal = t && t.closest && t.closest('#adminIbanModal, #adminResetPassModal, #adminCryptoAddrModal');
+    if (modal) return;
+  });
 
   if (balanceSave) balanceSave.onclick = async function () {
     var amount = Number(document.getElementById('adminBalanceAmount').value);
