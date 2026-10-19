@@ -1561,6 +1561,89 @@ if('IntersectionObserver' in window){var o=new IntersectionObserver(function(es)
   document.getElementById('suConfirm').addEventListener('keydown',function(e){if(e.key==='Enter')doSignupSubmit();});
 })();
 </script>
+    // Enter navigation
+  document.getElementById('suName').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suEmail').focus();});
+  document.getElementById('suEmail').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suPass').focus();});
+  document.getElementById('suPass').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('suConfirm').focus();});
+  document.getElementById('suConfirm').addEventListener('keydown',function(e){if(e.key==='Enter')doSignupSubmit();});
+})();
+</script>
+
+<!-- ⬇️ ВСТАВЬ СЮДА СВОЙ ФУТЕР ⬇️ -->
+
+<footer style="background:#060a12; color:#93a0b5; font-size:13px; padding:60px 24px 40px; border-top:1px solid rgba(255,255,255,0.1); line-height:1.6;">
+  <div style="max-width:1180px; margin:0 auto;">
+    
+    <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:24px;">
+      <a href="#" style="color:#edf2f9; text-decoration:none; font-weight:600;">🌐 Estonia</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">🇬🇧 English</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Website Terms</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Legal Agreements</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Complaints</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Customer Vulnerability</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Data Privacy Statement</a>
+      <a href="#" style="color:#93a0b5; text-decoration:none;">Privacy</a>
+    </div>
+
+    <div style="margin-bottom:24px; color:#edf2f9; font-weight:600;">
+      © 2026 NordicCrypto Bank AB
+    </div>
+
+    <div style="margin-bottom:20px;">
+      If you would like to find out more about which NordicCrypto entity you receive services from, please check our corresponding FAQ page. If you have any other questions, please reach out to us via the in-app chat. Before entering into any agreement, review the terms and conditions of the relevant service. Consult a specialist if needed.
+    </div>
+    
+    <div style="margin-bottom:20px;">
+      <strong>NordicCrypto Bank AB</strong> is a bank established in the Republic of Sweden, registered address: Drottninggatan 1, 111 51 Stockholm, Sweden, number of registration 304580908. NordicCrypto Bank AB is licensed by the Swedish Financial Supervisory Authority (Finansinspektionen) and regulated by the Swedish National Debt Office. NordicCrypto Bank AB provides credit, payment, current account, and demand deposit account services.
+    </div>
+    
+    <div style="margin-bottom:20px;">
+      Insurance distribution service is provided by NordicCrypto Insurance Europe AB, which is authorised by the Swedish Financial Supervisory Authority as an insurance broker undertaking. Registered address: Drottninggatan 1, 111 51 Stockholm, Sweden, number of registration 305910164.
+    </div>
+
+    <div style="margin-bottom:20px;">
+      Investment services are provided by NordicCrypto Securities Europe AB, represented in Sweden by NordicCrypto AB, which is an investment firm authorised by the Swedish Financial Supervisory Authority. Registered address: Drottninggatan 1, 111 51 Stockholm, Sweden, number of registration 305799582.
+    </div>
+
+    <div style="margin-bottom:20px;">
+      Commodities services are provided by NordicCrypto Ltd and are not regulated by the Swedish Financial Supervisory Authority. NordicCrypto Ltd (No. 08804411) has its registered office address at 30 South Colonnade, London, United Kingdom.
+    </div>
+
+    <div style="margin-bottom:20px;">
+      Cryptocurrency products are provided either by:<br><br>
+      (i) NordicCrypto Digital Assets Europe Ltd (RAEL), a private company registered in the Republic of Cyprus (no. HE430310) with registered address at Omonoias 13, 3052 Limassol, Cyprus. RAEL is licensed by the Cyprus Securities and Exchange Commission (Licence No. 001/2025) as a Crypto Asset Service Provider (CASP) under EU Regulation 2023/1114 on markets in crypto-assets (MiCA), or<br><br>
+      (ii) NordicCrypto Ltd (No. 08804411), a company that is authorised by the Financial Conduct Authority under the Electronic Money Regulations 2011 for the issuing of electronic money and is registered with the Financial Conduct Authority to offer cryptocurrency services under the Money Laundering, Terrorist Financing and Transfer of Funds Regulations 2017. Registered address: 30 South Colonnade, London, United Kingdom.
+    </div>
+
+    <div style="margin-bottom:40px;">
+      Depending on whether clients have accepted the RAEL terms and conditions either during the creation of their cryptocurrency account or the migration of EEA clients from NordicCrypto Ltd to RAEL.
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:24px; font-weight:600;">
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to Ukraine</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to Thailand</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to Canada</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to Australia</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to India</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to the USA</a>
+      <span style="color:#374151;">|</span>
+      <a href="#" style="color:#edf2f9; text-decoration:none;">Send money to Estonia</a>
+    </div>
+
+  </div>
+</footer>
+
+<!-- ⬆️ КОНЕЦ ФУТЕРА ⬆️ -->
+
+<script>
+// 🛡️ Auto-clean URL from hash on reload
+(function(){
+...
 <script>
 // 🛡️ Auto-clean URL from hash on reload
 (function(){
