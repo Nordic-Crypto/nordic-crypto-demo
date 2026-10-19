@@ -4065,25 +4065,6 @@ document.addEventListener('DOMContentLoaded', function(){
 </head>
 <body>
 
-<!-- 🛡️ GATE v2: сохраняем сессию между перезагрузками -->
-<script>
-(function(){
-  var hasToken = localStorage.getItem('session_token');
-  var hasEmail = localStorage.getItem('user_email');
-  var hash = window.location.hash || '';
-
-  if (hash === '#admin' || hash === '#signin' || hash === '#signup') return;
-
-  // 🛡️ FIX: НЕ удаляем ничего. Просто редиректим, если сессии нет.
-  // Удаление тут маскировало баг boot-guard'а (см. ниже) и мешало восстановлению.
-  if (!hasToken || !hasEmail) {
-    window.location.replace('index.html');
-    return;
-  }
-})();
-</script>
-
-
 <!-- SIDEBAR -->
 <div class="side" id="sideBar" style="display:none">
   <div class="brand">
