@@ -6193,6 +6193,124 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 
 })();
+  /* ═══════════ FIX: Сетка KYC-слотов ═══════════ */
+
+/* 1. Принудительно делаем нормальную сетку */
+#verifyScreen .docslots {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Если выбран паспорт (1 сторона) — прячем второй слот */
+#verifyScreen .docslots[data-sides="1"] {
+  grid-template-columns: 1fr !important;
+}
+
+#verifyScreen .docslots[data-sides="1"] #slotBack {
+  display: none !important;
+}
+
+/* 2. Фиксим колонки */
+#verifyScreen .slotw {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* 3. Слот с превью — строго на всю ширину своей колонки */
+#verifyScreen .slot {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1.586 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  border: 2px dashed rgba(255,255,255,.15) !important;
+  background: rgba(255,255,255,.02) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 4. Фиксим картинку внутри слота */
+#verifyScreen .slot-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 1 !important;
+  border-radius: 12px !important;
+}
+
+#verifyScreen .slot-img[hidden] {
+  display: none !important;
+}
+
+/* 5. Прячем зелёную плашку (имя файла), если фото загружено в слот */
+#verifyScreen .slotw:has(.slot.has) .uploaded-file {
+  display: none !important;
+}
+
+/* 6. Плашка с именем файла — только если фото НЕТ в слоте (или для селфи) */
+#verifyScreen .uploaded-file {
+  margin-top: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  background: rgba(125,243,200,.08) !important;
+  border: 1px solid rgba(125,243,200,.3) !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 7. Фиксим внутреннюю обводку при ховере */
+#verifyScreen .slot .upload-inner {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#verifyScreen .slot.has .upload-inner {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 8. Текст "Tap to replace" поверх фото */
+#verifyScreen .slot.has::after {
+  content: "Tap to replace" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 3 !important;
+  padding: 24px 8px 8px !important;
+  font-size: 12px !important;
+  text-align: center !important;
+  color: #fff !important;
+  background: linear-gradient(transparent, rgba(0,0,0,.8)) !important;
+  pointer-events: none !important;
+  display: block !important;
+}
+
+/* 9. Убираем конфликтующий старый стиль, если он есть */
+#verifyScreen .slot.has {
+  border-style: solid !important;
+  border-color: #7df3c8 !important;
+}
+#verifyScreen .slot.has::before {
+  display: none !important;
+}
 </script>
 </body>
 </html>
