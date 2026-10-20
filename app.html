@@ -6194,6 +6194,123 @@ document.addEventListener('DOMContentLoaded', function(){
   if (suClose) suClose.addEventListener('click', function () {
     var m = $('signupMask'); if (m) { m.classList.remove('on'); m.style.display = 'none'; }
   });
+    /* ═══════════ 🛡️ ЖЕСТКИЙ ФИКС ДЛЯ KYC PENDING ═══════════ */
+  
+  var _kycPollTimer = null;
+
+  // 1. Функция, которая делает запрос и переключает экраны
+  async function forceCheckKycStatus() {
+    var token = localStorage.getItem('session_token') || '';
+    if (!token) return;
+    
+    var btn = document.getElementById('btnCheckKycStatus');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Checking...';
+    }
+
+    try {
+      // Делаем запрос к вашему воркеру (замените URL, если он другой)
+      var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL : 'https://nordiccrypto.workers.dev';
+      
+      // Пытаемся вызвать вашу функцию из app.legacy.js, если она есть
+      var resData = null;
+      if (typeof window.checkVerificationStatus === 'function') {
+        resData = await window.checkVerificationStatus();
+      } else {
+        // Если функции нет — делаем сырой запрос
+        var res = await fetch(W + '?action=kyc_status', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        resData = await res.json();
+      }
+
+      console.log('KYC Status Response:', resData);
+
+      // Если сервер ответил, что статус approved
+      if (resData && (resData.status === 'approved' || resData.kyc_status === 'approved')) {
+        if (btn) btn.textContent = '✅ Approved! Loading...';
+        
+        // Прячем Pending
+        var p = document.getElementById('pendingScreen');
+        if (p) {
+          p.classList.remove('on');
+          p.style.display = 'none';
+        }
+        
+        // Показываем Main и Sidebar
+        var mainApp = document.getElementById('mainApp');
+        var sideBar = document.getElementById('sideBar');
+        if (mainApp) mainApp.style.display = 'flex';
+        if (sideBar) sideBar.style.display = 'flex';
+        
+        // Вызываем render из app.legacy.js, чтобы обновить баланс и карту
+        if (typeof window.render === 'function') {
+          window.render();
+        } else {
+          // Если рендера нет — просто перезагружаем страницу
+          // (при перезагрузке app.legacy.js сам проверит статус и пустит в кабинет)
+          window.location.reload();
+        }
+        return;
+      }
+      
+      // Если статус rejected
+      if (resData && (resData.status === 'rejected' || resData.kyc_status === 'rejected')) {
+        if (btn) btn.textContent = '❌ Rejected';
+        var p = document.getElementById('pendingScreen');
+        if (p) p.classList.remove('on');
+        var r = document.getElementById('rejectedScreen');
+        if (r) r.classList.add('on');
+        return;
+      }
+
+      // Если все еще pending
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔄 Check status';
+      }
+      
+    } catch (e) {
+      console.error('KYC check error:', e);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔄 Check status';
+      }
+    }
+  }
+
+  // 2. Привязываем кнопку "Check status"
+  var realCheckBtn = document.getElementById('btnCheckKycStatus');
+  if (realCheckBtn) {
+    // Удаляем старые обработчики (чтобы не было конфликтов)
+    var newBtn = realCheckBtn.cloneNode(true);
+    realCheckBtn.parentNode.replaceChild(newBtn, realCheckBtn);
+    
+    newBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      forceCheckKycStatus();
+    });
+  }
+
+  // 3. Авто-проверка каждые 5 секунд, пока открыт Pending
+  function startKycPolling() {
+    if (_kycPollTimer) clearInterval(_kycPollTimer);
+    
+    _kycPollTimer = setInterval(function() {
+      var pendingScreen = document.getElementById('pendingScreen');
+      // Если мы на экране pending и он видим
+      if (pendingScreen && (pendingScreen.classList.contains('on') || pendingScreen.style.display === 'flex')) {
+        console.log('🔄 Auto-checking KYC...');
+        forceCheckKycStatus();
+      } else {
+        clearInterval(_kycPollTimer);
+      }
+    }, 5000); // 5 секунд
+  }
+
+  // Запускаем таймер
+  startKycPolling();
 })();
 </script>
 </body>
