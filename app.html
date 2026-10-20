@@ -5946,33 +5946,53 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
-<!-- 🎁 KYC + Card Design — новые обработчики -->
+<!-- 🎁 KYC + Card Design — чистые обработчики (v2) -->
 <script>
 (function () {
+  "use strict";
+
   function $(id) { return document.getElementById(id); }
-  function fire(el) { var ev = document.createEvent('Event'); ev.initEvent('change', true, true); el.dispatchEvent(ev); }
+  function fire(el) {
+    var ev = document.createEvent('Event');
+    ev.initEvent('change', true, true);
+    el.dispatchEvent(ev);
+  }
+
+  /* ═══════════ 1. KYC — загрузка документов и селфи ═══════════ */
 
   var SLOTS = [
-    ['docUpload', 'docFile', 'docThumb', 'docUploaded', 'docFileName', 'docFileSize'],
+    ['docUpload',     'docFile',     'docThumb',     'docUploaded',     'docFileName',     'docFileSize'],
     ['docUploadBack', 'docFileBack', 'docThumbBack', 'docUploadedBack', 'docFileNameBack', 'docFileSizeBack'],
-    ['selfieUpload', 'selfieFile', 'selfieThumb', 'selfieUploaded', 'selfieFileName', 'selfieFileSize']
+    ['selfieUpload',  'selfieFile',  'selfieThumb',  'selfieUploaded',  'selfieFileName',  'selfieFileSize']
   ];
-  var slotsEl = $('docSlots'), next1 = $('verifyNext1');
-  function file(id) { var e = $(id); return e && e.files && e.files[0] ? e.files[0] : null; }
-  function curType() { var b = document.querySelector('.vtype-btn.on'); return b ? b.getAttribute('data-type') : 'Passport'; }
-  function docs() {
-    var s = slotsEl && slotsEl.getAttribute('data-sides') === '1' ? 1 : 2, f = file('docFile'), b = file('docFileBack');
-    return { type: curType(), sides: s, front: f, back: s === 2 ? b : null, ok: !!f && (s === 1 || !!b) };
+
+  var slotsEl = $('docSlots');
+  var next1   = $('verifyNext1');
+
+  function file(id) {
+    var e = $(id);
+    return e && e.files && e.files[0] ? e.files[0] : null;
   }
-  function refresh() { if (next1) next1.disabled = !docs().ok; }
+  function curType() {
+    var b = document.querySelector('.vtype-btn.on');
+    return b ? b.getAttribute('data-type') : 'Passport';
+  }
+  function docs() {
+    var sides = slotsEl && slotsEl.getAttribute('data-sides') === '1' ? 1 : 2;
+    var front = file('docFile');
+    var back  = sides === 2 ? file('docFileBack') : null;
+    return { type: curType(), sides: sides, front: front, back: back,
+             ok: !!front && (sides === 1 || !!back) };
+  }
+  function refresh() {
+    if (next1) next1.disabled = !docs().ok;
+  }
   function applyType() {
     if (!slotsEl) return;
     var one = curType() === 'Passport';
     slotsEl.setAttribute('data-sides', one ? '1' : '2');
     var cap = $('capFront');
-if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
-var capBack = $('docUploadBack').querySelector('.upload-text');
-if (capBack) capBack.textContent = 'Back side';
+    if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
     refresh();
   }
   function showThumb(t, f) {
@@ -5987,7 +6007,7 @@ if (capBack) capBack.textContent = 'Back side';
     };
     if (window.FileReader) {
       var fr = new FileReader();
-      fr.onload = function () { t.onerror = tryBlob; t.src = fr.result; t.hidden = false; };
+      fr.onload  = function () { t.onerror = tryBlob; t.src = fr.result; t.hidden = false; };
       fr.onerror = tryBlob;
       fr.readAsDataURL(f);
     } else { tryBlob(); }
@@ -5995,6 +6015,7 @@ if (capBack) capBack.textContent = 'Back side';
   function bindUpload(a) {
     var z = $(a[0]), i = $(a[1]);
     if (!z || !i) return;
+
     ['dragenter', 'dragover'].forEach(function (t) {
       z.addEventListener(t, function (e) { e.preventDefault(); z.classList.add('drag'); });
     });
@@ -6017,191 +6038,160 @@ if (capBack) capBack.textContent = 'Back side';
       refresh();
     });
   }
+
   SLOTS.forEach(bindUpload);
+
+  /* Переключение типа документа */
   [].forEach.call(document.querySelectorAll('.vtype-btn'), function (b) {
-    b.addEventListener('click', function () { setTimeout(applyType, 0); });
+    b.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('.vtype-btn'), function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      setTimeout(applyType, 0);
+    });
   });
+
+  /* Continue нельзя разблокировать снаружи, пока документы не готовы */
   if (window.MutationObserver && next1) {
     new MutationObserver(function () {
       var want = !docs().ok;
       if (next1.disabled !== want) next1.disabled = want;
     }).observe(next1, { attributes: true, attributeFilter: ['disabled'] });
   }
+
   applyType();
   window.NCVerify = { getDocs: docs };
 
-  var opts = document.querySelectorAll('#designPickerModal .design-opt');
-  var live = $('designLive');
+  /* ═══════════ 2. Card Design — модалка и превью ═══════════ */
+
+  var opts   = document.querySelectorAll('#designPickerModal .design-opt');
+  var live   = $('designLive');
+  var nameEl = $('designName');
+
   function pick(b) {
+    if (!b) return;
     [].forEach.call(opts, function (o) {
-      o.classList.toggle('sel', o === b);
-      o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+      var on = o === b;
+      o.classList.toggle('sel', on);
+      o.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     if (live) live.className = 'design-preview ' + b.getAttribute('data-design');
-    var nm = $('designName'), sp = b.querySelector('span');
-    if (nm && sp) nm.textContent = sp.textContent;
+    var sp = b.querySelector('span');
+    if (nameEl && sp) nameEl.textContent = sp.textContent;
   }
-  [].forEach.call(opts, function (b) { b.addEventListener('click', function () { pick(b); }); });
+  function sync() {
+    var cur = document.querySelector(
+      '#designPickerModal .design-opt.on, ' +
+      '#designPickerModal .design-opt.active, ' +
+      '#designPickerModal .design-opt.selected, ' +
+      '#designPickerModal .design-opt[aria-pressed="true"]'
+    );
+    if (cur) pick(cur);
+  }
+  [].forEach.call(opts, function (b) {
+    b.addEventListener('click', function () { pick(b); });
+  });
+  if (window.MutationObserver && $('designPickerModal')) {
+    new MutationObserver(sync).observe($('designPickerModal'), {
+      attributes: true, subtree: true, attributeFilter: ['class', 'aria-pressed']
+    });
+  }
 
+  /* 3D-наклон live-превью */
   var dl = document.querySelector('.dlive');
   if (dl && live) {
     dl.addEventListener('pointermove', function (e) {
-      var r = dl.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-      live.style.transform = 'rotateX(' + (-y * 20).toFixed(1) + 'deg) rotateY(' + (x * 24).toFixed(1) + 'deg)';
+      var r = dl.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width  - .5;
+      var y = (e.clientY - r.top)  / r.height - .5;
+      live.style.transform =
+        'rotateX(' + (-y * 20).toFixed(1) + 'deg) rotateY(' + (x * 24).toFixed(1) + 'deg)';
     });
     dl.addEventListener('pointerleave', function () { live.style.transform = ''; });
   }
-    // 🛡️ FIX: убираем старый inline display:none с KYC слотов
-  // (kyc-fix.js ставит display:none, из-за чего front слот схлопывается)
-  function ncFixSlots() {
-    ['docUpload', 'docUploadBack', 'selfieUpload'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el && el.style.display === 'none') el.style.display = '';
-    });
-  }
-  setInterval(ncFixSlots, 150);
-  ncFixSlots();
-    // ═══════════════════════════════════════════════════════════
-  // 🛡️ FIX КРИТИЧНЫЙ: возвращаем .verify-step.on внутри pending/rejected
-  // (без этого pendingScreen показывает пустой экран)
-  // ═══════════════════════════════════════════════════════════
-  function ncFixSteps() {
-    ['pendingScreen', 'rejectedScreen'].forEach(function (id) {
-      var screen = document.getElementById(id);
-      if (!screen) return;
-      // Если экран показан — принудительно показываем все его шаги
-      if (screen.classList.contains('on') || screen.style.display === 'flex') {
-        var steps = screen.querySelectorAll('.verify-step');
-        for (var i = 0; i < steps.length; i++) {
-          if (!steps[i].classList.contains('on')) {
-            steps[i].classList.add('on');
-          }
+
+  /* ═══════════ 3. Публичный API для app.legacy.js ═══════════ */
+
+  var currentDesign = 'cosmic';
+  window.NCDesign = {
+    open:  function () { var m = $('designMask'); if (m) m.classList.add('on'); sync(); },
+    close: function () { var m = $('designMask'); if (m) m.classList.remove('on'); },
+    get:   function () { return currentDesign; }
+  };
+  var save   = $('designSave');
+  var cancel = $('designCancel');
+  if (save) save.addEventListener('click', function () {
+    var sel = document.querySelector('#designPickerModal .design-opt.sel');
+    if (sel) currentDesign = sel.getAttribute('data-design');
+    window.NCDesign.close();
+  });
+  if (cancel) cancel.addEventListener('click', function () { window.NCDesign.close(); });
+
+  /* ═══════════ 4. Logout / Check Status (pending + rejected) ═══════════ */
+
+  function wireLogout(id) {
+    var btn = $(id);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      try {
+        var tk = localStorage.getItem('session_token') || '';
+        ['session_token','user_email','user_name','session_expires','nc_current_user']
+          .forEach(function (k) { localStorage.removeItem(k); });
+        if (tk && typeof fetch === 'function') {
+          var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL
+                  : 'https://nordiccrypto.workers.dev';
+          fetch(W + '?action=logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: tk })
+          }).catch(function () {});
         }
-      }
+      } catch (e) { console.error('[logout]', e); }
+      window.location.replace('index.html');
     });
   }
-  ncFixSteps();
-  setInterval(ncFixSteps, 400);
+  wireLogout('btnLogoutPending');
+  wireLogout('btnLogoutRejected');
 
+  var checkBtn = $('btnCheckKycStatus');
+  if (checkBtn) checkBtn.addEventListener('click', function () {
+    if (typeof window.checkKycStatus === 'function') window.checkKycStatus();
+    else window.location.reload();
+  });
 
+  /* ═══════════ 5. Signup — переключатель Banking / Exchange ═══════════ */
 
-  // 🛡️ FIX: страховка pendingScreen — если он "on" но пустой, форсим всё
-  function ncFixPendingScreen() {
-    var p = document.getElementById('pendingScreen');
-    if (!p) return;
-    if (!p.classList.contains('on')) return;
-    // Если у экрана display не flex — форсим
-    var cs = window.getComputedStyle(p);
-    if (cs.display !== 'flex') {
-      p.style.cssText = 'display:flex !important;visibility:visible !important;opacity:1 !important;z-index:99999 !important;position:fixed !important;inset:0 !important;align-items:center !important;justify-content:center !important;';
-    }
-    // Показываем все step'ы
-    var steps = p.querySelectorAll('.verify-step');
-    for (var i = 0; i < steps.length; i++) {
-      if (window.getComputedStyle(steps[i]).display === 'none') {
-        steps[i].classList.add('on');
-      }
-    }
-  }
-  ncFixPendingScreen();
-  setInterval(ncFixPendingScreen, 400);
-    // 🛡️ FIX: Log out кнопка внутри pendingScreen
-  function ncWireLogout() {
-    ['btnLogoutPending', 'btnLogoutRejected'].forEach(function(id) {
-      var btn = document.getElementById(id);
-      if (!btn || btn.__ncWired) return;
-      btn.__ncWired = true;
-      btn.addEventListener('click', function() {
-        console.log('🚪 Logout via ' + id);
-        try {
-          var tk = localStorage.getItem('session_token') || '';
-          localStorage.removeItem('session_token');
-          localStorage.removeItem('user_email');
-          localStorage.removeItem('user_name');
-          localStorage.removeItem('session_expires');
-          localStorage.removeItem('nc_current_user');
-          // Уведомляем Worker
-          if (tk && typeof fetch === 'function') {
-            var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL :
-                    'https://nordiccrypto.workers.dev';
-            fetch(W + '?action=logout', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ token: tk })
-            }).catch(function(){});
-          }
-        } catch(e) { console.error('[logout]', e); }
-        window.location.replace('index.html');
-      });
-    });
-  }
-  ncWireLogout();
-  setInterval(ncWireLogout, 800);
-
-  // 🛡️ FIX: Check status кнопка
-  function ncWireCheckStatus() {
-    var btn = document.getElementById('btnCheckKycStatus');
-    if (!btn || btn.__ncWired) return;
-    btn.__ncWired = true;
-    btn.addEventListener('click', function() {
-      console.log('🔄 Check status clicked');
-      // Триггерим проверку через app.legacy (если есть)
-      if (typeof window.checkKycStatus === 'function') {
-        window.checkKycStatus();
-      } else {
-        // Fallback — перезагрузка
-        window.location.reload();
-      }
-    });
-  }
-  ncWireCheckStatus();
-  setInterval(ncWireCheckStatus, 800);
-    // ═══════════════════════════════════════════════════════════
-  // 🎨 SIGNUP — переключатель Banking/Exchange + UI
-  // ═══════════════════════════════════════════════════════════
-  (function ncSignupUI() {
-    var picker = document.getElementById('suTypePicker');
-    var suAccountType = 'banking';   // default
-
-    if (picker) {
-      picker.querySelectorAll('.type-opt').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          picker.querySelectorAll('.type-opt').forEach(function (b) {
-            b.classList.remove('on');
-          });
-          btn.classList.add('on');
-          suAccountType = btn.getAttribute('data-type') || 'banking';
-          // сохраним в глобал, чтобы app.legacy мог прочитать
-          window.__ncSignupAccountType = suAccountType;
-        });
-      });
-      window.__ncSignupAccountType = 'banking';
-    }
-
-    // Toggle password visibility
-    function wireToggle(btnId, inputId) {
-      var btn = document.getElementById(btnId);
-      var inp = document.getElementById(inputId);
-      if (!btn || !inp || btn.__wired) return;
-      btn.__wired = true;
+  var picker = $('suTypePicker');
+  if (picker) {
+    picker.querySelectorAll('.type-opt').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        inp.type = inp.type === 'password' ? 'text' : 'password';
-        btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+        picker.querySelectorAll('.type-opt').forEach(function (b) {
+          b.classList.remove('on');
+        });
+        btn.classList.add('on');
+        window.__ncSignupAccountType = btn.getAttribute('data-type') || 'banking';
       });
-    }
-    wireToggle('suPassToggle', 'suPassword');
-    wireToggle('suConfirmToggle', 'suConfirm');
+    });
+    window.__ncSignupAccountType = 'banking';
+  }
 
-    // Close button → скрыть signup
-    var closeBtn = document.getElementById('suClose');
-    if (closeBtn && !closeBtn.__wired) {
-      closeBtn.__wired = true;
-      closeBtn.addEventListener('click', function () {
-        var m = document.getElementById('signupMask');
-        if (m) { m.classList.remove('on'); m.style.display = 'none'; }
-      });
-    }
-  })();
+  function wireToggle(btnId, inputId) {
+    var btn = $(btnId), inp = $(inputId);
+    if (!btn || !inp) return;
+    btn.addEventListener('click', function () {
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+    });
+  }
+  wireToggle('suPassToggle', 'suPassword');
+  wireToggle('suConfirmToggle', 'suConfirm');
+
+  var suClose = $('suClose');
+  if (suClose) suClose.addEventListener('click', function () {
+    var m = $('signupMask');
+    if (m) { m.classList.remove('on'); m.style.display = 'none'; }
+  });
+
 })();
 </script>
 </body>
