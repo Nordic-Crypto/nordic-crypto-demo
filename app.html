@@ -4071,7 +4071,101 @@ body:not(.has-order) .progress-steps {
 @media (prefers-reduced-motion: reduce) {
   #onboard .onb-side::before { animation: none !important; }
 }
-  
+  /* ═══════════ FIX: Сетка KYC-слотов ═══════════ */
+#verifyScreen .docslots {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#verifyScreen .docslots[data-sides="1"] {
+  grid-template-columns: 1fr !important;
+}
+#verifyScreen .docslots[data-sides="1"] #slotBack {
+  display: none !important;
+}
+#verifyScreen .slotw {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+#verifyScreen .slot {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1.586 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  border: 2px dashed rgba(255,255,255,.15) !important;
+  background: rgba(255,255,255,.02) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#verifyScreen .slot-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 1 !important;
+  border-radius: 12px !important;
+}
+#verifyScreen .slot-img[hidden] {
+  display: none !important;
+}
+#verifyScreen .slotw:has(.slot.has) .uploaded-file {
+  display: none !important;
+}
+#verifyScreen .uploaded-file {
+  margin-top: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  background: rgba(125,243,200,.08) !important;
+  border: 1px solid rgba(125,243,200,.3) !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#verifyScreen .slot .upload-inner {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#verifyScreen .slot.has .upload-inner {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+#verifyScreen .slot.has::after {
+  content: "Tap to replace" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 3 !important;
+  padding: 24px 8px 8px !important;
+  font-size: 12px !important;
+  text-align: center !important;
+  color: #fff !important;
+  background: linear-gradient(transparent, rgba(0,0,0,.8)) !important;
+  pointer-events: none !important;
+  display: block !important;
+}
+#verifyScreen .slot.has {
+  border-style: solid !important;
+  border-color: #7df3c8 !important;
+}
+#verifyScreen .slot.has::before {
+  display: none !important;
+}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -6192,124 +6286,148 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 
 })();
-  /* ═══════════ FIX: Сетка KYC-слотов ═══════════ */
+ <script>
+(function () {
+  "use strict";
+  function $(id) { return document.getElementById(id); }
+  function fire(el) {
+    var ev = document.createEvent('Event'); ev.initEvent('change', true, true); el.dispatchEvent(ev);
+  }
+  var SLOTS = [
+    ['docUpload', 'docFile', 'docThumb', 'docUploaded', 'docFileName', 'docFileSize'],
+    ['docUploadBack', 'docFileBack', 'docThumbBack', 'docUploadedBack', 'docFileNameBack', 'docFileSizeBack'],
+    ['selfieUpload', 'selfieFile', 'selfieThumb', 'selfieUploaded', 'selfieFileName', 'selfieFileSize']
+  ];
+  var slotsEl = $('docSlots'), next1 = $('verifyNext1');
+  function file(id) { var e = $(id); return e && e.files && e.files[0] ? e.files[0] : null; }
+  function curType() { var b = document.querySelector('.vtype-btn.on'); return b ? b.getAttribute('data-type') : 'Passport'; }
+  function docs() {
+    var sides = slotsEl && slotsEl.getAttribute('data-sides') === '1' ? 1 : 2;
+    var front = file('docFile'), back = sides === 2 ? file('docFileBack') : null;
+    return { type: curType(), sides: sides, front: front, back: back, ok: !!front && (sides === 1 || !!back) };
+  }
+  function refresh() { if (next1) next1.disabled = !docs().ok; }
+  function applyType() {
+    if (!slotsEl) return;
+    var one = curType() === 'Passport';
+    slotsEl.setAttribute('data-sides', one ? '1' : '2');
+    var cap = $('capFront');
+    if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
+    refresh();
+  }
+  function showThumb(t, f) {
+    if (!t || !f) return;
+    var fail = function () { t.onerror = null; t.hidden = true; };
+    var tryBlob = function () {
+      if (window.URL && URL.createObjectURL) { t.onerror = fail; t.src = URL.createObjectURL(f); t.hidden = false; } else { fail(); }
+    };
+    if (window.FileReader) {
+      var fr = new FileReader(); fr.onload = function () { t.onerror = tryBlob; t.src = fr.result; t.hidden = false; };
+      fr.onerror = tryBlob; fr.readAsDataURL(f);
+    } else { tryBlob(); }
+  }
+  function bindUpload(a) {
+    var z = $(a[0]), i = $(a[1]);
+    if (!z || !i) return;
+    ['dragenter', 'dragover'].forEach(function (t) { z.addEventListener(t, function (e) { e.preventDefault(); z.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (t) { z.addEventListener(t, function (e) { e.preventDefault(); z.classList.remove('drag'); }); });
+    z.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files; if (f && f.length) { try { i.files = f; } catch (x) { return; } fire(i); }
+    });
+    i.addEventListener('change', function () {
+      var f = i.files && i.files[0], t = $(a[2]); showThumb(t, f);
+      if (f) {
+        if ($(a[3])) $(a[3]).style.display = 'flex';
+        if ($(a[4])) $(a[4]).textContent = f.name;
+        if ($(a[5])) $(a[5]).textContent = Math.max(1, Math.round(f.size / 1024)) + ' KB';
+      }
+      z.classList.toggle('has', !!f); refresh();
+    });
+  }
+  SLOTS.forEach(bindUpload);
+  [].forEach.call(document.querySelectorAll('.vtype-btn'), function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('.vtype-btn'), function (x) { x.classList.toggle('on', x === b); });
+      setTimeout(applyType, 0);
+    });
+  });
+  if (window.MutationObserver && next1) {
+    new MutationObserver(function () {
+      var want = !docs().ok;
+      if (next1.disabled !== want) next1.disabled = want;
+    }).observe(next1, { attributes: true, attributeFilter: ['disabled'] });
+  }
+  applyType();
+  window.NCVerify = { getDocs: docs };
+  
+  // Design Modal Logic
+  var opts = document.querySelectorAll('#designPickerModal .design-opt');
+  var live = $('designLive'), nameEl = $('designName');
+  function pick(b) {
+    if (!b) return;
+    [].forEach.call(opts, function (o) { var on = o === b; o.classList.toggle('sel', on); o.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    if (live) live.className = 'design-preview ' + b.getAttribute('data-design');
+    var sp = b.querySelector('span'); if (nameEl && sp) nameEl.textContent = sp.textContent;
+  }
+  [].forEach.call(opts, function (b) { b.addEventListener('click', function () { pick(b); }); });
+  var currentDesign = 'cosmic';
+  window.NCDesign = {
+    open: function () { var m = $('designMask'); if (m) m.classList.add('on'); },
+    close: function () { var m = $('designMask'); if (m) m.classList.remove('on'); },
+    get: function () { return currentDesign; }
+  };
+  var save = $('designSave'), cancel = $('designCancel');
+  if (save) save.addEventListener('click', function () {
+    var sel = document.querySelector('#designPickerModal .design-opt.sel');
+    if (sel) currentDesign = sel.getAttribute('data-design');
+    window.NCDesign.close();
+  });
+  if (cancel) cancel.addEventListener('click', function () { window.NCDesign.close(); });
+  
+  // Logout & Check Status
+  function wireLogout(id) {
+    var btn = $(id); if (!btn) return;
+    btn.addEventListener('click', function () {
+      try {
+        var tk = localStorage.getItem('session_token') || '';
+        ['session_token','user_email','user_name','session_expires','nc_current_user'].forEach(function (k) { localStorage.removeItem(k); });
+        if (tk && typeof fetch === 'function') {
+          var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL : 'https://nordiccrypto.workers.dev';
+          fetch(W + '?action=logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tk }) }).catch(function () {});
+        }
+      } catch (e) {}
+      window.location.replace('index.html');
+    });
+  }
+  wireLogout('btnLogoutPending'); wireLogout('btnLogoutRejected');
+  var checkBtn = $('btnCheckKycStatus');
+  if (checkBtn) checkBtn.addEventListener('click', function () {
+    if (typeof window.checkKycStatus === 'function') window.checkKycStatus(); else window.location.reload();
+  });
 
-/* 1. Принудительно делаем нормальную сетку */
-#verifyScreen .docslots {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* Если выбран паспорт (1 сторона) — прячем второй слот */
-#verifyScreen .docslots[data-sides="1"] {
-  grid-template-columns: 1fr !important;
-}
-
-#verifyScreen .docslots[data-sides="1"] #slotBack {
-  display: none !important;
-}
-
-/* 2. Фиксим колонки */
-#verifyScreen .slotw {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-  min-width: 0 !important;
-}
-
-/* 3. Слот с превью — строго на всю ширину своей колонки */
-#verifyScreen .slot {
-  position: relative !important;
-  width: 100% !important;
-  aspect-ratio: 1.586 !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 14px !important;
-  border: 2px dashed rgba(255,255,255,.15) !important;
-  background: rgba(255,255,255,.02) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* 4. Фиксим картинку внутри слота */
-#verifyScreen .slot-img {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  z-index: 1 !important;
-  border-radius: 12px !important;
-}
-
-#verifyScreen .slot-img[hidden] {
-  display: none !important;
-}
-
-/* 5. Прячем зелёную плашку (имя файла), если фото загружено в слот */
-#verifyScreen .slotw:has(.slot.has) .uploaded-file {
-  display: none !important;
-}
-
-/* 6. Плашка с именем файла — только если фото НЕТ в слоте (или для селфи) */
-#verifyScreen .uploaded-file {
-  margin-top: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 10px 14px !important;
-  background: rgba(125,243,200,.08) !important;
-  border: 1px solid rgba(125,243,200,.3) !important;
-  border-radius: 12px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* 7. Фиксим внутреннюю обводку при ховере */
-#verifyScreen .slot .upload-inner {
-  position: relative !important;
-  z-index: 2 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-#verifyScreen .slot.has .upload-inner {
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* 8. Текст "Tap to replace" поверх фото */
-#verifyScreen .slot.has::after {
-  content: "Tap to replace" !important;
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 3 !important;
-  padding: 24px 8px 8px !important;
-  font-size: 12px !important;
-  text-align: center !important;
-  color: #fff !important;
-  background: linear-gradient(transparent, rgba(0,0,0,.8)) !important;
-  pointer-events: none !important;
-  display: block !important;
-}
-
-/* 9. Убираем конфликтующий старый стиль, если он есть */
-#verifyScreen .slot.has {
-  border-style: solid !important;
-  border-color: #7df3c8 !important;
-}
-#verifyScreen .slot.has::before {
-  display: none !important;
-}
+  // Signup
+  var picker = $('suTypePicker');
+  if (picker) {
+    picker.querySelectorAll('.type-opt').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        picker.querySelectorAll('.type-opt').forEach(function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+        window.__ncSignupAccountType = btn.getAttribute('data-type') || 'banking';
+      });
+    });
+    window.__ncSignupAccountType = 'banking';
+  }
+  function wireToggle(btnId, inputId) {
+    var btn = $(btnId), inp = $(inputId); if (!btn || !inp) return;
+    btn.addEventListener('click', function () { inp.type = inp.type === 'password' ? 'text' : 'password'; btn.textContent = inp.type === 'password' ? '👁' : '🙈'; });
+  }
+  wireToggle('suPassToggle', 'suPassword'); wireToggle('suConfirmToggle', 'suConfirm');
+  var suClose = $('suClose');
+  if (suClose) suClose.addEventListener('click', function () {
+    var m = $('signupMask'); if (m) { m.classList.remove('on'); m.style.display = 'none'; }
+  });
+})();
+</script>
 </script>
 </body>
 </html>
