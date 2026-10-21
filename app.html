@@ -6791,6 +6791,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
   
 <script>
+<script>
 // --- EMAIL CHANGES ---
 async function loadAdminEmailChanges() {
   var box = document.getElementById('adminEmailChangesList');
@@ -6898,6 +6899,16 @@ async function loadAdminKycIncomplete() {
     box.innerHTML = html;
   } catch(e) { box.innerHTML = '<div class="admin-empty">Error loading</div>'; }
 }
+
+// --- ЗАПУСК ВКЛАДОК ПРИ КЛИКЕ ---
+document.addEventListener('click', function(e) {
+  var navItem = e.target.closest('.admin-nav-item');
+  if (!navItem) return;
+  var tab = navItem.getAttribute('data-tab');
+  if (tab === 'emailChanges' && typeof loadAdminEmailChanges === 'function') loadAdminEmailChanges();
+  if (tab === 'kycIncomplete' && typeof loadAdminKycIncomplete === 'function') loadAdminKycIncomplete();
+});
+
 </script>
 </body>
 </html>
