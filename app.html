@@ -6621,5 +6621,135 @@ document.addEventListener('DOMContentLoaded', function(){
 
 })();
 </script>
+ <script>
+// 🛡️ ФИКС ЗАГРУЗКИ ЗАЯВОК НА ВЫВОД
+(function() {
+  var _origLoad = window.loadAdminWithdrawals;
+  
+  window.loadAdminWithdrawals = function() {
+    var list = document.getElementById('adminWithdrawalsList');
+    var countEl = document.getElementById('adminWithdrawalsCount');
+    
+    // Убираем "Loading..." если оно там застряло
+    if (list && list.innerHTML.includes('Loading...')) {
+      list.innerHTML = '<div class="admin-empty">Загрузка данных...</div>';
+    }
+    
+    var token = localStorage.getItem('session_token');
+    if (!token) {
+      if (list) list.innerHTML = '<div class="admin-empty" style="color:#ff5470">Ошибка: Нет токена сессии. Перезайдите в аккаунт.</div>';
+      return;
+    }
+
+    var base = 'https://nordic-deposit-checker.otis-790.workers.dev'; 
+
+    // Делаем запрос напрямую к вашему рабочему воркеру
+    fetch(base + '?action=getUsersBatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) throw new Error(data.error || 'Ошибка сервера');
+      
+      var allWithdrawals = [];
+      (data.users || []).forEach(function(u) {
+        (u.withdrawals || []).forEach(function(w) {
+          w.userEmail = u.email;
+          w.userName = u.name || u.email;
+          allWithdrawals.push(w);
+        });
+      });
+
+      // Сортируем по дате (новые сверху)
+      allWithdrawals.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+      if (list) {
+        if (allWithdrawals.length === 0) {
+          list.innerHTML = '<div class="admin-empty">Нет заявок на вывод.</div>';
+        } else {
+          var html = '';
+          allWithdrawals.forEach(function(w) {
+            var isPending = w.status === 'pending';
+            var badgeClass = isPending ? 'pend' : (w.status === 'approved' ? 'ok' : 'fail');
+            var badgeText = isPending ? 'Pending' : (w.status === 'approved' ? 'Approved' : 'Rejected');
+            
+            html += 
+              '<div class="admin-client-card" style="margin-bottom:14px;">' +
+                '<div class="admin-client-top" style="justify-content:space-between;">' +
+                  '<div style="display:flex; align-items:center; gap:12px;">' +
+                    '<div class="admin-client-avatar">' + (w.userEmail || 'U').substring(0, 2).toUpperCase() + '</div>' +
+                    '<div>' +
+                      '<div class="admin-client-name">' + w.userName + '</div>' +
+                      '<div class="admin-client-email">' + w.userEmail + '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<span class="awd-badge ' + badgeClass + '">' + badgeText + '</span>' +
+                '</div>' +
+                '<div class="awd-amount" style="color:#47dcff; font-size:20px; font-weight:800; margin-bottom:8px;">$' + Number(w.amount).toFixed(2) + ' <span style="font-size:12px; color:#7c9cbb;">via ' + (w.method || 'iban').toUpperCase() + '</span></div>' +
+                '<div class="awd-details" style="background:rgba(255,255,255,.02); border-radius:10px; padding:12px; margin-bottom:12px;">' +
+                  '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span style="color:#7c9cbb;">Name</span><b style="color:#e8f4ff;">' + (w.details && w.details.name || '—') + '</b></div>' +
+                  '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span style="color:#7c9cbb;">IBAN</span><b style="color:#e8f4ff;">' + (w.details && w.details.iban || '—') + '</b></div>' +
+                  '<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#7c9cbb;">SWIFT</span><b style="color:#e8f4ff;">' + (w.details && w.details.swift || '—') + '</b></div>' +
+                '</div>' +
+                (isPending ? 
+                  '<div style="display:flex; gap:8px;">' +
+                    '<button class="btn b1" style="flex:1; justify-content:center; background:#10b981; border:0;" onclick="approveWithdrawal(\'' + w.id + '\', \'' + w.userEmail + '\')">✓ Approve</button>' +
+                    '<button class="btn b3" style="flex:1; justify-content:center;" onclick="rejectWithdrawal(\'' + w.id + '\', \'' + w.userEmail + '\')">✕ Reject</button>' +
+                  '</div>'
+                : '') +
+              '</div>';
+          });
+          list.innerHTML = html;
+        }
+      }
+      if (countEl) countEl.textContent = allWithdrawals.filter(function(w) { return w.status === 'pending'; }).length + ' pending · ' + allWithdrawals.length + ' total';
+      
+    })
+    .catch(function(err) {
+      console.error('Ошибка загрузки выводов:', err);
+      if (list) list.innerHTML = '<div class="admin-empty" style="color:#ff5470">Ошибка загрузки: ' + err.message + '</div>';
+    });
+  };
+
+  // Функция для кнопки Approve
+  window.approveWithdrawal = function(id, email) {
+    if (!confirm('Одобрить вывод для ' + email + '?')) return;
+    var token = localStorage.getItem('session_token');
+    var base = 'https://nordic-deposit-checker.otis-790.workers.dev';
+    
+    // Просто меняем статус в локальном состоянии (если нужно — нужно дописать API endpoint в воркере)
+    // В текущем воркере нет action=approveWithdrawal, поэтому мы просто перерисуем список.
+    // Вам нужно добавить этот action в воркер, если его нет.
+    alert('Заявка одобрена (демо). Для реального списания добавьте endpoint в воркер.');
+    // После реального обновления нужно вызвать loadAdminWithdrawals();
+  };
+
+  // Функция для кнопки Reject
+  window.rejectWithdrawal = function(id, email) {
+    if (!confirm('Отклонить вывод для ' + email + '?')) return;
+    alert('Заявка отклонена (демо).');
+  };
+
+  // Перехватываем клики по вкладке "Withdrawals", чтобы вызвать наш скрипт
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.admin-nav-item[data-tab="withdrawals"]')) {
+      setTimeout(window.loadAdminWithdrawals, 100);
+    }
+  });
+
+  // Также перезаписываем старую функцию, если она вдруг вызовется
+  window.loadAdminWithdrawals = window.loadAdminWithdrawals;
+
+  // Запускаем принудительно через 2 секунды после загрузки страницы (если мы на этой вкладке)
+  setTimeout(function() {
+    if (document.querySelector('.admin-nav-item[data-tab="withdrawals"].active')) {
+      window.loadAdminWithdrawals();
+    }
+  }, 2000);
+
+})();
+</script> 
 </body>
 </html>
