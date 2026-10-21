@@ -6460,7 +6460,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
   function api(action) {
-    var base = typeof WORKER_LOGIN_URL !== 'undefined' ? WORKER_LOGIN_URL : '';
+    var base = typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://nordiccrypto.workers.dev';
     var token = typeof getSessionToken === 'function' ? getSessionToken() : localStorage.getItem('session_token');
     if (!base || !token) return Promise.reject(new Error('no session'));
     return fetch(base + '?action=' + action, {
