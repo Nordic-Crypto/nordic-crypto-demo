@@ -6791,125 +6791,8 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
   
 <script>
-// --- EMAIL CHANGES ---
-async function loadAdminEmailChanges() {
-  var box = document.getElementById('adminEmailChangesList');
-  if (!box) return;
-  box.innerHTML = '<div class="admin-empty">Loading...</div>';
-  try {
-    var token = localStorage.getItem('session_token');
-    var r = await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=listEmailChanges', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    var d = await r.json();
-    if (!d.ok || !d.requests || d.requests.length === 0) {
-      box.innerHTML = '<div class="admin-empty">No pending email changes.</div>';
-      return;
-    }
-    var html = '';
-    d.requests.forEach(function(req) {
-      html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
-        '<div class="admin-client-top">' +
-          '<div class="admin-client-info">' +
-            '<div class="admin-client-name">' + req.name + '</div>' +
-            '<div class="admin-client-email">From: ' + req.oldEmail + '</div>' +
-            '<div class="admin-client-email" style="color:#34d399">To: ' + req.newEmail + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="admin-client-actions">' +
-          '<button class="btn b1" onclick="approveEmailChange(\'' + req.oldEmail + '\',\'' + req.newEmail + '\',\'' + req.id + '\')">✅ Approve</button>' +
-          '<button class="btn b3" onclick="rejectEmailChange(\'' + req.oldEmail + '\',\'' + req.id + '\')">❌ Reject</button>' +
-        '</div>' +
-      '</div>';
-    });
-    box.innerHTML = html;
-  } catch(e) { box.innerHTML = '<div class="admin-empty">Error</div>'; }
-}
-
-async function approveEmailChange(oldEmail, newEmail, reqId) {
-  if (!confirm('Approve email change to ' + newEmail + '?')) return;
-  var token = localStorage.getItem('session_token');
-  await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=approveEmailChange', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, oldEmail, newEmail, reqId })
-  });
-  loadAdminEmailChanges();
-}
-
-async function rejectEmailChange(oldEmail, reqId) {
-  if (!confirm('Reject email change?')) return;
-  var token = localStorage.getItem('session_token');
-  await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=rejectEmailChange', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, email: oldEmail, reqId })
-  });
-  loadAdminEmailChanges();
-}
-
-// --- KYC INCOMPLETE ---
-async function loadAdminKycIncomplete() {
-  var box = document.getElementById('adminKycIncompleteList');
-  if (!box) return;
-  box.innerHTML = '<div class="admin-empty">Loading...</div>';
-  try {
-    var token = localStorage.getItem('session_token');
-    var r = await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=getUsersBatch', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    var d = await r.json();
-    if (!d.ok || !d.users) throw new Error('Failed');
-    
-    // Фильтруем тех, у кого верификация не approved
-    var incomplete = d.users.filter(function(u) {
-       var vStatus = u.verification ? u.verification.status : null;
-       return vStatus !== 'approved';
-    });
-
-    if (incomplete.length === 0) {
-      box.innerHTML = '<div class="admin-empty">All clients are verified.</div>';
-      return;
-    }
-
-    var html = '';
-    incomplete.forEach(function(u) {
-      var status = u.verification ? u.verification.status : 'not_started';
-      var badge = status === 'pending' ? '⏳ Pending' : status === 'rejected' ? '❌ Rejected' : '⚪ Not Started';
-      var actions = '';
-      if (status === 'pending') {
-         actions = '<button class="btn b2" onclick="adminViewClient(\'' + u.email + '\')">👁 View / Approve KYC</button>';
-      }
-      
-      html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
-        '<div class="admin-client-top">' +
-          '<div class="admin-client-info">' +
-            '<div class="admin-client-name">' + u.name + '</div>' +
-            '<div class="admin-client-email">' + u.email + '</div>' +
-          '</div>' +
-          '<div class="admin-client-badge">' + badge + '</div>' +
-        '</div>' +
-        '<div style="font-size:12px;color:#8b95a5;margin-top:10px;">' +
-          (u.verification && u.verification.personalInfo ? 'Address: ' + JSON.stringify(u.verification.personalInfo) : 'No address provided') +
-        '</div>' +
-        '<div class="admin-client-actions" style="margin-top:10px;">' + actions + '</div>' +
-      '</div>';
-    });
-    box.innerHTML = html;
-  } catch(e) { box.innerHTML = '<div class="admin-empty">Error loading</div>'; }
-}
-
-// --- ЗАПУСК ВКЛАДОК ПРИ КЛИКЕ ---
-document.addEventListener('click', function(e) {
-  var navItem = e.target.closest('.admin-nav-item');
-  if (!navItem) return;
-  var tab = navItem.getAttribute('data-tab');
-  if (tab === 'emailChanges' && typeof loadAdminEmailChanges === 'function') loadAdminEmailChanges();
-  if (tab === 'kycIncomplete' && typeof loadAdminKycIncomplete === 'function') loadAdminKycIncomplete();
-});
-
 <script>
-// Логика для модального окна Reject
+// --- ФУНКЦИЯ ДЛЯ REJECT WITHDRAWAL ---
 window.openRejectModal = function(id, email) {
   var modal = document.getElementById('rejectReasonModal');
   if (!modal) return;
@@ -6982,6 +6865,122 @@ document.addEventListener('change', function(e) {
       }
     }
   }
+});
+
+// --- EMAIL CHANGES ---
+async function loadAdminEmailChanges() {
+  var box = document.getElementById('adminEmailChangesList');
+  if (!box) return;
+  box.innerHTML = '<div class="admin-empty">Loading...</div>';
+  try {
+    var token = localStorage.getItem('session_token');
+    var r = await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=listEmailChanges', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    var d = await r.json();
+    if (!d.ok || !d.requests || d.requests.length === 0) {
+      box.innerHTML = '<div class="admin-empty">No pending email changes.</div>';
+      return;
+    }
+    var html = '';
+    d.requests.forEach(function(req) {
+      html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
+        '<div class="admin-client-top">' +
+          '<div class="admin-client-info">' +
+            '<div class="admin-client-name">' + req.name + '</div>' +
+            '<div class="admin-client-email">From: ' + req.oldEmail + '</div>' +
+            '<div class="admin-client-email" style="color:#34d399">To: ' + req.newEmail + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="admin-client-actions">' +
+          '<button class="btn b1" onclick="approveEmailChange(\'' + req.oldEmail + '\',\'' + req.newEmail + '\',\'' + req.id + '\')">✅ Approve</button>' +
+          '<button class="btn b3" onclick="rejectEmailChange(\'' + req.oldEmail + '\',\'' + req.id + '\')">❌ Reject</button>' +
+        '</div>' +
+      '</div>';
+    });
+    box.innerHTML = html;
+  } catch(e) { box.innerHTML = '<div class="admin-empty">Error</div>'; }
+}
+
+async function approveEmailChange(oldEmail, newEmail, reqId) {
+  if (!confirm('Approve email change to ' + newEmail + '?')) return;
+  var token = localStorage.getItem('session_token');
+  await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=approveEmailChange', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, oldEmail, newEmail, reqId })
+  });
+  loadAdminEmailChanges();
+}
+
+async function rejectEmailChange(oldEmail, reqId) {
+  if (!confirm('Reject email change?')) return;
+  var token = localStorage.getItem('session_token');
+  await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=rejectEmailChange', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, email: oldEmail, reqId })
+  });
+  loadAdminEmailChanges();
+}
+
+// --- KYC INCOMPLETE ---
+async function loadAdminKycIncomplete() {
+  var box = document.getElementById('adminKycIncompleteList');
+  if (!box) return;
+  box.innerHTML = '<div class="admin-empty">Loading...</div>';
+  try {
+    var token = localStorage.getItem('session_token');
+    var r = await fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=getUsersBatch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    var d = await r.json();
+    if (!d.ok || !d.users) throw new Error('Failed');
+    
+    var incomplete = d.users.filter(function(u) {
+       var vStatus = u.verification ? u.verification.status : null;
+       return vStatus !== 'approved';
+    });
+
+    if (incomplete.length === 0) {
+      box.innerHTML = '<div class="admin-empty">All clients are verified.</div>';
+      return;
+    }
+
+    var html = '';
+    incomplete.forEach(function(u) {
+      var status = u.verification ? u.verification.status : 'not_started';
+      var badge = status === 'pending' ? '⏳ Pending' : status === 'rejected' ? '❌ Rejected' : '⚪ Not Started';
+      var actions = '';
+      if (status === 'pending') {
+         actions = '<button class="btn b2" onclick="adminViewClient(\'' + u.email + '\')">👁 View / Approve KYC</button>';
+      }
+      
+      html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
+        '<div class="admin-client-top">' +
+          '<div class="admin-client-info">' +
+            '<div class="admin-client-name">' + u.name + '</div>' +
+            '<div class="admin-client-email">' + u.email + '</div>' +
+          '</div>' +
+          '<div class="admin-client-badge">' + badge + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#8b95a5;margin-top:10px;">' +
+          (u.verification && u.verification.personalInfo ? 'Address: ' + JSON.stringify(u.verification.personalInfo) : 'No address provided') +
+        '</div>' +
+        '<div class="admin-client-actions" style="margin-top:10px;">' + actions + '</div>' +
+      '</div>';
+    });
+    box.innerHTML = html;
+  } catch(e) { box.innerHTML = '<div class="admin-empty">Error loading</div>'; }
+}
+
+// --- ЗАПУСК ВКЛАДОК ПРИ КЛИКЕ ---
+document.addEventListener('click', function(e) {
+  var navItem = e.target.closest('.admin-nav-item');
+  if (!navItem) return;
+  var tab = navItem.getAttribute('data-tab');
+  if (tab === 'emailChanges' && typeof loadAdminEmailChanges === 'function') loadAdminEmailChanges();
+  if (tab === 'kycIncomplete' && typeof loadAdminKycIncomplete === 'function') loadAdminKycIncomplete();
 });
 </script>
 </body>
