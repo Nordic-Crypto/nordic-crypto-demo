@@ -6702,19 +6702,19 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   };
 
-    // Обработчик кнопок
+      // Обработчик кнопок
   window.doWithdrawal = function(id, email, status) {
-    var reason = '';
-
-    if (status === 'rejected') {
-      var input = prompt('Причина отклонения (клиент её увидит):', 'Документы не подтверждены / реквизиты неверны');
-      if (input === null) return;                    // нажали Cancel
-      reason = String(input).trim().slice(0, 500);
-      if (!reason) reason = 'Rejected by support';   // если пусто — дефолт
-    } else {
+    if (status === 'approved') {
       if (!confirm('Approve this withdrawal?')) return;
+      sendWithdrawalUpdate(id, email, status, '');
+    } else {
+      // Открываем красивое окно для выбора причины
+      openRejectModal(id, email);
     }
+  };
 
+  // Отправка на сервер
+  function sendWithdrawalUpdate(id, email, status, reason) {
     fetch(WORKER_URL + '?action=updateWithdrawal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6723,19 +6723,18 @@ document.addEventListener('DOMContentLoaded', function(){
         userEmail: email,
         withdrawalId: id,
         status: status,
-        reason: reason                        // ← передаём причину
+        reason: reason
       })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (!data.ok) throw new Error(data.error || 'Failed');
-      // Перерисовываем список без перезагрузки страницы
-      window.loadAdminWithdrawals();
+      window.loadAdminWithdrawals(); // Обновляем список без перезагрузки
     })
     .catch(function(err) {
       alert('Error: ' + err.message);
     });
-  };
+  }
 })();
 </script>
 </body>
