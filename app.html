@@ -6409,5 +6409,98 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
+ <script>
+// 🛡️ РЕНДЕР РЕАЛЬНЫХ ДАННЫХ В НОВЫЙ ДИЗАЙН
+document.addEventListener('DOMContentLoaded', function() {
+  // Ждем, пока app.legacy.js загрузит данные (2 секунды)
+  setTimeout(function() {
+    var allUsers = [];
+    
+    // Пытаемся найти, куда app.legacy.js сохраняет список всех клиентов
+    if (window.allUsers) allUsers = window.allUsers;
+    else if (window.adminUsers) allUsers = window.adminUsers;
+    else if (window.users) allUsers = window.users;
+    
+    // Если данные в объекте (а не в массиве), превращаем их в массив
+    if (allUsers && !Array.isArray(allUsers)) {
+      allUsers = Object.values(allUsers);
+    }
+
+    // Если данные вообще не нашлись, пробуем взять их из localStorage
+    if (!allUsers || allUsers.length === 0) {
+      try {
+        var raw = localStorage.getItem('nc_all_users') || localStorage.getItem('admin_users');
+        if (raw) allUsers = JSON.parse(raw);
+      } catch(e) {}
+    }
+
+    if (!allUsers || allUsers.length === 0) {
+      console.log('Данные клиентов не найдены, оставляем Loading...');
+      return;
+    }
+
+    // --- 1. ОБНОВЛЯЕМ ВЕРХНИЕ КАРТОЧКИ (KPI) ---
+    var totalClients = allUsers.length;
+    var totalBalance = 0;
+    var pendingVerif = 0;
+    
+    allUsers.forEach(function(u) {
+      totalBalance += parseFloat(u.balance || 0);
+      if (u.kyc_status === 'pending' || u.status === 'pending') pendingVerif++;
+    });
+
+    var elClients = document.getElementById('admnStatClients');
+    var elBalance = document.getElementById('admnStatBalance');
+    if (elClients) elClients.textContent = totalClients;
+    if (elBalance) elBalance.textContent = '$' + totalBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    // --- 2. ОБНОВЛЯЕМ "Recent clients" ---
+    var tbodyRecent = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(2) .crm-table tbody');
+    if (tbodyRecent) {
+      tbodyRecent.innerHTML = '';
+      // Берем 3 последних клиента
+      var recentUsers = allUsers.slice(-3).reverse();
+      
+      recentUsers.forEach(function(u) {
+        var initials = (u.name || u.email || 'U').substring(0, 2).toUpperCase();
+        var statusClass = (u.kyc_status === 'approved' || u.status === 'active') ? 'ok' : (u.kyc_status === 'rejected' ? 'bad' : 'wait');
+        var statusText = statusClass === 'ok' ? 'Verified' : (statusClass === 'bad' ? 'Rejected' : 'In review');
+        var bal = parseFloat(u.balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2});
+        
+        tbodyRecent.innerHTML += `
+          <tr>
+            <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${u.name || 'User'}</b><small>${u.email || ''}</small></div></div></td>
+            <td><span class="pill ${statusClass}">${statusText}</span></td>
+            <td>$${bal}</td>
+            <td>Today</td>
+          </tr>
+        `;
+      });
+    }
+
+    // --- 3. ОБНОВЛЯЕМ "Verification queue" ---
+    var tbodyQueue = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(1) .crm-table tbody');
+    if (tbodyQueue) {
+      var pendingUsers = allUsers.filter(u => u.kyc_status === 'pending' || u.status === 'pending').slice(0, 3);
+      
+      if (pendingUsers.length > 0) {
+        tbodyQueue.innerHTML = '';
+        pendingUsers.forEach(function(u) {
+          var initials = (u.name || u.email || 'U').substring(0, 2).toUpperCase();
+          tbodyQueue.innerHTML += `
+            <tr>
+              <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${u.name || 'User'}</b><small>${u.doc_type || 'Document'}</small></div></div></td>
+              <td><div class="crm-act"><button class="crm-ib ok" onclick="showAdminTab('verifications')"><span class="ic i-check"></span></button><button class="crm-ib bad" onclick="showAdminTab('verifications')"><span class="ic i-x"></span></button></div></td>
+            </tr>
+          `;
+        });
+      } else {
+        tbodyQueue.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#8793a8;padding:20px;">No pending verifications</td></tr>';
+      }
+    }
+
+  }, 2000); // Ждем 2 секунды, чтобы app.legacy.js успел загрузить базу
+});
+</script> 
 </body>
 </html>
