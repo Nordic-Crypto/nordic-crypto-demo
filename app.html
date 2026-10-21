@@ -6737,5 +6737,42 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
+  <!-- REJECT REASON MODAL -->
+<div id="rejectReasonModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#0f1420;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;width:100%;max-width:420px;box-shadow:0 20px 40px rgba(0,0,0,0.5);">
+    <h3 style="color:#fff;margin-top:0;margin-bottom:8px;font-size:18px;">Reject Withdrawal</h3>
+    <p style="color:#8b95a5;font-size:13px;margin-bottom:20px;">Select a reason. The client will see this in their notifications.</p>
+    
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <label class="reject-radio" style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;color:#e7edf5;font-size:14px;">
+        <input type="radio" name="rejectReason" value="AML / Compliance" checked style="accent-color:#ef4444;"> 
+        🛡️ AML / Compliance Issue
+      </label>
+      <label class="reject-radio" style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;color:#e7edf5;font-size:14px;">
+        <input type="radio" name="rejectReason" value="Technical / Bank Error" style="accent-color:#ef4444;"> 
+        ⚙️ Technical / Bank Error
+      </label>
+      <label class="reject-radio" style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;color:#e7edf5;font-size:14px;">
+        <input type="radio" name="rejectReason" value="KYC / Verification Failed" style="accent-color:#ef4444;"> 
+        🪪 KYC / Verification Failed
+      </label>
+      <label class="reject-radio" style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;color:#e7edf5;font-size:14px;">
+        <input type="radio" name="rejectReason" value="Insufficient Funds" style="accent-color:#ef4444;"> 
+        💸 Insufficient Funds
+      </label>
+      <label class="reject-radio" style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;cursor:pointer;color:#e7edf5;font-size:14px;">
+        <input type="radio" name="rejectReason" value="Custom" style="accent-color:#ef4444;"> 
+        ✏️ Custom Reason (Type below)
+      </label>
+    </div>
+
+    <textarea id="customRejectText" placeholder="Enter custom reason here..." style="display:none;width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-family:inherit;font-size:14px;margin-bottom:16px;resize:none;height:60px;"></textarea>
+
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeRejectModal()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#8b95a5;cursor:pointer;font-weight:600;font-family:inherit;">Cancel</button>
+      <button onclick="submitReject()" style="flex:1;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:#fff;cursor:pointer;font-weight:600;font-family:inherit;box-shadow:0 4px 12px rgba(239,68,68,0.3);">Reject</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
