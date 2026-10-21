@@ -6459,10 +6459,12 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
-  function api(action) {
-    var base = typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://nordiccrypto.workers.dev';
-    var token = typeof getSessionToken === 'function' ? getSessionToken() : localStorage.getItem('session_token');
-    if (!base || !token) return Promise.reject(new Error('no session'));
+    function api(action) {
+    // Берем URL напрямую, чтобы не было ошибок
+    var base = 'https://nordiccrypto.workers.dev'; 
+    var token = localStorage.getItem('session_token');
+    if (!token) return Promise.reject(new Error('no session'));
+    
     return fetch(base + '?action=' + action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
