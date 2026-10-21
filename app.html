@@ -6430,7 +6430,7 @@ document.addEventListener('DOMContentLoaded', function(){
   function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
   function api(action) {
-    var base = 'https://nordiccrypto.workers.dev'; 
+    var base = 'https://nordic-deposit-checker.otis-790.workers.dev'; 
     var token = localStorage.getItem('session_token');
     if (!token) return Promise.reject(new Error('no session'));
     
