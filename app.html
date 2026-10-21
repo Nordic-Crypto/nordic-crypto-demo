@@ -6409,8 +6409,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
- <script>
-<script>
+
 <script>
 /* NC Admin Live Dashboard v1.0: Recent clients, Verification queue, KPI cards */
 (function () {
@@ -6459,8 +6458,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
-    function api(action) {
-    // Берем URL напрямую, чтобы не было ошибок
+      function api(action) {
     var base = 'https://nordiccrypto.workers.dev'; 
     var token = localStorage.getItem('session_token');
     if (!token) return Promise.reject(new Error('no session'));
@@ -6471,7 +6469,6 @@ document.addEventListener('DOMContentLoaded', function(){
       body: JSON.stringify({ token: token })
     }).then(function (r) { return r.json(); });
   }
-
   function cachedUsers() {
     try {
       var c = window.allUsers || window.adminUsers;
