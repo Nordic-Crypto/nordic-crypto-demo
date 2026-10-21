@@ -6383,35 +6383,10 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
   <script>
-// 🛡️ ФИКС "LOADING..." В АДМИНКЕ
-(function() {
-  function fixLoading() {
-    var lists = ['adminWithdrawalsList', 'adminPendingDepositsList', 'adminClientsList', 'adminVerifsList'];
-    
-    lists.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.innerHTML.includes('Loading...')) {
-        // Если лоадер висит больше 5 секунд — меняем на "Нет данных"
-        setTimeout(function() {
-          if (el.innerHTML.includes('Loading...')) {
-            el.innerHTML = '<div class="admin-empty" style="color:#f59e0b">Нет данных или ошибка загрузки. Нажмите Refresh.</div>';
-          }
-        }, 5000);
-      }
-    });
-  }
-  
-  // Запускаем при переключении вкладок
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.admin-nav-item')) {
-      setTimeout(fixLoading, 100);
-    }
-  });
-})();
-</script>
-
+<!-- ═══════════════════════════════════════════════════════
+     ADMIN DASHBOARD — CLEAN SCRIPT
+     ═══════════════════════════════════════════════════════ -->
 <script>
-/* NC Admin Live Dashboard v1.0: Recent clients, Verification queue, KPI cards */
 (function () {
   'use strict';
   if (window.__ncDashLoaded) return;
@@ -6458,7 +6433,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
-      function api(action) {
+  function api(action) {
     var base = 'https://nordiccrypto.workers.dev'; 
     var token = localStorage.getItem('session_token');
     if (!token) return Promise.reject(new Error('no session'));
@@ -6469,20 +6444,20 @@ document.addEventListener('DOMContentLoaded', function(){
       body: JSON.stringify({ token: token })
     }).then(function (r) { return r.json(); });
   }
-  function cachedUsers() {
-    try {
-      var c = window.allUsers || window.adminUsers;
-      if (c && c.length) return c;
-      var raw = localStorage.getItem('nc_all_users') || localStorage.getItem('nc_users');
-      var arr = raw ? JSON.parse(raw) : null;
-      return arr && arr.length ? arr : [];
-    } catch (e) { return []; }
-  }
 
   function ensure() {
+    // Если блоки уже созданы — не дублируем
     if ($('ncRecentBody') && $('ncQueueBody')) return true;
+    
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
+
+    // Удаляем старые "заглушки" из макета, чтобы не было дублей
+    var oldBlocks = sec.querySelectorAll('.crm-grid');
+    oldBlocks.forEach(function(b) {
+      if (!b.id || b.id !== 'ncDash') b.remove();
+    });
+
     var box = document.createElement('div');
     box.className = 'crm-grid';
     box.id = 'ncDash';
@@ -6563,7 +6538,7 @@ document.addEventListener('DOMContentLoaded', function(){
     Promise.all([pu, pv, ps]).then(function () {
       try {
         var map = {}, i;
-        if (!users) users = cachedUsers();
+        if (!users) users = [];
         for (i = 0; i < vers.length; i++) map[String(vers[i].email).toLowerCase()] = vers[i].status;
         renderRecent(users, map);
         renderQueue(vers);
@@ -6599,6 +6574,12 @@ document.addEventListener('DOMContentLoaded', function(){
       if (panelOpen() && Date.now() - last > REFRESH_MS && ensure()) refresh();
     } catch (e) { console.warn('[NC dash] tick failed:', e); }
   }, 2000);
+
+  // Запускаем при открытии админки
+  setTimeout(function() {
+    if (ensure()) refresh();
+  }, 1000);
+
 })();
 </script>
 </body>
