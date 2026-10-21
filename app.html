@@ -6908,6 +6908,81 @@ document.addEventListener('click', function(e) {
   if (tab === 'kycIncomplete' && typeof loadAdminKycIncomplete === 'function') loadAdminKycIncomplete();
 });
 
+<script>
+// Логика для модального окна Reject
+window.openRejectModal = function(id, email) {
+  var modal = document.getElementById('rejectReasonModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  window._currentRejectId = id;
+  window._currentRejectEmail = email;
+  
+  // Сброс полей
+  document.getElementById('customRejectText').style.display = 'none';
+  document.getElementById('customRejectText').value = '';
+  var firstRadio = document.querySelector('input[name="rejectReason"][value="AML / Compliance"]');
+  if (firstRadio) firstRadio.checked = true;
+};
+
+window.closeRejectModal = function() {
+  var modal = document.getElementById('rejectReasonModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.submitReject = function() {
+  var selected = document.querySelector('input[name="rejectReason"]:checked').value;
+  var finalReason = selected;
+  
+  if (selected === 'Custom') {
+    var customText = document.getElementById('customRejectText').value.trim();
+    if (!customText) {
+      alert('Please enter a custom reason.');
+      return;
+    }
+    finalReason = customText;
+  }
+  
+  closeRejectModal();
+  
+  // Отправляем на сервер
+  var WORKER_URL = 'https://nordic-deposit-checker.otis-790.workers.dev';
+  var token = localStorage.getItem('session_token');
+  
+  fetch(WORKER_URL + '?action=updateWithdrawal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token: token,
+      userEmail: window._currentRejectEmail,
+      withdrawalId: window._currentRejectId,
+      status: 'rejected',
+      reason: finalReason
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.ok) throw new Error(data.error || 'Failed');
+    if (typeof window.loadAdminWithdrawals === 'function') window.loadAdminWithdrawals();
+  })
+  .catch(function(err) {
+    alert('Error: ' + err.message);
+  });
+};
+
+// Показ поля ввода при выборе "Custom"
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'rejectReason') {
+    var ta = document.getElementById('customRejectText');
+    if (ta) {
+      if (e.target.value === 'Custom') {
+        ta.style.display = 'block';
+        ta.focus();
+      } else {
+        ta.style.display = 'none';
+      }
+    }
+  }
+});
 </script>
 </body>
 </html>
