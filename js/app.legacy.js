@@ -590,7 +590,24 @@ function initSettings() {
       else { input.type = 'password'; this.textContent = '👁'; }
     };
   }
-
+  // Кнопка смены почты
+  var changeEmailBtn = document.getElementById('btnChangeEmail');
+  if (changeEmailBtn) changeEmailBtn.onclick = function () {
+    var newEmail = prompt('Enter new email address:');
+    if (!newEmail) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { alert('Invalid email'); return; }
+    
+    fetch(WORKER_LOGIN_URL + '?action=requestEmailChange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: getSessionToken(), newEmail: newEmail })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) alert('✅ Request sent to admin for approval.');
+      else alert('Error: ' + d.error);
+    });
+  };
   if (cpSave) cpSave.onclick = async function () {
     var oldP = document.getElementById('cpOld').value;
     var newP = document.getElementById('cpNew').value;
