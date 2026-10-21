@@ -1,0 +1,162 @@
+/* ============================================================
+   NC ADMIN CRM v1.0 — CRM-style layer: crisp surfaces, real SVG icons
+   (CSS masks), tables, status pills, KPI cards. Light and dark.
+   Load AFTER nc-premium.css. Works on your existing markup; the
+   .crm-* classes are optional building blocks for lists and tables.
+   Dark by default; add data-theme="light" or "auto" to #adminPanel.
+   ============================================================ */
+.admin-panel{color-scheme:dark;--c-bg:light-dark(#f3f5f9,#0a0d14);--c-surf:light-dark(#fff,#10141d);--c-surf2:light-dark(#f6f8fb,#151a25);--c-line:light-dark(#e2e7ef,#1f2633);--c-ink:light-dark(#0f172a,#e8edf5);--c-mute:light-dark(#64748b,#8793a8);--c-acc:#10b981;--c-shadow:light-dark(0 1px 2px rgba(15,23,42,.06),0 1px 0 rgba(255,255,255,.03) inset);background:var(--c-bg);color:var(--c-ink);font-feature-settings:"tnum" 1}
+.admin-panel[data-theme="light"]{color-scheme:light}
+.admin-panel[data-theme="auto"]{color-scheme:light dark}
+.ic{display:inline-block;width:18px;height:18px;flex:none;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+
+/* icons (CSS masks, no HTML changes) */
+.admin-panel{--ico-dash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='9' rx='1'/%3E%3Crect x='14' y='3' width='7' height='5' rx='1'/%3E%3Crect x='14' y='12' width='7' height='9' rx='1'/%3E%3Crect x='3' y='16' width='7' height='5' rx='1'/%3E%3C/svg%3E");--ico-users:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8'/%3E%3C/svg%3E");--ico-shield:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");--ico-chat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E");--ico-out:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M8 7h9v9'/%3E%3C/svg%3E");--ico-in:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 7 7 17M16 17H7V8'/%3E%3C/svg%3E");--ico-trash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5'/%3E%3C/svg%3E");--ico-cog:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1'/%3E%3C/svg%3E");--ico-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");--ico-wallet:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7a2 2 0 0 1 2-2h13v4'/%3E%3Cpath d='M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z'/%3E%3Ccircle cx='16' cy='14.5' r='1'/%3E%3C/svg%3E");--ico-pulse:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");--ico-coins:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9 8h4.5a2 2 0 0 1 0 4H9m0 0h5a2 2 0 0 1 0 4H9M9 7v10M12 6v2M12 16v2'/%3E%3C/svg%3E");--ico-logout:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E");--ico-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");--ico-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E");--ico-x:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6l12 12M18 6 6 18'/%3E%3C/svg%3E");--ico-refresh:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5'/%3E%3C/svg%3E");--ico-moon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z'/%3E%3C/svg%3E");}
+.i-dash{--i:var(--ico-dash)}
+.i-users{--i:var(--ico-users)}
+.i-shield{--i:var(--ico-shield)}
+.i-chat{--i:var(--ico-chat)}
+.i-out{--i:var(--ico-out)}
+.i-in{--i:var(--ico-in)}
+.i-trash{--i:var(--ico-trash)}
+.i-cog{--i:var(--ico-cog)}
+.i-search{--i:var(--ico-search)}
+.i-wallet{--i:var(--ico-wallet)}
+.i-pulse{--i:var(--ico-pulse)}
+.i-coins{--i:var(--ico-coins)}
+.i-logout{--i:var(--ico-logout)}
+.i-eye{--i:var(--ico-eye)}
+.i-check{--i:var(--ico-check)}
+.i-x{--i:var(--ico-x)}
+.i-refresh{--i:var(--ico-refresh)}
+.i-moon{--i:var(--ico-moon)}
+.admin-panel .admin-nav-item[data-tab="stats"]>span:first-child{--i:var(--ico-dash)}
+.admin-panel .admin-nav-item[data-tab="clients"]>span:first-child{--i:var(--ico-users)}
+.admin-panel .admin-nav-item[data-tab="verifications"]>span:first-child{--i:var(--ico-shield)}
+.admin-panel .admin-nav-item[data-tab="chats"]>span:first-child{--i:var(--ico-chat)}
+.admin-panel .admin-nav-item[data-tab="withdrawals"]>span:first-child{--i:var(--ico-out)}
+.admin-panel .admin-nav-item[data-tab="deposits"]>span:first-child{--i:var(--ico-in)}
+.admin-panel .admin-nav-item[data-tab="deleted"]>span:first-child{--i:var(--ico-trash)}
+.admin-panel .admin-nav-item[data-tab="system"]>span:first-child{--i:var(--ico-cog)}
+.admin-panel .admin-stat-card:nth-child(1) .admin-stat-icon{--i:var(--ico-users)}
+.admin-panel .admin-stat-card:nth-child(2) .admin-stat-icon{--i:var(--ico-wallet)}
+.admin-panel .admin-stat-card:nth-child(3) .admin-stat-icon{--i:var(--ico-pulse)}
+.admin-panel .admin-stat-card:nth-child(4) .admin-stat-icon{--i:var(--ico-coins)}
+
+/* top bar */
+.admin-panel .admin-top{height:60px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--c-surf);border-bottom:1px solid var(--c-line);-webkit-backdrop-filter:none;backdrop-filter:none}
+.admin-panel .admin-brand{display:flex;align-items:center;gap:10px;padding:0;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.admin-panel .admin-brand span{color:var(--c-acc)}
+.admin-panel .blogo{width:32px;height:32px;flex:none;border-radius:9px;overflow:hidden;background:linear-gradient(135deg,#10b981,#6366f1)}
+.admin-panel .admin-top-actions{display:flex;align-items:center;gap:10px}
+.admin-panel .admin-user{padding:6px 12px;border:1px solid var(--c-line);border-radius:999px;background:var(--c-surf2);font-size:13px;color:var(--c-mute)}
+
+/* layout and navigation */
+.admin-panel .admin-body{display:grid;grid-template-columns:240px minmax(0,1fr);flex:1;min-height:0}
+.admin-panel .admin-sidebar{display:flex;flex-direction:column;gap:2px;padding:14px 10px;overflow-y:auto;background:var(--c-surf);border-right:1px solid var(--c-line)}
+.admin-panel .admin-nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;color:var(--c-mute);font-size:14px;font-weight:600;cursor:pointer;background:none;box-shadow:none;transform:none}
+.admin-panel .admin-nav-item:hover{background:var(--c-surf2);color:var(--c-ink);transform:none}
+.admin-panel .admin-nav-item.active{background:light-dark(#ecfdf5,rgba(16,185,129,.12));color:light-dark(#047857,#6ee7b7);box-shadow:none}
+.admin-panel .admin-nav-item.active::before{display:none}
+.admin-panel .admin-nav-item>span:first-child{width:20px;height:20px;flex:none;font-size:0;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat;transform:none}
+.admin-panel .admin-nav-item[data-tab="chats"],.admin-panel .admin-nav-item[data-tab="deleted"]{margin-top:10px}
+.admin-panel .admin-nav-item .admin-nav-badge{margin-left:auto;padding:1px 8px;font-size:11.5px;font-weight:700}
+
+/* content and section titles */
+.admin-panel .admin-content{min-width:0;padding:24px 28px 56px;overflow-y:auto}
+.admin-panel .admin-section{padding:0;background:none;border:0;border-radius:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.admin-panel .admin-section.active::before{display:block;margin:0 0 18px;font-size:22px;font-weight:800;letter-spacing:-.025em}
+.admin-panel .admin-section[data-section="stats"].active::before{content:"Dashboard"}
+.admin-panel .admin-section[data-section="clients"].active::before{content:"Clients"}
+.admin-panel .admin-section[data-section="verifications"].active::before{content:"Verifications"}
+.admin-panel .admin-section[data-section="chats"].active::before{content:"Live chats"}
+.admin-panel .admin-section[data-section="withdrawals"].active::before{content:"Withdrawals"}
+.admin-panel .admin-section[data-section="deposits"].active::before{content:"Pending deposits"}
+.admin-panel .admin-section[data-section="deleted"].active::before{content:"Deleted users"}
+.admin-panel .admin-section[data-section="system"].active::before{content:"System"}
+
+/* surfaces */
+.admin-panel .admin-stat-card,.admin-panel .admin-client-card,.admin-panel .admin-system,.crm-card{background:var(--c-surf);border:1px solid var(--c-line);border-radius:14px;box-shadow:var(--c-shadow);-webkit-backdrop-filter:none;backdrop-filter:none}
+.admin-panel .admin-stat-card:hover,.admin-panel .admin-client-card:hover{transform:none;background:var(--c-surf);border-color:light-dark(#cbd5e1,#2b3547);box-shadow:var(--c-shadow)}
+
+/* KPI cards */
+.admin-panel .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;padding:0}
+.admin-panel .admin-stat-card{position:relative;padding:18px}
+.admin-panel .admin-stat-card::after{display:none}
+.admin-panel .admin-stat-icon{width:36px;height:36px;display:grid;place-items:center;margin:0 0 14px;border-radius:10px;font-size:0;background:light-dark(#ecfdf5,rgba(16,185,129,.14));color:light-dark(#047857,#6ee7b7)}
+.admin-panel .admin-stat-icon::before{content:"";width:18px;height:18px;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.admin-panel .admin-stat-card:nth-child(even) .admin-stat-icon{background:light-dark(#eef2ff,rgba(99,102,241,.16));color:light-dark(#4338ca,#a5b4fc)}
+.admin-panel .admin-stat-value{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.15}
+.admin-panel .admin-stat-label{margin-top:4px;font-size:13px;color:var(--c-mute)}
+.crm-trend{display:inline-flex;align-items:center;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;vertical-align:middle}
+.crm-trend.up{background:light-dark(#dcfce7,rgba(16,185,129,.16));color:light-dark(#15803d,#6ee7b7)}
+.crm-trend.down{background:light-dark(#fee2e2,rgba(239,68,68,.16));color:light-dark(#b91c1c,#fca5a5)}
+
+/* buttons */
+.admin-panel .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 14px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:none;filter:none;transform:none}
+.admin-panel .btn:hover{transform:none;filter:none;box-shadow:none}
+.admin-panel .btn.b2{background:var(--c-surf);border:1px solid var(--c-line);color:var(--c-ink)}
+.admin-panel .btn.b2:hover{background:var(--c-surf2)}
+.admin-panel .btn.b1{background:var(--c-acc);color:#04140d;border:0}
+.admin-panel .btn.b1:hover{background:#34d399}
+.admin-panel .btn.b3{background:light-dark(#eef2ff,rgba(99,102,241,.14));border:1px solid light-dark(#c7d2fe,rgba(99,102,241,.4));color:light-dark(#4338ca,#c7d2fe)}
+.admin-panel .admin-empty{padding:48px 20px;border:1px dashed var(--c-line);border-radius:14px;background:var(--c-surf);color:var(--c-mute)}
+.admin-panel .admin-clients-list,.admin-panel .admin-withdrawals-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.admin-panel .admin-client-card{padding:18px}
+.admin-panel .admin-system{padding:22px}
+.admin-panel .admin-system-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.admin-panel .admin-system-value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+
+/* CRM building blocks */
+.crm-card{overflow:hidden}
+.crm-ch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--c-line)}
+.crm-ch h3{margin:0;font-size:15px;font-weight:700}
+.crm-ch small{color:var(--c-mute);font-size:12.5px}
+.crm-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.crm-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.crm-chips{display:flex;gap:8px;flex-wrap:wrap}
+.crm-chip{padding:6px 12px;border-radius:999px;border:1px solid var(--c-line);background:var(--c-surf);color:var(--c-mute);font:600 13px inherit;cursor:pointer}
+.crm-chip.on{background:var(--c-ink);color:var(--c-bg);border-color:transparent}
+.crm-s{position:relative;min-width:240px}
+.crm-s .ic{position:absolute;left:12px;top:50%;margin-top:-9px;color:var(--c-mute)}
+.crm-s input{width:100%;height:36px;padding:0 12px 0 36px;border-radius:10px;border:1px solid var(--c-line);background:var(--c-surf);color:var(--c-ink);font:inherit;font-size:13.5px}
+.crm-tw{overflow-x:auto}
+.crm-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.crm-table th{padding:10px 18px;text-align:left;font-size:12px;font-weight:600;color:var(--c-mute);background:var(--c-surf2);border-bottom:1px solid var(--c-line);white-space:nowrap}
+.crm-table td{padding:12px 18px;border-bottom:1px solid var(--c-line);white-space:nowrap}
+.crm-table tr:last-child td{border-bottom:0}
+.crm-table tbody tr:hover td{background:var(--c-surf2)}
+.crm-user{display:flex;align-items:center;gap:12px}
+.crm-user b{display:block;font-weight:600}
+.crm-user small{color:var(--c-mute)}
+.crm-av{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:50%;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#10b981,#6366f1)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:light-dark(#dcfce7,rgba(16,185,129,.16));color:light-dark(#15803d,#6ee7b7)}
+.pill.wait{background:light-dark(#fef3c7,rgba(245,158,11,.16));color:light-dark(#b45309,#fcd34d)}
+.pill.bad{background:light-dark(#fee2e2,rgba(239,68,68,.16));color:light-dark(#b91c1c,#fca5a5)}
+.crm-act{display:flex;gap:6px;justify-content:flex-end}
+.crm-ib{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--c-line);background:var(--c-surf);color:var(--c-mute);cursor:pointer}
+.crm-ib:hover{background:var(--c-surf2);color:var(--c-ink)}
+.crm-ib.ok:hover{color:#10b981}
+.crm-ib.bad:hover{color:#ef4444}
+.crm-bars{display:flex;align-items:flex-end;gap:12px;height:170px;padding:20px 18px 6px}
+.crm-bars i{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#10b981,rgba(16,185,129,.22))}
+.crm-bl{display:flex;gap:12px;padding:0 18px 14px;color:var(--c-mute);font-size:12px}
+.crm-bl span{flex:1;text-align:center}
+.crm-feed{list-style:none;margin:0;padding:4px 18px 10px}
+.crm-feed li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--c-line);font-size:13.5px}
+.crm-feed li:last-child{border-bottom:0}
+.crm-feed .dot{width:8px;height:8px;margin-top:7px;flex:none;border-radius:50%;background:var(--c-acc)}
+.crm-feed small{display:block;color:var(--c-mute)}
+
+@media (max-width:900px){
+  .admin-panel .admin-body{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .admin-panel .admin-sidebar{flex-direction:row;overflow-x:auto;padding:8px 12px;border-right:0;border-bottom:1px solid var(--c-line)}
+  .admin-panel .admin-nav-item{flex:none;white-space:nowrap}
+  .admin-panel .admin-nav-item[data-tab="chats"],.admin-panel .admin-nav-item[data-tab="deleted"]{margin-top:0}
+  .admin-panel .admin-content{padding:18px 14px 48px}
+  .admin-panel .admin-user{display:none}
+  .crm-grid{grid-template-columns:1fr}
+  .admin-panel .admin-clients-list,.admin-panel .admin-withdrawals-list{grid-template-columns:1fr}
+}
