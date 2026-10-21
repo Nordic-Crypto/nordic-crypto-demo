@@ -6702,15 +6702,29 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   };
 
-  // Обработчик кнопок
+    // Обработчик кнопок
   window.doWithdrawal = function(id, email, status) {
-    if (status === 'rejected' && !confirm('Reject this withdrawal?')) return;
-    if (status === 'approved' && !confirm('Approve this withdrawal?')) return;
-    
+    var reason = '';
+
+    if (status === 'rejected') {
+      var input = prompt('Причина отклонения (клиент её увидит):', 'Документы не подтверждены / реквизиты неверны');
+      if (input === null) return;                    // нажали Cancel
+      reason = String(input).trim().slice(0, 500);
+      if (!reason) reason = 'Rejected by support';   // если пусто — дефолт
+    } else {
+      if (!confirm('Approve this withdrawal?')) return;
+    }
+
     fetch(WORKER_URL + '?action=updateWithdrawal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: getToken(), userEmail: email, withdrawalId: id, status: status })
+      body: JSON.stringify({
+        token: getToken(),
+        userEmail: email,
+        withdrawalId: id,
+        status: status,
+        reason: reason                        // ← передаём причину
+      })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -6722,13 +6736,6 @@ document.addEventListener('DOMContentLoaded', function(){
       alert('Error: ' + err.message);
     });
   };
-
-  // Автоматически грузим список при клике на вкладку
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.admin-nav-item[data-tab="withdrawals"]')) {
-      setTimeout(window.loadAdminWithdrawals, 100);
-    }
-  });
 })();
 </script>
 </body>
