@@ -1972,12 +1972,12 @@ window.submitRealVerification = async function () {
     if (!selfieFile) throw new Error('Please upload selfie');
     if (!street || !city || !zip) throw new Error('Please fill address');
 
-    var MAX_BYTES = 3 * 1024 * 1024;
+        var MAX_BYTES = 15 * 1024 * 1024;
     if (docFile.size > MAX_BYTES) {
-      throw new Error('Document too large (' + (docFile.size/1024/1024).toFixed(1) + 'MB). Max 3MB.');
+      throw new Error('Document too large (' + (docFile.size/1024/1024).toFixed(1) + 'MB). Max 15MB.');
     }
     if (selfieFile.size > MAX_BYTES) {
-      throw new Error('Selfie too large (' + (selfieFile.size/1024/1024).toFixed(1) + 'MB). Max 3MB.');
+      throw new Error('Selfie too large (' + (selfieFile.size/1024/1024).toFixed(1) + 'MB). Max 15MB.');
     }
 
     console.log('[KYC] Starting upload. Doc:', docFile.size, 'bytes; Selfie:', selfieFile.size, 'bytes');
