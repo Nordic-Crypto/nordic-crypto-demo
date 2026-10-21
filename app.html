@@ -5220,9 +5220,14 @@ document.addEventListener('DOMContentLoaded', function(){
   <div class="admin-top">
     <div class="admin-brand"><div class="blogo"><img src="logo.png" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div><div>Nordic<span>Crypto</span> · <b style="color:#a78bfa">Admin</b></div></div>
     <div class="admin-top-actions">
-      <span class="admin-user" id="adminUser">admin@nordiccrypto.com</span>
-      <button class="btn b2" id="adminLogoutBtn">🚪 Log out</button>
-    </div>
+  <span class="admin-user" id="adminUser">admin@nordiccrypto.com</span>
+  
+  <button class="btn b2" id="themeToggleBtn" title="Switch theme" style="width:38px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px;">
+    🌙
+  </button>
+  
+  <button class="btn b2" id="adminLogoutBtn">🚪 Log out</button>
+</div>
   </div>
   <div class="admin-body">
     <aside class="admin-sidebar">
@@ -6453,14 +6458,30 @@ document.addEventListener('DOMContentLoaded', function(){
     var box = document.createElement('div');
     box.className = 'crm-grid';
     box.id = 'ncDash';
-    box.innerHTML =
-      '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
-      '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
-      '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
-      '<tbody id="ncRecentBody"></tbody></table></div></div>' +
-      '<div class="crm-card"><div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
-      '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
-      '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>';
+        box.innerHTML =
+      '<div class="crm-grid" style="margin-bottom:14px;">' +
+        '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
+        '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
+        '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
+        '<tbody id="ncRecentBody"></tbody></table></div></div>' +
+        
+        '<div class="crm-card"><div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
+        '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
+        '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>' +
+      '</div>' +
+      
+      // 👇 ЭТОТ БЛОК ДОБАВЛЯЕТ ACTIVITY ВНИЗ
+      '<div class="crm-grid">' +
+        '<div class="crm-card">' +
+          '<div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>' +
+          '<ul class="crm-feed">' +
+            '<li><span class="dot"></span><div>System is running normally<small>Just now</small></div></li>' +
+            '<li><span class="dot" style="background:#6366f1"></span><div>Admin logged in<small>1 min ago</small></div></li>' +
+            '<li><span class="dot" style="background:#f59e0b"></span><div>Dashboard data synced<small>2 min ago</small></div></li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>';
+
     sec.appendChild(box);
     return true;
   }
@@ -6570,6 +6591,33 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(function() {
     if (ensure()) refresh();
   }, 1000);
+
+    // ─── Переключатель темы (Light/Dark) ───
+  var themeBtn = $('themeToggleBtn');
+  var currentTheme = localStorage.getItem('nc_admin_theme') || 'dark';
+  
+  function applyTheme(theme) {
+    var panel = $('adminPanel');
+    if (!panel) return;
+    if (theme === 'light') {
+      panel.setAttribute('data-theme', 'light');
+      panel.style.colorScheme = 'light';
+      if (themeBtn) themeBtn.textContent = '☀️';
+    } else {
+      panel.removeAttribute('data-theme');
+      panel.style.colorScheme = 'dark';
+      if (themeBtn) themeBtn.textContent = '🌙';
+    }
+    localStorage.setItem('nc_admin_theme', theme);
+  }
+  
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme);
+    });
+  }
+  applyTheme(currentTheme);
 
 })();
 </script>
