@@ -331,9 +331,11 @@
     });
   }
 
-  // ============================================================
+    // ============================================================
   // ⚡ SSE LIVE — мгновенная реакция
   // ============================================================
+  var _sseFailCount = 0; // Счетчик неудачных попыток
+
   function connectSSE() {
     if (_eventSource) {
       try { _eventSource.close(); } catch (e) {}
@@ -345,12 +347,19 @@
       return;
     }
 
+    // Если было больше 5 неудач подряд — останавливаем SSE, переходим только на polling
+    if (_sseFailCount >= 5) {
+      console.warn('[maintenance] SSE disabled after 5 failures. Fallback to polling.');
+      return; 
+    }
+
     try {
       var url = getWorker() + '?action=maintenanceStream&_t=' + Date.now();
       _eventSource = new EventSource(url);
 
       _eventSource.onopen = function () {
         console.log('[maintenance] ⚡ SSE connected');
+        _sseFailCount = 0; // Сбрасываем счетчик при успехе
       };
 
       _eventSource.onmessage = function (event) {
@@ -363,16 +372,21 @@
       };
 
       _eventSource.onerror = function () {
-        console.warn('[maintenance] SSE error — reconnect in 3s');
         try { _eventSource.close(); } catch (e) {}
         _eventSource = null;
-        setTimeout(connectSSE, 3000);
+        _sseFailCount++;
+        
+        // Экспоненциальная задержка: 5с, 15с, 30с, 60с... но не чаще
+        var delay = Math.min(5000 * Math.pow(2, _sseFailCount - 1), 60000); 
+        
+        console.warn('[maintenance] SSE error. Reconnect in ' + (delay/1000) + 's... (Attempt ' + _sseFailCount + ')');
+        
+        setTimeout(connectSSE, delay);
       };
     } catch (e) {
       console.warn('[maintenance] SSE init failed, polling only');
     }
   }
-
   function handleServerStatus(maintenance) {
     if (maintenance && maintenance.active) {
       if (maintenance.until && Date.now() > maintenance.until) {
