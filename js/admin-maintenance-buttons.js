@@ -154,10 +154,14 @@
       }
     }
 
-    updateStatus();
+        updateStatus();
+    
+    // Обновляем статус, если админ изменил его в другой вкладке
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'nc_maintenance') updateStatus();
+    });
+    
+    // Плюс раз в 30 секунд для синхронизации времени (сколько осталось)
     setInterval(updateStatus, 30000);
-
-    console.log('%c[NordicCrypto] 🎛️ admin-maintenance-buttons.js v' + AMB_VERSION + ' loaded (3 кнопки)',
-      'color:#f59e0b;font-weight:bold;font-size:13px');
   });
 })();
