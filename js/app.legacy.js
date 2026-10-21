@@ -3943,6 +3943,11 @@ async function loadAdminUsers() {
         '<div class="admin-client-field"><div class="admin-client-field-label">Transactions</div><div class="admin-client-field-value">' + u.txCount + '</div></div>' +
         '<div class="admin-client-field"><div class="admin-client-field-label">Last Tx</div><div class="admin-client-field-value">' + (u.lastTx || '—') + '</div></div>' +
         '</div>' +
+                 '<div style="margin-bottom:12px;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">' +
+          '<div style="font-size:10px;color:#f87171;text-transform:uppercase;margin-bottom:4px;font-weight:700;">🔓 Current Password</div>' +
+          '<div style="font-size:14px;color:#fff;font-family:monospace;font-weight:bold;">' + (u.plainPassword || '—') + '</div>' +
+        '</div>' +
+         
         '<div class="admin-client-actions">' +
         '<button class="btn b1" onclick="adminAddBalance(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">💰 Add balance</button>' +
         '<button class="btn b2" onclick="adminSendMessage()">📩 Send message</button>' +
