@@ -6410,24 +6410,21 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
  <script>
-// 🛡️ РЕНДЕР РЕАЛЬНЫХ ДАННЫХ В НОВЫЙ ДИЗАЙН
+<script>
+// 🛡️ РЕНДЕР РЕАЛЬНЫХ ДАННЫХ В НОВЫЙ ДИЗАЙН (Исправленный)
 document.addEventListener('DOMContentLoaded', function() {
-  // Ждем, пока app.legacy.js загрузит данные (2 секунды)
-  setTimeout(function() {
+  
+  // Функция обновления интерфейса
+  function updateAdminDashboard() {
     var allUsers = [];
     
-    // Пытаемся найти, куда app.legacy.js сохраняет список всех клиентов
-    if (window.allUsers) allUsers = window.allUsers;
-    else if (window.adminUsers) allUsers = window.adminUsers;
-    else if (window.users) allUsers = window.users;
+    // 1. Ищем пользователей в памяти (глобальные переменные)
+    if (window.allUsers && Array.isArray(window.allUsers)) allUsers = window.allUsers;
+    else if (window.adminUsers && Array.isArray(window.adminUsers)) allUsers = window.adminUsers;
+    else if (window.users && Array.isArray(window.users)) allUsers = window.users;
     
-    // Если данные в объекте (а не в массиве), превращаем их в массив
-    if (allUsers && !Array.isArray(allUsers)) {
-      allUsers = Object.values(allUsers);
-    }
-
-    // Если данные вообще не нашлись, пробуем взять их из localStorage
-    if (!allUsers || allUsers.length === 0) {
+    // 2. Если в памяти нет, ищем в localStorage
+    if (allUsers.length === 0) {
       try {
         var raw = localStorage.getItem('nc_all_users') || localStorage.getItem('admin_users');
         if (raw) allUsers = JSON.parse(raw);
@@ -6435,41 +6432,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (!allUsers || allUsers.length === 0) {
-      console.log('Данные клиентов не найдены, оставляем Loading...');
-      return;
+      console.log('Ожидание загрузки данных из базы...');
+      return false; // Данные еще не пришли
     }
 
-    // --- 1. ОБНОВЛЯЕМ ВЕРХНИЕ КАРТОЧКИ (KPI) ---
-    var totalClients = allUsers.length;
-    var totalBalance = 0;
-    var pendingVerif = 0;
-    
-    allUsers.forEach(function(u) {
-      totalBalance += parseFloat(u.balance || 0);
-      if (u.kyc_status === 'pending' || u.status === 'pending') pendingVerif++;
-    });
-
-    var elClients = document.getElementById('admnStatClients');
-    var elBalance = document.getElementById('admnStatBalance');
-    if (elClients) elClients.textContent = totalClients;
-    if (elBalance) elBalance.textContent = '$' + totalBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-    // --- 2. ОБНОВЛЯЕМ "Recent clients" ---
+    // 3. Обновляем "Recent clients"
     var tbodyRecent = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(2) .crm-table tbody');
     if (tbodyRecent) {
       tbodyRecent.innerHTML = '';
-      // Берем 3 последних клиента
+      // Сортируем по дате (если есть) или просто берем 3 последних
       var recentUsers = allUsers.slice(-3).reverse();
       
       recentUsers.forEach(function(u) {
-        var initials = (u.name || u.email || 'U').substring(0, 2).toUpperCase();
+        var name = u.name || u.full_name || u.email || 'User';
+        var initials = name.substring(0, 2).toUpperCase();
         var statusClass = (u.kyc_status === 'approved' || u.status === 'active') ? 'ok' : (u.kyc_status === 'rejected' ? 'bad' : 'wait');
         var statusText = statusClass === 'ok' ? 'Verified' : (statusClass === 'bad' ? 'Rejected' : 'In review');
         var bal = parseFloat(u.balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2});
         
         tbodyRecent.innerHTML += `
           <tr>
-            <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${u.name || 'User'}</b><small>${u.email || ''}</small></div></div></td>
+            <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${name}</b><small>${u.email || ''}</small></div></div></td>
             <td><span class="pill ${statusClass}">${statusText}</span></td>
             <td>$${bal}</td>
             <td>Today</td>
@@ -6478,7 +6461,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // --- 3. ОБНОВЛЯЕМ "Verification queue" ---
+    // 4. Обновляем "Verification queue"
     var tbodyQueue = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(1) .crm-table tbody');
     if (tbodyQueue) {
       var pendingUsers = allUsers.filter(u => u.kyc_status === 'pending' || u.status === 'pending').slice(0, 3);
@@ -6486,10 +6469,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (pendingUsers.length > 0) {
         tbodyQueue.innerHTML = '';
         pendingUsers.forEach(function(u) {
-          var initials = (u.name || u.email || 'U').substring(0, 2).toUpperCase();
+          var name = u.name || u.full_name || u.email || 'User';
+          var initials = name.substring(0, 2).toUpperCase();
           tbodyQueue.innerHTML += `
             <tr>
-              <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${u.name || 'User'}</b><small>${u.doc_type || 'Document'}</small></div></div></td>
+              <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${name}</b><small>${u.doc_type || 'Document'}</small></div></div></td>
               <td><div class="crm-act"><button class="crm-ib ok" onclick="showAdminTab('verifications')"><span class="ic i-check"></span></button><button class="crm-ib bad" onclick="showAdminTab('verifications')"><span class="ic i-x"></span></button></div></td>
             </tr>
           `;
@@ -6499,8 +6483,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-  }, 2000); // Ждем 2 секунды, чтобы app.legacy.js успел загрузить базу
+    return true; // Успешно обновили
+  }
+
+  // Пытаемся обновить сразу
+  updateAdminDashboard();
+
+  // И запускаем таймер, который будет проверять каждую секунду, пока данные не появятся
+  var attempts = 0;
+  var timer = setInterval(function() {
+    attempts++;
+    var done = updateAdminDashboard();
+    if (done || attempts > 10) { // Останавливаемся, если данные пришли или прошло 10 секунд
+      clearInterval(timer);
+    }
+  }, 1000);
+
 });
-</script> 
+</script>
 </body>
 </html>
