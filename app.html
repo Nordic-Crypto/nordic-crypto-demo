@@ -6313,5 +6313,32 @@ document.addEventListener('DOMContentLoaded', function(){
   startKycPolling();
 })();
 </script>
+  <script>
+// 🛡️ ФИКС "LOADING..." В АДМИНКЕ
+(function() {
+  function fixLoading() {
+    var lists = ['adminWithdrawalsList', 'adminPendingDepositsList', 'adminClientsList', 'adminVerifsList'];
+    
+    lists.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && el.innerHTML.includes('Loading...')) {
+        // Если лоадер висит больше 5 секунд — меняем на "Нет данных"
+        setTimeout(function() {
+          if (el.innerHTML.includes('Loading...')) {
+            el.innerHTML = '<div class="admin-empty" style="color:#f59e0b">Нет данных или ошибка загрузки. Нажмите Refresh.</div>';
+          }
+        }, 5000);
+      }
+    });
+  }
+  
+  // Запускаем при переключении вкладок
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.admin-nav-item')) {
+      setTimeout(fixLoading, 100);
+    }
+  });
+})();
+</script>
 </body>
 </html>
