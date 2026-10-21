@@ -6411,95 +6411,196 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
  <script>
 <script>
-// 🛡️ РЕНДЕР РЕАЛЬНЫХ ДАННЫХ В НОВЫЙ ДИЗАЙН (Исправленный)
-document.addEventListener('DOMContentLoaded', function() {
-  
-  // Функция обновления интерфейса
-  function updateAdminDashboard() {
-    var allUsers = [];
-    
-    // 1. Ищем пользователей в памяти (глобальные переменные)
-    if (window.allUsers && Array.isArray(window.allUsers)) allUsers = window.allUsers;
-    else if (window.adminUsers && Array.isArray(window.adminUsers)) allUsers = window.adminUsers;
-    else if (window.users && Array.isArray(window.users)) allUsers = window.users;
-    
-    // 2. Если в памяти нет, ищем в localStorage
-    if (allUsers.length === 0) {
-      try {
-        var raw = localStorage.getItem('nc_all_users') || localStorage.getItem('admin_users');
-        if (raw) allUsers = JSON.parse(raw);
-      } catch(e) {}
-    }
+<script>
+/* NC Admin Live Dashboard v1.0: Recent clients, Verification queue, KPI cards */
+(function () {
+  'use strict';
+  if (window.__ncDashLoaded) return;
+  window.__ncDashLoaded = true;
 
-    if (!allUsers || allUsers.length === 0) {
-      console.log('Ожидание загрузки данных из базы...');
-      return false; // Данные еще не пришли
-    }
+  var REFRESH_MS = 45000, last = 0, busy = false;
 
-    // 3. Обновляем "Recent clients"
-    var tbodyRecent = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(2) .crm-table tbody');
-    if (tbodyRecent) {
-      tbodyRecent.innerHTML = '';
-      // Сортируем по дате (если есть) или просто берем 3 последних
-      var recentUsers = allUsers.slice(-3).reverse();
-      
-      recentUsers.forEach(function(u) {
-        var name = u.name || u.full_name || u.email || 'User';
-        var initials = name.substring(0, 2).toUpperCase();
-        var statusClass = (u.kyc_status === 'approved' || u.status === 'active') ? 'ok' : (u.kyc_status === 'rejected' ? 'bad' : 'wait');
-        var statusText = statusClass === 'ok' ? 'Verified' : (statusClass === 'bad' ? 'Rejected' : 'In review');
-        var bal = parseFloat(u.balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2});
-        
-        tbodyRecent.innerHTML += `
-          <tr>
-            <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${name}</b><small>${u.email || ''}</small></div></div></td>
-            <td><span class="pill ${statusClass}">${statusText}</span></td>
-            <td>$${bal}</td>
-            <td>Today</td>
-          </tr>
-        `;
-      });
-    }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(v) {
+    try { if (typeof fmtCurrency === 'function') return fmtCurrency(v || 0); } catch (e) {}
+    return '$' + Number(v || 0).toFixed(2);
+  }
+  function initials(name, email) {
+    var p = String(name || email || 'U').replace(/@.*/, '').trim().split(/[\s._-]+/);
+    var a = p[0] ? p[0].charAt(0) : 'U';
+    var b = p[1] ? p[1].charAt(0) : (p[0] && p[0].length > 1 ? p[0].charAt(1) : '');
+    return (a + b).toUpperCase();
+  }
+  function ago(ts) {
+    var d = Date.now() - Number(ts || 0), m;
+    if (!ts || d < 0) return '—';
+    m = Math.floor(d / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + ' min ago';
+    if (m < 1440) return Math.floor(m / 60) + ' h ago';
+    return Math.floor(m / 1440) + ' d ago';
+  }
+  function created(u) {
+    var v = u.createdAt || u.created || u.registeredAt, n = Number(v), d;
+    if (!isNaN(n) && n > 0) return n;
+    d = Date.parse(v);
+    return isNaN(d) ? 0 : d;
+  }
+  function pill(s) {
+    if (s === 'approved') return '<span class="pill ok">Verified</span>';
+    if (s === 'pending') return '<span class="pill wait">In review</span>';
+    if (s === 'rejected') return '<span class="pill bad">Rejected</span>';
+    return '<span class="pill" style="background:rgba(148,163,184,.16);color:#94a3b8">Not verified</span>';
+  }
+  function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
 
-    // 4. Обновляем "Verification queue"
-    var tbodyQueue = document.querySelector('.admin-section[data-section="stats"] .crm-grid:nth-of-type(1) .crm-table tbody');
-    if (tbodyQueue) {
-      var pendingUsers = allUsers.filter(u => u.kyc_status === 'pending' || u.status === 'pending').slice(0, 3);
-      
-      if (pendingUsers.length > 0) {
-        tbodyQueue.innerHTML = '';
-        pendingUsers.forEach(function(u) {
-          var name = u.name || u.full_name || u.email || 'User';
-          var initials = name.substring(0, 2).toUpperCase();
-          tbodyQueue.innerHTML += `
-            <tr>
-              <td><div class="crm-user"><span class="crm-av">${initials}</span><div><b>${name}</b><small>${u.doc_type || 'Document'}</small></div></div></td>
-              <td><div class="crm-act"><button class="crm-ib ok" onclick="showAdminTab('verifications')"><span class="ic i-check"></span></button><button class="crm-ib bad" onclick="showAdminTab('verifications')"><span class="ic i-x"></span></button></div></td>
-            </tr>
-          `;
-        });
-      } else {
-        tbodyQueue.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#8793a8;padding:20px;">No pending verifications</td></tr>';
-      }
-    }
-
-    return true; // Успешно обновили
+  function api(action) {
+    var base = typeof WORKER_LOGIN_URL !== 'undefined' ? WORKER_LOGIN_URL : '';
+    var token = typeof getSessionToken === 'function' ? getSessionToken() : localStorage.getItem('session_token');
+    if (!base || !token) return Promise.reject(new Error('no session'));
+    return fetch(base + '?action=' + action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token })
+    }).then(function (r) { return r.json(); });
   }
 
-  // Пытаемся обновить сразу
-  updateAdminDashboard();
+  function cachedUsers() {
+    try {
+      var c = window.allUsers || window.adminUsers;
+      if (c && c.length) return c;
+      var raw = localStorage.getItem('nc_all_users') || localStorage.getItem('nc_users');
+      var arr = raw ? JSON.parse(raw) : null;
+      return arr && arr.length ? arr : [];
+    } catch (e) { return []; }
+  }
 
-  // И запускаем таймер, который будет проверять каждую секунду, пока данные не появятся
-  var attempts = 0;
-  var timer = setInterval(function() {
-    attempts++;
-    var done = updateAdminDashboard();
-    if (done || attempts > 10) { // Останавливаемся, если данные пришли или прошло 10 секунд
-      clearInterval(timer);
+  function ensure() {
+    if ($('ncRecentBody') && $('ncQueueBody')) return true;
+    var sec = document.querySelector('[data-section="stats"]');
+    if (!sec) return false;
+    var box = document.createElement('div');
+    box.className = 'crm-grid';
+    box.id = 'ncDash';
+    box.innerHTML =
+      '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
+      '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
+      '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
+      '<tbody id="ncRecentBody"></tbody></table></div></div>' +
+      '<div class="crm-card"><div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
+      '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
+      '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>';
+    sec.appendChild(box);
+    return true;
+  }
+
+  function renderRecent(users, statusByEmail) {
+    var body = $('ncRecentBody'), sub = $('ncRecentSub'), list = users.slice(0), html = '', i, u, hasDate = false;
+    if (!body) return;
+    for (i = 0; i < list.length; i++) { if (created(list[i]) > 0) { hasDate = true; break; } }
+    if (hasDate) list.sort(function (a, b) { return created(b) - created(a); });
+    list = list.slice(0, 5);
+    if (sub) sub.textContent = users.length + ' total';
+    if (!list.length) {
+      body.innerHTML = '<tr><td colspan="4" style="padding:22px 18px;color:var(--c-mute,#8793a8)">No clients yet.</td></tr>';
+      return;
     }
-  }, 1000);
+    for (i = 0; i < list.length; i++) {
+      u = list[i];
+      html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(u.name, u.email)) + '</span>' +
+        '<div><b>' + esc(u.name || u.email) + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
+        '<td>' + pill(statusByEmail[String(u.email).toLowerCase()]) + '</td>' +
+        '<td>' + money(u.balance) + '</td><td>' + esc(u.lastTx || '—') + '</td></tr>';
+    }
+    body.innerHTML = html;
+  }
 
-});
+  function renderQueue(vers) {
+    var body = $('ncQueueBody'), sub = $('ncQueueSub'), html = '', i, v, e;
+    var pend = vers.filter(function (x) { return x.status === 'pending'; })
+      .sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
+    if (!body) return;
+    if (sub) sub.textContent = pend.length ? pend.length + ' waiting' : 'All clear';
+    if (!pend.length) {
+      body.innerHTML = '<tr><td style="padding:22px 18px;color:var(--c-mute,#8793a8)">Nothing is waiting for review.</td></tr>';
+      return;
+    }
+    for (i = 0; i < pend.length && i < 5; i++) {
+      v = pend[i]; e = esc(v.email);
+      html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(v.name, v.email)) + '</span>' +
+        '<div><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.docType || 'Document') + ' · ' + ago(v.submittedAt) + '</small></div></div></td>' +
+        '<td><div class="crm-act">' +
+        '<button type="button" class="crm-ib" title="View documents" data-nc-act="docs" data-email="' + e + '">👁</button>' +
+        '<button type="button" class="crm-ib ok" title="Approve" data-nc-act="approve" data-email="' + e + '">✓</button>' +
+        '<button type="button" class="crm-ib bad" title="Reject" data-nc-act="reject" data-email="' + e + '">✕</button>' +
+        '</div></td></tr>';
+    }
+    body.innerHTML = html;
+  }
+
+  function renderKpi(users, stats) {
+    var c = $('admnStatClients'), b = $('admnStatBalance'), t = $('admnStatTx'), i, bal = 0, tx = 0, n = users.length;
+    if (stats) { n = stats.totalClients; bal = stats.totalBalance; tx = stats.totalTx; }
+    else {
+      for (i = 0; i < users.length; i++) { bal += Number(users[i].balance) || 0; tx += Number(users[i].txCount) || 0; }
+    }
+    if (c && n != null) c.textContent = n;
+    if (b) b.textContent = money(bal);
+    if (t && tx != null) t.textContent = tx;
+  }
+
+  function refresh() {
+    if (busy) return;
+    busy = true; last = Date.now();
+    var users = null, vers = [], stats = null;
+    var pu = api('listUsers').then(function (d) { if (d && d.ok && d.users) users = d.users; }).catch(function () {});
+    var pv = api('listVerifications').then(function (d) { if (d && d.ok && d.verifications) vers = d.verifications; }).catch(function () {});
+    var ps = api('getStats').then(function (d) { if (d && d.ok && d.stats) stats = d.stats; }).catch(function () {});
+    Promise.all([pu, pv, ps]).then(function () {
+      try {
+        var map = {}, i;
+        if (!users) users = cachedUsers();
+        for (i = 0; i < vers.length; i++) map[String(vers[i].email).toLowerCase()] = vers[i].status;
+        renderRecent(users, map);
+        renderQueue(vers);
+        renderKpi(users, stats);
+      } catch (e) { console.warn('[NC dash] render failed:', e); }
+      busy = false;
+    });
+  }
+
+  document.addEventListener('click', function (ev) {
+    try {
+      var t = ev.target, a, n, go, act, email, fn;
+      if (!t || !t.closest) return;
+      n = t.closest('.admin-nav-item');
+      if (n && n.getAttribute('data-tab') === 'stats' && Date.now() - last > 5000) setTimeout(refresh, 300);
+      a = t.closest('[data-nc-act],[data-nc-go]');
+      if (!a) return;
+      go = a.getAttribute('data-nc-go');
+      if (go) { if (typeof showAdminTab === 'function') showAdminTab(go); return; }
+      act = a.getAttribute('data-nc-act');
+      email = a.getAttribute('data-email');
+      fn = { docs: 'viewKycDocs', approve: 'approveKyc', reject: 'rejectKyc' }[act];
+      if (fn && typeof window[fn] === 'function') {
+        window[fn](email);
+        setTimeout(refresh, 1500);
+        setTimeout(refresh, 4000);
+      }
+    } catch (e) { console.warn('[NC dash] click failed:', e); }
+  });
+
+  setInterval(function () {
+    try {
+      if (panelOpen() && Date.now() - last > REFRESH_MS && ensure()) refresh();
+    } catch (e) { console.warn('[NC dash] tick failed:', e); }
+  }, 2000);
+})();
 </script>
 </body>
 </html>
