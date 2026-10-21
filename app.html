@@ -6446,17 +6446,13 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function ensure() {
-    // Если блоки уже созданы — не дублируем
     if ($('ncRecentBody') && $('ncQueueBody')) return true;
-    
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
-
-    // Удаляем старые "заглушки" из макета, чтобы не было дублей
-    var oldBlocks = sec.querySelectorAll('.crm-grid');
-    oldBlocks.forEach(function(b) {
-      if (!b.id || b.id !== 'ncDash') b.remove();
-    });
+    
+    // Удаляем старые блоки макета, чтобы не было дублей
+    var old = sec.querySelectorAll('.crm-grid');
+    old.forEach(function(b) { if (!b.id || b.id !== 'ncDash') b.remove(); });
 
     var box = document.createElement('div');
     box.className = 'crm-grid';
@@ -6575,7 +6571,6 @@ document.addEventListener('DOMContentLoaded', function(){
     } catch (e) { console.warn('[NC dash] tick failed:', e); }
   }, 2000);
 
-  // Запускаем при открытии админки
   setTimeout(function() {
     if (ensure()) refresh();
   }, 1000);
