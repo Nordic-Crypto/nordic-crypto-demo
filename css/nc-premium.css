@@ -1,31 +1,58 @@
 /* ============================================================
-   NC PREMIUM v1.0 — дизайн-слой поверх существующего CSS
-   Только добавляет и уточняет. Не удаляет ничего из старых стилей,
-   не трогает JS-логику. Подключать ПОСЛЕ основного <style>.
+   NC PREMIUM v2.0 — Dark Premium
+   Глубокий чёрный фон, стеклянные карточки, изумрудные и фиолетовые
+   акценты, мягкие тени. Только добавляет и уточняет: все селекторы
+   из v1.0 сохранены, имена классов не менялись, JS не затрагивается.
+   Подключать ПОСЛЕ основного <style>.
+
+   !important оставлен ТОЛЬКО там, где без него не обойтись:
+   - #adminPanel и .mask: JS ставит им inline z-index (99999 / 10001),
+     перебить inline можно только через !important;
+   - prefers-reduced-motion: стандартный приём доступности.
+   Остальные !important убраны: слои держатся специфичностью.
    ============================================================ */
 
-/* ---------- 00. СЛОИ (stacking) — починка "мёртвых" кнопок админки ----------
-   Раньше админ-панель получала inline z-index:99999, а модалки (.mask = 7000,
-   динамические = 10001) и toast (2000) оказывались ПОД ней: окна открывались,
-   но были невидимы, поэтому казалось, что View / Cancel / Approve не работают.
-   Теперь панель на своём месте, а всё интерактивное — выше неё. */
+/* ---------- 00. Слои (stacking) ----------
+   Панель админа ниже модалок, модалки ниже toast и окна неактивности. */
 #adminPanel{z-index:4500!important}
 .mask{z-index:100100!important}
-.dep-verify-overlay{z-index:100100!important}
-.toast{z-index:100300!important}
-.inactivity-overlay{z-index:100400!important}
+html .dep-verify-overlay{z-index:100100}
+html .toast{z-index:100300}
+html .inactivity-overlay{z-index:100400}
 
 /* ---------- 0. Токены ---------- */
 :root{
+  color-scheme:dark;
   --nc-ease:cubic-bezier(.2,.7,.2,1);
-  --nc-r-sm:10px; --nc-r-md:14px; --nc-r-lg:20px;
-  --nc-glow:0 0 0 1px rgba(0,229,255,.28),0 10px 30px -10px rgba(0,229,255,.35);
-  --nc-card:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  --nc-r-sm:10px; --nc-r-md:14px; --nc-r-lg:22px;
+
+  /* палитра */
+  --nc-bg:#05070b;
+  --nc-line:rgba(255,255,255,.08);
+  --nc-line-strong:rgba(255,255,255,.14);
+  --nc-emerald:#34d399;
+  --nc-emerald-deep:#10b981;
+  --nc-violet:#8b5cf6;
+  --nc-violet-soft:#a78bfa;
+  --nc-grad:linear-gradient(135deg,#34d399,#8b5cf6);
+
+  /* свечения и тени */
+  --nc-glow-e:0 0 0 1px rgba(52,211,153,.38),0 14px 36px -14px rgba(52,211,153,.5);
+  --nc-glow-v:0 0 0 1px rgba(139,92,246,.4),0 14px 36px -14px rgba(139,92,246,.5);
+  --nc-glow:var(--nc-glow-e);
+  --nc-shadow:0 24px 60px -28px rgba(0,0,0,.85);
+
+  /* стекло */
+  --nc-card:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.02));
+  --nc-card-hover:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+
+  /* единственная глобальная переменная приложения, которую усиливаем */
+  --bg:var(--nc-bg);
 }
 
 /* ---------- 1. Пустой экран: гарантия видимости контента ----------
-   Раньше шаги внутри pending/rejected получали .on через setInterval.
-   Теперь это решается чистым CSS и работает всегда. */
+   showVerifyStep() снимает .on со ВСЕХ .verify-step, в том числе внутри
+   pending/rejected. Чистый CSS возвращает им видимость в любом случае. */
 #pendingScreen .verify-step,
 #rejectedScreen .verify-step{display:block}
 
@@ -34,62 +61,104 @@
 
 /* ---------- 2. Базовая полировка ---------- */
 html{-webkit-text-size-adjust:100%}
-body{text-rendering:optimizeLegibility}
-::selection{background:rgba(0,229,255,.28)}
+body{text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(139,92,246,.4);color:#fff}
+
+/* тонкие тёмные скроллбары */
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26);background-clip:content-box}
 
 :where(a,button,input,select,textarea,[tabindex]):focus-visible{
-  outline:2px solid var(--pri);outline-offset:2px;border-radius:8px}
+  outline:2px solid var(--nc-emerald);outline-offset:2px;border-radius:8px}
 
-button,.btn{transition:transform .15s var(--nc-ease),box-shadow .2s var(--nc-ease),background-color .2s,border-color .2s,opacity .2s}
+button,.btn{
+  transition:transform .18s var(--nc-ease),box-shadow .25s var(--nc-ease),
+             background-color .2s,border-color .2s,opacity .2s,filter .2s}
 button:not(:disabled):active{transform:translateY(1px) scale(.99)}
-button:disabled{opacity:.55;cursor:not-allowed}
+button:disabled{opacity:.5;cursor:not-allowed}
 
-input,select,textarea{transition:border-color .2s,box-shadow .2s,background-color .2s}
+/* hover кнопок: поднятие и изумрудное свечение */
+.btn:not(:disabled):hover,
+.login-screen button:not(:disabled):hover,
+.admin-client-actions button:not(:disabled):hover{
+  transform:translateY(-2px);
+  box-shadow:var(--nc-glow-e);
+  filter:brightness(1.08)}
+.btn:not(:disabled):active,
+.login-screen button:not(:disabled):active,
+.admin-client-actions button:not(:disabled):active{
+  transform:translateY(0) scale(.99);box-shadow:none;filter:none}
+
+input,select,textarea{
+  transition:border-color .2s,box-shadow .2s,background-color .2s}
 input:focus,select:focus,textarea:focus{
-  border-color:rgba(0,229,255,.6)!important;
-  box-shadow:0 0 0 4px rgba(0,229,255,.12)}
+  border-color:rgba(52,211,153,.65);
+  box-shadow:0 0 0 4px rgba(52,211,153,.14)}
 
 /* ---------- 3. Вход ---------- */
-.login-screen{backdrop-filter:blur(2px)}
-.login-screen input{min-height:48px;border-radius:var(--nc-r-md)}
-.login-screen button[type="button"],.login-screen .btn-primary,#btnLogin{
-  min-height:50px;border-radius:var(--nc-r-md);font-weight:700;letter-spacing:.005em}
+.login-screen{
+  background:
+    radial-gradient(900px 520px at 20% 0%,rgba(52,211,153,.10),transparent 60%),
+    radial-gradient(800px 520px at 90% 100%,rgba(139,92,246,.14),transparent 60%),
+    var(--nc-bg);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.login-screen input{
+  min-height:50px;border-radius:var(--nc-r-md);
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--nc-line-strong)}
+.login-screen input:hover{border-color:rgba(255,255,255,.24)}
+.login-screen button[type="button"],
+.login-screen .btn-primary,
+#btnLogin{
+  min-height:52px;border-radius:var(--nc-r-md);
+  font-weight:700;letter-spacing:.005em;
+  background:linear-gradient(135deg,var(--nc-emerald),var(--nc-emerald-deep));
+  color:#04120d;border:0;
+  box-shadow:0 14px 30px -14px rgba(52,211,153,.6)}
 #loginError{border-radius:var(--nc-r-sm);line-height:1.45}
 
 /* ---------- 4. Экраны проверки (KYC / pending / rejected) ---------- */
 .verify-box{
   background:var(--nc-card);
-  border:1px solid var(--bd2);
+  border:1px solid var(--nc-line);
   border-radius:var(--nc-r-lg);
-  box-shadow:var(--shadow-lg)}
-.vtl li{transition:opacity .3s}
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  backdrop-filter:blur(20px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),var(--nc-shadow)}
+.vtl li{transition:opacity .3s,color .3s}
 .verify-icon{box-shadow:var(--nc-glow)}
 
 /* ---------- 5. Админ-панель ---------- */
 .admin-panel{background:
-  radial-gradient(900px 480px at 8% -10%,rgba(0,229,255,.07),transparent 60%),
-  radial-gradient(800px 460px at 100% 110%,rgba(139,92,246,.08),transparent 60%),
-  var(--bg)}
+  radial-gradient(900px 480px at 8% -10%,rgba(52,211,153,.08),transparent 60%),
+  radial-gradient(800px 460px at 100% 110%,rgba(139,92,246,.10),transparent 60%),
+  var(--nc-bg)}
 
 .admin-sidebar{
-  background:linear-gradient(180deg,rgba(17,24,39,.96),rgba(11,18,32,.96));
-  border-right:1px solid var(--bd)}
+  background:linear-gradient(180deg,rgba(14,18,28,.96),rgba(7,10,16,.96));
+  border-right:1px solid var(--nc-line)}
 .admin-brand{font-weight:800;letter-spacing:-.02em}
 
 .admin-nav-item{
   border-radius:var(--nc-r-sm);
-  transition:background-color .2s,color .2s,transform .15s var(--nc-ease);
+  transition:background-color .2s,color .2s,transform .18s var(--nc-ease);
   position:relative}
-.admin-nav-item:hover{background:rgba(255,255,255,.05)}
+.admin-nav-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
 .admin-nav-item.on,.admin-nav-item.active{
-  background:linear-gradient(90deg,rgba(0,229,255,.14),rgba(139,92,246,.10));
-  box-shadow:inset 2px 0 0 var(--pri)}
-.admin-nav-badge{border-radius:999px;min-width:20px;text-align:center;font-variant-numeric:tabular-nums}
+  background:linear-gradient(90deg,rgba(52,211,153,.16),rgba(139,92,246,.10));
+  box-shadow:inset 2px 0 0 var(--nc-emerald)}
+.admin-nav-badge{
+  border-radius:999px;min-width:20px;text-align:center;
+  font-variant-numeric:tabular-nums;
+  background:var(--nc-grad);color:#04120d;font-weight:700}
 
 .admin-top{
-  background:rgba(11,18,32,.82);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--bd);
+  background:rgba(7,10,16,.78);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--nc-line);
   position:sticky;top:0;z-index:5}
 
 .admin-stats{gap:14px}
@@ -98,14 +167,28 @@ input:focus,select:focus,textarea:focus{
 .admin-section,
 .admin-system{
   background:var(--nc-card);
-  border:1px solid var(--bd);
+  border:1px solid var(--nc-line);
   border-radius:var(--nc-r-lg);
-  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 34px -22px rgba(0,0,0,.7)}
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),var(--nc-shadow)}
 .admin-stat-value{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .admin-stat-label{color:var(--mut)}
 
-.admin-client-card{transition:border-color .2s,transform .2s var(--nc-ease),box-shadow .2s}
-.admin-client-card:hover{border-color:rgba(0,229,255,.32);box-shadow:var(--nc-glow)}
+/* hover карточек: поднятие и свечение */
+.admin-stat-card,
+.admin-client-card{
+  transition:border-color .22s,transform .22s var(--nc-ease),
+             box-shadow .25s var(--nc-ease),background .25s}
+.admin-stat-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(139,92,246,.4);
+  background:var(--nc-card-hover);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),var(--nc-glow-v)}
+.admin-client-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(52,211,153,.4);
+  background:var(--nc-card-hover);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),var(--nc-glow-e)}
 .admin-client-field-label{color:var(--mut)}
 .admin-client-field-value{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .admin-client-actions{gap:8px;flex-wrap:wrap}
@@ -127,7 +210,18 @@ input:focus,select:focus,textarea:focus{
   .admin-client-grid{grid-template-columns:1fr}
 }
 
-/* ---------- 7. Доступность: меньше движения ---------- */
+/* ---------- 7. Запасной вариант без backdrop-filter ---------- */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .verify-box,.admin-stat-card,.admin-client-card,.admin-section,.admin-system{background:#0d121b}
+  .admin-top{background:#07090f}
+}
+
+/* ---------- 8. Доступность: меньше движения ---------- */
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .btn:not(:disabled):hover,
+  .admin-stat-card:hover,
+  .admin-client-card:hover{transform:none}
 }
