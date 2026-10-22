@@ -6171,6 +6171,31 @@ document.addEventListener('DOMContentLoaded', function(){
         '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
         '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>' +
       '</div>' +
+              // 👇 НОВЫЙ БЛОК: БОНУСЫ И СТАТИСТИКА (Премиум-дизайн)
+      '<div class="crm-grid" style="margin-bottom:14px;">' +
+        '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,.98), rgba(9,14,23,.98)); border:1px solid rgba(255,215,0,.2); position:relative; overflow:hidden;">' +
+          '<div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.05;">💎</div>' +
+          '<div class="crm-ch"><div><h3 style="color:#ffd700;">Premium Bonuses</h3><small>Daily rewards & Loyalty</small></div>' +
+          '<button type="button" class="btn b2" style="border-color:#ffd700; color:#ffd700;" data-nc-go="clients">Manage</button></div>' +
+          
+          '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px;">' +
+            '<div style="background:rgba(255,215,0,.05); border:1px solid rgba(255,215,0,.1); border-radius:12px; padding:12px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Total Bonuses</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#ffd700;">$' + (stats && stats.totalBonuses ? stats.totalBonuses : '0') + '</div>' +
+            '</div>' +
+            
+            '<div style="background:rgba(0,212,255,.05); border:1px solid rgba(0,212,255,.1); border-radius:12px; padding:12px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Active Today</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#00d4ff;">' + (stats && stats.dau ? stats.dau : '0') + '</div>' +
+            '</div>' +
+            
+            '<div style="background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.1); border-radius:12px; padding:12px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Verified</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#10b981;">' + (stats && stats.totalKyc ? stats.totalKyc : '0') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       
       '<div class="crm-grid">' +
         '<div class="crm-card">' +
