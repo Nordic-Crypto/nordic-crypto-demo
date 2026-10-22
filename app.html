@@ -5267,80 +5267,9 @@ document.addEventListener('DOMContentLoaded', function(){
     </aside>
     <main class="admin-content">
      <div class="admin-section active" data-section="stats">
-  <div class="admin-stats">
-    <div class="admin-stat-card">
-      <div class="admin-stat-icon"></div>
-      <div class="admin-stat-value" id="admnStatClients">0</div>
-      <div class="admin-stat-label">Total Clients</div>
-    </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-icon"></div>
-      <div class="admin-stat-value" id="admnStatBalance">$0.00</div>
-      <div class="admin-stat-label">Total Balance</div>
-    </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-icon"></div>
-      <div class="admin-stat-value" id="admnStatTx">0</div>
-      <div class="admin-stat-label">Transactions</div>
-    </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-icon"></div>
-      <div class="admin-stat-value" id="admnStatCrypto">0</div>
-      <div class="admin-stat-label">Crypto assets</div>
-    </div>
-  </div>
 
-  <!-- Новые красивые блоки -->
-  <div class="crm-grid">
-    <div class="crm-card">
-      <div class="crm-ch">
-        <div><h3>Deposits</h3><small>Last 7 days</small></div>
-        <span class="pill ok">Live</span>
-      </div>
-      <div class="crm-bars">
-        <i style="height:46%"></i><i style="height:62%"></i><i style="height:38%"></i><i style="height:78%"></i><i style="height:58%"></i><i style="height:92%"></i><i style="height:70%"></i>
-      </div>
-      <div class="crm-bl"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-    </div>
 
-    <div class="crm-card">
-      <div class="crm-ch">
-        <div><h3>Verification queue</h3><small>Pending items</small></div>
-      </div>
-      <div class="crm-tw">
-        <table class="crm-table">
-          <tbody>
-            <tr><td><div class="crm-user"><span class="crm-av">?</span><div><b>Loading...</b><small>...</small></div></div></td><td><div class="crm-act"><button class="crm-ib ok"><span class="ic i-check"></span></button><button class="crm-ib bad"><span class="ic i-x"></span></button></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
-  <div class="crm-grid">
-    <div class="crm-card">
-      <div class="crm-ch">
-        <div><h3>Recent clients</h3><small>Newest first</small></div>
-        <button class="btn b2" onclick="showAdminTab('clients')">View all</button>
-      </div>
-      <div class="crm-tw">
-        <table class="crm-table">
-          <thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Joined</th></tr></thead>
-          <tbody>
-            <tr><td><div class="crm-user"><span class="crm-av">...</span><div><b>Loading...</b></div></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="crm-card">
-      <div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>
-      <ul class="crm-feed">
-        <li><span class="dot"></span><div>System ready<small>Just now</small></div></li>
-      </ul>
-    </div>
-  </div>
-</div>
       <div class="admin-section" data-section="clients">
         <div style="display:flex;gap:12px;margin-bottom:16px;">
           <input type="text" id="clientSearch" placeholder="🔍 Search..." oninput="filterClients(this.value)" style="flex:1;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#e7edf5;font-size:14px;outline:none;">
