@@ -6142,7 +6142,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return (a + b).toUpperCase();
   }
 
-    function ensure() {
+     function ensure() {
     if ($('ncRecentBody') && $('ncQueueBody')) return true;
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
@@ -6150,85 +6150,90 @@ document.addEventListener('DOMContentLoaded', function(){
     sec.innerHTML = ''; 
 
     var box = document.createElement('div');
-    box.className = 'crm-grid';
+    box.className = 'nc-dashboard-wrapper';
     box.id = 'ncDash';
+    box.style.cssText = 'display:flex; flex-direction:column; gap:16px; width:100%;';
     
     box.innerHTML = 
-      // === БЛОК 1: ГЛАВНЫЕ ЦИФРЫ ===
-      '<div class="crm-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:14px;">' +
-        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+      // === БЛОК 1: ГЛАВНЫЕ ЦИФРЫ (4 колонки) ===
+      '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">' +
+        '<div class="crm-card" style="padding:24px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
           '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Clients</div>' +
-          '<div id="statClientsNew" style="font-size:32px; font-weight:800; color:#47dcff; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
-          '<div style="font-size:12px; color:#10b981; margin-top:4px;">+<span id="statClientsToday">0</span> today · +<span id="statClientsYesterday">0</span> yesterday</div>' +
+          '<div id="statClientsNew" style="font-size:36px; font-weight:800; color:#47dcff; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
+          '<div style="font-size:13px; color:#10b981; margin-top:6px; font-weight:600;">+<span id="statClientsToday">0</span> today · +<span id="statClientsYesterday">0</span> yesterday</div>' +
         '</div>' +
         
-        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+        '<div class="crm-card" style="padding:24px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
           '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Balance</div>' +
-          '<div id="statBalanceNew" style="font-size:32px; font-weight:800; color:#fff; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
-          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">All clients combined</div>' +
+          '<div id="statBalanceNew" style="font-size:36px; font-weight:800; color:#fff; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
+          '<div style="font-size:13px; color:#8b95a5; margin-top:6px;">All clients combined</div>' +
         '</div>' +
         
-        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+        '<div class="crm-card" style="padding:24px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
           '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Deposits</div>' +
-          '<div id="statDepositsNew" style="font-size:32px; font-weight:800; color:#10b981; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
-          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">+<span id="statDepositsToday">0</span> today · +<span id="statDepositsYesterday">0</span> yesterday</div>' +
+          '<div id="statDepositsNew" style="font-size:36px; font-weight:800; color:#10b981; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
+          '<div style="font-size:13px; color:#8b95a5; margin-top:6px;">+<span style="color:#10b981;font-weight:600" id="statDepositsToday">0</span> today · +<span style="color:#10b981;font-weight:600" id="statDepositsYesterday">0</span> yesterday</div>' +
         '</div>' +
         
-        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+        '<div class="crm-card" style="padding:24px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
           '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Transactions</div>' +
-          '<div id="statTxNew" style="font-size:32px; font-weight:800; color:#a78bfa; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
-          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">All time</div>' +
+          '<div id="statTxNew" style="font-size:36px; font-weight:800; color:#a78bfa; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
+          '<div style="font-size:13px; color:#8b95a5; margin-top:6px;">All time</div>' +
         '</div>' +
       '</div>' +
 
-      // === БЛОК 2: КЛИЕНТЫ, ВЕРИФИКАЦИИ, БОНУСЫ ===
-      '<div class="crm-grid" style="margin-bottom:14px;">' +
-        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
-          '<div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
-          '<div style="display:flex;gap:8px;">' +
-          '<button type="button" class="btn b2" id="btnForceRefresh" style="padding:4px 10px;" title="Refresh">🔄</button>' +
-          '<button type="button" class="btn b2" data-nc-go="clients">View all</button>' +
-          '</div></div>' +
-          '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
-          '<tbody id="ncRecentBody"></tbody></table></div>' +
+      // === БЛОК 2: КЛИЕНТЫ + ВЕРИФИКАЦИИ (2 колонки) ===
+      '<div style="display:grid; grid-template-columns:2fr 1fr; gap:16px;">' +
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:380px;">' +
+          '<div class="crm-ch" style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">' +
+            '<div><h3 style="margin:0; font-size:16px;">Recent clients</h3><small id="ncRecentSub" style="color:#8b95a5">Loading…</small></div>' +
+            '<div style="display:flex;gap:8px;">' +
+            '<button type="button" class="btn b2" id="btnForceRefresh" style="padding:6px 12px; font-size:12px;" title="Refresh">🔄</button>' +
+            '<button type="button" class="btn b2" data-nc-go="clients" style="padding:6px 12px; font-size:12px;">View all</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="crm-tw" style="flex:1; overflow:auto;"><table class="crm-table" style="width:100%;"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead><tbody id="ncRecentBody"></tbody></table></div>' +
         '</div>' +
         
-        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
-          '<div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
-          '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
-          '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div>' +
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:380px;">' +
+          '<div class="crm-ch" style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">' +
+            '<div><h3 style="margin:0; font-size:16px;">Verification queue</h3><small id="ncQueueSub" style="color:#8b95a5">Loading…</small></div>' +
+            '<button type="button" class="btn b2" data-nc-go="verifications" style="padding:6px 12px; font-size:12px;">Open</button>' +
+          '</div>' +
+          '<div class="crm-tw" style="flex:1; overflow:auto;"><table class="crm-table" style="width:100%;"><tbody id="ncQueueBody"></tbody></table></div>' +
         '</div>' +
+      '</div>' +
 
-        '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,0.98), rgba(9,14,23,0.98)); border:1px solid rgba(255,215,0,0.2); position:relative; overflow:hidden;">' +
-          '<div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.05;">💎</div>' +
-          '<div class="crm-ch"><div><h3 style="color:#ffd700;">Premium Bonuses</h3><small>Daily rewards & Loyalty</small></div>' +
-          '<button type="button" class="btn b2" style="border-color:#ffd700; color:#ffd700;" onclick="openBonusModal()">Manage</button></div>' +
-          
-          '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px;">' +
-            '<div style="background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.1); border-radius:12px; padding:12px; text-align:center;">' +
-              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Total Bonuses</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#ffd700;" id="bonusTotal">$0</div>' +
+      // === БЛОК 3: БОНУСЫ + АКТИВНОСТЬ (2 колонки) ===
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">' +
+        '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,0.98), rgba(9,14,23,0.98)); border:1px solid rgba(255,215,0,0.2); position:relative; overflow:hidden; padding:24px;">' +
+          '<div style="position:absolute; top:-20px; right:-20px; font-size:100px; opacity:0.03;">💎</div>' +
+          '<div class="crm-ch" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">' +
+            '<div><h3 style="color:#ffd700; margin:0; font-size:16px;">Premium Bonuses</h3><small style="color:#8b95a5">Daily rewards & Loyalty</small></div>' +
+            '<button type="button" class="btn b2" style="border-color:#ffd700; color:#ffd700; padding:6px 12px; font-size:12px;" onclick="openBonusModal()">Manage</button>' +
+          '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">' +
+            '<div style="background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.1); border-radius:12px; padding:16px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:6px;">Total Bonuses</div>' +
+              '<div style="font-size:24px; font-weight:800; color:#ffd700;" id="bonusTotal">$0</div>' +
             '</div>' +
-            '<div style="background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.1); border-radius:12px; padding:12px; text-align:center;">' +
-              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Active Today</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#00d4ff;" id="bonusActive">0</div>' +
+            '<div style="background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.1); border-radius:12px; padding:16px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:6px;">Active Today</div>' +
+              '<div style="font-size:24px; font-weight:800; color:#00d4ff;" id="bonusActive">0</div>' +
             '</div>' +
-            '<div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.1); border-radius:12px; padding:12px; text-align:center;">' +
-              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Verified</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#10b981;" id="bonusVerified">0</div>' +
+            '<div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.1); border-radius:12px; padding:16px; text-align:center;">' +
+              '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:6px;">Verified</div>' +
+              '<div style="font-size:24px; font-weight:800; color:#10b981;" id="bonusVerified">0</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
 
-      // === БЛОК 3: ACTIVITY FEED ===
-      '<div class="crm-grid">' +
-        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
-          '<div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>' +
-          '<ul class="crm-feed">' +
-            '<li><span class="dot"></span><div>System is running normally<small>Just now</small></div></li>' +
-            '<li><span class="dot" style="background:#6366f1"></span><div>Admin logged in<small>1 min ago</small></div></li>' +
-            '<li><span class="dot" style="background:#f59e0b"></span><div>Dashboard data synced<small>2 min ago</small></div></li>' +
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08); padding:24px;">' +
+          '<div class="crm-ch" style="margin-bottom:16px;"><div><h3 style="margin:0; font-size:16px;">Activity</h3><small style="color:#8b95a5">Latest events</small></div></div>' +
+          '<ul class="crm-feed" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px;">' +
+            '<li style="display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px;"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;"></span><div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#e7edf5;">System is running normally</div><div style="font-size:12px; color:#8b95a5;">Just now</div></div></li>' +
+            '<li style="display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px;"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:#6366f1;box-shadow:0 0 10px #6366f1;"></span><div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#e7edf5;">Admin logged in</div><div style="font-size:12px; color:#8b95a5;">1 min ago</div></div></li>' +
+            '<li style="display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px;"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 10px #f59e0b;"></span><div style="flex:1;"><div style="font-size:14px; font-weight:600; color:#e7edf5;">Dashboard data synced</div><div style="font-size:12px; color:#8b95a5;">2 min ago</div></div></li>' +
           '</ul>' +
         '</div>' +
       '</div>';
