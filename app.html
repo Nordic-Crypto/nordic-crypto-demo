@@ -6206,7 +6206,10 @@ document.addEventListener('DOMContentLoaded', function(){
       // 1. Блок Recent clients и Verification queue
       '<div class="crm-grid" style="margin-bottom:14px;">' +
         '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
-        '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
+'<div style="display:flex;gap:8px;">' +
+'<button type="button" class="btn b2" onclick="if(window.refreshDashboard) window.refreshDashboard();" style="padding:4px 10px;" title="Обновить">🔄</button>' +
+'<button type="button" class="btn b2" data-nc-go="clients">View all</button>' +
+'</div></div>' +
         '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
         '<tbody id="ncRecentBody"></tbody></table></div></div>' +
         
@@ -6343,12 +6346,17 @@ document.addEventListener('DOMContentLoaded', function(){
       });
   }
 
-  // Запуск
+   // Делаем функцию обновления доступной для кнопки
+  window.refreshDashboard = function() {
+    if (ensure()) refresh();
+  };
+
+  // Автообновление каждые 3 секунды
   setInterval(function() {
     if ($('adminPanel') && $('adminPanel').classList.contains('on')) {
-      if (ensure()) refresh();
+      window.refreshDashboard();
     }
-  }, 2000);
+  }, 3000);
   
   setTimeout(function() { if (ensure()) refresh(); }, 1000);
 
