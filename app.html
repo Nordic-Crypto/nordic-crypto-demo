@@ -5267,7 +5267,28 @@ document.addEventListener('DOMContentLoaded', function(){
     </aside>
     <main class="admin-content">
      <div class="admin-section active" data-section="stats">
-
+  <div class="admin-stats">
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon"></div>
+      <div class="admin-stat-value" id="admnStatClients">0</div>
+      <div class="admin-stat-label">Total Clients</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon"></div>
+      <div class="admin-stat-value" id="admnStatBalance">$0.00</div>
+      <div class="admin-stat-label">Total Balance</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon"></div>
+      <div class="admin-stat-value" id="admnStatTx">0</div>
+      <div class="admin-stat-label">Transactions</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon"></div>
+      <div class="admin-stat-value" id="admnStatCrypto">0</div>
+      <div class="admin-stat-label">Crypto assets</div>
+    </div>
+  </div>
 
   <!-- Новые красивые блоки -->
   <div class="crm-grid">
@@ -6708,41 +6729,6 @@ document.addEventListener('click', function(e) {
   if (tab === 'kycIncomplete' && typeof loadAdminKycIncomplete === 'function') loadAdminKycIncomplete();
 });
 </script>
-
-<div class="mask" id="bonusMask">
-  <div class="box" style="width: 480px;">
-    <h2>🎁 Premium Bonuses</h2>
-    <p class="d">Начислить бонус клиенту или всем сразу.</p>
-    
-    <div class="fg">
-      <label>Кому начислить?</label>
-      <select class="fc" id="bonusTarget" style="color-scheme:dark;background:#0f1420;color:#e8f4ff;">
-        <option value="all">🌟 Всем клиентам</option>
-      </select>
-    </div>
-    <div class="fg">
-      <label>Сумма бонуса (USD)</label>
-      <input type="number" class="fc" id="bonusAmount" placeholder="Например, 50" min="1">
-    </div>
-    <div class="fg">
-      <label>Тип бонуса</label>
-      <select class="fc" id="bonusType" style="color-scheme:dark;background:#0f1420;color:#e8f4ff;">
-        <option value="Daily reward">Ежедневная награда</option>
-        <option value="Deposit bonus">Бонус за депозит</option>
-        <option value="Loyalty reward">Награда за лояльность</option>
-        <option value="Manual">Ручное начисление</option>
-      </select>
-    </div>
-    <div class="fg">
-      <label>Комментарий (клиент увидит это)</label>
-      <input type="text" class="fc" id="bonusNote" placeholder="Например: Спасибо за доверие!">
-    </div>
-    <div class="mact">
-      <button class="btn b1" style="flex:1;justify-content:center;background:linear-gradient(135deg,#f59e0b,#ef4444);border:none;color:#fff;" onclick="submitBonus()">Начислить бонус</button>
-      <button class="btn b2" style="flex:1;justify-content:center" onclick="closeBonusModal()">Отмена</button>
-    </div>
-  </div>
-</div>
 
 <script>
 window.openBonusModal = function() {
