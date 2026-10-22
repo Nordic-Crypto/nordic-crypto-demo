@@ -6128,13 +6128,11 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
-<!-- 🎁 KYC + Card Design — финальные обработчики -->
+<script>
 (function () {
   'use strict';
   if (window.__ncDashLoaded) return;
   window.__ncDashLoaded = true;
-
-  var REFRESH_MS = 45000, last = 0, busy = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -6143,6 +6141,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
   function money(v) { return '$' + Number(v || 0).toFixed(2); }
+  
   function initials(name, email) {
     var p = String(name || email || 'U').replace(/@.*/, '').trim().split(/[\s._-]+/);
     var a = p[0] ? p[0].charAt(0) : 'U';
@@ -6155,12 +6154,16 @@ document.addEventListener('DOMContentLoaded', function(){
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
 
-    sec.innerHTML = ''; // Очищаем старый кривой дизайн
+    // Очищаем старый дизайн
+    sec.innerHTML = ''; 
 
     var box = document.createElement('div');
     box.className = 'crm-grid';
     box.id = 'ncDash';
-    box.innerHTML =
+    
+    // Вставляем HTML (сетку)
+    box.innerHTML = 
+      // 1. Блок Recent clients и Verification queue
       '<div class="crm-grid" style="margin-bottom:14px;">' +
         '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
         '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
@@ -6171,7 +6174,8 @@ document.addEventListener('DOMContentLoaded', function(){
         '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
         '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>' +
       '</div>' +
-              // 👇 НОВЫЙ БЛОК: БОНУСЫ И СТАТИСТИКА (Премиум-дизайн)
+      
+      // 2. Золотая карточка Premium Bonuses
       '<div class="crm-grid" style="margin-bottom:14px;">' +
         '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,.98), rgba(9,14,23,.98)); border:1px solid rgba(255,215,0,.2); position:relative; overflow:hidden;">' +
           '<div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.05;">💎</div>' +
@@ -6181,22 +6185,23 @@ document.addEventListener('DOMContentLoaded', function(){
           '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px;">' +
             '<div style="background:rgba(255,215,0,.05); border:1px solid rgba(255,215,0,.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Total Bonuses</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#ffd700;">$' + (stats && stats.totalBonuses ? stats.totalBonuses : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#ffd700;">$' + (window._ncStats && window._ncStats.totalBonuses ? window._ncStats.totalBonuses : '0') + '</div>' +
             '</div>' +
             
             '<div style="background:rgba(0,212,255,.05); border:1px solid rgba(0,212,255,.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Active Today</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#00d4ff;">' + (stats && stats.dau ? stats.dau : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#00d4ff;">' + (window._ncStats && window._ncStats.dau ? window._ncStats.dau : '0') + '</div>' +
             '</div>' +
             
             '<div style="background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Verified</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#10b981;">' + (stats && stats.totalKyc ? stats.totalKyc : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#10b981;">' + (window._ncStats && window._ncStats.totalKyc ? window._ncStats.totalKyc : '0') + '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
-      
+
+      // 3. Блок Activity
       '<div class="crm-grid">' +
         '<div class="crm-card">' +
           '<div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>' +
@@ -6213,59 +6218,114 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function renderRecent(users, statusByEmail) {
-    var body = $('ncRecentBody'), sub = $('ncRecentSub'), list = users.slice(0), html = '';
+    var body = $('ncRecentBody'), sub = $('ncRecentSub'), html = '';
     if (!body) return;
-    
-    list = list.slice(0, 5);
+    var list = users.slice(0, 5);
     if (sub) sub.textContent = users.length + ' total';
     
     if (!list.length) {
       body.innerHTML = '<tr><td colspan="4" style="padding:22px 18px;color:#8793a8">No clients yet.</td></tr>';
       return;
     }
-    
     for (var i = 0; i < list.length; i++) {
       var u = list[i];
       var st = statusByEmail[String(u.email).toLowerCase()] === 'approved' ? 
         '<span class="pill ok">Verified</span>' : '<span class="pill" style="background:rgba(255,255,255,0.1);color:#94a3b8">Not verified</span>';
-      
       html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(u.name, u.email)) + '</span>' +
         '<div><b>' + esc(u.name || u.email) + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
-        '<td>' + st + '</td>' +
-        '<td>' + money(u.balance) + '</td><td>' + esc(u.lastTx || '—') + '</td></tr>';
+        '<td>' + st + '</td><td>' + money(u.balance) + '</td><td>' + esc(u.lastTx || '—') + '</td></tr>';
+    }
+    body.innerHTML = html;
+  }
+
+  function renderQueue(vers) {
+    var body = $('ncQueueBody'), sub = $('ncQueueSub'), html = '';
+    if (!body) return;
+    var pend = vers.filter(function (x) { return x.status === 'pending'; });
+    if (sub) sub.textContent = pend.length ? pend.length + ' waiting' : 'All clear';
+    if (!pend.length) {
+      body.innerHTML = '<tr><td style="padding:22px 18px;color:#8793a8">Nothing is waiting for review.</td></tr>';
+      return;
+    }
+    for (var i = 0; i < pend.length && i < 5; i++) {
+      var v = pend[i], e = esc(v.email);
+      html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(v.name, v.email)) + '</span>' +
+        '<div><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.docType || 'Document') + '</small></div></div></td>' +
+        '<td><div class="crm-act">' +
+        '<button type="button" class="crm-ib ok" title="Approve" onclick="approveKyc(\'' + e + '\')">✓</button>' +
+        '<button type="button" class="crm-ib bad" title="Reject" onclick="rejectKyc(\'' + e + '\')">✕</button>' +
+        '</div></td></tr>';
     }
     body.innerHTML = html;
   }
 
   function refresh() {
-    if (busy) return;
-    busy = true; last = Date.now();
-    var users = [], vers = [];
-    
-    var base = 'https://nordic-deposit-checker.otis-790.workers.dev'; 
+    var base = 'https://nordic-deposit-checker.otis-790.workers.dev';
     var token = localStorage.getItem('session_token');
     
     fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
-      .then(function(r){ return r.json(); })
-      .then(function(d) { if (d.ok && d.users) users = d.users; })
-      .catch(function(){})
-      .then(function() {
-        fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
-          .then(function(r){ return r.json(); })
-          .then(function(d) { if (d.ok && d.verifications) vers = d.verifications; })
-          .catch(function(){})
-          .then(function() {
-             var map = {};
-             vers.forEach(function(v){ map[String(v.email).toLowerCase()] = v.status; });
-             renderRecent(users, map);
-             busy = false;
-          });
+      .then(function(r) { return r.json(); })
+      .then(function(d) { 
+        if (d.ok && d.users) renderRecent(d.users, {}); 
+      });
+
+    fetch(base + '?action=getStats', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { 
+        if (d.ok && d.stats) {
+          window._ncStats = d.stats; // Сохраняем для золотой карточки
+          var c = $('admnStatClients'), b = $('admnStatBalance'), t = $('admnStatTx');
+          if (c) c.textContent = d.stats.totalClients;
+          if (b) b.textContent = money(d.stats.totalBalance);
+          if (t) t.textContent = d.stats.totalTx;
+        }
+      });
+      
+    fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { 
+        if (d.ok && d.verifications) renderQueue(d.verifications); 
       });
   }
 
-  setTimeout(function() {
-    if (ensure()) refresh();
-  }, 1000);
+  // Запуск
+  setInterval(function() {
+    if ($('adminPanel') && $('adminPanel').classList.contains('on')) {
+      if (ensure()) refresh();
+    }
+  }, 2000);
+  
+  setTimeout(function() { if (ensure()) refresh(); }, 1000);
+
+    // ─── Переключатель темы (Light/Dark) ───
+  var themeBtn = $('themeToggleBtn');
+  var currentTheme = localStorage.getItem('nc_admin_theme') || 'dark';
+  
+  function applyTheme(theme) {
+    var panel = $('adminPanel');
+    if (!panel) return;
+    if (theme === 'light') {
+      panel.setAttribute('data-theme', 'light');
+      panel.style.colorScheme = 'light';
+      if (themeBtn) themeBtn.textContent = '☀️';
+    } else {
+      panel.removeAttribute('data-theme');
+      panel.style.colorScheme = 'dark';
+      if (themeBtn) themeBtn.textContent = '🌙';
+    }
+    localStorage.setItem('nc_admin_theme', theme);
+  }
+  
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(currentTheme);
+    });
+  }
+  applyTheme(currentTheme);
+
+})();
+</script>
     // ─── Переключатель темы (Light/Dark) ───
   var themeBtn = $('themeToggleBtn');
   var currentTheme = localStorage.getItem('nc_admin_theme') || 'dark';
