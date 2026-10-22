@@ -6207,7 +6207,7 @@ document.addEventListener('DOMContentLoaded', function(){
       '<div class="crm-grid" style="margin-bottom:14px;">' +
         '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
 '<div style="display:flex;gap:8px;">' +
-'<button type="button" class="btn b2" onclick="if(window.refreshDashboard) window.refreshDashboard();" style="padding:4px 10px;" title="Обновить">🔄</button>' +
+'<button type="button" class="btn b2" onclick="if(window.refreshDashboard) window.refreshDashboard();" style="padding:4px 10px;" title="Refresh">🔄</button>' +
 '<button type="button" class="btn b2" data-nc-go="clients">View all</button>' +
 '</div></div>' +
         '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
@@ -6350,6 +6350,11 @@ document.addEventListener('DOMContentLoaded', function(){
   window.refreshDashboard = function() {
     if (ensure()) refresh();
   };
+  document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'btnForceRefresh') {
+    if (window.refreshDashboard) window.refreshDashboard();
+  }
+});
 
   // Автообновление каждые 3 секунды
   setInterval(function() {
