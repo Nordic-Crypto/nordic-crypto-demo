@@ -6142,7 +6142,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return (a + b).toUpperCase();
   }
 
-  function ensure() {
+    function ensure() {
     if ($('ncRecentBody') && $('ncQueueBody')) return true;
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
@@ -6154,45 +6154,76 @@ document.addEventListener('DOMContentLoaded', function(){
     box.id = 'ncDash';
     
     box.innerHTML = 
-      '<div class="crm-grid" style="margin-bottom:14px;">' +
-        '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
-        '<div style="display:flex;gap:8px;">' +
-        '<button type="button" class="btn b2" id="btnForceRefresh" style="padding:4px 10px;" title="Refresh">🔄</button>' +
-        '<button type="button" class="btn b2" data-nc-go="clients">View all</button>' +
-        '</div></div>' +
-        '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
-        '<tbody id="ncRecentBody"></tbody></table></div></div>' +
+      // === БЛОК 1: ГЛАВНЫЕ ЦИФРЫ ===
+      '<div class="crm-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:14px;">' +
+        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+          '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Clients</div>' +
+          '<div id="statClientsNew" style="font-size:32px; font-weight:800; color:#47dcff; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
+          '<div style="font-size:12px; color:#10b981; margin-top:4px;">+<span id="statClientsToday">0</span> today · +<span id="statClientsYesterday">0</span> yesterday</div>' +
+        '</div>' +
         
-        '<div class="crm-card"><div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
-        '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
-        '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>' +
+        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+          '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Balance</div>' +
+          '<div id="statBalanceNew" style="font-size:32px; font-weight:800; color:#fff; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
+          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">All clients combined</div>' +
+        '</div>' +
+        
+        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+          '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Total Deposits</div>' +
+          '<div id="statDepositsNew" style="font-size:32px; font-weight:800; color:#10b981; margin-top:8px; font-family:ui-monospace,monospace;">$0</div>' +
+          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">+<span id="statDepositsToday">0</span> today · +<span id="statDepositsYesterday">0</span> yesterday</div>' +
+        '</div>' +
+        
+        '<div class="crm-card" style="padding:20px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(145deg, rgba(16,23,36,0.9), rgba(9,14,23,0.9));">' +
+          '<div style="font-size:11px; color:#8b95a5; text-transform:uppercase; font-weight:700; letter-spacing:1px;">Transactions</div>' +
+          '<div id="statTxNew" style="font-size:32px; font-weight:800; color:#a78bfa; margin-top:8px; font-family:ui-monospace,monospace;">0</div>' +
+          '<div style="font-size:12px; color:#8b95a5; margin-top:4px;">All time</div>' +
+        '</div>' +
       '</div>' +
-      
+
+      // === БЛОК 2: КЛИЕНТЫ, ВЕРИФИКАЦИИ, БОНУСЫ ===
       '<div class="crm-grid" style="margin-bottom:14px;">' +
-        '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,.98), rgba(9,14,23,.98)); border:1px solid rgba(255,215,0,.2); position:relative; overflow:hidden;">' +
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
+          '<div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
+          '<div style="display:flex;gap:8px;">' +
+          '<button type="button" class="btn b2" id="btnForceRefresh" style="padding:4px 10px;" title="Refresh">🔄</button>' +
+          '<button type="button" class="btn b2" data-nc-go="clients">View all</button>' +
+          '</div></div>' +
+          '<div class="crm-tw"><table class="crm-table"><thead><tr><th>Client</th><th>Status</th><th>Balance</th><th>Last tx</th></tr></thead>' +
+          '<tbody id="ncRecentBody"></tbody></table></div>' +
+        '</div>' +
+        
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
+          '<div class="crm-ch"><div><h3>Verification queue</h3><small id="ncQueueSub">Loading…</small></div>' +
+          '<button type="button" class="btn b2" data-nc-go="verifications">Open</button></div>' +
+          '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div>' +
+        '</div>' +
+
+        '<div class="crm-card" style="background:linear-gradient(135deg, rgba(16,23,36,0.98), rgba(9,14,23,0.98)); border:1px solid rgba(255,215,0,0.2); position:relative; overflow:hidden;">' +
           '<div style="position:absolute; top:-20px; right:-20px; font-size:80px; opacity:0.05;">💎</div>' +
           '<div class="crm-ch"><div><h3 style="color:#ffd700;">Premium Bonuses</h3><small>Daily rewards & Loyalty</small></div>' +
           '<button type="button" class="btn b2" style="border-color:#ffd700; color:#ffd700;" onclick="openBonusModal()">Manage</button></div>' +
           
           '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px;">' +
-            '<div style="background:rgba(255,215,0,.05); border:1px solid rgba(255,215,0,.1); border-radius:12px; padding:12px; text-align:center;">' +
+            '<div style="background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Total Bonuses</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#ffd700;">$' + (window._ncStats && window._ncStats.totalBonuses ? window._ncStats.totalBonuses : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#ffd700;" id="bonusTotal">$0</div>' +
             '</div>' +
-            '<div style="background:rgba(0,212,255,.05); border:1px solid rgba(0,212,255,.1); border-radius:12px; padding:12px; text-align:center;">' +
+            '<div style="background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Active Today</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#00d4ff;">' + (window._ncStats && window._ncStats.dau ? window._ncStats.dau : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#00d4ff;" id="bonusActive">0</div>' +
             '</div>' +
-            '<div style="background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.1); border-radius:12px; padding:12px; text-align:center;">' +
+            '<div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.1); border-radius:12px; padding:12px; text-align:center;">' +
               '<div style="font-size:10px; color:#a0aec0; text-transform:uppercase; margin-bottom:4px;">Verified</div>' +
-              '<div style="font-size:20px; font-weight:800; color:#10b981;">' + (window._ncStats && window._ncStats.totalKyc ? window._ncStats.totalKyc : '0') + '</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#10b981;" id="bonusVerified">0</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
 
+      // === БЛОК 3: ACTIVITY FEED ===
       '<div class="crm-grid">' +
-        '<div class="crm-card">' +
+        '<div class="crm-card" style="background:linear-gradient(145deg,rgba(16,23,36,0.98),rgba(9,14,23,0.98)); border:1px solid rgba(255,255,255,0.08);">' +
           '<div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>' +
           '<ul class="crm-feed">' +
             '<li><span class="dot"></span><div>System is running normally<small>Just now</small></div></li>' +
@@ -6248,19 +6279,22 @@ document.addEventListener('DOMContentLoaded', function(){
     body.innerHTML = html;
   }
 
-  function refresh() {
+    function refresh() {
     var base = 'https://nordic-deposit-checker.otis-790.workers.dev';
     var token = localStorage.getItem('session_token');
     
     Promise.all([
       fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); }),
-      fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); })
+      fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); }),
+      fetch(base + '?action=getStats', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); })
     ]).then(function(results) {
       var usersData = results[0];
       var verifsData = results[1];
+      var statsData = results[2];
       
       var users = (usersData && usersData.ok && usersData.users) ? usersData.users : [];
       var vers = (verifsData && verifsData.ok && verifsData.verifications) ? verifsData.verifications : [];
+      var stats = (statsData && statsData.ok && statsData.stats) ? statsData.stats : {};
 
       var statusByEmail = {};
       vers.forEach(function(v) {
@@ -6268,25 +6302,42 @@ document.addEventListener('DOMContentLoaded', function(){
       });
 
       renderRecent(users, statusByEmail); 
-    });
+      renderQueue(vers);
 
-    fetch(base + '?action=getStats', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
-      .then(function(r) { return r.json(); })
-      .then(function(d) { 
-        if (d.ok && d.stats) {
-          window._ncStats = d.stats; 
-          var c = $('admnStatClients'), b = $('admnStatBalance'), t = $('admnStatTx');
-          if (c) c.textContent = d.stats.totalClients;
-          if (b) b.textContent = money(d.stats.totalBalance);
-          if (t) t.textContent = d.stats.totalTx;
-        }
+      // Считаем новые цифры
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      var yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      var clientsToday = 0, clientsYesterday = 0;
+      users.forEach(function(u) {
+        if (!u.createdAt) return;
+        var d = new Date(u.createdAt);
+        if (d >= today) clientsToday++;
+        else if (d >= yesterday && d < today) clientsYesterday++;
       });
+
+      // Заполняем большие карточки
+      var elClients = $('statClientsNew');
+      var elBalance = $('statBalanceNew');
+      var elDeposits = $('statDepositsNew');
+      var elTx = $('statTxNew');
       
-    fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
-      .then(function(r) { return r.json(); })
-      .then(function(d) { 
-        if (d.ok && d.verifications) renderQueue(d.verifications); 
-      });
+      if (elClients) elClients.textContent = stats.totalClients || users.length;
+      if (elBalance) elBalance.textContent = money(stats.totalBalance || 0);
+      if (elDeposits) elDeposits.textContent = money(stats.totalDeposits || 0);
+      if (elTx) elTx.textContent = stats.totalTx || 0;
+
+      if ($('statClientsToday')) $('statClientsToday').textContent = clientsToday;
+      if ($('statClientsYesterday')) $('statClientsYesterday').textContent = clientsYesterday;
+      if ($('statDepositsToday')) $('statDepositsToday').textContent = stats.depositsToday || 0;
+      if ($('statDepositsYesterday')) $('statDepositsYesterday').textContent = stats.depositsYesterday || 0;
+      
+      if ($('bonusTotal')) $('bonusTotal').textContent = '$' + (stats.totalBonuses || 0);
+      if ($('bonusActive')) $('bonusActive').textContent = stats.dau || 0;
+      if ($('bonusVerified')) $('bonusVerified').textContent = stats.totalKyc || 0;
+    });
   }
 
   window.refreshDashboard = function() {
