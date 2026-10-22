@@ -6263,11 +6263,26 @@ document.addEventListener('DOMContentLoaded', function(){
     var base = 'https://nordic-deposit-checker.otis-790.workers.dev';
     var token = localStorage.getItem('session_token');
     
-    fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
-      .then(function(r) { return r.json(); })
-      .then(function(d) { 
-        if (d.ok && d.users) renderRecent(d.users, {}); 
+        // Загружаем юзеров и верификации ПАРАЛЛЕЛЬНО, чтобы склеить статусы
+    Promise.all([
+      fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); }),
+      fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); })
+    ]).then(function(results) {
+      var usersData = results[0];
+      var verifsData = results[1];
+      
+      var users = (usersData && usersData.ok && usersData.users) ? usersData.users : [];
+      var vers = (verifsData && verifsData.ok && verifsData.verifications) ? verifsData.verifications : [];
+
+      // Создаем словарь: email -> статус (approved, pending, rejected)
+      var statusByEmail = {};
+      vers.forEach(function(v) {
+        if (v.email) statusByEmail[v.email.toLowerCase()] = v.status;
       });
+
+      // Передаем реальные статусы в renderRecent!
+      renderRecent(users, statusByEmail); 
+    });
 
     fetch(base + '?action=getStats', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
       .then(function(r) { return r.json(); })
