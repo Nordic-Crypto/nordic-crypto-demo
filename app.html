@@ -6353,9 +6353,8 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
    // Принудительно сбрасываем кэш и обновляем
-  window.refreshDashboard = function() {
+   window.refreshDashboard = function() {
     if (ensure()) {
-      // Добавляем случайный параметр, чтобы браузер не кэшировал
       var oldFetch = window.fetch;
       window.fetch = function() {
         var args = Array.prototype.slice.call(arguments);
@@ -6365,7 +6364,7 @@ document.addEventListener('DOMContentLoaded', function(){
         return oldFetch.apply(this, args);
       };
       refresh();
-      window.fetch = oldFetch; // Возвращаем как было
+      window.fetch = oldFetch;
     }
   };
 
@@ -6379,7 +6378,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if ($('adminPanel') && $('adminPanel').classList.contains('on')) {
       window.refreshDashboard();
     }
-  }, 3000);
+  }, 5000); // <-- Поменяли 3000 на 5000
   
   setTimeout(function() { if (ensure()) refresh(); }, 1000);
 
