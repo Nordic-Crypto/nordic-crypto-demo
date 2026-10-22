@@ -6784,6 +6784,10 @@ window.submitBonus = function() {
     alert('Введите сумму больше 0');
     return;
   }
+  if (target === 'all') {
+    alert('Пока выберите конкретного клиента');
+    return;
+  }
   
   var btn = event.target;
   btn.disabled = true;
@@ -6792,22 +6796,15 @@ window.submitBonus = function() {
   var token = localStorage.getItem('session_token');
   var url = 'https://nordic-deposit-checker.otis-790.workers.dev';
   
-  if (target === 'all') {
-    alert('Массовое начисление требует доработки на бэкенде. Пока выберите конкретного клиента.');
-    btn.disabled = false;
-    btn.textContent = 'Начислить бонус';
-    return;
-  }
-  
-  fetch(url + '?action=adminChangeBalance', {
+  // ИСПОЛЬЗУЕМ СУЩЕСТВУЮЩУЮ КОМАНДУ updateUserBalance
+  fetch(url + '?action=updateUserBalance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       token: token,
-      userEmail: target,
+      email: target,
       amount: Number(amount),
-      type: 'bonus',
-      note: type + (note ? ': ' + note : '')
+      note: 'BONUS: ' + type + (note ? ' - ' + note : '')
     })
   })
   .then(function(r) { return r.json(); })
@@ -6815,8 +6812,7 @@ window.submitBonus = function() {
     if (res.ok) {
       alert('✅ Бонус успешно начислен!');
       closeBonusModal();
-      if (typeof window.loadAdminUsers === 'function') window.loadAdminUsers();
-      if (typeof window.loadAdminWithdrawals === 'function') window.loadAdminWithdrawals();
+      if (window.refreshDashboard) window.refreshDashboard();
     } else {
       alert('Ошибка: ' + (res.error || 'Не удалось начислить бонус'));
     }
