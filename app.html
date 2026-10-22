@@ -4331,6 +4331,12 @@ document.addEventListener('DOMContentLoaded', function(){
           <div><div class="nc3-asset-name">Ethereum <span>ETH</span></div><div class="nc3-asset-amount" id="ethB">0.00000000 ETH</div></div>
           <div class="nc3-asset-value"><strong id="ethPrice">$—</strong><span id="ethChange">—</span></div>
         </div>
+                <div style="grid-column: span 2; margin-top: 12px;">
+          <button class="nc3-action" onclick="openClientBonus()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05)); border: 1px solid rgba(255,215,0,0.3);">
+            <span class="nc3-action-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">🎁</span>
+            <div><b>Premium Bonus</b><small>Claim daily $5 reward</small></div>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -4619,7 +4625,25 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 
+<!-- CLIENT PREMIUM BONUS MODAL -->
+<div class="mask" id="clientBonusMask">
+  <div class="box" style="width: 420px; text-align: center;">
+    <div style="font-size: 50px; margin-bottom: 10px;">🎁</div>
+    <h2 style="color: #ffd700;">Premium Bonus</h2>
+    <p class="d" style="margin-bottom: 20px;">Claim your daily reward to boost your balance!</p>
+    
+    <div style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+      <div style="font-size: 12px; color: #a0aec0; text-transform: uppercase;">Reward</div>
+      <div style="font-size: 24px; font-weight: 800; color: #ffd700;">+$5.00</div>
+      <div style="font-size: 12px; color: #a0aec0; margin-top: 5px;">+10 Loyalty Points</div>
+    </div>
 
+    <div class="mact">
+      <button class="btn b1" style="flex:1; justify-content:center; background:linear-gradient(135deg,#f59e0b,#ef4444); border:none; color:#fff;" onclick="claimClientBonus()">Claim Now</button>
+      <button class="btn b2" style="flex:1; justify-content:center" onclick="document.getElementById('clientBonusMask').classList.remove('on')">Close</button>
+    </div>
+  </div>
+</div>
   <!-- MASK Add/Transfer -->
 <div class="mask" id="mask">
   <div class="box">
@@ -6823,6 +6847,44 @@ window.submitBonus = function() {
   .finally(function() {
     btn.disabled = false;
     btn.textContent = 'Начислить бонус';
+  });
+};
+</script>
+  <script>
+window.openClientBonus = function() {
+  document.getElementById('clientBonusMask').classList.add('on');
+};
+
+window.claimClientBonus = function() {
+  var btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Claiming...';
+  
+  var token = localStorage.getItem('session_token');
+  var url = 'https://nordic-deposit-checker.otis-790.workers.dev';
+  
+  fetch(url + '?action=claimDailyBonus', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.ok) {
+      alert('🎉 You claimed +$5.00! Your new balance is $' + res.usd.toFixed(2));
+      document.getElementById('clientBonusMask').classList.remove('on');
+      if (typeof window.renderAccount === 'function') window.renderAccount();
+      else location.reload();
+    } else {
+      alert('⚠️ ' + (res.error || 'Bonus already claimed today.'));
+    }
+  })
+  .catch(function(err) {
+    alert('Network error: ' + err.message);
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.textContent = 'Claim Now';
   });
 };
 </script>
