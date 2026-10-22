@@ -6889,66 +6889,55 @@ window.claimClientBonus = function() {
 };
 </script>
   <script>
-// 🛡️ ФИКС: Принудительная синхронизация истории транзакций при загрузке
+// 🛡️ ФИКС: Принудительная синхронизация истории транзакций
 document.addEventListener('DOMContentLoaded', function() {
-  // Ждем 1 секунду, чтобы основные скрипты загрузились
   setTimeout(function() {
     var token = localStorage.getItem('session_token');
-    if (!token) return; // Если не залогинен, пропускаем
+    if (!token) return;
     
     var url = 'https://nordic-deposit-checker.otis-790.workers.dev';
     
-    // Запрашиваем свежий стейт с сервера
     fetch(url + '?action=getUserState', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: token })
     })
     .then(function(r) { return r.json(); })
-    .then(function(serverState) {
-      if (!serverState || !serverState.ok) {
-         // Если сервер вернул просто стейт без ok (как в твоем воркере), проверяем его
-         if (serverState && serverState.usd !== undefined) {
-             applyServerState(serverState);
-         }
-         return;
-      }
-      // Если формат {ok: true, state: {...}}
-      if (serverState.state) {
-         applyServerState(serverState.state);
+    .then(function(data) {
+      // Сервер может вернуть данные напрямую или внутри data.state
+      var st = data.state || data;
+      
+      if (st && st.txs && st.txs.length > 0) {
+        // Ищем контейнер для транзакций
+        var list = document.getElementById('recentTxList');
+        if (list) {
+          var html = '';
+          // Берем последние 5 транзакций
+          st.txs.slice(0, 5).forEach(function(tx) {
+             var isPlus = tx.amt > 0;
+             var iconClass = isPlus ? 'deposit' : 'withdrawal';
+             var iconSymbol = isPlus ? '↓' : '↑';
+             var amountClass = isPlus ? 'plus' : 'minus';
+             var amountText = (isPlus ? '+' : '') + Number(tx.amt).toFixed(2) + ' USD';
+             
+             html += 
+               '<div class="recent-tx-item">' +
+                 '<div class="recent-tx-icon ' + iconClass + '">' + iconSymbol + '</div>' +
+                 '<div class="recent-tx-info">' +
+                   '<div class="recent-tx-desc">' + (tx.desc || 'Transaction') + '</div>' +
+                   '<div class="recent-tx-time">' + (tx.date || new Date().toLocaleDateString()) + '</div>' +
+                 '</div>' +
+                 '<div class="recent-tx-amount ' + amountClass + '">' +
+                   amountText +
+                 '</div>' +
+               '</div>';
+          });
+          list.innerHTML = html;
+        }
       }
     })
     .catch(function(e) { console.warn('Sync error:', e); });
-
-    function applyServerState(st) {
-      // Проверяем, есть ли транзакции на сервере
-      if (st.txs && st.txs.length > 0) {
-        // Если на фронтенде функция renderTxList существует, вызываем её
-        if (typeof window.renderTxList === 'function') {
-           window.renderTxList(st.txs);
-        } else {
-           // Если функции нет, просто перерисовываем блок вручную
-           var list = document.getElementById('recentTxList');
-           if (list) {
-              var html = '';
-              st.txs.slice(0, 5).forEach(function(tx) {
-                 html += '<div class="recent-tx-item">' +
-                   '<div class="recent-tx-icon ' + (tx.amt > 0 ? 'deposit' : 'withdrawal') + '">' + (tx.amt > 0 ? '↓' : '↑') + '</div>' +
-                   '<div class="recent-tx-info">' +
-                     '<div class="recent-tx-desc">' + tx.desc + '</div>' +
-                     '<div class="recent-tx-time">' + tx.date + '</div>' +
-                   '</div>' +
-                   '<div class="recent-tx-amount ' + (tx.amt > 0 ? 'plus' : 'minus') + '">' +
-                     (tx.amt > 0 ? '+' : '') + tx.amt + ' USD' +
-                   '</div>' +
-                 '</div>';
-              });
-              list.innerHTML = html;
-           }
-        }
-      }
-    }
-  }, 1500); // Задержка 1.5 секунды, чтобы основной скрипт успел отрисовать интерфейс
+  }, 2000); // Ждем 2 секунды, чтобы всё остальное загрузилось
 });
 </script>
   
