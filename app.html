@@ -6129,280 +6129,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 <!-- 🎁 KYC + Card Design — финальные обработчики -->
-<script>
-(function () {
-  "use strict";
-  function $(id) { return document.getElementById(id); }
-  function fire(el) {
-    var ev = document.createEvent('Event'); ev.initEvent('change', true, true); el.dispatchEvent(ev);
-  }
-
-  var SLOTS = [
-    ['docUpload', 'docFile', 'docThumb', 'docUploaded', 'docFileName', 'docFileSize'],
-    ['docUploadBack', 'docFileBack', 'docThumbBack', 'docUploadedBack', 'docFileNameBack', 'docFileSizeBack'],
-    ['selfieUpload', 'selfieFile', 'selfieThumb', 'selfieUploaded', 'selfieFileName', 'selfieFileSize']
-  ];
-  var slotsEl = $('docSlots'), next1 = $('verifyNext1');
-
-  function file(id) { var e = $(id); return e && e.files && e.files[0] ? e.files[0] : null; }
-  function curType() { var b = document.querySelector('.vtype-btn.on'); return b ? b.getAttribute('data-type') : 'Passport'; }
-  
-  function docs() {
-    var sides = slotsEl && slotsEl.getAttribute('data-sides') === '1' ? 1 : 2;
-    var front = file('docFile'), back = sides === 2 ? file('docFileBack') : null;
-    return { type: curType(), sides: sides, front: front, back: back, ok: !!front && (sides === 1 || !!back) };
-  }
-  function refresh() { if (next1) next1.disabled = !docs().ok; }
-  
-  function applyType() {
-    if (!slotsEl) return;
-    var one = curType() === 'Passport';
-    slotsEl.setAttribute('data-sides', one ? '1' : '2');
-    var cap = $('capFront');
-    if (cap) cap.textContent = one ? 'Photo page' : 'Front side';
-    refresh();
-  }
-  function showThumb(t, f) {
-    if (!t || !f) return;
-    var fail = function () { t.onerror = null; t.hidden = true; };
-    var tryBlob = function () {
-      if (window.URL && URL.createObjectURL) {
-        t.onerror = fail; t.src = URL.createObjectURL(f); t.hidden = false;
-      } else { fail(); }
-    };
-    if (window.FileReader) {
-      var fr = new FileReader();
-      fr.onload = function () { t.onerror = tryBlob; t.src = fr.result; t.hidden = false; };
-      fr.onerror = tryBlob; fr.readAsDataURL(f);
-    } else { tryBlob(); }
-  }
-  function bindUpload(a) {
-    var z = $(a[0]), i = $(a[1]);
-    if (!z || !i) return;
-    ['dragenter', 'dragover'].forEach(function (t) { z.addEventListener(t, function (e) { e.preventDefault(); z.classList.add('drag'); }); });
-    ['dragleave', 'drop'].forEach(function (t) { z.addEventListener(t, function (e) { e.preventDefault(); z.classList.remove('drag'); }); });
-    z.addEventListener('drop', function (e) {
-      var f = e.dataTransfer && e.dataTransfer.files;
-      if (f && f.length) { try { i.files = f; } catch (x) { return; } fire(i); }
-    });
-    i.addEventListener('change', function () {
-      var f = i.files && i.files[0], t = $(a[2]); showThumb(t, f);
-      if (f) {
-        if ($(a[3])) $(a[3]).style.display = 'flex';
-        if ($(a[4])) $(a[4]).textContent = f.name;
-        if ($(a[5])) $(a[5]).textContent = Math.max(1, Math.round(f.size / 1024)) + ' KB';
-      }
-      z.classList.toggle('has', !!f); refresh();
-    });
-  }
-
-  SLOTS.forEach(bindUpload);
-  [].forEach.call(document.querySelectorAll('.vtype-btn'), function (b) {
-    b.addEventListener('click', function () {
-      [].forEach.call(document.querySelectorAll('.vtype-btn'), function (x) { x.classList.toggle('on', x === b); });
-      setTimeout(applyType, 0);
-    });
-  });
-  if (window.MutationObserver && next1) {
-    new MutationObserver(function () {
-      var want = !docs().ok;
-      if (next1.disabled !== want) next1.disabled = want;
-    }).observe(next1, { attributes: true, attributeFilter: ['disabled'] });
-  }
-  applyType();
-  window.NCVerify = { getDocs: docs };
-
-  /* Модалка дизайна карты */
-  var opts = document.querySelectorAll('#designPickerModal .design-opt');
-  var live = $('designLive'), nameEl = $('designName');
-  function pick(b) {
-    if (!b) return;
-    [].forEach.call(opts, function (o) { var on = o === b; o.classList.toggle('sel', on); o.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    if (live) live.className = 'design-preview ' + b.getAttribute('data-design');
-    var sp = b.querySelector('span'); if (nameEl && sp) nameEl.textContent = sp.textContent;
-  }
-  [].forEach.call(opts, function (b) { b.addEventListener('click', function () { pick(b); }); });
-  
-  var currentDesign = 'cosmic';
-  window.NCDesign = {
-    open: function () { var m = $('designMask'); if (m) m.classList.add('on'); },
-    close: function () { var m = $('designMask'); if (m) m.classList.remove('on'); },
-    get: function () { return currentDesign; }
-  };
-  var save = $('designSave'), cancel = $('designCancel');
-  if (save) save.addEventListener('click', function () {
-    var sel = document.querySelector('#designPickerModal .design-opt.sel');
-    if (sel) currentDesign = sel.getAttribute('data-design');
-    window.NCDesign.close();
-  });
-  if (cancel) cancel.addEventListener('click', function () { window.NCDesign.close(); });
-
-  /* Logout и Check Status для pending / rejected экранов */
-  function wireLogout(id) {
-    var btn = $(id); if (!btn) return;
-    btn.addEventListener('click', function () {
-      try {
-        var tk = localStorage.getItem('session_token') || '';
-        ['session_token','user_email','user_name','session_expires','nc_current_user'].forEach(function (k) { localStorage.removeItem(k); });
-        if (tk && typeof fetch === 'function') {
-          var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL : 'https://nordiccrypto.workers.dev';
-          fetch(W + '?action=logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tk }) }).catch(function () {});
-        }
-      } catch (e) {}
-      window.location.replace('index.html');
-    });
-  }
-  wireLogout('btnLogoutPending'); wireLogout('btnLogoutRejected');
-  var checkBtn = $('btnCheckKycStatus');
-  if (checkBtn) checkBtn.addEventListener('click', function () {
-    if (typeof window.checkKycStatus === 'function') window.checkKycStatus(); else window.location.reload();
-  });
-
-  /* Регистрация — переключатель Banking / Exchange и пароли */
-  var picker = $('suTypePicker');
-  if (picker) {
-    picker.querySelectorAll('.type-opt').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        picker.querySelectorAll('.type-opt').forEach(function (b) { b.classList.remove('on'); });
-        btn.classList.add('on');
-        window.__ncSignupAccountType = btn.getAttribute('data-type') || 'banking';
-      });
-    });
-    window.__ncSignupAccountType = 'banking';
-  }
-  function wireToggle(btnId, inputId) {
-    var btn = $(btnId), inp = $(inputId); if (!btn || !inp) return;
-    btn.addEventListener('click', function () {
-      inp.type = inp.type === 'password' ? 'text' : 'password';
-      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
-    });
-  }
-  wireToggle('suPassToggle', 'suPassword'); wireToggle('suConfirmToggle', 'suConfirm');
-  
-  var suClose = $('suClose');
-  if (suClose) suClose.addEventListener('click', function () {
-    var m = $('signupMask'); if (m) { m.classList.remove('on'); m.style.display = 'none'; }
-  });
-    /* ═══════════ 🛡️ ЖЕСТКИЙ ФИКС ДЛЯ KYC PENDING ═══════════ */
-  
-  var _kycPollTimer = null;
-
-  // 1. Функция, которая делает запрос и переключает экраны
-  async function forceCheckKycStatus() {
-    var token = localStorage.getItem('session_token') || '';
-    if (!token) return;
-    
-    var btn = document.getElementById('btnCheckKycStatus');
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = '⏳ Checking...';
-    }
-
-    try {
-      // Делаем запрос к вашему воркеру (замените URL, если он другой)
-      var W = (typeof WORKER_URL !== 'undefined') ? WORKER_URL : 'https://nordiccrypto.workers.dev';
-      
-      // Пытаемся вызвать вашу функцию из app.legacy.js, если она есть
-      var resData = null;
-      if (typeof window.checkVerificationStatus === 'function') {
-        resData = await window.checkVerificationStatus();
-      } else {
-        // Если функции нет — делаем сырой запрос
-        var res = await fetch(W + '?action=kyc_status', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        resData = await res.json();
-      }
-
-      console.log('KYC Status Response:', resData);
-
-      // Если сервер ответил, что статус approved
-      if (resData && (resData.status === 'approved' || resData.kyc_status === 'approved')) {
-        if (btn) btn.textContent = '✅ Approved! Loading...';
-        
-        // Прячем Pending
-        var p = document.getElementById('pendingScreen');
-        if (p) {
-          p.classList.remove('on');
-          p.style.display = 'none';
-        }
-        
-        // Показываем Main и Sidebar
-        var mainApp = document.getElementById('mainApp');
-        var sideBar = document.getElementById('sideBar');
-        if (mainApp) mainApp.style.display = 'flex';
-        if (sideBar) sideBar.style.display = 'flex';
-        
-        // Вызываем render из app.legacy.js, чтобы обновить баланс и карту
-        if (typeof window.render === 'function') {
-          window.render();
-        } else {
-          // Если рендера нет — просто перезагружаем страницу
-          // (при перезагрузке app.legacy.js сам проверит статус и пустит в кабинет)
-          window.location.reload();
-        }
-        return;
-      }
-      
-      // Если статус rejected
-      if (resData && (resData.status === 'rejected' || resData.kyc_status === 'rejected')) {
-        if (btn) btn.textContent = '❌ Rejected';
-        var p = document.getElementById('pendingScreen');
-        if (p) p.classList.remove('on');
-        var r = document.getElementById('rejectedScreen');
-        if (r) r.classList.add('on');
-        return;
-      }
-
-      // Если все еще pending
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '🔄 Check status';
-      }
-      
-    } catch (e) {
-      console.error('KYC check error:', e);
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '🔄 Check status';
-      }
-    }
-  }
-
-  // 2. Привязываем кнопку "Check status"
-  var realCheckBtn = document.getElementById('btnCheckKycStatus');
-  if (realCheckBtn) {
-    // Удаляем старые обработчики (чтобы не было конфликтов)
-    var newBtn = realCheckBtn.cloneNode(true);
-    realCheckBtn.parentNode.replaceChild(newBtn, realCheckBtn);
-    
-    newBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      forceCheckKycStatus();
-    });
-  }
-
-  // 3. Авто-проверка каждые 5 секунд, пока открыт Pending
-  function startKycPolling() {
-    if (_kycPollTimer) clearInterval(_kycPollTimer);
-    
-    _kycPollTimer = setInterval(function() {
-      var pendingScreen = document.getElementById('pendingScreen');
-      // Если мы на экране pending и он видим
-      if (pendingScreen && (pendingScreen.classList.contains('on') || pendingScreen.style.display === 'flex')) {
-        console.log('🔄 Auto-checking KYC...');
-        forceCheckKycStatus();
-      } else {
-        clearInterval(_kycPollTimer);
-      }
-    }, 5000); // 5 секунд
-  }
-
-  // Запускаем таймер
-  startKycPolling();
-})();
-</script>
-<script>
 (function () {
   'use strict';
   if (window.__ncDashLoaded) return;
@@ -6416,64 +6142,25 @@ document.addEventListener('DOMContentLoaded', function(){
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function money(v) {
-    try { if (typeof fmtCurrency === 'function') return fmtCurrency(v || 0); } catch (e) {}
-    return '$' + Number(v || 0).toFixed(2);
-  }
+  function money(v) { return '$' + Number(v || 0).toFixed(2); }
   function initials(name, email) {
     var p = String(name || email || 'U').replace(/@.*/, '').trim().split(/[\s._-]+/);
     var a = p[0] ? p[0].charAt(0) : 'U';
     var b = p[1] ? p[1].charAt(0) : (p[0] && p[0].length > 1 ? p[0].charAt(1) : '');
     return (a + b).toUpperCase();
   }
-  function ago(ts) {
-    var d = Date.now() - Number(ts || 0), m;
-    if (!ts || d < 0) return '—';
-    m = Math.floor(d / 60000);
-    if (m < 1) return 'just now';
-    if (m < 60) return m + ' min ago';
-    if (m < 1440) return Math.floor(m / 60) + ' h ago';
-    return Math.floor(m / 1440) + ' d ago';
-  }
-  function created(u) {
-    var v = u.createdAt || u.created || u.registeredAt, n = Number(v), d;
-    if (!isNaN(n) && n > 0) return n;
-    d = Date.parse(v);
-    return isNaN(d) ? 0 : d;
-  }
-  function pill(s) {
-    if (s === 'approved') return '<span class="pill ok">Verified</span>';
-    if (s === 'pending') return '<span class="pill wait">In review</span>';
-    if (s === 'rejected') return '<span class="pill bad">Rejected</span>';
-    return '<span class="pill" style="background:rgba(148,163,184,.16);color:#94a3b8">Not verified</span>';
-  }
-  function panelOpen() { var p = $('adminPanel'); return !!p && p.classList.contains('on'); }
-
-  function api(action) {
-    var base = 'https://nordic-deposit-checker.otis-790.workers.dev'; 
-    var token = localStorage.getItem('session_token');
-    if (!token) return Promise.reject(new Error('no session'));
-    
-    return fetch(base + '?action=' + action, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token })
-    }).then(function (r) { return r.json(); });
-  }
 
   function ensure() {
     if ($('ncRecentBody') && $('ncQueueBody')) return true;
     var sec = document.querySelector('[data-section="stats"]');
     if (!sec) return false;
-    
-    // Удаляем старые блоки макета, чтобы не было дублей
-    var old = sec.querySelectorAll('.crm-grid');
-    old.forEach(function(b) { if (!b.id || b.id !== 'ncDash') b.remove(); });
+
+    sec.innerHTML = ''; // Очищаем старый кривой дизайн
 
     var box = document.createElement('div');
     box.className = 'crm-grid';
     box.id = 'ncDash';
-        box.innerHTML =
+    box.innerHTML =
       '<div class="crm-grid" style="margin-bottom:14px;">' +
         '<div class="crm-card"><div class="crm-ch"><div><h3>Recent clients</h3><small id="ncRecentSub">Loading…</small></div>' +
         '<button type="button" class="btn b2" data-nc-go="clients">View all</button></div>' +
@@ -6485,7 +6172,6 @@ document.addEventListener('DOMContentLoaded', function(){
         '<div class="crm-tw"><table class="crm-table"><tbody id="ncQueueBody"></tbody></table></div></div>' +
       '</div>' +
       
-      // 👇 ЭТОТ БЛОК ДОБАВЛЯЕТ ACTIVITY ВНИЗ
       '<div class="crm-grid">' +
         '<div class="crm-card">' +
           '<div class="crm-ch"><div><h3>Activity</h3><small>Latest events</small></div></div>' +
@@ -6502,111 +6188,59 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function renderRecent(users, statusByEmail) {
-    var body = $('ncRecentBody'), sub = $('ncRecentSub'), list = users.slice(0), html = '', i, u, hasDate = false;
+    var body = $('ncRecentBody'), sub = $('ncRecentSub'), list = users.slice(0), html = '';
     if (!body) return;
-    for (i = 0; i < list.length; i++) { if (created(list[i]) > 0) { hasDate = true; break; } }
-    if (hasDate) list.sort(function (a, b) { return created(b) - created(a); });
+    
     list = list.slice(0, 5);
     if (sub) sub.textContent = users.length + ' total';
+    
     if (!list.length) {
-      body.innerHTML = '<tr><td colspan="4" style="padding:22px 18px;color:var(--c-mute,#8793a8)">No clients yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="4" style="padding:22px 18px;color:#8793a8">No clients yet.</td></tr>';
       return;
     }
-    for (i = 0; i < list.length; i++) {
-      u = list[i];
+    
+    for (var i = 0; i < list.length; i++) {
+      var u = list[i];
+      var st = statusByEmail[String(u.email).toLowerCase()] === 'approved' ? 
+        '<span class="pill ok">Verified</span>' : '<span class="pill" style="background:rgba(255,255,255,0.1);color:#94a3b8">Not verified</span>';
+      
       html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(u.name, u.email)) + '</span>' +
         '<div><b>' + esc(u.name || u.email) + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
-        '<td>' + pill(statusByEmail[String(u.email).toLowerCase()]) + '</td>' +
+        '<td>' + st + '</td>' +
         '<td>' + money(u.balance) + '</td><td>' + esc(u.lastTx || '—') + '</td></tr>';
     }
     body.innerHTML = html;
   }
 
-  function renderQueue(vers) {
-    var body = $('ncQueueBody'), sub = $('ncQueueSub'), html = '', i, v, e;
-    var pend = vers.filter(function (x) { return x.status === 'pending'; })
-      .sort(function (a, b) { return (a.submittedAt || 0) - (b.submittedAt || 0); });
-    if (!body) return;
-    if (sub) sub.textContent = pend.length ? pend.length + ' waiting' : 'All clear';
-    if (!pend.length) {
-      body.innerHTML = '<tr><td style="padding:22px 18px;color:var(--c-mute,#8793a8)">Nothing is waiting for review.</td></tr>';
-      return;
-    }
-    for (i = 0; i < pend.length && i < 5; i++) {
-      v = pend[i]; e = esc(v.email);
-      html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(v.name, v.email)) + '</span>' +
-        '<div><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.docType || 'Document') + ' · ' + ago(v.submittedAt) + '</small></div></div></td>' +
-        '<td><div class="crm-act">' +
-        '<button type="button" class="crm-ib" title="View documents" data-nc-act="docs" data-email="' + e + '">👁</button>' +
-        '<button type="button" class="crm-ib ok" title="Approve" data-nc-act="approve" data-email="' + e + '">✓</button>' +
-        '<button type="button" class="crm-ib bad" title="Reject" data-nc-act="reject" data-email="' + e + '">✕</button>' +
-        '</div></td></tr>';
-    }
-    body.innerHTML = html;
-  }
-
-  function renderKpi(users, stats) {
-    var c = $('admnStatClients'), b = $('admnStatBalance'), t = $('admnStatTx'), i, bal = 0, tx = 0, n = users.length;
-    if (stats) { n = stats.totalClients; bal = stats.totalBalance; tx = stats.totalTx; }
-    else {
-      for (i = 0; i < users.length; i++) { bal += Number(users[i].balance) || 0; tx += Number(users[i].txCount) || 0; }
-    }
-    if (c && n != null) c.textContent = n;
-    if (b) b.textContent = money(bal);
-    if (t && tx != null) t.textContent = tx;
-  }
-
   function refresh() {
     if (busy) return;
     busy = true; last = Date.now();
-    var users = null, vers = [], stats = null;
-    var pu = api('listUsers').then(function (d) { if (d && d.ok && d.users) users = d.users; }).catch(function () {});
-    var pv = api('listVerifications').then(function (d) { if (d && d.ok && d.verifications) vers = d.verifications; }).catch(function () {});
-    var ps = api('getStats').then(function (d) { if (d && d.ok && d.stats) stats = d.stats; }).catch(function () {});
-    Promise.all([pu, pv, ps]).then(function () {
-      try {
-        var map = {}, i;
-        if (!users) users = [];
-        for (i = 0; i < vers.length; i++) map[String(vers[i].email).toLowerCase()] = vers[i].status;
-        renderRecent(users, map);
-        renderQueue(vers);
-        renderKpi(users, stats);
-      } catch (e) { console.warn('[NC dash] render failed:', e); }
-      busy = false;
-    });
+    var users = [], vers = [];
+    
+    var base = 'https://nordic-deposit-checker.otis-790.workers.dev'; 
+    var token = localStorage.getItem('session_token');
+    
+    fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
+      .then(function(r){ return r.json(); })
+      .then(function(d) { if (d.ok && d.users) users = d.users; })
+      .catch(function(){})
+      .then(function() {
+        fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) })
+          .then(function(r){ return r.json(); })
+          .then(function(d) { if (d.ok && d.verifications) vers = d.verifications; })
+          .catch(function(){})
+          .then(function() {
+             var map = {};
+             vers.forEach(function(v){ map[String(v.email).toLowerCase()] = v.status; });
+             renderRecent(users, map);
+             busy = false;
+          });
+      });
   }
-
-  document.addEventListener('click', function (ev) {
-    try {
-      var t = ev.target, a, n, go, act, email, fn;
-      if (!t || !t.closest) return;
-      n = t.closest('.admin-nav-item');
-      if (n && n.getAttribute('data-tab') === 'stats' && Date.now() - last > 5000) setTimeout(refresh, 300);
-      a = t.closest('[data-nc-act],[data-nc-go]');
-      if (!a) return;
-      go = a.getAttribute('data-nc-go');
-      if (go) { if (typeof showAdminTab === 'function') showAdminTab(go); return; }
-      act = a.getAttribute('data-nc-act');
-      email = a.getAttribute('data-email');
-      fn = { docs: 'viewKycDocs', approve: 'approveKyc', reject: 'rejectKyc' }[act];
-      if (fn && typeof window[fn] === 'function') {
-        window[fn](email);
-        setTimeout(refresh, 1500);
-        setTimeout(refresh, 4000);
-      }
-    } catch (e) { console.warn('[NC dash] click failed:', e); }
-  });
-
-  setInterval(function () {
-    try {
-      if (panelOpen() && Date.now() - last > REFRESH_MS && ensure()) refresh();
-    } catch (e) { console.warn('[NC dash] tick failed:', e); }
-  }, 2000);
 
   setTimeout(function() {
     if (ensure()) refresh();
   }, 1000);
-
     // ─── Переключатель темы (Light/Dark) ───
   var themeBtn = $('themeToggleBtn');
   var currentTheme = localStorage.getItem('nc_admin_theme') || 'dark';
