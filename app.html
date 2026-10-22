@@ -6290,10 +6290,13 @@ document.addEventListener('DOMContentLoaded', function(){
     body.innerHTML = html;
   }
 
-    function refresh() {
+      function refresh() {
     var base = 'https://nordic-deposit-checker.otis-790.workers.dev';
     var token = localStorage.getItem('session_token');
     
+    // Принудительно перерисовываем каркас, если его нет
+    ensure();
+
     Promise.all([
       fetch(base + '?action=listUsers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); }),
       fetch(base + '?action=listVerifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: token}) }).then(function(r) { return r.json(); }),
@@ -6312,10 +6315,11 @@ document.addEventListener('DOMContentLoaded', function(){
         if (v.email) statusByEmail[v.email.toLowerCase()] = v.status;
       });
 
+      // Рендерим таблицы
       renderRecent(users, statusByEmail); 
       renderQueue(vers);
 
-      // Считаем новые цифры
+      // Считаем даты для статистики
       var today = new Date();
       today.setHours(0,0,0,0);
       var yesterday = new Date(today);
@@ -6330,15 +6334,10 @@ document.addEventListener('DOMContentLoaded', function(){
       });
 
       // Заполняем большие карточки
-      var elClients = $('statClientsNew');
-      var elBalance = $('statBalanceNew');
-      var elDeposits = $('statDepositsNew');
-      var elTx = $('statTxNew');
-      
-      if (elClients) elClients.textContent = stats.totalClients || users.length;
-      if (elBalance) elBalance.textContent = money(stats.totalBalance || 0);
-      if (elDeposits) elDeposits.textContent = money(stats.totalDeposits || 0);
-      if (elTx) elTx.textContent = stats.totalTx || 0;
+      if ($('statClientsNew')) $('statClientsNew').textContent = stats.totalClients || users.length;
+      if ($('statBalanceNew')) $('statBalanceNew').textContent = money(stats.totalBalance || 0);
+      if ($('statDepositsNew')) $('statDepositsNew').textContent = money(stats.totalDeposits || 0);
+      if ($('statTxNew')) $('statTxNew').textContent = stats.totalTx || 0;
 
       if ($('statClientsToday')) $('statClientsToday').textContent = clientsToday;
       if ($('statClientsYesterday')) $('statClientsYesterday').textContent = clientsYesterday;
@@ -6348,11 +6347,26 @@ document.addEventListener('DOMContentLoaded', function(){
       if ($('bonusTotal')) $('bonusTotal').textContent = '$' + (stats.totalBonuses || 0);
       if ($('bonusActive')) $('bonusActive').textContent = stats.dau || 0;
       if ($('bonusVerified')) $('bonusVerified').textContent = stats.totalKyc || 0;
+    }).catch(function(err) {
+      console.error('Refresh error:', err);
     });
   }
 
+   // Принудительно сбрасываем кэш и обновляем
   window.refreshDashboard = function() {
-    if (ensure()) refresh();
+    if (ensure()) {
+      // Добавляем случайный параметр, чтобы браузер не кэшировал
+      var oldFetch = window.fetch;
+      window.fetch = function() {
+        var args = Array.prototype.slice.call(arguments);
+        if (typeof args[0] === 'string' && args[0].indexOf('nordic-deposit-checker') > -1) {
+          args[0] += (args[0].indexOf('?') > -1 ? '&' : '?') + '_t=' + Date.now();
+        }
+        return oldFetch.apply(this, args);
+      };
+      refresh();
+      window.fetch = oldFetch; // Возвращаем как было
+    }
   };
 
   document.addEventListener('click', function(e) {
