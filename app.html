@@ -4165,6 +4165,12 @@ body:not(.has-order) .progress-steps {
 #verifyScreen .slot.has::before {
   display: none !important;
 }
+  /* Фикс для дашборда */
+.nc-dashboard-wrapper .crm-table { width: 100%; border-collapse: collapse; }
+.nc-dashboard-wrapper .crm-table th { text-align: left; padding: 12px 16px; font-size: 11px; color: #8b95a5; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.nc-dashboard-wrapper .crm-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
+.nc-dashboard-wrapper .crm-card::-webkit-scrollbar { width: 6px; height: 6px; }
+.nc-dashboard-wrapper .crm-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
