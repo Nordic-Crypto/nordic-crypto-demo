@@ -3217,7 +3217,32 @@ function initEvents() {
   if (btnReceiveHero && btnCopyIban) btnReceiveHero.onclick = function () { btnCopyIban.click(); };
   var btnReceiveMoney = document.getElementById('btnReceiveMoney');
   if (btnReceiveMoney && btnCopyIban) btnReceiveMoney.onclick = function () { btnCopyIban.click(); };
-
+  var btnRefresh = document.getElementById('btnRefreshBalance');
+  if (btnRefresh) {
+    btnRefresh.onclick = function () {
+      var oldHtml = btnRefresh.innerHTML;
+      // Показываем, что идет загрузка (крутим иконку)
+      btnRefresh.style.pointerEvents = 'none';
+      btnRefresh.style.opacity = '0.6';
+      btnRefresh.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: loginSpin 1s linear infinite;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
+      
+      // Принудительно обновляем данные
+      refreshBalanceFromServer();
+      
+      // Если открыта панель админа и мы смотрим клиента
+      if (typeof loadAdminUsers === 'function' && window.adminViewingEmail) {
+        loadAdminUsers();
+      }
+      
+      // Через 1 секунду возвращаем кнопку в исходное состояние
+      setTimeout(function() {
+        btnRefresh.style.pointerEvents = 'auto';
+        btnRefresh.style.opacity = '1';
+        btnRefresh.innerHTML = oldHtml;
+        if (typeof toast === 'function') toast('Data updated');
+      }, 1000);
+    };
+  }
   var btnOrder = document.getElementById('btnOrder');
   if (btnOrder) btnOrder.onclick = placeOrder;
 }
