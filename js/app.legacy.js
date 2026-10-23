@@ -2627,27 +2627,51 @@ function refreshDest() {
   var swift = $('mTransferSwift'); if (swift) swift.style.display = 'none';
   var card = $('mTransferCard'); if (card) card.style.display = 'none';
 
-  if (isAdd) {
+    if (isAdd) {
     if (hint.show) {
       if (mDestWrap) mDestWrap.style.display = 'block';
-      var destEl = $('mDest');
+      
+      var destEl = $('mDest'); // скрытое поле
       var labelEl = $('mDestLabel');
-      if (destEl) { destEl.value = ''; destEl.readOnly = false; }
+      var destText = $('mDestText');
+      var destNet = $('mDestNetwork');
+      var qrWrap = $('mQrWrap');
+      var qrCode = $('mQrCode');
+
+      var addr = '';
+      var networkName = '';
 
       if (m === 'Bitcoin (BTC)') {
-        var btcAddr = getDepositWallet('BTC');
-        if (labelEl) labelEl.textContent = btcAddr ? 'Send BTC to this address' : 'Recipient BTC Address';
-        if (destEl) {
-          if (btcAddr) { destEl.value = btcAddr; destEl.readOnly = true; }
-          else { destEl.placeholder = 'bc1q...'; }
-        }
+        addr = getDepositWallet('BTC');
+        networkName = 'Bitcoin (BTC)';
+        if (labelEl) labelEl.textContent = 'Send BTC to this address';
       } else if (m === 'Ethereum (ETH)') {
-        var ethAddr = getDepositWallet('ETH');
-        if (labelEl) labelEl.textContent = ethAddr ? 'Send ETH to this address' : 'Recipient ETH Address';
-        if (destEl) {
-          if (ethAddr) { destEl.value = ethAddr; destEl.readOnly = true; }
-          else { destEl.placeholder = '0x...'; }
+        addr = getDepositWallet('ETH');
+        networkName = 'Ethereum (ERC-20)';
+        if (labelEl) labelEl.textContent = 'Send ETH to this address';
+      }
+
+      // Заполняем текст адреса
+      if (destText) destText.textContent = addr || 'Address not set';
+      if (destEl) destEl.value = addr || '';
+      if (destNet) destNet.textContent = networkName;
+
+      // Генерируем QR
+      if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
+        qrWrap.style.display = 'flex';
+        if (!window._mQrInstance) {
+          window._mQrInstance = new QRious({
+            element: qrCode,
+            value: addr,
+            size: 110,
+            background: 'white',
+            foreground: 'black'
+          });
+        } else {
+          window._mQrInstance.value = addr;
         }
+      } else {
+        if (qrWrap) qrWrap.style.display = 'none';
       }
     }
     return;
