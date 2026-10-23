@@ -1348,7 +1348,7 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
     if (typeof window.__ncPollingHub !== 'undefined') {
       console.log('[deposit-flow] polling delegated to polling-hub');
     } else {
-      setInterval(syncPendingDeposits, 30000);
+      // setInterval(syncPendingDeposits, 30000);
     }
 
     document.addEventListener('visibilitychange', function () {
