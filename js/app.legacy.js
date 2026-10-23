@@ -2657,19 +2657,24 @@ function refreshDest() {
       if (destNet) destNet.textContent = networkName;
 
       // Генерируем QR
-      if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
+            if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
         qrWrap.style.display = 'flex';
-        if (!window._mQrInstance) {
-          window._mQrInstance = new QRious({
-            element: qrCode,
-            value: addr,
-            size: 110,
-            background: 'white',
-            foreground: 'black'
-          });
-        } else {
-          window._mQrInstance.value = addr;
-        }
+        
+        // Принудительно очищаем старый QR, чтобы не было наложений
+        qrCode.innerHTML = '';
+        qrCode.style.width = '110px';
+        qrCode.style.height = '110px';
+        qrCode.style.background = '#fff';
+        qrCode.style.borderRadius = '10px';
+        
+        new QRious({
+          element: qrCode,
+          value: addr,
+          size: 110,
+          background: 'white',
+          foreground: 'black',
+          padding: 0 // Убираем внутренние отступы, чтобы код занял весь квадрат
+        });
       } else {
         if (qrWrap) qrWrap.style.display = 'none';
       }
