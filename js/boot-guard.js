@@ -177,7 +177,7 @@
       if (o && o.classList.contains('on') && $('ncbRetry')) return;
       if (!somethingVisible()) armWatchdog();
       else done();
-    }, 2000);
+    }, 500);
   });
 
   /* Каждые 2 сек — если видно UI, закрываем overlay */
