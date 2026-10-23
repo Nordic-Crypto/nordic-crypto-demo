@@ -3676,9 +3676,16 @@ async function startTicket() {
     var btnExTrade = document.getElementById('exBtnTrade');
     if (btnExTrade) btnExTrade.onclick = function () { toast('Trading terminal: coming soon'); };
 
-    var saved = localStorage.getItem('adminTab') || 'stats';
+        var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
+    }
+    
+    // 🛡️ ВОЗВРАЩАЕМ ВЫЗОВ, НО ЗАЩИЩАЕМ ОТ ДВОЙНОГО ЗАПУСКА
+    if (typeof showApp === 'function' && localStorage.getItem('session_token') && !window._ncAppStarted) {
+      window._ncAppStarted = true;
+      setTimeout(function() { showApp(); }, 100);
+    }
   }
     // 🛡️ ЖЕСТКИЙ КОНТРОЛЬ КНОПКИ CONTINUE
     var btnNext = document.getElementById('verifyNext1');
