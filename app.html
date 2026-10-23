@@ -6961,5 +6961,38 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 1500); // Ждем 1.5 сек, чтобы все скрипты загрузились
 });
 </script>
+  <!-- 🎁 ПРЕЛОАДЕР: Красивый экран загрузки вместо черного фона -->
+<div id="ncPreloader" style="position:fixed;inset:0;background:#0B1220;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.4s ease;">
+  <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#00E5FF,#8B5CF6);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 20px 40px -10px rgba(0,229,255,0.4);">
+    <img src="logo.png" alt="N" style="width:50px;height:50px;object-fit:contain;" onerror="this.outerHTML='<span style=\'font-size:40px;font-weight:800;color:#fff\'>N</span>'">
+  </div>
+  <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#00E5FF;border-radius:50%;animation:ncSpin 1s linear infinite;"></div>
+  <div style="color:#94A3B8;font-size:14px;margin-top:20px;font-weight:500;">Loading your account...</div>
+</div>
+<style>
+  @keyframes ncSpin { to { transform: rotate(360deg); } }
+  #ncPreloader.hidden { opacity: 0; pointer-events: none; }
+</style>
+
+<script>
+// 🛡️ Автоматическое скрытие прелоадера
+(function() {
+  var preloader = document.getElementById('ncPreloader');
+  if (!preloader) return;
+
+  function hidePreloader() {
+    if (preloader) {
+      preloader.classList.add('hidden');
+      setTimeout(function() { preloader.style.display = 'none'; }, 500);
+    }
+  }
+
+  // Страховка: скрываем через 3.5 секунды в любом случае
+  setTimeout(hidePreloader, 3500);
+
+  // Экспортируем функцию, чтобы app.legacy.js мог её вызвать
+  window._ncHidePreloader = hidePreloader;
+})();
+</script>
 </body>
 </html>
