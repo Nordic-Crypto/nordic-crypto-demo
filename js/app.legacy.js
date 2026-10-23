@@ -1160,59 +1160,76 @@ function finalizeDeposit() {
 
   if (!tx || !tx.hash) { toast('Deposit error — contact support', true); return; }
 
-  // Проверка на дубликаты
+  // 1. Проверка на дубликаты
   var isDup = false;
   (st.txs || []).forEach(function (t) { if (t.hash === tx.hash) isDup = true; });
   (st.pendingDeposits || []).forEach(function (d) { if (d.txHash === tx.hash) isDup = true; });
   if (isDup) { toast('Deposit already submitted', true); closeDepositVerification(); return; }
 
-  // 🛡️ НЕ НАЧИСЛЯЕМ ДЕНЬГИ, А СОЗДАЕМ ЗАЯВКУ
-  if (!st.pendingDeposits) st.pendingDeposits = [];
-  
-  var newDep = {
-    id: 'dep_' + Date.now(),
-    userEmail: localStorage.getItem('user_email'),
-    userName: localStorage.getItem('user_name') || 'User',
-    txHash: tx.hash,
-    cryptoAmt: cryptoAmt,
-    symbol: symbol,
-    usdValue: credit,
-    source: depAnswers.source,
-    origin: depAnswers.origin,
-    status: 'pending',
-    createdAt: Date.now()
-  };
-  
-  st.pendingDeposits.push(newDep);
+  // 2. Блокируем кнопку и показываем лоадер (опционально)
+  var btnConfirm = document.getElementById('depBtnConfirm');
+  if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Submitting...'; }
 
-  // Сохраняем на сервер (в состояние клиента)
-  saveToServer(); 
-  
-  // Сразу отправляем запрос в админку через спец. API (если оно есть)
   var token = getSessionToken();
-  if (token) {
-    fetch(WORKER_URL + '?action=addPendingDeposit', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: token, txHash: tx.hash, cryptoAmt: cryptoAmt,
-        symbol: symbol, usdValue: credit, to: tx.to, time: tx.time
-      })
-    }).catch(function(){});
-  }
+  if (!token) { toast('Not authenticated', true); return; }
 
-  // Показываем клиенту экран успеха
-  var cryptoEl = document.getElementById('depSuccessCrypto');
-  var usdEl = document.getElementById('depSuccessUsd');
-  var balEl = document.getElementById('depNewBalance');
-  
-  if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
-  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' pending approval';
-  if (balEl) balEl.textContent = 'Awaiting Admin Approval';
+  // 3. Отправляем заявку на сервер (Воркер)
+  fetch(WORKER_URL + '?action=addPendingDeposit', {
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token: token, 
+      txHash: tx.hash, 
+      cryptoAmt: cryptoAmt,
+      symbol: symbol, 
+      usdValue: credit, 
+      to: tx.to, 
+      time: tx.time
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.textContent = 'Confirm →'; }
+    
+    if (!res.ok && !res.alreadyExists && !res.alreadyCredited) {
+      toast(res.error || 'Error submitting deposit', true);
+      return;
+    }
 
-  showDepStep(4);
-  playChime();
-  spawnConfetti();
-  addNotification('Deposit submitted for review', '⏳');
+    // 4. Локально добавляем в стейт (чтобы UI обновился)
+    if (!st.pendingDeposits) st.pendingDeposits = [];
+    st.pendingDeposits.push({
+      id: 'dep_' + Date.now(),
+      userEmail: localStorage.getItem('user_email'),
+      userName: localStorage.getItem('user_name') || 'User',
+      txHash: tx.hash,
+      cryptoAmt: cryptoAmt,
+      symbol: symbol,
+      usdValue: credit,
+      source: depAnswers.source,
+      origin: depAnswers.origin,
+      status: 'pending',
+      createdAt: Date.now()
+    });
+
+    // 5. Показываем успех (НЕ вызываем saveToServer, чтобы не перезаписать данные Воркера)
+    var cryptoEl = document.getElementById('depSuccessCrypto');
+    var usdEl = document.getElementById('depSuccessUsd');
+    var balEl = document.getElementById('depNewBalance');
+    
+    if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
+    if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' pending approval';
+    if (balEl) balEl.textContent = 'Awaiting Admin Approval';
+
+    showDepStep(4);
+    playChime();
+    spawnConfetti();
+    addNotification('Deposit submitted for review', '⏳');
+  })
+  .catch(function(err) {
+    if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.textContent = 'Confirm →'; }
+    toast('Connection error', true);
+  });
 }
 
 /* ═══════════════════ BALANCE CHART ═══════════════════ */
