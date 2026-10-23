@@ -4918,32 +4918,32 @@ document.addEventListener('DOMContentLoaded', function(){
             </button>
           </div>
           <div class="docslots" id="docSlots" data-sides="1">
-            <div class="slotw">
-              <label class="upload-zone slot" id="docUpload">
-                <input type="file" accept="image/*" id="docFile" style="display:none">
-                <img class="slot-img" id="docThumb" alt="" hidden>
-                <div class="upload-inner">
-                  <svg class="ghost g-pass" viewBox="0 0 120 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="74" rx="9"/><circle cx="34" cy="30" r="12"/><path d="M68 24h34M68 36h26M12 62h96M12 70h96"/></svg>
-                  <svg class="ghost g-card" viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="70" rx="9"/><circle cx="34" cy="32" r="11"/><path d="M16 60c3-9 10-12 18-12s15 3 18 12M68 26h34M68 38h26M68 50h30"/></svg>
-                  <div class="upload-text" id="capFront">Photo page</div>
-                  <div class="upload-hint">Tap or drop a photo</div>
-                </div>
-              </label>
-              <div class="uploaded-file" id="docUploaded" style="display:none"><span class="file-check">✓</span><span class="file-name" id="docFileName">document.jpg</span><span class="file-size" id="docFileSize">240 KB</span></div>
-            </div>
-            <div class="slotw" id="slotBack">
-              <label class="upload-zone slot" id="docUploadBack">
-                <input type="file" accept="image/*" id="docFileBack" style="display:none">
-                <img class="slot-img" id="docThumbBack" alt="" hidden>
-                <div class="upload-inner">
-                  <svg class="ghost" viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="70" rx="9"/><path d="M3 20h114v14H3zM16 50h56M16 60h38"/></svg>
-                  <div class="upload-text">Back side</div>
-                  <div class="upload-hint">Tap or drop a photo</div>
-                </div>
-              </label>
-              <div class="uploaded-file" id="docUploadedBack" style="display:none"><span class="file-check">✓</span><span class="file-name" id="docFileNameBack">back.jpg</span><span class="file-size" id="docFileSizeBack">240 KB</span></div>
-            </div>
-          </div>
+  <div class="slotw">
+    <label class="upload-zone slot" id="docUpload">
+      <input type="file" accept="image/*" id="docFile" style="display:none">
+      <img class="slot-img" id="docThumb" alt="" style="display:none;">
+      <div class="upload-inner">
+        <svg class="ghost g-pass" viewBox="0 0 120 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="74" rx="9"/><circle cx="34" cy="30" r="12"/><path d="M68 24h34M68 36h26M12 62h96M12 70h96"/></svg>
+        <svg class="ghost g-card" viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="70" rx="9"/><circle cx="34" cy="32" r="11"/><path d="M16 60c3-9 10-12 18-12s15 3 18 12M68 26h34M68 38h26M68 50h30"/></svg>
+        <div class="upload-text" id="capFront">Photo page</div>
+        <div class="upload-hint">Tap or drop a photo</div>
+      </div>
+    </label>
+    <div class="uploaded-file" id="docUploaded" style="display:none"><span class="file-check">✓</span><span class="file-name" id="docFileName">document.jpg</span><span class="file-size" id="docFileSize">240 KB</span></div>
+  </div>
+  <div class="slotw" id="slotBack">
+    <label class="upload-zone slot" id="docUploadBack">
+      <input type="file" accept="image/*" id="docFileBack" style="display:none">
+      <img class="slot-img" id="docThumbBack" alt="" style="display:none;">
+      <div class="upload-inner">
+        <svg class="ghost" viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="114" height="70" rx="9"/><path d="M3 20h114v14H3zM16 50h56M16 60h38"/></svg>
+        <div class="upload-text">Back side</div>
+        <div class="upload-hint">Tap or drop a photo</div>
+      </div>
+    </label>
+    <div class="uploaded-file" id="docUploadedBack" style="display:none"><span class="file-check">✓</span><span class="file-name" id="docFileNameBack">back.jpg</span><span class="file-size" id="docFileSizeBack">240 KB</span></div>
+  </div>
+</div>
           <div class="selfie-hint" style="margin:14px 0 0">
             <div class="hint-line">All four corners visible</div>
             <div class="hint-line">No glare or blur</div>
@@ -6972,6 +6972,19 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
   @keyframes ncSpin { to { transform: rotate(360deg); } }
   #ncPreloader.hidden { opacity: 0; pointer-events: none; }
+  #verifyScreen .slot-img {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 1 !important;
+  border-radius: 12px !important;
+}
+#verifyScreen .slot.has .upload-inner {
+  display: none !important;
+}
 </style>
 
 <script>
