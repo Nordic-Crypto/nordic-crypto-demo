@@ -4667,6 +4667,10 @@ document.addEventListener('DOMContentLoaded', function(){
       </select>
     </div>
     <div class="fg" id="mDestWrap" style="display:none"><label id="mDestLabel">Recipient details</label><input class="fc" id="mDest"></div>
+    <div id="mQrWrap" style="display:none; text-align:center; margin-bottom: 16px;">
+  <div id="mQrCode" style="background:#fff; padding:10px; border-radius:12px; display:inline-block;"></div>
+  <div style="font-size:12px; color:#94a3b8; margin-top:8px;">Scan to send</div>
+</div>
     <div id="mTransferSepa" style="display:none">
       <div class="fg"><label>Recipient name</label><input class="fc" id="mRecipientName"></div>
       <div class="fg"><label>IBAN</label><input class="fc" id="mRecipientIban"></div>
@@ -7056,5 +7060,6 @@ document.addEventListener('DOMContentLoaded', function() {
   window._ncHidePreloader = hidePreloader;
 })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </body>
 </html>
