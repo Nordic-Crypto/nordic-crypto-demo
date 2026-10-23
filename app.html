@@ -6923,6 +6923,22 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 2000); // Ждем 2 секунды, чтобы всё остальное загрузилось
 });
 </script>
-  
+<script>
+// 🛡️ ФИКС: Принудительный запуск панели админа при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  // Ждем 1.5 секунды, чтобы все скрипты (app.legacy.js и др.) точно загрузились
+  setTimeout(function() {
+    var isAdmin = localStorage.getItem('user_role') === 'admin';
+    var panel = document.getElementById('adminPanel');
+    var isPanelVisible = panel && panel.classList.contains('on');
+    
+    // Если мы админ, но панель не открылась — открываем принудительно
+    if (isAdmin && !isPanelVisible && typeof showAdminPanel === 'function') {
+      console.log('🛡️ [FIX] Forcing admin panel to show');
+      showAdminPanel();
+    }
+  }, 1500);
+});
+</script>  
 </body>
 </html>
