@@ -4666,7 +4666,28 @@ document.addEventListener('DOMContentLoaded', function(){
         <option value="Credit Card">Credit Card</option>
       </select>
     </div>
-    <div class="fg" id="mDestWrap" style="display:none"><label id="mDestLabel">Recipient details</label><input class="fc" id="mDest"></div>
+    <!-- 🛡️ Красивая карточка для крипто-депозита -->
+<div id="mDestWrap" style="display:none; margin-bottom: 20px;">
+  <label id="mDestLabel" style="display:block; margin-bottom:10px; color:#94a3b8; font-size:13px; font-weight:600;">Send to this address</label>
+  
+  <!-- Адрес -->
+  <div style="background:#0f1420; border:1px solid rgba(71,220,255,.3); border-radius:12px; padding:14px; margin-bottom:16px; font-family:ui-monospace; font-size:14px; color:#00e5ff; word-break:break-all; display:flex; align-items:center; gap:8px;">
+    <span id="mDestText" style="flex:1;">—</span>
+    <button onclick="copyText(document.getElementById('mDestText').textContent, 'Address copied')" style="background:transparent; border:none; color:#00e5ff; cursor:pointer; font-size:18px;">📋</button>
+    <input type="hidden" id="mDest"> <!-- Скрытое поле для совместимости со старым кодом -->
+  </div>
+
+  <!-- Блок с QR и Сетью -->
+  <div id="mQrWrap" style="display:none; display:flex; align-items:center; gap:16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px;">
+    <div id="mQrCode" style="background:#fff; padding:8px; border-radius:10px; flex-shrink:0;"></div>
+    <div style="flex:1;">
+      <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px;">Network</div>
+      <div id="mDestNetwork" style="font-size:14px; font-weight:700; color:#fff; margin-bottom:8px;">—</div>
+      <button onclick="copyText(document.getElementById('mDestText').textContent, 'Address copied')" style="width:100%; background:rgba(0,229,255,.1); border:1px solid rgba(0,229,255,.3); color:#00e5ff; padding:8px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">📋 Copy address</button>
+      <div style="font-size:10px; color:#f59e0b; margin-top:8px;">⚠️ Send only crypto to this address</div>
+    </div>
+  </div>
+</div>
     <div id="mQrWrap" style="display:none; text-align:center; margin-bottom: 16px;">
   <div id="mQrCode" style="background:#fff; padding:10px; border-radius:12px; display:inline-block;"></div>
   <div style="font-size:12px; color:#94a3b8; margin-top:8px;">Scan to send</div>
