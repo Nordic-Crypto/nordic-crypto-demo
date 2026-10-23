@@ -34,6 +34,9 @@ var sessionTimer = null, countdownTimer = null, countdownLeft = 60;
 
 /* ─────────────── UTILS ─────────────── */
 function $(i) { return document.getElementById(i); }
+// Safe argument for inline onclick handlers: a JSON string, HTML-escaped
+function ncArg(v) { return escapeHtml(JSON.stringify(String(v == null ? '' : v))); }
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -219,6 +222,7 @@ async function doLogin() {
   var btnLogin = document.getElementById('btnLogin');
   var loginForm = document.getElementById('loginForm');
   var loginLoading = document.getElementById('loginLoading');
+  if (!emailEl || !passEl || !errorEl || !btnLogin || !loginForm || !loginLoading) { console.warn('[NC] login form is not on this page'); return; }
   var email = emailEl.value.trim().toLowerCase();
   var password = passEl.value;
 
@@ -303,6 +307,13 @@ async function checkSession() {
 
 function showLoginScreen() {
   var login = document.getElementById('loginScreen');
+  if (!login) {
+    // login lives on index.html: leave once per 30 s so we never redirect in a loop
+    try {
+      var k = 'nc_login_redirect_ts', last = Number(sessionStorage.getItem(k) || 0);
+      if (Date.now() - last > 30000) { sessionStorage.setItem(k, String(Date.now())); window.location.replace('/index.html'); return; }
+    } catch (e) {}
+  }
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
   if (login) login.classList.remove('hidden');
@@ -328,6 +339,14 @@ function hideLoginScreen() {
 }
 
 /* ═══ v7.2: просмотр клиента админом переживает F5 / Ctrl+Shift+R ═══ */
+if (typeof window.filterClients !== 'function') {
+  window.filterClients = function (q) {
+    q = String(q || '').toLowerCase();
+    var cards = document.querySelectorAll('#adminClientsList .admin-client-card');
+    for (var i = 0; i < cards.length; i++) cards[i].style.display = cards[i].textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+  };
+}
+
 var NC_VIEW_KEY = 'nc_admin_view';
 function ncReadAdminView() {
   try {
@@ -383,13 +402,10 @@ function showApp() {
     safe(initAdminPanel);
     safe(loadCharts);
      
-   try { render(); } catch (e) { console.warn('[NC render]', e); }
+    // FIX: the old early return left the user on an empty screen after sign in.
+    window._ncJustLoggedIn = false;
 
-    // 🛡️ ЗАЩИТА ОТ МИГАНИЯ ПРИ ВХОДЕ
-    if (window._ncJustLoggedIn) {
-      window._ncJustLoggedIn = false;
-      if (window.NCBoot) window.NCBoot.done();
-    }
+    try { render(); } catch (e) { console.warn('[NC render]', e); }
 
     if (!localStorage.getItem('user_email')) {
       showLoginScreen();
@@ -938,7 +954,7 @@ function renderNotifications() {
   var html = '';
   for (var j = 0; j < notifs.length; j++) {
     var n = notifs[j];
-    var safeId = String(n.id).replace(/'/g, "\\'");
+    var safeId = String(n.id);
     var safeText = escapeHtml(n.text);
     html += '<div class="notif-item' + (n.read ? '' : ' unread') + '" data-id="' + n.id + '">' +
       '<div class="notif-icon">' + (n.icon || '🔔') + '</div>' +
@@ -946,7 +962,7 @@ function renderNotifications() {
       '<div class="notif-text">' + safeText + '</div>' +
       '<div class="notif-time">' + timeAgo(n.ts) + '</div>' +
       '</div>' +
-      '<button onclick="event.stopPropagation(); deleteNotification(\'' + safeId + '\')" style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:6px;background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.3);color:#ff6b6b;cursor:pointer;font-size:14px;line-height:1;">×</button>' +
+      '<button onclick="event.stopPropagation(); deleteNotification(' + ncArg(safeId) + ')" style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:6px;background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.3);color:#ff6b6b;cursor:pointer;font-size:14px;line-height:1;">×</button>' +
       '</div>';
   }
   listEl.innerHTML = html;
@@ -1609,7 +1625,7 @@ function openTxDetails(tx) {
         '<span style="color:#94a3b8;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em">TX hash</span>' +
         '<span style="text-align:right;max-width:65%">' +
         '<b style="font-family:ui-monospace;font-size:.85rem;word-break:break-all">' + hashHtml + '</b>' +
-        '<button onclick="event.stopPropagation();copyText(\'' + tx.hash + '\',\'TX hash copied\')" style="margin-left:6px;background:transparent;border:none;color:#47dcff;cursor:pointer;font-size:14px" title="Copy">📋</button>' +
+        '<button onclick="event.stopPropagation();copyText(' + ncArg(tx.hash) + ',\'TX hash copied\')" style="margin-left:6px;background:transparent;border:none;color:#47dcff;cursor:pointer;font-size:14px" title="Copy">📋</button>' +
         '</span>' +
         '</div>';
     }
@@ -1834,14 +1850,19 @@ function renderIbanByAdmin() {
 /* ═══════════════════ KYC / VERIFICATION ═══════════════════ */
 var verifyData = { docType: 'Passport', docFile: null, selfieFile: null, address: null };
 
+function ncResetScreen(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('on');
+  el.removeAttribute('style');
+}
+
 function showVerifyScreen() {
   var screen = document.getElementById('verifyScreen');
-  if (screen) screen.classList.add('on');
+  if (screen) { screen.removeAttribute('style'); screen.classList.add('on'); }
   if (typeof window.__ncPausePolling === 'function') window.__ncPausePolling(600000);
-  var pending = document.getElementById('pendingScreen');
-  if (pending) pending.classList.remove('on');
-  var rejected = document.getElementById('rejectedScreen');
-  if (rejected) rejected.classList.remove('on');
+  ncResetScreen('pendingScreen');
+  ncResetScreen('rejectedScreen');
   showVerifyStep(1);
 }
 
@@ -1851,7 +1872,7 @@ function hideVerifyScreen() {
 }
 
 function showVerifyStep(n) {
-  var steps = document.querySelectorAll('.verify-step');
+  var steps = document.querySelectorAll('#verifyScreen .verify-step');
   for (var i = 0; i < steps.length; i++) steps[i].classList.remove('on');
   var target = document.getElementById('verifyStep' + n);
   if (target) target.classList.add('on');
@@ -2182,11 +2203,9 @@ function showPendingScreen() {
 
 function showRejectedScreen(reason) {
   var s = document.getElementById('rejectedScreen');
-  if (s) s.classList.add('on');
-  var p = document.getElementById('pendingScreen');
-  if (p) p.classList.remove('on');
-  var v = document.getElementById('verifyScreen');
-  if (v) v.classList.remove('on');
+  if (s) { s.removeAttribute('style'); s.classList.add('on'); }
+  ncResetScreen('pendingScreen');
+  ncResetScreen('verifyScreen');
   var side = document.getElementById('sideBar');
   var main = document.getElementById('mainApp');
   if (side) side.style.display = 'none';
@@ -3710,10 +3729,15 @@ async function startTicket() {
             btnNext.style.opacity = '1';
             btnNext.style.pointerEvents = 'auto';
           }
+        } else {
+          // one side (passport): do not leave stale inline lock from the 2-sides mode
+          btnNext.style.opacity = '';
+          btnNext.style.pointerEvents = '';
         }
       }, 300);
     }
-   
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
   } else {
@@ -3950,13 +3974,13 @@ async function loadAdminUsers() {
         '</div>' +
          
         '<div class="admin-client-actions">' +
-        '<button class="btn b1" onclick="adminAddBalance(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">💰 Add balance</button>' +
+        '<button class="btn b1" onclick="adminAddBalance(' + ncArg(u.email) + ', ' + ncArg(u.name) + ')">💰 Add balance</button>' +
         '<button class="btn b2" onclick="adminSendMessage()">📩 Send message</button>' +
-        '<button class="btn b2" onclick="adminSetCryptoAddress(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">🔑 Deposit address</button>' +
-        '<button class="btn b2" onclick="adminSetIban(\'' + u.email + '\')">🏦 Issue IBAN</button>' +
-        '<button class="btn b2" onclick="adminResetPassword(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">🔑 Reset password</button>' +
-        '<button class="btn b2" onclick="adminViewClient(\'' + u.email + '\')">👁 View</button>' +
-        '<button class="btn b3" onclick="adminDeleteUser(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">🗑 Delete</button>' +
+        '<button class="btn b2" onclick="adminSetCryptoAddress(' + ncArg(u.email) + ', ' + ncArg(u.name) + ')">🔑 Deposit address</button>' +
+        '<button class="btn b2" onclick="adminSetIban(' + ncArg(u.email) + ')">🏦 Issue IBAN</button>' +
+        '<button class="btn b2" onclick="adminResetPassword(' + ncArg(u.email) + ', ' + ncArg(u.name) + ')">🔑 Reset password</button>' +
+        '<button class="btn b2" onclick="adminViewClient(' + ncArg(u.email) + ')">👁 View</button>' +
+        '<button class="btn b3" onclick="adminDeleteUser(' + ncArg(u.email) + ', ' + ncArg(u.name) + ')">🗑 Delete</button>' +
         '</div>' +
         '</div>';
     }
@@ -4028,7 +4052,7 @@ window.loadAdminVerifications = async function (opts) {
     list.forEach(function (v) {
       var statusColor = v.status === 'approved' ? '#34d399' : v.status === 'rejected' ? '#f87171' : '#fbbf24';
       var statusLabel = v.status === 'approved' ? '✅ Approved' : v.status === 'rejected' ? '❌ Rejected' : '⏳ Pending';
-      var safeEmail = String(v.email).replace(/'/g, "\\'");
+      var safeEmail = String(v.email);
       html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
         '<div class="admin-client-top">' +
         '<div class="admin-client-avatar">🪪</div>' +
@@ -4042,9 +4066,9 @@ window.loadAdminVerifications = async function (opts) {
         (v.personalInfo && (v.personalInfo.street || v.personalInfo.city) ? '<div style="font-size:12px;color:#8b95a5;margin:8px 0;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;">📍 ' + [v.personalInfo.street, v.personalInfo.city, v.personalInfo.zip, v.personalInfo.country].filter(Boolean).map(escapeHtml).join(', ') + '</div>' : '') +
         (v.status === 'rejected' && v.reason ? '<div style="font-size:12px;color:#ff8a8a;margin:8px 0;">Reason: ' + escapeHtml(v.reason) + '</div>' : '') +
         '<div class="admin-client-actions" style="margin-top:12px;flex-wrap:wrap;">' +
-        '<button class="btn b2" onclick="viewKycDocs(\'' + safeEmail + '\')">👁 View docs</button>' +
-        (v.status !== 'approved' ? '<button class="btn b1" onclick="approveKyc(\'' + safeEmail + '\')">✅ Approve</button>' : '') +
-        (v.status !== 'rejected' ? '<button class="btn b3" onclick="rejectKyc(\'' + safeEmail + '\')">❌ Reject</button>' : '') +
+        '<button class="btn b2" onclick="viewKycDocs(' + ncArg(safeEmail) + ')">👁 View docs</button>' +
+        (v.status !== 'approved' ? '<button class="btn b1" onclick="approveKyc(' + ncArg(safeEmail) + ')">✅ Approve</button>' : '') +
+        (v.status !== 'rejected' ? '<button class="btn b3" onclick="rejectKyc(' + ncArg(safeEmail) + ')">❌ Reject</button>' : '') +
         '</div>' +
         '</div>';
     });
@@ -4126,7 +4150,7 @@ window.approveKyc = function (email) {
     '</button>' +
     '</div>' +
     '<div style="display:flex;gap:8px;">' +
-    '<button id="kycApproveOk" onclick="_kycDoApprove(\'' + email.replace(/'/g, "\\'") + '\')" disabled style="flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:not-allowed;opacity:0.4;font-family:inherit;">Approve</button>' +
+    '<button id="kycApproveOk" onclick="_kycDoApprove(' + ncArg(email) + ')" disabled style="flex:1;padding:12px;background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:not-allowed;opacity:0.4;font-family:inherit;">Approve</button>' +
     '<button onclick="document.getElementById(\'kycApproveModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
     '</div>' +
     '</div>';
@@ -4227,7 +4251,7 @@ window.adminSetIban = function (email) {
     '<input id="adminCountryInput" type="text" value="SE" maxlength="2" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#e7edf5;font-size:13px;outline:none;box-sizing:border-box;font-family:monospace;text-transform:uppercase;">' +
     '<div id="adminIbanErr" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:12px;"></div>' +
     '<div style="display:flex;gap:8px;margin-top:20px;">' +
-    '<button id="adminIbanSave" onclick="adminSaveIban(\'' + email.replace(/'/g, "\\'") + '\')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>' +
+    '<button id="adminIbanSave" onclick="adminSaveIban(' + ncArg(email) + ')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Save</button>' +
     '<button onclick="document.getElementById(\'adminIbanModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
     '</div>' +
     '</div>';
@@ -4293,7 +4317,7 @@ window.adminResetPassword = function (email, name) {
     '<div id="adminResetPassErr" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:12px;"></div>' +
     '<div id="adminResetPassOk" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:#34d399;font-size:12px;"></div>' +
     '<div style="display:flex;gap:8px;margin-top:20px;">' +
-    '<button id="adminResetPassSave" onclick="adminSaveNewPassword(\'' + email.replace(/'/g, "\\'") + '\')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Save new password</button>' +
+    '<button id="adminResetPassSave" onclick="adminSaveNewPassword(' + ncArg(email) + ')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Save new password</button>' +
     '<button onclick="document.getElementById(\'adminResetPassModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>' +
     '</div>' +
     '</div>';
@@ -4366,7 +4390,7 @@ function adminSetCryptoAddress(email, name) {
     '<input id="adminEthAddr" type="text" placeholder="0xFB7A..." style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#e7edf5;font-size:13px;outline:none;box-sizing:border-box;font-family:monospace;">' +
     '<div id="adminAddrErr" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:12px;"></div>' +
     '<div style="display:flex;gap:8px;margin-top:20px;">' +
-    '<button onclick="adminSaveCryptoAddress(\'' + email.replace(/'/g, "\\'") + '\')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">Save</button>' +
+    '<button onclick="adminSaveCryptoAddress(' + ncArg(email) + ')" style="flex:1;padding:12px;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">Save</button>' +
     '<button onclick="document.getElementById(\'adminCryptoAddrModal\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#8b95a5;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">Cancel</button>' +
     '</div>' +
     '</div>';
@@ -4500,8 +4524,8 @@ function renderAdminWithdrawalCard(w) {
   var actions = '';
   if (w.status === 'pending') {
     actions = '<div class="awd-actions">' +
-      '<button class="awd-btn awd-approve" onclick="adminApproveWithdrawal(\'' + w.userEmail + '\',\'' + w.id + '\')">✅ Approve</button>' +
-      '<button class="awd-btn awd-reject" onclick="adminRejectWithdrawal(\'' + w.userEmail + '\',\'' + w.id + '\')">❌ Reject</button>' +
+      '<button class="awd-btn awd-approve" onclick="adminApproveWithdrawal(' + ncArg(w.userEmail) + ',' + ncArg(w.id) + ')">✅ Approve</button>' +
+      '<button class="awd-btn awd-reject" onclick="adminRejectWithdrawal(' + ncArg(w.userEmail) + ',' + ncArg(w.id) + ')">❌ Reject</button>' +
       '</div>';
   }
   return '<div class="awd-card">' +
@@ -4725,8 +4749,8 @@ async function loadDeletedUsers() {
         '<div class="admin-client-badge" style="background:rgba(255,84,112,.14);color:#ff5470">DELETED</div>' +
         '</div>' +
         '<div class="admin-client-actions">' +
-        '<button class="btn b1" onclick="adminRestoreUser(\'' + u.email + '\')">♻ Restore</button>' +
-        '<button class="btn b3" onclick="adminPermanentDelete(\'' + u.email + '\', \'' + escapeHtml(u.name).replace(/\'/g, "") + '\')">🗑 Delete forever</button>' +
+        '<button class="btn b1" onclick="adminRestoreUser(' + ncArg(u.email) + ')">♻ Restore</button>' +
+        '<button class="btn b3" onclick="adminPermanentDelete(' + ncArg(u.email) + ', ' + ncArg(u.name) + ')">🗑 Delete forever</button>' +
         '</div>' +
         '</div>';
     }
@@ -4939,8 +4963,8 @@ async function loadAdminPendingDeposits() {
 
     var html = '';
     list.forEach(function (d) {
-      var safeEmail = String(d.userEmail).replace(/'/g, "\\'");
-      var safeId = String(d.id).replace(/'/g, "\\'");
+      var safeEmail = String(d.userEmail);
+      var safeId = String(d.id);
       var dateStr = new Date(d.createdAt).toLocaleString('en-GB');
       html += '<div class="awd-card" style="border-color:rgba(246,195,68,0.4);background:rgba(246,195,68,0.04);">' +
         '<div class="awd-head">' +
@@ -4955,8 +4979,8 @@ async function loadAdminPendingDeposits() {
         '<div class="awd-row"><span>Time</span><b>' + dateStr + '</b></div>' +
         '</div>' +
         '<div class="awd-actions">' +
-        '<button class="awd-btn awd-approve" onclick="adminApprovePendingDeposit(\'' + safeEmail + '\',\'' + safeId + '\')">✅ Approve</button>' +
-        '<button class="awd-btn awd-reject" onclick="adminRejectPendingDeposit(\'' + safeEmail + '\',\'' + safeId + '\')">❌ Reject</button>' +
+        '<button class="awd-btn awd-approve" onclick="adminApprovePendingDeposit(' + ncArg(safeEmail) + ',' + ncArg(safeId) + ')">✅ Approve</button>' +
+        '<button class="awd-btn awd-reject" onclick="adminRejectPendingDeposit(' + ncArg(safeEmail) + ',' + ncArg(safeId) + ')">❌ Reject</button>' +
         '</div>' +
         '</div>';
     });
@@ -5076,8 +5100,8 @@ async function loadAdminChats() {
     if (!chats.length) { box.innerHTML = '<div class="admin-empty">No chats yet</div>'; return; }
     var html = '';
     chats.forEach(function (c) {
-      var safeEmail = String(c.email).replace(/'/g, "\\'");
-      html += '<div onclick="openAdminChat(\'' + safeEmail + '\')" style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">' +
+      var safeEmail = String(c.email);
+      html += '<div onclick="openAdminChat(' + ncArg(safeEmail) + ')" style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center;">' +
         '<div style="display:flex;gap:12px;align-items:center;">' +
         '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">E</div>' +
         '<div><div style="color:#e7edf5;font-weight:600;font-size:14px;">' + escapeHtml(c.name) +
@@ -5120,12 +5144,12 @@ async function openAdminChat(email) {
     '<div style="background:#0f1720;border:1px solid rgba(139,92,246,0.2);border-radius:20px;width:100%;max-width:520px;height:600px;display:flex;flex-direction:column;overflow:hidden;">' +
     '<div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">' +
     '<div style="color:#e7edf5;font-weight:700;font-size:14px;">' + escapeHtml(email) + '</div>' +
-    '<button onclick="endAdminChat(\'' + email.replace(/'/g, "\\'") + '\')" style="background:rgba(255,80,80,0.15);border:none;color:#ff6b6b;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;">End chat</button>' +
+    '<button onclick="endAdminChat(' + ncArg(email) + ')" style="background:rgba(255,80,80,0.15);border:none;color:#ff6b6b;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;">End chat</button>' +
     '</div>' +
     '<div id="adminChatMsgs" style="flex:1;overflow-y:auto;padding:16px;">' + messagesHtml + '</div>' +
     '<div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;">' +
-    '<input id="adminChatInput" placeholder="Reply..." style="flex:1;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#e7edf5;font-size:13px;outline:none;" onkeydown="if(event.key===\'Enter\')sendAdminChatMsg(\'' + email.replace(/'/g, "\\'") + '\')">' +
-    '<button onclick="sendAdminChatMsg(\'' + email.replace(/'/g, "\\'") + '\')" style="width:42px;height:42px;border-radius:12px;border:none;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;cursor:pointer;">→</button>' +
+    '<input id="adminChatInput" placeholder="Reply..." style="flex:1;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#e7edf5;font-size:13px;outline:none;" onkeydown="if(event.key===\'Enter\')sendAdminChatMsg(' + ncArg(email) + ')">' +
+    '<button onclick="sendAdminChatMsg(' + ncArg(email) + ')" style="width:42px;height:42px;border-radius:12px;border:none;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;cursor:pointer;">→</button>' +
     '</div>' +
     '</div>';
   document.body.appendChild(modal);
