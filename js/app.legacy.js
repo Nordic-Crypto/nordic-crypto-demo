@@ -383,14 +383,13 @@ function showApp() {
     safe(initAdminPanel);
     safe(loadCharts);
      
-     // 🛡️ ЗАЩИТА ОТ МИГАНИЯ ПРИ ВХОДЕ
+   try { render(); } catch (e) { console.warn('[NC render]', e); }
+
+    // 🛡️ ЗАЩИТА ОТ МИГАНИЯ ПРИ ВХОДЕ
     if (window._ncJustLoggedIn) {
       window._ncJustLoggedIn = false;
       if (window.NCBoot) window.NCBoot.done();
-      return; // Останавливаем дальнейшую перезагрузку
     }
-
-    try { render(); } catch (e) { console.warn('[NC render]', e); }
 
     if (!localStorage.getItem('user_email')) {
       showLoginScreen();
