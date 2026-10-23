@@ -6368,11 +6368,25 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   };
 
-  document.addEventListener('click', function(e) {
-    if (e.target && e.target.id === 'btnForceRefresh') {
-      if (window.refreshDashboard) window.refreshDashboard();
-    }
-  });
+  // Универсальный обработчик для кнопок дашборда
+document.addEventListener('click', function(e) {
+  // Кнопка "View all" (Клиенты)
+  if (e.target.closest('[data-nc-go="clients"]')) {
+    e.preventDefault();
+    if (typeof showAdminTab === 'function') showAdminTab('clients');
+  }
+  
+  // Кнопка "Open" (Верификации)
+  if (e.target.closest('[data-nc-go="verifications"]')) {
+    e.preventDefault();
+    if (typeof showAdminTab === 'function') showAdminTab('verifications');
+  }
+  
+  // Кнопка "Manage" (Бонусы)
+  if (e.target.closest('[onclick="openBonusModal()"]') || e.target.closest('.bonus-manage-btn')) {
+    if (typeof openBonusModal === 'function') openBonusModal();
+  }
+});
 
   setInterval(function() {
     if ($('adminPanel') && $('adminPanel').classList.contains('on')) {
