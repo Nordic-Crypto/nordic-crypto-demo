@@ -3676,9 +3676,14 @@ async function startTicket() {
     var btnExTrade = document.getElementById('exBtnTrade');
     if (btnExTrade) btnExTrade.onclick = function () { toast('Trading terminal: coming soon'); };
 
-        var saved = localStorage.getItem('adminTab') || 'stats';
+         var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
+      if (typeof showApp === 'function' && localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
+        setTimeout(function() {
+          showApp();
+        }, 100);
+      }
     }
     
     // 🛡️ ВОЗВРАЩАЕМ ВЫЗОВ, НО ЗАЩИЩАЕМ ОТ ДВОЙНОГО ЗАПУСКА
