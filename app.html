@@ -6260,7 +6260,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return true;
   }
 
-  function renderRecent(users, statusByEmail) {
+    function renderRecent(users, statusByEmail) {
     var body = $('ncRecentBody'), sub = $('ncRecentSub'), html = '';
     if (!body) return;
     var list = users.slice(0, 5);
@@ -6272,8 +6272,21 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     for (var i = 0; i < list.length; i++) {
       var u = list[i];
-      var st = statusByEmail[String(u.email).toLowerCase()] === 'approved' ? 
-        '<span class="pill ok">Verified</span>' : '<span class="pill" style="background:rgba(255,255,255,0.1);color:#94a3b8">Not verified</span>';
+      var email = String(u.email).trim().toLowerCase();
+      var vStatus = statusByEmail[email] || null;
+      var st = '';
+
+      // Определяем статус для отображения
+      if (vStatus === 'approved') {
+        st = '<span class="pill ok" style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;">✓ Verified</span>';
+      } else if (vStatus === 'pending') {
+        st = '<span class="pill pend" style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;">⏳ Pending KYC</span>';
+      } else if (vStatus === 'rejected') {
+        st = '<span class="pill fail" style="background:rgba(239,68,68,0.15);color:#ef4444;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;">✗ Rejected</span>';
+      } else {
+        st = '<span class="pill" style="background:rgba(255,255,255,0.08);color:#94a3b8;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;">— Not started</span>';
+      }
+
       html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(u.name, u.email)) + '</span>' +
         '<div><b>' + esc(u.name || u.email) + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
         '<td>' + st + '</td><td>' + money(u.balance) + '</td><td>' + esc(u.lastTx || '—') + '</td></tr>';
@@ -6322,12 +6335,16 @@ document.addEventListener('DOMContentLoaded', function(){
       var vers = (verifsData && verifsData.ok && verifsData.verifications) ? verifsData.verifications : [];
       var stats = (statsData && statsData.ok && statsData.stats) ? statsData.stats : {};
 
+            // Собираем статусы верификаций
       var statusByEmail = {};
       vers.forEach(function(v) {
-        if (v.email) statusByEmail[v.email.toLowerCase()] = v.status;
+        if (v && v.email) {
+          var em = String(v.email).trim().toLowerCase();
+          statusByEmail[em] = v.status; // 'pending', 'approved', 'rejected'
+        }
       });
 
-      // Рендерим таблицы
+      // Принудительно обновляем таблицы
       renderRecent(users, statusByEmail); 
       renderQueue(vers);
 
