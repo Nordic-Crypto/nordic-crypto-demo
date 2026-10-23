@@ -1887,24 +1887,92 @@ function fileSizeStr(bytes) {
 
 function initVerification() {
   var typeBtns = document.querySelectorAll('.vtype-btn');
+  var docSlots = document.getElementById('docSlots');
+  var slotBack = document.getElementById('slotBack');
+  var verifyNext1 = document.getElementById('verifyNext1');
+  
+  function updateSlots() {
+    var activeType = document.querySelector('.vtype-btn.on');
+    var type = activeType ? activeType.getAttribute('data-type') : 'Passport';
+    var isTwoSides = (type === "Driver's License" || type === 'National ID');
+    
+    if (isTwoSides) {
+      docSlots.setAttribute('data-sides', '2');
+      if (slotBack) slotBack.style.display = 'flex';
+      if (document.getElementById('capFront')) document.getElementById('capFront').textContent = 'Front side';
+    } else {
+      docSlots.setAttribute('data-sides', '1');
+      if (slotBack) slotBack.style.display = 'none';
+      if (document.getElementById('capFront')) document.getElementById('capFront').textContent = 'Photo page';
+    }
+    checkContinue();
+  }
+
+  function checkContinue() {
+    var activeType = document.querySelector('.vtype-btn.on');
+    var type = activeType ? activeType.getAttribute('data-type') : 'Passport';
+    var isTwoSides = (type === "Driver's License" || type === 'National ID');
+    
+    var hasFront = document.getElementById('docFile') && document.getElementById('docFile').files.length > 0;
+    var hasBack = document.getElementById('docFileBack') && document.getElementById('docFileBack').files.length > 0;
+    
+    if (isTwoSides) {
+      verifyNext1.disabled = !(hasFront && hasBack);
+    } else {
+      verifyNext1.disabled = !hasFront;
+    }
+  }
+
   for (var i = 0; i < typeBtns.length; i++) {
     typeBtns[i].onclick = function () {
       for (var j = 0; j < typeBtns.length; j++) typeBtns[j].classList.remove('on');
       this.classList.add('on');
       verifyData.docType = this.getAttribute('data-type');
+      updateSlots();
     };
   }
+
   var docInput = document.getElementById('docFile');
   if (docInput) docInput.onchange = function () {
     var f = this.files[0];
     if (!f) return;
     verifyData.docFile = f.name;
-    document.getElementById('docUpload').style.display = 'none';
+    var img = document.getElementById('docThumb');
+    if (img) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    }
+    document.getElementById('docUpload').classList.add('has');
     document.getElementById('docUploaded').style.display = 'flex';
     document.getElementById('docFileName').textContent = f.name;
     document.getElementById('docFileSize').textContent = fileSizeStr(f.size);
-    document.getElementById('verifyNext1').disabled = false;
+    checkContinue();
   };
+
+  var docInputBack = document.getElementById('docFileBack');
+  if (docInputBack) docInputBack.onchange = function () {
+    var f = this.files[0];
+    if (!f) return;
+    var img = document.getElementById('docThumbBack');
+    if (img) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    }
+    document.getElementById('docUploadBack').classList.add('has');
+    document.getElementById('docUploadedBack').style.display = 'flex';
+    document.getElementById('docFileNameBack').textContent = f.name;
+    document.getElementById('docFileSizeBack').textContent = fileSizeStr(f.size);
+    checkContinue();
+  };
+
   var selfieInput = document.getElementById('selfieFile');
   if (selfieInput) selfieInput.onchange = function () {
     var f = this.files[0];
@@ -1916,6 +1984,7 @@ function initVerification() {
     document.getElementById('selfieFileSize').textContent = fileSizeStr(f.size);
     document.getElementById('verifyNext2').disabled = false;
   };
+
   var btn1 = document.getElementById('verifyNext1');
   if (btn1) btn1.onclick = function () { showVerifyStep(2); };
   var back2 = document.getElementById('verifyBack2');
@@ -1936,8 +2005,9 @@ function initVerification() {
       };
     }
   }, 500);
-}
 
+  updateSlots();
+}
 function fileToBase64(file) {
   return new Promise(function (resolve, reject) {
     var reader = new FileReader();
