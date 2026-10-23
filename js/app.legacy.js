@@ -1096,22 +1096,13 @@ var depPendingTx = null;
 var depAnswers = { source: null, origin: null };
 
 function openDepositVerification(tx, cryptoAmt, symbol, usdValue) {
-  depPendingTx = { tx, cryptoAmt, symbol, usdValue };
-  depAnswers = { source: null, origin: null };
-
-  var cryptoEl = document.getElementById('depAmountCrypto');
-  var usdEl = document.getElementById('depAmountUsd');
-  if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
-  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(usdValue);
-
-  var check = document.getElementById('depConfirmCheck');
-  if (check) check.checked = false;
-  var btnConfirm = document.getElementById('depBtnConfirm');
-  if (btnConfirm) btnConfirm.disabled = true;
-
-  showDepStep(0);
-  var overlay = document.getElementById('depVerifyOverlay');
-  if (overlay) overlay.classList.add('on');
+  // 🛡️ Старая модалка отключена. Вся логика теперь в deposit-flow.js
+  console.log('[NC] openDepositVerification called (old modal disabled)', tx, cryptoAmt);
+  
+  // Если есть новая функция из deposit-flow.js, вызываем её
+  if (typeof window.__ncOpenDepositFlow === 'function') {
+    window.__ncOpenDepositFlow(tx, cryptoAmt, symbol, usdValue);
+  }
 }
 
 function closeDepositVerification() {
