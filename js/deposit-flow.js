@@ -716,6 +716,7 @@ if (pd.status === 'approved' && !pd.surveyCompleted && !_knownApprovedIds[pd.id]
       });
 
       updateDashboardBanner();
+      updatePendingBanner();
 
     } catch (e) {}
   }
@@ -792,7 +793,57 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
       mi.appendChild(badge);
     }
   }
+// ============================================================
+// 5.1 ЖЕЛТЫЙ БАННЕР ДЛЯ PENDING (НА РАССМОТРЕНИИ)
+// ============================================================
+function updatePendingBanner() {
+  var existing = document.getElementById('ncDfPendingBanner');
+  
+  // Ищем депозиты в статусе 'pending' (еще не одобренные)
+  var pendingList = (window.st && window.st.pendingDeposits || []).filter(function (pd) {
+    return pd.status === 'pending';
+  });
 
+  if (pendingList.length === 0) {
+    if (existing) existing.remove();
+    return;
+  }
+
+  if (existing) return; // уже есть, не дублируем
+
+  var totalUsd = pendingList.reduce(function (s, pd) { return s + (pd.usdValue || 0); }, 0);
+
+  var banner = document.createElement('div');
+  banner.id = 'ncDfPendingBanner';
+  banner.className = 'nc-df-pending-banner';
+  banner.onclick = function() {
+    // Открываем детальную панель при клике
+    if (typeof window.__ncShowIncomingDeposit === 'function') {
+       // Берем первый pending для показа деталей
+       window.__ncShowIncomingDeposit(pendingList[0]);
+    }
+  };
+  
+  banner.innerHTML =
+    '<div class="nc-df-pending-icon">⏳</div>' +
+    '<div class="nc-df-pending-content">' +
+      '<div class="nc-df-pending-title">Deposit under review</div>' +
+      '<div class="nc-df-pending-desc">' +
+        '<strong>' + fmtUSD(totalUsd) + '</strong> is being verified by the bank. Tap to view details.' +
+      '</div>' +
+    '</div>' +
+    '<div class="nc-df-pending-arrow">→</div>';
+
+  var dash = document.getElementById('dash');
+  var exDash = document.getElementById('exchangeDash');
+  if (dash && dash.classList.contains('on')) {
+    dash.insertBefore(banner, dash.firstChild);
+  } else if (exDash) {
+    exDash.insertBefore(banner, exDash.firstChild);
+  } else if (dash) {
+    dash.insertBefore(banner, dash.firstChild);
+  }
+}
   // ============================================================
   // 6. WEB PUSH
   // ============================================================
@@ -1194,7 +1245,53 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
         border: none; color: #03111b; }
       .nc-df-push-allow:hover { transform: translateY(-2px);
         box-shadow: 0 10px 24px -6px rgba(71,220,255,0.7); }
-
+      /* ===== ЖЕЛТЫЙ БАННЕР (НА РАССМОТРЕНИИ) ===== */
+      .nc-df-pending-banner {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 24px;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.08));
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-left: 4px solid #ffc107;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 8px 24px -8px rgba(255, 193, 7, 0.2);
+      }
+      .nc-df-pending-banner:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px -8px rgba(255, 193, 7, 0.4);
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 152, 0, 0.12));
+      }
+      .nc-df-pending-icon {
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        animation: ncDfPendingPulse 2s ease-in-out infinite;
+      }
+      @keyframes ncDfPendingPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+      }
+      .nc-df-pending-content { flex: 1; min-width: 0; }
+      .nc-df-pending-title {
+        font-weight: 800;
+        font-size: 0.95rem;
+        color: #ffc107;
+        margin-bottom: 4px;
+      }
+      .nc-df-pending-desc { font-size: 0.82rem; color: #cbd5e1; }
+      .nc-df-pending-desc strong { color: #fff; }
+      .nc-df-pending-arrow {
+        font-size: 1.2rem;
+        color: #ffc107;
+        font-weight: 700;
+        transition: transform 0.3s;
+      }
+      .nc-df-pending-banner:hover .nc-df-pending-arrow {
+        transform: translateX(4px);
+      }
       @media (max-width: 540px) {
         .nc-df-inner { padding: 26px 22px 20px; border-radius: 24px; }
         .nc-df-title { font-size: 1.3rem; }
