@@ -568,7 +568,7 @@ if (data.user.role === 'admin') {
     if (typeof window.initLoginLogout     === 'function') window.initLoginLogout();
     if (typeof window.initSignup          === 'function') window.initSignup();
     if (typeof window.initPasswordConfirm === 'function') window.initPasswordConfirm();
-    if (typeof window.checkSession        === 'function') window.checkSession();
+    if (typeof window.checkSession        === 'function') // window.checkSession();
 
     console.log('%c[NordicCrypto] 🔐 auth.js v2.1 ready',
       'color:#f472b6;font-weight:bold');
