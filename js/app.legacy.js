@@ -431,6 +431,7 @@ function showApp() {
         if (el) { el.classList.remove('on'); el.style.display = 'none'; }
       });
       if (typeof applyAccountType === 'function') applyAccountType();
+      if (window._ncHidePreloader) window._ncHidePreloader();
       return;
     }
 
