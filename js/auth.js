@@ -120,6 +120,7 @@
         localStorage.setItem('user_name', niceName);
 
         window.hideLoginScreen();
+        window._ncJustLoggedIn = true;
         showAppSafe();
       // 🛡️ ADMIN PANEL AUTO-OPEN
 if (data.user.role === 'admin') {
