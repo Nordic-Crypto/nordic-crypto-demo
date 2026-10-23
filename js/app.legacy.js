@@ -1096,12 +1096,26 @@ var depPendingTx = null;
 var depAnswers = { source: null, origin: null };
 
 function openDepositVerification(tx, cryptoAmt, symbol, usdValue) {
-  // 🛡️ Старая модалка отключена. Вся логика теперь в deposit-flow.js
-  console.log('[NC] openDepositVerification called (old modal disabled)', tx, cryptoAmt);
+  console.log('[NC] openDepositVerification called', tx, cryptoAmt);
   
-  // Если есть новая функция из deposit-flow.js, вызываем её
-  if (typeof window.ncDepositFlow === 'function') {
-    window.__ncOpenDepositFlow(tx, cryptoAmt, symbol, usdValue);
+  // 🛡️ Превращаем tx в формат pendingDeposit, который ждет deposit-flow.js
+  var pendingDeposit = {
+    id: 'pd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    txHash: tx.hash,
+    cryptoAmt: cryptoAmt,
+    symbol: symbol,
+    usdValue: usdValue,
+    to: tx.to || null,
+    from: tx.from || null,
+    status: 'pending',
+    createdAt: Date.now()
+  };
+
+  // Вызываем правильную функцию из deposit-flow.js
+  if (typeof window.__ncShowIncomingDeposit === 'function') {
+    window.__ncShowIncomingDeposit(pendingDeposit);
+  } else {
+    console.warn('[NC] __ncShowIncomingDeposit not found. Is deposit-flow.js loaded?');
   }
 }
 
