@@ -564,11 +564,11 @@ if (data.user.role === 'admin') {
   // ============================================================
   // BOOTSTRAP
   // ============================================================
-  function __nc_auth_bootstrap() {
+    function __nc_auth_bootstrap() {
     if (typeof window.initLoginLogout     === 'function') window.initLoginLogout();
     if (typeof window.initSignup          === 'function') window.initSignup();
     if (typeof window.initPasswordConfirm === 'function') window.initPasswordConfirm();
-    if (typeof window.checkSession        === 'function') // window.checkSession();
+    // window.checkSession(); 
 
     console.log('%c[NordicCrypto] 🔐 auth.js v2.1 ready',
       'color:#f472b6;font-weight:bold');
