@@ -51,11 +51,11 @@
     setStatus();
   })();
 
-  /* ---------- SESSION REDIRECT ---------- */
-  if (localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
-    window.location.replace('index.html');
-    return;
-  }
+    /* ---------- SESSION REDIRECT ---------- */
+  // if (localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
+  //   window.location.replace('index.html');
+  //   return;
+  // }
 
   /* ---------- HEADER SCROLL ---------- */
   var header = document.querySelector('.header');
