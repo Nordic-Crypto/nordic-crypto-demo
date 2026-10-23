@@ -2656,24 +2656,24 @@ function refreshDest() {
       if (destEl) destEl.value = addr || '';
       if (destNet) destNet.textContent = networkName;
 
-      // Генерируем QR
-            if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
+            // 🛡️ ГЕНЕРАЦИЯ QR-КОДА
+      if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
         qrWrap.style.display = 'flex';
         
-        // Принудительно очищаем старый QR, чтобы не было наложений
+        // Полностью очищаем контейнер перед новой отрисовкой
         qrCode.innerHTML = '';
-        qrCode.style.width = '110px';
-        qrCode.style.height = '110px';
-        qrCode.style.background = '#fff';
-        qrCode.style.borderRadius = '10px';
+        
+        // Рисуем QR через canvas (это самый надежный способ)
+        var canvas = document.createElement('canvas');
+        qrCode.appendChild(canvas);
         
         new QRious({
-          element: qrCode,
+          element: canvas,
           value: addr,
-          size: 110,
+          size: 120, // Размер под контейнер
           background: 'white',
           foreground: 'black',
-          padding: 0 // Убираем внутренние отступы, чтобы код занял весь квадрат
+          level: 'H' // Высокий уровень защиты (меньше шансов, что не отсканируется)
         });
       } else {
         if (qrWrap) qrWrap.style.display = 'none';
