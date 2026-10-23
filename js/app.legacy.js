@@ -1160,43 +1160,59 @@ function finalizeDeposit() {
 
   if (!tx || !tx.hash) { toast('Deposit error — contact support', true); return; }
 
+  // Проверка на дубликаты
   var isDup = false;
   (st.txs || []).forEach(function (t) { if (t.hash === tx.hash) isDup = true; });
-  if (isDup) { toast('Deposit already credited', true); closeDepositVerification(); return; }
+  (st.pendingDeposits || []).forEach(function (d) { if (d.txHash === tx.hash) isDup = true; });
+  if (isDup) { toast('Deposit already submitted', true); closeDepositVerification(); return; }
 
-  st.usd += credit;
-  if (symbol === 'BTC') st.btc += cryptoAmt;
-  else if (symbol === 'ETH') st.eth += cryptoAmt;
+  // 🛡️ НЕ НАЧИСЛЯЕМ ДЕНЬГИ, А СОЗДАЕМ ЗАЯВКУ
+  if (!st.pendingDeposits) st.pendingDeposits = [];
+  
+  var newDep = {
+    id: 'dep_' + Date.now(),
+    userEmail: localStorage.getItem('user_email'),
+    userName: localStorage.getItem('user_name') || 'User',
+    txHash: tx.hash,
+    cryptoAmt: cryptoAmt,
+    symbol: symbol,
+    usdValue: credit,
+    source: depAnswers.source,
+    origin: depAnswers.origin,
+    status: 'pending',
+    createdAt: Date.now()
+  };
+  
+  st.pendingDeposits.push(newDep);
 
-  if (!Array.isArray(st.txs)) st.txs = [];
-  st.txs.unshift({
-    date: now(), ts: Date.now(),
-    desc: 'Crypto deposit — ' + Number(cryptoAmt).toFixed(8) + ' ' + symbol,
-    amt: credit, status: 'Processing', hash: tx.hash,
-    crypto: cryptoAmt, symbol,
-    verification: { source: depAnswers.source, origin: depAnswers.origin }
-  });
+  // Сохраняем на сервер (в состояние клиента)
+  saveToServer(); 
+  
+  // Сразу отправляем запрос в админку через спец. API (если оно есть)
+  var token = getSessionToken();
+  if (token) {
+    fetch(WORKER_URL + '?action=addPendingDeposit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: token, txHash: tx.hash, cryptoAmt: cryptoAmt,
+        symbol: symbol, usdValue: credit, to: tx.to, time: tx.time
+      })
+    }).catch(function(){});
+  }
 
-  if (!st.depositVerifications) st.depositVerifications = [];
-  st.depositVerifications.push({
-    txHash: tx.hash, cryptoAmt, symbol, usdValue: credit,
-    source: depAnswers.source, origin: depAnswers.origin, completedAt: Date.now()
-  });
-
-  saveToServer();
-  render();
-
+  // Показываем клиенту экран успеха
   var cryptoEl = document.getElementById('depSuccessCrypto');
   var usdEl = document.getElementById('depSuccessUsd');
   var balEl = document.getElementById('depNewBalance');
+  
   if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
-  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' credited';
-  if (balEl) balEl.textContent = fmtCurrency(st.usd);
+  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' pending approval';
+  if (balEl) balEl.textContent = 'Awaiting Admin Approval';
 
   showDepStep(4);
   playChime();
   spawnConfetti();
-  addNotification('Deposit verified: ' + cryptoAmt.toFixed(8) + ' ' + symbol, '✅');
+  addNotification('Deposit submitted for review', '⏳');
 }
 
 /* ═══════════════════ BALANCE CHART ═══════════════════ */
