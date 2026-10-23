@@ -1348,7 +1348,14 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
     if (typeof window.__ncPollingHub !== 'undefined') {
       console.log('[deposit-flow] polling delegated to polling-hub');
     } else {
-      // setInterval(syncPendingDeposits, 30000);
+      // 🛡️ УМНАЯ СИНХРОНИЗАЦИЯ (раз в 15 секунд)
+setInterval(async () => {
+  // Проверяем, не открыто ли уже окно депозита, чтобы не спамить
+  const isModalOpen = document.querySelector('.deposit-modal-overlay') || document.querySelector('#deposit-flow-modal');
+  if (!isModalOpen) {
+    await syncPendingDeposits();
+  }
+}, 15000);
     }
 
     document.addEventListener('visibilitychange', function () {
