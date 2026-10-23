@@ -2068,30 +2068,12 @@ window.submitRealVerification = async function () {
 
   var btn = document.getElementById('verifyNext3');
   if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
-
-  document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
-
-  var loadingOverlay = document.createElement('div');
-  loadingOverlay.id = 'kycLoadingOverlay';
-  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#e7edf5;';
-  loadingOverlay.innerHTML =
-    '<div style="width:60px;height:60px;border:4px solid rgba(0,212,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:kycSpin 1s linear infinite;margin-bottom:24px;"></div>' +
-    '<div style="font-size:20px;font-weight:700;" id="kycStatusText">Uploading documents...</div>' +
-    '<div style="font-size:13px;color:#94a3b8;margin-top:10px;" id="kycStatusSub">Please wait, do not close this tab</div>' +
-    '<style>@keyframes kycSpin{to{transform:rotate(360deg)}}</style>';
-  document.body.appendChild(loadingOverlay);
-
-  function setStatus(main, sub) {
-    var m = document.getElementById('kycStatusText');
-    var s = document.getElementById('kycStatusSub');
-    if (m) m.textContent = main;
-    if (s) s.textContent = sub || '';
-  }
+  if (window._ncShowPreloader) window._ncShowPreloader();
 
   await new Promise(function (r) { setTimeout(r, 80); });
 
   var watchdog = setTimeout(function () {
-    document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
+   if (window._ncHidePreloader) window._ncHidePreloader();
     if (typeof toast === 'function') toast('Upload timeout. Try smaller files or check connection.', true);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
     window._kycSubmitting = false;
@@ -2197,7 +2179,7 @@ var email = localStorage.getItem('user_email');
 if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
 
     clearTimeout(watchdog);
-    document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
+    if (window._ncHidePreloader) window._ncHidePreloader();
 
     var loginEl = document.getElementById('loginScreen'); if (loginEl) loginEl.style.display = 'none';
     var sideEl = document.getElementById('sideBar'); if (sideEl) sideEl.style.display = 'none';
