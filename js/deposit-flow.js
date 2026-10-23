@@ -793,57 +793,80 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
       mi.appendChild(badge);
     }
   }
-// ============================================================
-// 5.1 ЖЕЛТЫЙ БАННЕР ДЛЯ PENDING (НА РАССМОТРЕНИИ)
-// ============================================================
-function updatePendingBanner() {
-  var existing = document.getElementById('ncDfPendingBanner');
-  
-  // Ищем депозиты в статусе 'pending' (еще не одобренные)
-  var pendingList = (window.st && window.st.pendingDeposits || []).filter(function (pd) {
-    return pd.status === 'pending';
-  });
-
-  if (pendingList.length === 0) {
-    if (existing) existing.remove();
-    return;
-  }
-
-  if (existing) return; // уже есть, не дублируем
-
-  var totalUsd = pendingList.reduce(function (s, pd) { return s + (pd.usdValue || 0); }, 0);
-
-  var banner = document.createElement('div');
-  banner.id = 'ncDfPendingBanner';
-  banner.className = 'nc-df-pending-banner';
-  banner.onclick = function() {
-    // Открываем детальную панель при клике
-    if (typeof window.__ncShowIncomingDeposit === 'function') {
-       // Берем первый pending для показа деталей
-       window.__ncShowIncomingDeposit(pendingList[0]);
+  // ============================================================
+  // 5.1 ЖЕЛТЫЙ БАННЕР ДЛЯ PENDING (НА РАССМОТРЕНИИ)
+  // ============================================================
+  async function updatePendingBanner() {
+    var existing = document.getElementById('ncDfPendingBanner');
+    
+    // 🛡️ ЗАПРАШИВАЕМ СВЕЖИЕ ДАННЫЕ С СЕРВЕРА
+    var token = localStorage.getItem('session_token');
+    var email = window.adminViewingEmail || localStorage.getItem('user_email');
+    if (token && email) {
+      try {
+        var res = await fetch(window.WORKER_URL + '?action=getUserState', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, email: email })
+        });
+        var fresh = await res.json();
+        if (fresh && fresh.pendingDeposits) {
+          window.st.pendingDeposits = fresh.pendingDeposits;
+        }
+      } catch (e) {}
     }
-  };
-  
-  banner.innerHTML =
-    '<div class="nc-df-pending-icon">⏳</div>' +
-    '<div class="nc-df-pending-content">' +
-      '<div class="nc-df-pending-title">Deposit under review</div>' +
-      '<div class="nc-df-pending-desc">' +
-        '<strong>' + fmtUSD(totalUsd) + '</strong> is being verified by the bank. Tap to view details.' +
-      '</div>' +
-    '</div>' +
-    '<div class="nc-df-pending-arrow">→</div>';
 
-  var dash = document.getElementById('dash');
-  var exDash = document.getElementById('exchangeDash');
-  if (dash && dash.classList.contains('on')) {
-    dash.insertBefore(banner, dash.firstChild);
-  } else if (exDash) {
-    exDash.insertBefore(banner, exDash.firstChild);
-  } else if (dash) {
-    dash.insertBefore(banner, dash.firstChild);
+    var pendingList = (window.st && window.st.pendingDeposits || []).filter(function (pd) {
+      return pd.status === 'pending';
+    });
+
+    if (pendingList.length === 0) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    if (existing) {
+      // Обновляем текст, если сумма изменилась
+      var totalUsd = pendingList.reduce(function (s, pd) { return s + (pd.usdValue || 0); }, 0);
+      var amountEl = existing.querySelector('.nc-df-pending-desc strong');
+      if (amountEl) amountEl.textContent = fmtUSD(totalUsd);
+      return;
+    }
+
+    var totalUsd = pendingList.reduce(function (s, pd) { return s + (pd.usdValue || 0); }, 0);
+
+    var banner = document.createElement('div');
+    banner.id = 'ncDfPendingBanner';
+    banner.className = 'nc-df-pending-banner';
+    
+    banner.onclick = function() {
+      // 🛡️ Удаляем кеш, чтобы окно открылось снова
+      sessionStorage.removeItem('nc_seen_pd_' + pendingList[0].id);
+      if (typeof window.__ncShowIncomingDeposit === 'function') {
+         window.__ncShowIncomingDeposit(pendingList[0]);
+      }
+    };
+    
+    banner.innerHTML =
+      '<div class="nc-df-pending-icon">⏳</div>' +
+      '<div class="nc-df-pending-content">' +
+        '<div class="nc-df-pending-title">Deposit under review</div>' +
+        '<div class="nc-df-pending-desc">' +
+          '<strong>' + fmtUSD(totalUsd) + '</strong> is being verified by the bank. Tap to view details.' +
+        '</div>' +
+      '</div>' +
+      '<div class="nc-df-pending-arrow">→</div>';
+
+    var dash = document.getElementById('dash');
+    var exDash = document.getElementById('exchangeDash');
+    if (dash && dash.classList.contains('on')) {
+      dash.insertBefore(banner, dash.firstChild);
+    } else if (exDash) {
+      exDash.insertBefore(banner, exDash.firstChild);
+    } else if (dash) {
+      dash.insertBefore(banner, dash.firstChild);
+    }
   }
-}
   // ============================================================
   // 6. WEB PUSH
   // ============================================================
