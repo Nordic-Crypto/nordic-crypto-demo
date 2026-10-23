@@ -382,6 +382,13 @@ function showApp() {
     safe(initSettings);
     safe(initAdminPanel);
     safe(loadCharts);
+     
+     // 🛡️ ЗАЩИТА ОТ МИГАНИЯ ПРИ ВХОДЕ
+    if (window._ncJustLoggedIn) {
+      window._ncJustLoggedIn = false;
+      if (window.NCBoot) window.NCBoot.done();
+      return; // Останавливаем дальнейшую перезагрузку
+    }
 
     try { render(); } catch (e) { console.warn('[NC render]', e); }
 
@@ -3676,22 +3683,11 @@ async function startTicket() {
     var btnExTrade = document.getElementById('exBtnTrade');
     if (btnExTrade) btnExTrade.onclick = function () { toast('Trading terminal: coming soon'); };
 
-         var saved = localStorage.getItem('adminTab') || 'stats';
+             var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
-      if (typeof showApp === 'function' && localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
-        setTimeout(function() {
-          showApp();
-        }, 100);
-      }
     }
-    
-    // 🛡️ ВОЗВРАЩАЕМ ВЫЗОВ, НО ЗАЩИЩАЕМ ОТ ДВОЙНОГО ЗАПУСКА
-    if (typeof showApp === 'function' && localStorage.getItem('session_token') && !window._ncAppStarted) {
-      window._ncAppStarted = true;
-      setTimeout(function() { showApp(); }, 100);
-    }
-  }
+     
     // 🛡️ ЖЕСТКИЙ КОНТРОЛЬ КНОПКИ CONTINUE
     var btnNext = document.getElementById('verifyNext1');
     if (btnNext) {
