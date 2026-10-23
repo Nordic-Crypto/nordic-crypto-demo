@@ -1100,7 +1100,7 @@ function openDepositVerification(tx, cryptoAmt, symbol, usdValue) {
   console.log('[NC] openDepositVerification called (old modal disabled)', tx, cryptoAmt);
   
   // Если есть новая функция из deposit-flow.js, вызываем её
-  if (typeof window.__ncOpenDepositFlow === 'function') {
+  if (typeof window.ncDepositFlow === 'function') {
     window.__ncOpenDepositFlow(tx, cryptoAmt, symbol, usdValue);
   }
 }
