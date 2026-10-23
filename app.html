@@ -6332,6 +6332,12 @@ document.addEventListener('DOMContentLoaded', function(){
       var statsData = results[2];
       
       var users = (usersData && usersData.ok && usersData.users) ? usersData.users : [];
+      var usersData = results[0];
+      var verifsData = results[1];
+      var statsData = results[2];
+      
+      var users = (usersData && usersData.ok && usersData.users) ? usersData.users : [];
+      var vers = (verifsData && verifsData.ok && verifsData.verifications) ? verifsData.verifications : [];
       var vers = (verifsData && verifsData.ok && verifsData.verifications) ? verifsData.verifications : [];
       var stats = (statsData && statsData.ok && statsData.stats) ? statsData.stats : {};
 
