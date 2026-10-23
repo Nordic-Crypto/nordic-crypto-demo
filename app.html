@@ -5063,56 +5063,6 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
 </div>
-<!-- DEPOSIT VERIFICATION -->
-<div class="dep-verify-overlay" id="depVerifyOverlay">
-  <div class="dep-verify-box">
-    <div class="dep-step on" id="depStep0">
-      <div class="dep-icon-big">💰</div>
-      <h1>Deposit detected!</h1>
-      <p class="dep-sub">We found a new deposit</p>
-      <div class="dep-amount-card"><div class="dep-amount-crypto" id="depAmountCrypto">+ 0.00000000 BTC</div><div class="dep-amount-usd" id="depAmountUsd">≈ $0.00</div></div>
-      <p class="dep-sub">To complete your deposit, answer 3 quick questions.</p>
-      <button class="btn b1" id="depBtnStart" style="width:100%;justify-content:center;padding:16px;margin-top:16px">Start verification →</button>
-    </div>
-    <div class="dep-step" id="depStep1">
-      <div class="dep-progress"><div class="dep-progress-bar" style="width:33%"></div></div>
-      <div class="dep-step-label">Step 1 of 3</div>
-      <h2>Where did you send from?</h2>
-      <div class="dep-options">
-        <button class="dep-opt" data-value="personal_wallet"><span class="dep-opt-icon">👤</span><span class="dep-opt-text">My personal wallet</span></button>
-        <button class="dep-opt" data-value="exchange"><span class="dep-opt-icon">🏦</span><span class="dep-opt-text">Exchange (Binance, etc)</span></button>
-        <button class="dep-opt" data-value="friend"><span class="dep-opt-icon">👥</span><span class="dep-opt-text">Friend/family</span></button>
-        <button class="dep-opt" data-value="other"><span class="dep-opt-icon">📦</span><span class="dep-opt-text">Other</span></button>
-      </div>
-    </div>
-    <div class="dep-step" id="depStep2">
-      <div class="dep-progress"><div class="dep-progress-bar" style="width:66%"></div></div>
-      <div class="dep-step-label">Step 2 of 3</div>
-      <h2>Source of funds?</h2>
-      <div class="dep-options">
-        <button class="dep-opt" data-value="salary"><span class="dep-opt-icon">💼</span><span class="dep-opt-text">Salary/savings</span></button>
-        <button class="dep-opt" data-value="investment"><span class="dep-opt-icon">📈</span><span class="dep-opt-text">Investment</span></button>
-        <button class="dep-opt" data-value="gift"><span class="dep-opt-icon">🎁</span><span class="dep-opt-text">Gift</span></button>
-        <button class="dep-opt" data-value="business"><span class="dep-opt-icon">🏢</span><span class="dep-opt-text">Business</span></button>
-      </div>
-    </div>
-    <div class="dep-step" id="depStep3">
-      <div class="dep-progress"><div class="dep-progress-bar" style="width:100%"></div></div>
-      <div class="dep-step-label">Step 3 of 3</div>
-      <h2>Please confirm</h2>
-      <label class="dep-checkbox"><input type="checkbox" id="depConfirmCheck"><span class="dep-checkmark"></span><span class="dep-check-text">I confirm this deposit is mine</span></label>
-      <button class="btn b1" id="depBtnConfirm" disabled style="width:100%;justify-content:center;padding:16px;margin-top:16px">Confirm →</button>
-    </div>
-    <div class="dep-step" id="depStep4">
-      <div class="dep-success-icon">✓</div>
-      <h1>Deposit confirmed!</h1>
-      <p class="dep-sub">Funds credited</p>
-      <div class="dep-amount-card success"><div class="dep-amount-crypto" id="depSuccessCrypto">+ 0 BTC</div><div class="dep-amount-usd" id="depSuccessUsd">≈ $0.00</div></div>
-      <div class="dep-balance"><span>New balance:</span><span class="dep-balance-value" id="depNewBalance">$0.00</span></div>
-      <button class="btn b1" id="depBtnDone" style="width:100%;justify-content:center;padding:16px;margin-top:16px">Back →</button>
-    </div>
-  </div>
-</div>
 
 <!-- SIGNUP -->
 <div class="mask" id="signupMask">
