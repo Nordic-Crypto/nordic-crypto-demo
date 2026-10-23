@@ -3679,12 +3679,6 @@ async function startTicket() {
     var saved = localStorage.getItem('adminTab') || 'stats';
     if (document.querySelector('.admin-nav-item') && typeof showAdminTab === 'function') {
       setTimeout(function () { showAdminTab(saved); }, 300);
-      if (typeof showApp === 'function' && localStorage.getItem('session_token') && localStorage.getItem('user_email')) {
-        setTimeout(function() {
-          showApp();
-        }, 100);
-      }
-    }
   }
     // 🛡️ ЖЕСТКИЙ КОНТРОЛЬ КНОПКИ CONTINUE
     var btnNext = document.getElementById('verifyNext1');
