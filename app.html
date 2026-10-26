@@ -5867,22 +5867,28 @@ if ('serviceWorker' in navigator) {
 // 🛡️ Инициализация чата и загрузка истории при открытии
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('chatToggle');
-  
   if (btn) {
     btn.onclick = function() {
       // 1. Открываем/закрываем сам чат
       if (typeof toggleChat === 'function') toggleChat();
       
-      // 2. Если чат открылся — подгружаем историю с сервера
+      // 2. Проверяем, открылся ли он
       var panel = document.getElementById('chatPanel');
       if (panel && panel.style.display === 'flex') {
-        if (typeof window.loadChatHistory === 'function') {
-          window.loadChatHistory(); // Подгружаем сообщения
-        }
+        
+        // Жестко прячем форму, чтобы она не мелькала
+        var form = document.getElementById('chatTicketForm');
+        if (form) form.style.display = 'none';
+
+        // 3. Загружаем историю (с небольшой задержкой, чтобы скрипты успели прогрузиться)
+        setTimeout(function() {
+          if (typeof window.loadChatHistory === 'function') {
+            window.loadChatHistory();
+          }
+        }, 100); 
       }
     };
   }
-  
   if (typeof updateChatBadge === 'function') updateChatBadge();
 });
   </script>
