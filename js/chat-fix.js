@@ -27,45 +27,62 @@
   // 1. ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ИСТОРИИ ПРИ ОТКРЫТИИ
   // ============================================================
     window.loadChatHistory = async function() {
-    var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
-    if (!token) return;
-    var email = window.adminViewingEmail || localStorage.getItem('user_email');
-    if (!email) return;
+  var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
+  if (!token) return;
+  var email = window.adminViewingEmail || localStorage.getItem('user_email');
+  if (!email) return;
 
-    try {
-      var res = await fetch(window.WORKER_URL + '?action=getChat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, email: email })
-      });
-      var data = await res.json();
+  try {
+    var res = await fetch(window.WORKER_URL + '?action=getChat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, email: email })
+    });
+    var data = await res.json();
+    
+    if (data.ok) {
+      var history = data.chat || [];
       
-      if (data.ok) {
-        var history = data.chat || [];
-        
-        // 🛡️ ПЕРЕКЛЮЧЕНИЕ ОКОН: Если есть сообщения — показываем чат, скрываем форму
-        var form = document.getElementById('chatTicketForm');
-        var conv = document.getElementById('chatConversation');
-        
-        if (history.length > 0) {
-          if (form) form.style.display = 'none';
-          if (conv) conv.style.display = 'flex';
-        } else {
-          if (form) form.style.display = 'flex';
-          if (conv) conv.style.display = 'none';
+      // 🛡️ ПЕРЕКЛЮЧЕНИЕ ОКОН
+      var form = document.getElementById('chatTicketForm');
+      var conv = document.getElementById('chatConversation');
+      
+      if (history.length > 0) {
+        // Если есть история — показываем чат, скрываем форму
+        if (form) {
+            form.style.display = 'none';
+            form.style.visibility = 'hidden'; // Жестко скрываем
         }
-
-        // Сохраняем историю, НЕ удаляя оптимистичные сообщения
-        var optimistic = (window.st.chat || []).filter(function (m) { return m._sending || m._failed; });
-        var merged = history.concat(optimistic);
-        merged.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
-        
-        window.st.chat = merged;
-        if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
+        if (conv) {
+            conv.style.display = 'flex';
+            conv.style.visibility = 'visible';
+        }
+      } else {
+        // Если истории нет — показываем форму
+        if (form) {
+            form.style.display = 'flex';
+            form.style.visibility = 'visible';
+        }
+        if (conv) {
+            conv.style.display = 'none';
+            conv.style.visibility = 'hidden';
+        }
       }
-    } catch(e) { console.error('Chat history load error:', e); }
-  };
 
+      // Обновляем данные
+      var optimistic = (window.st.chat || []).filter(function (m) { return m._sending || m._failed; });
+      var merged = history.concat(optimistic);
+      merged.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+      
+      window.st.chat = merged;
+      
+      // Если есть история, принудительно перерисовываем сообщения
+      if (history.length > 0 && typeof window.renderChatMessages === 'function') {
+        window.renderChatMessages();
+      }
+    }
+  } catch(e) { console.error('Chat history load error:', e); }
+};
   // ============================================================
   // 2. Override sendChatMsg
   // ============================================================
