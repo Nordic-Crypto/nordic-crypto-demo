@@ -4227,22 +4227,74 @@ body:not(.has-order) .progress-steps {
 }
 </style>
 <script>
+// 🛡️ Ультимативный фикс чата
 document.addEventListener('DOMContentLoaded', function(){
-  var greet = document.getElementById('nc3Greeting');
-  if (greet){
-    var hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) greet.textContent = 'Good morning';
-    else if (hour >= 12 && hour < 18) greet.textContent = 'Good afternoon';
-    else if (hour >= 18 && hour < 23) greet.textContent = 'Good evening';
-    else greet.textContent = 'Good night';
+  var btn = document.getElementById('chatToggle');
+  
+  if (btn) {
+    // Убираем старые обработчики (если они были)
+    var newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.onclick = function(e) {
+      e.preventDefault();
+      
+      // 1. Вызываем стандартную функцию открытия (чтобы чат выехал)
+      if (typeof toggleChat === 'function') toggleChat();
+      
+      // 2. Ждем полсекунды, чтобы все остальные скрипты отработали и переключили окна
+      setTimeout(function() {
+        var panel = document.getElementById('chatPanel');
+        if (!panel || panel.style.display !== 'flex') return; // Если чат закрылся, ничего не делаем
+        
+        var form = document.getElementById('chatTicketForm');
+        var conv = document.getElementById('chatConversation');
+        
+        // Принудительно прячем форму на время проверки
+        if (form) form.style.display = 'none';
+        if (conv) conv.style.display = 'flex';
+        
+        // 3. Проверяем историю через сервер
+        var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
+        var email = window.adminViewingEmail || localStorage.getItem('user_email');
+        
+        if (!token || !email) return;
+
+        fetch(window.WORKER_URL + '?action=getChat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, email: email })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.ok && data.chat && data.chat.length > 0) {
+            // ЕСТЬ ИСТОРИЯ: Оставляем чат, прячем форму
+            if (form) form.style.display = 'none';
+            if (conv) conv.style.display = 'flex';
+            
+            // Обновляем сообщения
+            window.st.chat = data.chat;
+            if (typeof window.renderChatMessages === 'function') {
+              window.renderChatMessages();
+            }
+          } else {
+            // НЕТ ИСТОРИИ: Показываем форму
+            if (form) form.style.display = 'flex';
+            if (conv) conv.style.display = 'none';
+          }
+        })
+        .catch(function(e) { 
+            console.error('Ошибка загрузки истории чата:', e); 
+            // В случае ошибки возвращаем форму
+            if (form) form.style.display = 'flex';
+            if (conv) conv.style.display = 'none';
+        });
+        
+      }, 300); // Задержка 300мс (ждем, пока открывающий скрипт переключит окна)
+    };
   }
-  var nameEl = document.getElementById('nc3HeroName');
-  if (nameEl){
-    var n = localStorage.getItem('user_name');
-    if (n && n.trim() !== '' && n !== 'User' && n !== 'Admin'){
-      nameEl.textContent = ' ' + n.split(' ')[0];
-    }
-  }
+  
+  if (typeof updateChatBadge === 'function') updateChatBadge();
 });
 </script>
   <link rel="stylesheet" href="css/nc-premium.css?v=2">
