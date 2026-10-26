@@ -26,7 +26,7 @@
   // ============================================================
   // 1. ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ИСТОРИИ ПРИ ОТКРЫТИИ
   // ============================================================
-  window.loadChatHistory = async function() {
+    window.loadChatHistory = async function() {
     var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
     if (!token) return;
     var email = window.adminViewingEmail || localStorage.getItem('user_email');
@@ -41,13 +41,27 @@
       var data = await res.json();
       
       if (data.ok) {
+        var history = data.chat || [];
+        
+        // 🛡️ ПЕРЕКЛЮЧЕНИЕ ОКОН: Если есть сообщения — показываем чат, скрываем форму
+        var form = document.getElementById('chatTicketForm');
+        var conv = document.getElementById('chatConversation');
+        
+        if (history.length > 0) {
+          if (form) form.style.display = 'none';
+          if (conv) conv.style.display = 'flex';
+        } else {
+          if (form) form.style.display = 'flex';
+          if (conv) conv.style.display = 'none';
+        }
+
         // Сохраняем историю, НЕ удаляя оптимистичные сообщения
         var optimistic = (window.st.chat || []).filter(function (m) { return m._sending || m._failed; });
-        var merged = (data.chat || []).concat(optimistic);
+        var merged = history.concat(optimistic);
         merged.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
         
         window.st.chat = merged;
-        renderChatMessages();
+        if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
       }
     } catch(e) { console.error('Chat history load error:', e); }
   };
