@@ -1,20 +1,14 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT-FIX.JS v1.0
-   ============================================================
-   Быстрый чат: optimistic UI + atomic endpoint + fast polling.
-   
-   Загружается ПОСЛЕ fixes.js.
-   Переопределяет sendChatMsg, renderChatMessages, markChatRead.
+   NORDIC CRYPTO — CHAT-FIX.JS v1.1 (Fixed History & Isolation)
    ============================================================ */
 
 (function () {
   'use strict';
 
-  var CHAT_VERSION = '1.0.0';
-  var POLL_OPEN_MS = 1500;   // чат открыт
-  var POLL_CLOSED_MS = 20000; // чат закрыт
+  var CHAT_VERSION = '1.1.0';
+  var POLL_OPEN_MS = 1500;
+  var POLL_CLOSED_MS = 20000;
   var _lastPollTs = 0;
-  var _pending = [];          // сообщения в процессе отправки
 
   function $(id) { return document.getElementById(id); }
 
@@ -30,7 +24,36 @@
   }
 
   // ============================================================
-  // 1. Override sendChatMsg — atomic endpoint + optimistic UI
+  // 1. ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ИСТОРИИ ПРИ ОТКРЫТИИ
+  // ============================================================
+  window.loadChatHistory = async function() {
+    var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
+    if (!token) return;
+    var email = window.adminViewingEmail || localStorage.getItem('user_email');
+    if (!email) return;
+
+    try {
+      var res = await fetch(window.WORKER_URL + '?action=getChat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, email: email })
+      });
+      var data = await res.json();
+      
+      if (data.ok) {
+        // Сохраняем историю, НЕ удаляя оптимистичные сообщения
+        var optimistic = (window.st.chat || []).filter(function (m) { return m._sending || m._failed; });
+        var merged = (data.chat || []).concat(optimistic);
+        merged.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+        
+        window.st.chat = merged;
+        renderChatMessages();
+      }
+    } catch(e) { console.error('Chat history load error:', e); }
+  };
+
+  // ============================================================
+  // 2. Override sendChatMsg
   // ============================================================
 
   window.sendChatMsg = async function () {
@@ -39,14 +62,9 @@
     var text = (input.value || '').trim();
     if (!text) return;
 
-    // Ограничение длины (клиентский)
-    if (text.length > 4000) {
-      text = text.slice(0, 4000);
-    }
-
+    if (text.length > 4000) text = text.slice(0, 4000);
     input.value = '';
 
-    // Optimistic UI: сразу показываем сообщение
     var clientMsgId = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     if (!window.st.chat) window.st.chat = [];
     var optimistic = {
@@ -61,11 +79,9 @@
     window.st.chat.push(optimistic);
     renderChatMessages();
 
-    // Скролл вниз
     var box = $('chatMessages');
     if (box) box.scrollTop = box.scrollHeight;
 
-    // Типпинг
     sendTypingIndicator(true);
 
     var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
@@ -87,7 +103,6 @@
       var data = await res.json();
 
       if (data.ok && data.message) {
-        // Заменяем optimistic на реальное сообщение
         var realMsg = data.message;
         for (var i = 0; i < window.st.chat.length; i++) {
           if (window.st.chat[i].clientMsgId === clientMsgId) {
@@ -97,7 +112,6 @@
         }
         renderChatMessages();
       } else {
-        // Ошибка — помечаем как failed
         optimistic._sending = false;
         optimistic._failed = true;
         optimistic._error = data.error || 'Failed to send';
@@ -112,10 +126,6 @@
       sendTypingIndicator(false);
     }
   };
-
-  // ============================================================
-  // 2. Retry failed message
-  // ============================================================
 
   window.__ncRetryChatMsg = async function (clientMsgId) {
     var msg = (window.st.chat || []).find(function (m) { return m.clientMsgId === clientMsgId; });
@@ -158,7 +168,7 @@
   };
 
   // ============================================================
-  // 3. Override renderChatMessages — с индикаторами отправки
+  // 3. Override renderChatMessages
   // ============================================================
 
   window.renderChatMessages = function () {
@@ -210,12 +220,12 @@
   };
 
   // ============================================================
-  // 4. Fast polling — getChat endpoint
+  // 4. Polling
   // ============================================================
 
   var _lastChatHash = '';
 
-    window.__ncChatPoll = async function () {
+  window.__ncChatPoll = async function () {
     var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
     if (!token) return;
     var email = window.adminViewingEmail || localStorage.getItem('user_email');
@@ -239,12 +249,10 @@
       if (!data.ok) return;
 
       var serverChat = data.chat || [];
-      // Простой hash чтобы не перерисовывать если ничего не изменилось
       var hash = serverChat.length + '|' + (serverChat[serverChat.length - 1] ? serverChat[serverChat.length - 1].id : '');
       if (hash === _lastChatHash && !chatOpen) return;
 
       var prevLen = (window.st.chat || []).length;
-      // Мержим с оптимистичными (которые ещё не подтверждены)
       var optimistic = (window.st.chat || []).filter(function (m) { return m._sending || m._failed; });
       var merged = serverChat.concat(optimistic);
       merged.sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
@@ -261,7 +269,6 @@
 
       if (typeof window.updateChatBadge === 'function') window.updateChatBadge();
 
-      // Если пришло новое сообщение от админа — звук + нотификация
       if (serverChat.length > prevLen) {
         var newMsgs = serverChat.slice(prevLen);
         var hasAdmin = newMsgs.some(function (m) { return m.from === 'admin'; });
@@ -274,17 +281,13 @@
       }
 
       if (chatOpen) renderChatMessages();
-    } catch (e) {
-      // silent
-    }
+    } catch (e) {}
   }
 
-    // Отключено: polling-hub.js управляет polling'ом
-  // setInterval(pollChat, 1000);
-  setTimeout(window.__ncChatPoll, 500);  // одноразовая загрузка при старте
+  setTimeout(window.__ncChatPoll, 500);
 
   // ============================================================
-  // 5. Typing indicator (debounced)
+  // 5. Typing indicator
   // ============================================================
 
   var _typingTimeout = null;
@@ -297,7 +300,7 @@
     if (!email) return;
 
     var now = Date.now();
-    if (isTyping && now - _lastTypingSent < 2000) return; // throttle
+    if (isTyping && now - _lastTypingSent < 2000) return;
     _lastTypingSent = now;
 
     fetch(window.WORKER_URL + '?action=setTyping', {
@@ -306,10 +309,6 @@
       body: JSON.stringify({ token: token, email: email, who: 'client', typing: !!isTyping })
     }).catch(function () {});
   }
-
-  // ============================================================
-  // 6. Auto-scroll при вводе
-  // ============================================================
 
   document.addEventListener('input', function (e) {
     if (e.target && e.target.id === 'chatInput') {
@@ -320,46 +319,14 @@
   }, true);
 
   // ============================================================
-  // 7. Styles для индикаторов
+  // 6. markChatRead
   // ============================================================
-
-  function injectStyles() {
-    if ($('ncChatStyles')) return;
-    var style = document.createElement('style');
-    style.id = 'ncChatStyles';
-    style.textContent = `
-      .chat-msg-status {
-        font-size: 11px;
-        opacity: 0.8;
-        font-weight: 700;
-      }
-      .chat-msg-status.sending { color: #94a3b8; }
-      .chat-msg-status.sent    { color: #94a3b8; }
-      .chat-msg-status.read    { color: #47dcff; }
-      .chat-msg-status.failed  { color: #ff5470; cursor: pointer; }
-      .chat-msg-status.failed:hover { text-decoration: underline; }
-      .chat-bubble.failed {
-        background: rgba(255,84,112,0.15) !important;
-        border: 1px solid rgba(255,84,112,0.4) !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  injectStyles();
-
-  // ============================================================
-  // 8. Skip full setUserState при отправке чата
-  // ============================================================
-
-  // Патчим markChatRead — используем атомарный endpoint
   window.markChatRead = async function () {
     var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
     var email = window.adminViewingEmail || localStorage.getItem('user_email');
     if (!token || !email) return;
 
     try {
-      // Оптимистично помечаем локально
       (window.st.chat || []).forEach(function (m) {
         if (m.from === 'admin' && !m.read) m.read = true;
       });
@@ -373,9 +340,5 @@
     } catch (e) {}
   };
 
-  console.log(
-    '%c[NordicCrypto] 💬 chat-fix.js v' + CHAT_VERSION + ' loaded — fast chat enabled',
-    'color:#00e5ff;font-weight:bold;font-size:13px'
-  );
-
+  console.log('%c[NordicCrypto] 💬 chat-fix.js v' + CHAT_VERSION + ' loaded', 'color:#00e5ff;font-weight:bold;font-size:13px');
 })();
