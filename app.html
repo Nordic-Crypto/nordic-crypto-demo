@@ -4227,70 +4227,74 @@ body:not(.has-order) .progress-steps {
 }
 </style>
 <script>
-// 🛡️ Ультимативный фикс чата
+// 🛡️ Ультимативный фикс: запоминаем, что чат уже начат
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('chatToggle');
   
   if (btn) {
-    // Убираем старые обработчики (если они были)
+    // Убираем старые привязки
     var newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
     
     newBtn.onclick = function(e) {
       e.preventDefault();
       
-      // 1. Вызываем стандартную функцию открытия (чтобы чат выехал)
+      // 1. Открываем/закрываем чат
       if (typeof toggleChat === 'function') toggleChat();
       
-      // 2. Ждем полсекунды, чтобы все остальные скрипты отработали и переключили окна
-      setTimeout(function() {
-        var panel = document.getElementById('chatPanel');
-        if (!panel || panel.style.display !== 'flex') return; // Если чат закрылся, ничего не делаем
-        
-        var form = document.getElementById('chatTicketForm');
-        var conv = document.getElementById('chatConversation');
-        
-        // Принудительно прячем форму на время проверки
+      var panel = document.getElementById('chatPanel');
+      if (!panel || panel.style.display !== 'flex') return;
+      
+      var form = document.getElementById('chatTicketForm');
+      var conv = document.getElementById('chatConversation');
+      
+      // 2. ПРОВЕРЯЕМ ПАМЯТЬ (быстрый ответ)
+      var hasTicket = localStorage.getItem('nc_has_ticket');
+      
+      if (hasTicket === 'true') {
+        // Если тикет уже создавался — сразу показываем чат
         if (form) form.style.display = 'none';
         if (conv) conv.style.display = 'flex';
-        
-        // 3. Проверяем историю через сервер
-        var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
-        var email = window.adminViewingEmail || localStorage.getItem('user_email');
-        
-        if (!token || !email) return;
+      } else {
+        // Если нет — показываем форму
+        if (form) form.style.display = 'flex';
+        if (conv) conv.style.display = 'none';
+        return; // Дальше не идем
+      }
+      
+      // 3. ПРОВЕРЯЕМ СЕРВЕР (загружаем историю)
+      var token = window.getSessionToken ? window.getSessionToken() : localStorage.getItem('session_token');
+      var email = window.adminViewingEmail || localStorage.getItem('user_email');
+      
+      if (!token || !email) return;
 
-        fetch(window.WORKER_URL + '?action=getChat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token, email: email })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.ok && data.chat && data.chat.length > 0) {
-            // ЕСТЬ ИСТОРИЯ: Оставляем чат, прячем форму
-            if (form) form.style.display = 'none';
-            if (conv) conv.style.display = 'flex';
-            
-            // Обновляем сообщения
-            window.st.chat = data.chat;
-            if (typeof window.renderChatMessages === 'function') {
-              window.renderChatMessages();
-            }
-          } else {
-            // НЕТ ИСТОРИИ: Показываем форму
-            if (form) form.style.display = 'flex';
-            if (conv) conv.style.display = 'none';
+      fetch(window.WORKER_URL + '?action=getChat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, email: email })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.chat && data.chat.length > 0) {
+          // Сервер подтвердил — есть история!
+          localStorage.setItem('nc_has_ticket', 'true'); // Запоминаем навсегда
+          
+          if (form) form.style.display = 'none';
+          if (conv) conv.style.display = 'flex';
+          
+          window.st.chat = data.chat;
+          if (typeof window.renderChatMessages === 'function') {
+            window.renderChatMessages();
           }
-        })
-        .catch(function(e) { 
-            console.error('Ошибка загрузки истории чата:', e); 
-            // В случае ошибки возвращаем форму
-            if (form) form.style.display = 'flex';
-            if (conv) conv.style.display = 'none';
-        });
-        
-      }, 300); // Задержка 300мс (ждем, пока открывающий скрипт переключит окна)
+        } else {
+          // Если сервер говорит, что сообщений нет, но в памяти есть — не сдаемся
+          if (form) form.style.display = 'flex';
+          if (conv) conv.style.display = 'none';
+        }
+      })
+      .catch(function(e) { 
+          console.error('Ошибка чата:', e); 
+      });
     };
   }
   
