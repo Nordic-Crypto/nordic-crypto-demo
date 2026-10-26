@@ -4171,6 +4171,60 @@ body:not(.has-order) .progress-steps {
 .nc-dashboard-wrapper .crm-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
 .nc-dashboard-wrapper .crm-card::-webkit-scrollbar { width: 6px; height: 6px; }
 .nc-dashboard-wrapper .crm-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  /* 🛡️ ФИКС: Шапка чата — выстраиваем кнопки в ряд */
+.chat-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-right: 16px !important; /* Добавляем отступ справа */
+}
+
+/* Контейнер для кнопок (если он есть, или сами кнопки) */
+.chat-header > div:last-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Общие стили для ВСЕХ кнопок в шапке чата (и для крестика, и для обновления) */
+.chat-header button {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  color: #e7edf5 !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin: 0 !important; /* Убираем возможные отступы, которые ломают вид */
+}
+
+/* Эффект при наведении на крестик (красный) */
+.chat-header .chat-close:hover {
+  background: rgba(255, 84, 112, 0.15) !important;
+  border-color: rgba(255, 84, 112, 0.3) !important;
+  color: #ff5470 !important;
+}
+
+/* Эффект при наведении на кнопку обновления (синий/зеленый) */
+.chat-header button:not(.chat-close):hover {
+  background: rgba(0, 229, 255, 0.15) !important;
+  border-color: rgba(0, 229, 255, 0.3) !important;
+  color: #00e5ff !important;
+}
+
+/* На мобильных устройствах (где чат на весь экран) */
+@media (max-width: 480px) {
+  .chat-header {
+    padding-right: 60px !important; /* Оставляем место, чтобы не перекрывать аватарку */
+  }
+}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
