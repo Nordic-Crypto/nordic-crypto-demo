@@ -5810,12 +5810,25 @@ if ('serviceWorker' in navigator) {
   }
 }
 
-// Инициализация чата после загрузки страницы
+// 🛡️ Инициализация чата и загрузка истории при открытии
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('chatToggle');
-  if (btn && typeof toggleChat === 'function') {
-    btn.onclick = toggleChat;
+  
+  if (btn) {
+    btn.onclick = function() {
+      // 1. Открываем/закрываем сам чат
+      if (typeof toggleChat === 'function') toggleChat();
+      
+      // 2. Если чат открылся — подгружаем историю с сервера
+      var panel = document.getElementById('chatPanel');
+      if (panel && panel.style.display === 'flex') {
+        if (typeof window.loadChatHistory === 'function') {
+          window.loadChatHistory(); // Подгружаем сообщения
+        }
+      }
+    };
   }
+  
   if (typeof updateChatBadge === 'function') updateChatBadge();
 });
   </script>
