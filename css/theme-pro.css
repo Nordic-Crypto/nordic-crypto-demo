@@ -237,3 +237,139 @@ html body .nc3-hero h1 span,html body .ex-hero h1 span,html body #dash h1 span,h
   color:var(--txt)}
 .brand .nm{background:none!important;-webkit-text-fill-color:currentColor!important;color:var(--txt)!important}
 .brand .nm span{color:var(--pri)!important}
+
+/* ============================================================
+   v2 — TRADE TERMINAL / WITHDRAW / DEPOSIT FLOWS
+   ============================================================ */
+
+/* ---------- Trade terminal: pro terminal stays dark in both themes (canvas chart is dark) ---------- */
+.trade-terminal{
+  color-scheme:dark;--txt:#f4f5f8;--mut:#98a0b3;--pri:#c8ff4d;--lime-soft:rgba(200,255,77,.12);--lime-line:rgba(200,255,77,.38);
+  background:#07080c!important;color:var(--txt)!important;font-family:Inter,-apple-system,'Segoe UI',Roboto,sans-serif!important}
+.tt-header{background:#0b0d13!important;border-bottom:1px solid rgba(255,255,255,.07)!important}
+.tt-chart-panel,.tt-orderbook-panel,.tt-form-panel,.tt-bottom{background:#0a0c12!important}
+.tt-chart-toolbar,.tt-ob-header,.tt-ob-spread,.tt-form-tabs,.tt-bottom-header{background:#0e1016!important}
+.tt-coin-selector{border-radius:99px!important;padding:4px!important}
+.tt-coin-selector button{border-radius:99px!important}
+.tt-coin-selector button.on{background:var(--lime)!important;color:var(--lime-ink)!important;box-shadow:0 6px 18px -8px rgba(200,255,77,.7)!important}
+.tt-timeframes button.on{background:rgba(200,255,77,.14)!important;color:#c8ff4d!important}
+.tt-indicators button.on{background:rgba(139,123,255,.18)!important;color:#b6acff!important}
+.tt-price{font-family:Sora,Inter,sans-serif!important;font-variant-numeric:tabular-nums}
+.tt-price.up,.tt-ob-row.bid .tt-ob-price,.tt-rt-row.buy .tt-rt-price{color:#3ddc97!important}
+.tt-price.down,.tt-ob-row.ask .tt-ob-price,.tt-rt-row.sell .tt-rt-price{color:#ff6b6b!important}
+.tt-close{border-radius:99px!important}
+.tt-input-group input,.tt-limit-price input{border-radius:14px!important;background:rgba(255,255,255,.04)!important}
+.tt-input-group input:focus{border-color:#c8ff4d!important;box-shadow:0 0 0 4px rgba(200,255,77,.12)!important}
+.tt-quick button{border-radius:99px!important}
+.tt-quick button:hover{background:rgba(200,255,77,.1)!important;border-color:rgba(200,255,77,.4)!important;color:#c8ff4d!important}
+.tt-order-type{border-radius:99px!important}.tt-order-type button{border-radius:99px!important}
+.tt-form-tabs button.on[data-tab="convert"]{color:#b6acff!important}
+.tt-form-tabs button.on[data-tab="convert"]::after{background:#8b7bff!important}
+.tt-submit{border-radius:99px!important;font-weight:700!important}
+.tt-submit-buy{background:#c8ff4d!important;color:#0a0f04!important;box-shadow:0 12px 28px -12px rgba(200,255,77,.7)!important}
+.tt-submit-sell{background:#ff6b6b!important;color:#fff!important;box-shadow:0 12px 28px -12px rgba(255,107,107,.6)!important}
+.tt-submit-convert{background:#8b7bff!important;color:#fff!important;box-shadow:0 12px 28px -12px rgba(139,123,255,.6)!important}
+.tt-bottom-tabs button.on::after{background:#c8ff4d!important;box-shadow:0 0 12px rgba(200,255,77,.55)!important}
+.tt-tab-count{background:rgba(200,255,77,.14)!important;color:#c8ff4d!important}
+.tt-bottom-filters button{border-radius:99px!important}
+.tt-bottom-filters button.on{background:rgba(200,255,77,.12)!important;border-color:rgba(200,255,77,.4)!important;color:#c8ff4d!important}
+.tt-oh-row:hover,.tt-oo-row:hover{background:rgba(200,255,77,.04)!important}
+.tt-oo-cancel{border-radius:99px!important}
+.tt-oh-type{border-radius:99px!important}
+.tt-oh-type.buy{background:rgba(61,220,151,.15)!important;color:#3ddc97!important}
+.tt-oh-type.sell{background:rgba(255,107,107,.15)!important;color:#ff6b6b!important}
+.tt-table-head,.tt-oh-row,.tt-oo-row,.tt-rt-row,.tt-ob-row,.tt-stats,.tt-preview b,.tt-input-group input,.tt-limit-price input{font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace!important}
+
+/* ---------- Withdraw: complete the wd-* coverage ---------- */
+.wd-form-title,.wd-success-title,.wd-stage-title,.wd-processing-title{color:var(--txt)!important;background:none!important;-webkit-text-fill-color:currentColor!important}
+.wd-form-sub,.wd-stage-desc,.wd-success-desc,.wd-processing-desc{color:var(--mut)!important}
+.wd-form-close{background:var(--field)!important;border:1px solid var(--bd2)!important;color:var(--mut)!important;border-radius:99px!important;width:38px!important;height:38px!important}
+.wd-form-close:hover{background:color-mix(in srgb,var(--bad) 14%,transparent)!important;border-color:var(--bad)!important;color:var(--bad)!important}
+select.wd-input{background-color:var(--field)!important;color:var(--txt)!important}
+.wd-input,.wd-live-row,.wd-live-value,.wd-live-label,.wd-iban-value{font-family:Inter,ui-monospace,Menlo,Consolas,monospace!important}
+.wd-iban-validation,.wd-progress-steps,.wd-live-data,.wd-success-details,.wd-network-viz{background:var(--field)!important;border:1px solid var(--bd)!important;border-radius:18px!important}
+.wd-iban-label,.wd-live-label{color:var(--mut)!important}
+.wd-iban-value,.wd-live-value,.wd-step-text{color:var(--txt)!important}
+.wd-live-value.positive,.wd-check{color:var(--ok)!important}
+.wd-live-value.warning{color:var(--warn)!important}
+.wd-live-value.negative{color:var(--bad)!important}
+.wd-live-value.muted{color:var(--mut)!important}
+.wd-live-value.hash{color:var(--pri)!important}
+.wd-live-row:not(:last-child){border-bottom:1px solid var(--bd)!important}
+.wd-step{background:transparent!important;border:1px solid transparent}
+.wd-step.active{background:var(--lime-soft)!important;border-color:var(--lime-line)!important}
+.wd-step.done{background:color-mix(in srgb,var(--ok) 10%,transparent)!important;border-color:color-mix(in srgb,var(--ok) 38%,transparent)!important}
+.wd-step.active .wd-step-icon{background:var(--lime-soft)!important;color:var(--pri)!important;border-color:var(--lime-line)!important}
+.wd-step.done .wd-step-icon{background:color-mix(in srgb,var(--ok) 16%,transparent)!important;border-color:var(--ok)!important}
+.wd-step.active .wd-step-time{color:var(--pri)!important}.wd-step.done .wd-step-time{color:var(--ok)!important}
+.wd-copy-btn{background:var(--lime-soft)!important;border-color:var(--lime-line)!important;color:var(--pri)!important}
+.wd-success-amount{color:var(--ok)!important;text-shadow:none!important;font-family:Sora,Inter,sans-serif!important}
+.wd-success-title{background:none!important}
+.wd-stage-icon.bank,.wd-stage-icon.crypto,.wd-processing-icon{background:var(--lime-soft)!important;border-color:var(--lime-line)!important}
+.wd-stage-icon.card{background:color-mix(in srgb,var(--pri2) 12%,transparent)!important;border-color:color-mix(in srgb,var(--pri2) 40%,transparent)!important}
+.wd-stage-icon.success-icon,.wd-success-icon{background:var(--lime)!important;box-shadow:0 18px 50px -12px var(--lime)!important}
+.wd-stage-icon.bank svg,.wd-stage-icon.crypto svg{stroke:var(--pri)!important}
+.wd-stage-icon.card svg{stroke:var(--pri2)!important}
+.wd-stage-icon.success-icon svg{stroke:var(--lime-ink)!important}
+/* withdraw-confirmations.js uses classes that have no base styles: give them a sane look */
+.wd-processing-icon,.wd-success-icon{width:84px;height:84px;border-radius:50%;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:2px solid var(--lime-line)}
+.wd-success-icon{color:var(--lime-ink);font-weight:900;border:0}
+.wd-processing-title{font-size:1.3rem;font-weight:800;margin:0 0 8px;text-align:center}
+.wd-processing-desc{font-size:.88rem;line-height:1.55;margin:0 0 22px;text-align:center}
+.wd-processing.on,.wd-success.on{display:block!important}
+.wd-network-viz{display:flex;align-items:center;justify-content:center;gap:0}
+.wd-network-node{width:14px;height:14px;border-radius:50%;background:var(--bd2);flex-shrink:0}
+.wd-network-node.active{background:var(--pri);box-shadow:0 0 12px var(--pri)}
+.wd-network-line{height:2px;flex:1;background:var(--bd2)}
+.wd-btn-cancel{border-radius:99px!important}
+
+/* ---------- Deposit flow (nc-df-*) ---------- */
+.nc-df-modal{background:rgba(4,6,10,.62)!important}
+html[data-theme="light"] .nc-df-modal{background:rgba(30,36,20,.38)!important}
+.nc-df-inner,.nc-df-push-inner{background:var(--card-solid)!important;border:1px solid var(--bd2)!important;color:var(--txt)!important;border-radius:30px!important;box-shadow:var(--shadow-lg)!important}
+.nc-df-inner::before{background:radial-gradient(circle,var(--lime-soft),transparent 70%)!important}
+.nc-df-title,.nc-df-success-title{background:none!important;-webkit-text-fill-color:currentColor!important;color:var(--txt)!important}
+.nc-df-subtitle,.nc-df-info,.nc-df-success-desc,.nc-df-row-label,.nc-df-amount-usd,.nc-df-confirm-header,.nc-df-confirm-meta,.nc-df-survey-counter,.nc-df-push-desc,.nc-df-success-balance span{color:var(--mut)!important}
+.nc-df-trust{color:var(--mut)!important;opacity:.8}
+.nc-df-row{background:var(--field)!important;border-color:var(--bd)!important;border-radius:14px!important}
+.nc-df-row-value,.nc-df-push-title,.nc-df-checkbox-text,.nc-df-declaration-text,.nc-df-banner-desc,.nc-df-pending-desc{color:var(--txt)!important}
+.nc-df-banner-amount,.nc-df-pending-desc strong{color:var(--txt)!important;font-weight:800}
+.nc-df-amount{border-color:var(--bd)!important}
+.nc-df-amount-crypto,.nc-df-success-amount,.nc-df-success-balance strong{color:var(--ok)!important;text-shadow:none!important}
+.nc-df-link,.nc-df-copy,.nc-df-confirm-count{color:var(--pri)!important}
+.nc-df-close{background:var(--field)!important;border:1px solid var(--bd2)!important;color:var(--mut)!important;border-radius:99px!important}
+.nc-df-close:hover{background:color-mix(in srgb,var(--bad) 14%,transparent)!important;border-color:var(--bad)!important;color:var(--bad)!important}
+.nc-df-coin{background:var(--lime)!important;box-shadow:0 10px 28px -10px var(--lime)!important}
+.nc-df-coin svg,.nc-df-coin *{color:var(--lime-ink)}
+.nc-df-coin-pulse{background:radial-gradient(circle,var(--lime-soft),transparent 70%)!important}
+.nc-df-confirm-wrap{background:var(--lime-soft)!important;border-color:var(--lime-line)!important;border-radius:18px!important}
+.nc-df-confirm-bar,.nc-df-survey-progress{background:var(--bd)!important}
+.nc-df-confirm-fill,.nc-df-survey-progress-fill{background:var(--lime)!important;box-shadow:none!important}
+.nc-df-btn{border-radius:99px!important;font-weight:650!important}
+.nc-df-btn-primary,.nc-df-push-allow{background:var(--lime)!important;color:var(--lime-ink)!important;box-shadow:0 12px 28px -12px var(--lime)!important}
+.nc-df-btn-primary:hover,.nc-df-push-allow:hover{box-shadow:0 18px 36px -12px var(--lime)!important}
+.nc-df-btn-ghost,.nc-df-push-skip{background:var(--field)!important;border:1px solid var(--bd2)!important;color:var(--txt)!important}
+.nc-df-btn-ghost:hover{background:var(--lime-soft)!important;border-color:var(--lime-line)!important;color:var(--pri)!important}
+.nc-df-option{background:var(--field)!important;border:1.5px solid var(--bd)!important;color:var(--txt)!important;border-radius:18px!important}
+.nc-df-option:hover{background:var(--lime-soft)!important;border-color:var(--lime-line)!important}
+.nc-df-option.nc-on{background:var(--lime-soft)!important;border-color:var(--pri)!important;box-shadow:0 8px 24px -12px var(--pri)!important}
+.nc-df-option-check{color:var(--ok)!important}
+.nc-df-declaration{background:color-mix(in srgb,var(--warn) 9%,transparent)!important;border-color:color-mix(in srgb,var(--warn) 35%,transparent)!important;border-radius:18px!important}
+.nc-df-declaration-note,.nc-df-banner-title,.nc-df-pending-title,.nc-df-pending-arrow{color:var(--warn)!important}
+.nc-df-checkbox-mark{border-color:var(--bd2)!important}
+.nc-df-checkbox input:checked+.nc-df-checkbox-mark{background:var(--lime)!important;border-color:var(--lime)!important}
+.nc-df-checkbox input:checked+.nc-df-checkbox-mark::after{color:var(--lime-ink)!important}
+.nc-df-success-icon{background:var(--lime)!important;color:var(--lime-ink)!important;box-shadow:0 18px 50px -12px var(--lime)!important}
+.nc-df-success-burst{background:radial-gradient(circle,var(--lime-soft),transparent 70%)!important}
+.nc-df-success-balance{background:color-mix(in srgb,var(--ok) 9%,transparent)!important;border-color:color-mix(in srgb,var(--ok) 32%,transparent)!important;border-radius:16px!important}
+.nc-df-live-dot{background:var(--ok)!important;box-shadow:0 0 8px var(--ok)!important}
+.nc-df-banner,.nc-df-pending-banner{background:color-mix(in srgb,var(--warn) 12%,var(--card-solid))!important;border-color:color-mix(in srgb,var(--warn) 45%,transparent)!important;border-radius:22px!important}
+.nc-df-banner{animation:none!important;box-shadow:var(--shadow-md)!important}
+.nc-df-banner-btn{background:var(--lime)!important;color:var(--lime-ink)!important;border-radius:99px!important;box-shadow:0 10px 24px -10px var(--lime)!important;animation:none!important}
+.nc-df-push-prompt .nc-df-push-inner{border-radius:24px!important}
+.wd-network-viz:has(svg){display:block!important}
+.wd-network-viz svg{width:100%;height:80px}
+.wd-network-viz circle[fill="#47dcff"]{fill:var(--pri)!important}
+.wd-network-viz circle[fill="#334155"],.wd-network-viz line{stroke:var(--bd2)}
+.wd-network-viz circle[fill="#334155"]{fill:var(--bd2)!important}
+.nc-df-coin svg [fill="#fff"],.nc-df-coin svg path[fill="#fff"]{fill:var(--lime-ink)!important}
