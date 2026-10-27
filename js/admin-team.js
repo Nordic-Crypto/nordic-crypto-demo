@@ -1,3 +1,16 @@
+/* sign-out helper: clears every auth key and returns to the login page (no black screen) */
+window.__atLogout = function () {
+  try { ['session_token', 'user_email', 'user_role', 'user_name'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+  try { sessionStorage.removeItem('nc_f5_recovery'); } catch (e) {}
+  location.replace('index.html');
+};
+/* guard: admin role without a session token = dead session -> back to login */
+(function () {
+  try {
+    var t = localStorage.getItem('session_token'), r = localStorage.getItem('user_role');
+    if (!t && r === 'admin') window.__atLogout();
+  } catch (e) {}
+})();
 /* ============================================================
    NC ADMIN TEAM v1.0
    Owner: create admin accounts, set permissions, activity log, per-agent reports.
@@ -74,6 +87,7 @@
 
   function boot() {
     post('adminMe').then(function (r) {
+      if (r && !r.ok && /not authenticated|session|expired|disabled/i.test(String(r.error || ''))) { window.__atLogout(); return; }
       if (!r || !r.ok) return;                                    // old worker: leave everything as is
       ME = r.me; PERMS = r.allPerms || {}; LABELS = r.labels || {}; ME.perms = r.perms || [];
       var nav = document.querySelector('#adminPanel .admin-sidebar'), main = document.querySelector('#adminPanel .admin-content');
@@ -420,7 +434,7 @@
       post('changePassword', { oldPassword: o, newPassword: n }).then(function (r) {
         if (!r.ok) { er.textContent = r.error || 'Failed'; return; }
         closeModal(); toast('Password changed. Please sign in again.');
-        setTimeout(function () { try { localStorage.removeItem('session_token'); } catch (e) {} location.reload(); }, 1200);
+        setTimeout(function () { window.__atLogout(); }, 1200);
       });
     };
   };
