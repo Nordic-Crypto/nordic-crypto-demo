@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — TRADE TERMINAL v1.0
+   NORDIC CRYPTO — TRADE TERMINAL v1.1
    ============================================================
    Professional trading terminal (Binance Spot style).
    
@@ -1008,12 +1008,14 @@
       if (typeof window.renderExchangeDash === 'function') window.renderExchangeDash();
       if (typeof window.playChime === 'function') window.playChime();
 
+      // v1.1: the server executes market orders at ITS price — show that one, not the client's guess
+      var execPrice = (data.trade && Number(data.trade.price) > 0) ? Number(data.trade.price) : price;
       var action = type === 'buy' ? 'Bought' : 'Sold';
       var amountStr = type === 'buy'
-        ? (amount / price).toFixed(8) + ' ' + symbol
+        ? (amount / execPrice).toFixed(8) + ' ' + symbol
         : amount.toFixed(8) + ' ' + symbol;
       if (typeof window.addNotification === 'function') {
-        window.addNotification(action + ' ' + amountStr + ' @ $' + price.toFixed(2), type === 'buy' ? '📈' : '📉');
+        window.addNotification(action + ' ' + amountStr + ' @ $' + execPrice.toFixed(2), type === 'buy' ? '📈' : '📉');
       }
 
       // Record in history
@@ -1031,11 +1033,11 @@
             type: type,
             symbol: symbol,
             amount: Number(amount),
-            price: Number(price),
-            total: type === 'buy' ? Number(amount) : Number(amount) * Number(price),
+            price: execPrice,
+            total: type === 'buy' ? Number(amount) : Number(amount) * execPrice,
             orderType: orderType || 'market',
             status: 'filled',
-            filled: type === 'buy' ? Number(amount) / Number(price) : Number(amount),
+            filled: type === 'buy' ? Number(amount) / execPrice : Number(amount),
             filledAt: Date.now()
           });
           if (window.st.orders.length > 500) window.st.orders.length = 500;
