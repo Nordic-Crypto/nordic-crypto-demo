@@ -373,3 +373,11 @@ html[data-theme="light"] .nc-df-modal{background:rgba(30,36,20,.38)!important}
 .wd-network-viz circle[fill="#334155"],.wd-network-viz line{stroke:var(--bd2)}
 .wd-network-viz circle[fill="#334155"]{fill:var(--bd2)!important}
 .nc-df-coin svg [fill="#fff"],.nc-df-coin svg path[fill="#fff"]{fill:var(--lime-ink)!important}
+
+/* admin theme toggle: icon + label */
+#adminPanel #themeToggleBtn{width:auto!important;min-width:38px;height:38px;padding:0 14px!important;display:inline-flex!important;align-items:center;justify-content:center;gap:8px;font-size:13px!important;font-weight:600;border-radius:999px!important;cursor:pointer;white-space:nowrap}
+#adminPanel #themeToggleBtn::after{content:none!important;display:none!important}
+#adminPanel #themeToggleBtn svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#adminPanel #themeToggleBtn .ncb-l{font-size:13px}
+html[data-theme="dark"] #adminPanel #themeToggleBtn .i-moon,html[data-theme="light"] #adminPanel #themeToggleBtn .i-sun{display:none}
+@media(max-width:720px){#adminPanel #themeToggleBtn .ncb-l{display:none}#adminPanel #themeToggleBtn{padding:0!important;width:38px!important}}
