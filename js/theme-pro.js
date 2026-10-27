@@ -34,7 +34,19 @@
     var b=e.target.closest&&e.target.closest('#themeToggleBtn');
     if(b){e.preventDefault();e.stopImmediatePropagation();toggle()}
   },true);
-  ensure();setInterval(ensure,1500);
+  /* admin toggle: real icon + label so it is obvious what the button does */
+  function adminBtn(){
+    var b=document.getElementById('themeToggleBtn');if(!b)return;
+    var t=root.getAttribute('data-theme'),to=t==='dark'?'light':'dark';
+    if(b.getAttribute('data-ncb')!==t){
+      b.setAttribute('data-ncb',t);
+      b.innerHTML=SUN+MOON+'<span class="ncb-l">'+(to==='light'?'Light mode':'Dark mode')+'</span>';
+      b.title='Switch to '+to+' mode (screen colours)';b.setAttribute('aria-label',b.title);
+      b.removeAttribute('style');
+    }
+  }
+  document.addEventListener('nc:theme',adminBtn);
+  ensure();adminBtn();setInterval(function(){ensure();adminBtn()},1500);
   window.addEventListener('storage',function(e){if(e.key===KEY)apply(get())});
 })();
 
