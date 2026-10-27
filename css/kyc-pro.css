@@ -52,3 +52,21 @@
 /* file info row */
 #verifyScreen .uploaded-file .file-name{flex:1 1 0!important;min-width:60px;max-width:none!important}
 #verifyScreen .uploaded-file .file-size{flex:none;white-space:nowrap}
+
+/* celebration after approval */
+.kp-cele{position:fixed;inset:0;z-index:300000;display:grid;place-items:center;padding:24px;background:radial-gradient(900px 500px at 50% 30%,rgba(125,243,200,.18),rgba(5,8,15,.94));backdrop-filter:blur(8px);overflow:hidden;animation:kpIn .35s}
+.kp-cele.out{opacity:0;transition:opacity .35s}
+.kp-cele-box{position:relative;z-index:2;text-align:center;max-width:420px;padding:36px 30px;border-radius:26px;background:linear-gradient(160deg,rgba(24,32,48,.96),rgba(10,15,25,.96));border:1px solid rgba(125,243,200,.35);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 60px rgba(125,243,200,.12);color:#e8f1ff;animation:kpPop .5s cubic-bezier(.2,1.3,.3,1)}
+.kp-cele-box h2{margin:18px 0 8px;font-size:26px;letter-spacing:-.02em}
+.kp-cele-box p{margin:0 0 24px;color:#9fb3c8;line-height:1.55;font-size:14.5px}
+.kp-cele-box p b{color:#7df3c8}
+.kp-cele-box .btn{width:100%;justify-content:center;height:48px;font-size:15px}
+.kp-ring{width:84px;height:84px;margin:0 auto}
+.kp-ring svg{width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.kp-ring circle{stroke:#7df3c8;stroke-width:2.5;stroke-dasharray:151;stroke-dashoffset:151;animation:kpDraw .7s .15s ease forwards;filter:drop-shadow(0 0 8px rgba(125,243,200,.6))}
+.kp-ring path{stroke:#7df3c8;stroke-width:3.2;stroke-dasharray:40;stroke-dashoffset:40;animation:kpDraw .4s .7s ease forwards}
+@keyframes kpDraw{to{stroke-dashoffset:0}}
+@keyframes kpPop{from{transform:scale(.88) translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.kp-cele>i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;opacity:.9;animation:kpFall linear infinite}
+@keyframes kpFall{to{transform:translateY(110vh) rotate(540deg)}}
+@media(prefers-reduced-motion:reduce){.kp-cele>i{display:none}}
