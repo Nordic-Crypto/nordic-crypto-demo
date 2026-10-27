@@ -1,3 +1,5 @@
+/* guard: app.html has no login form of its own — without a session go to the login page (no black screen) */
+(function(){try{if(!/index\.html$/.test(location.pathname)&&!localStorage.getItem('session_token')){location.replace('index.html')}}catch(e){}})();
 /* NC THEME PRO — theme switch (dark/light), shared with the landing page via localStorage 'nc_theme' */
 (function(){
   'use strict';
