@@ -1,0 +1,40 @@
+/* CARDS PRO — premium card designs (same keys as before: cosmic, purple, silver, black, gold, ocean, mountain, aurora, city) */
+:root{--cp-lines:repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 1px,transparent 1px 7px);--cp-sheen:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%)}
+
+/* real cards + preview tiles share the same artwork */
+html body .pay.design-cosmic,.design-preview.cosmic{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 92% 0%,rgba(138,108,255,.50),transparent 55%),radial-gradient(circle at 0% 105%,rgba(198,255,61,.16),transparent 50%),linear-gradient(135deg,#1c2040 0%,#0b0c18 100%)!important}
+html body .pay.design-purple,.design-preview.purple{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 95% 5%,rgba(255,92,200,.50),transparent 55%),linear-gradient(135deg,#5a2fc0 0%,#1e1046 100%)!important}
+html body .pay.design-silver,.design-preview.silver{background:var(--cp-sheen),var(--cp-lines),linear-gradient(135deg,#f3f4f6 0%,#b9bec7 48%,#e8eaee 100%)!important}
+html body .pay.design-black,.design-preview.black{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 0% 110%,rgba(198,255,61,.22),transparent 52%),linear-gradient(135deg,#1a1b1d 0%,#050506 100%)!important}
+html body .pay.design-gold,.design-preview.gold{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 90% 0%,rgba(255,244,196,.65),transparent 52%),linear-gradient(135deg,#f1d98c 0%,#c9a24a 46%,#8a6414 100%)!important}
+html body .pay.design-ocean,.design-preview.ocean{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 90% 0%,rgba(80,230,240,.45),transparent 55%),linear-gradient(135deg,#0d7586 0%,#06222f 100%)!important}
+html body .pay.design-mountain,.design-preview.mountain{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 85% 0%,rgba(190,215,235,.35),transparent 55%),linear-gradient(135deg,#566f80 0%,#151f28 100%)!important}
+html body .pay.design-aurora,.design-preview.aurora{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 15% 100%,rgba(70,255,170,.50),transparent 55%),radial-gradient(circle at 95% 0%,rgba(146,98,255,.55),transparent 55%),linear-gradient(135deg,#07120f 0%,#120b2a 100%)!important}
+html body .pay.design-city,.design-preview.city{background:var(--cp-sheen),var(--cp-lines),radial-gradient(circle at 100% 100%,rgba(255,130,80,.65),transparent 55%),linear-gradient(135deg,#2b1f55 0%,#74275f 100%)!important}
+
+/* rim light + depth on real cards */
+html body .pay[class*="design-"]{border:1px solid rgba(255,255,255,.14)!important;box-shadow:0 30px 60px -28px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.18)!important}
+html body .pay.design-black{border-color:rgba(198,255,61,.35)!important;box-shadow:0 30px 60px -28px rgba(0,0,0,.9),0 0 0 1px rgba(198,255,61,.06),inset 0 1px 0 rgba(255,255,255,.12)!important}
+html body .pay.design-gold{border-color:rgba(255,235,170,.55)!important}
+.design-preview{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 16px rgba(0,0,0,.35)}
+
+/* dark text on the light designs */
+html body .pay.design-silver .pb,html body .pay.design-silver .pt,html body .pay.design-silver .pn,html body .pay.design-silver .pv,html body .pay.design-silver .pl,
+html body .pay.design-gold .pb,html body .pay.design-gold .pt,html body .pay.design-gold .pn,html body .pay.design-gold .pv,html body .pay.design-gold .pl{color:#1b1608!important;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+html body .pay.design-silver .pl,html body .pay.design-gold .pl,html body .pay.design-silver .pt,html body .pay.design-gold .pt{opacity:.72}
+html body .pay.design-silver .nfc-icon,html body .pay.design-gold .nfc-icon{stroke:#1b1608}
+#designMask #designLive.silver,#designMask #designLive.gold{color:#1b1608}
+
+/* modal polish */
+#designMask .box{background:linear-gradient(180deg,#12141a,#0b0c10)!important;border:1px solid rgba(198,255,61,.14)!important}
+#designMask #designLive{transition:background .25s,transform .25s}
+#designMask .design-opt{border-radius:16px}
+#designMask .design-opt.on,#designMask .design-opt.sel{border-color:#c6ff3d!important;box-shadow:0 0 0 4px rgba(198,255,61,.12)}
+#designMask .design-opt.on::after{background:#c6ff3d!important;color:#0a0b08!important}
+#designMask .b1{background:#c6ff3d!important;color:#0a0b08!important}
+#designMask .b2{background:transparent!important;color:#edf2f9!important;border:1px solid rgba(255,255,255,.18)!important}
+html[data-theme="light"] #designMask .box{background:#fff!important}
+html[data-theme="light"] #designMask h2,html[data-theme="light"] #designMask .dname{color:#14150f}
+html[data-theme="light"] #designMask .d,html[data-theme="light"] #designMask .design-opt{color:#5b5f52}
+html[data-theme="light"] #designMask .b2{color:#14150f!important;border-color:rgba(0,0,0,.2)!important}
+html body .pay.design-silver .card-network,html body .pay.design-gold .card-network,html body .pay.design-silver .card-network *:not(svg):not(circle):not(path),html body .pay.design-gold .card-network *:not(svg):not(circle):not(path){color:#1b1608!important}
