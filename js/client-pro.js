@@ -192,10 +192,40 @@
     var b = $('bal'); if (b) { var v = Number(S().usd); if (isFinite(v) && b.offsetParent !== null) countUp(b, v, money); }
   }
 
+
+  /* ---------- DEPOSIT MODAL: show the address the admin assigned ---------- */
+  var QRS = { BTC: 'Bitcoin network', ETH: 'Ethereum network (ERC-20)' };
+  function fillDeposit() {
+    var m = $('mMethod'), txt = $('mDestText'); if (!m || !txt) return;
+    var v = m.value, coin = v === 'Bitcoin (BTC)' ? 'BTC' : v === 'Ethereum (ETH)' ? 'ETH' : null;
+    var wrap = $('mDestWrap'), qrw = $('mQrWrap'), net = $('mDestNetwork'), qr = $('mQrCode'), addr = '';
+    if (!coin) { if (qrw) qrw.style.display = 'none'; return; }
+    try { addr = (typeof window.getDepositWallet === 'function' && window.getDepositWallet(coin)) || ''; } catch (e) { }
+    if (!addr) { var h = $('mDest'); addr = h && h.value || ''; }
+    if (wrap) wrap.style.display = 'block';
+    if (addr) {
+      txt.textContent = addr; txt.style.wordBreak = 'break-all';
+      if (net) net.textContent = QRS[coin];
+      if (qrw) qrw.style.display = 'flex';
+      if (qr && qr.getAttribute('data-v') !== addr) {
+        qr.setAttribute('data-v', addr); qr.innerHTML = '';
+        try { var cv = document.createElement('canvas'); qr.appendChild(cv); new window.QRious({ element: cv, value: addr, size: 120, level: 'M' }); }
+        catch (e) { qr.innerHTML = '<div style="color:#475569;font-size:11px;padding:8px;text-align:center">QR unavailable</div>'; }
+      }
+    } else {
+      txt.textContent = 'No ' + coin + ' address assigned yet. Contact support.'; if (net) net.textContent = '—'; if (qrw) qrw.style.display = 'none';
+    }
+  }
+  function hookDeposit() {
+    if (window.__cpDepHooked || typeof window.refreshDest !== 'function') return; window.__cpDepHooked = true;
+    var o = window.refreshDest; window.refreshDest = function () { var r = o.apply(this, arguments); try { fillDeposit(); } catch (e) { } return r; };
+    var m = $('mMethod'); if (m) m.addEventListener('change', function () { setTimeout(fillDeposit, 0); });
+  }
+
   /* ---------- loop ---------- */
   function tick() {
     if (!window.st) return;
-    buildBanking(); buildExchange(); renderBankingBits(); renderExchange(); loadCg();
+    hookDeposit(); buildBanking(); buildExchange(); renderBankingBits(); renderExchange(); loadCg();
   }
   function start() { applyPriv(); tick(); setInterval(tick, 1200); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
