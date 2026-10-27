@@ -1,0 +1,36 @@
+/* NC STATEMENT PRO v1 — works in light and dark (uses theme-pro tokens when present) */
+.ncs-has{display:flex!important;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ex-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.ncs-open{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:99px;border:1px solid var(--lime-line,rgba(200,255,77,.4));background:var(--lime-soft,rgba(200,255,77,.12));color:var(--pri,#c8ff4d);font:650 13px/1 inherit;cursor:pointer;white-space:nowrap;transition:transform .15s,background .15s}
+.ncs-open:hover{background:var(--lime,#c8ff4d);color:var(--lime-ink,#0a0f04);transform:translateY(-1px)}
+.ncs-mask{position:fixed;inset:0;z-index:100060;background:rgba(4,6,10,.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+html[data-theme="light"] .ncs-mask{background:rgba(30,36,20,.38)}
+.ncs-modal{width:100%;max-width:520px;background:var(--card-solid,#0e1016);color:var(--txt,#f4f5f8);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:28px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);animation:ncsIn .22s ease both;overflow:hidden}
+@keyframes ncsIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.ncs-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:24px 26px 6px}
+.ncs-h h3{margin:0 0 4px;font-size:21px;letter-spacing:-.01em}
+.ncs-h p{margin:0;color:var(--mut,#98a0b3);font-size:13.5px}
+.ncs-x{width:38px;height:38px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:transparent;color:var(--mut,#98a0b3);font-size:22px;line-height:1;cursor:pointer}
+.ncs-b{padding:14px 26px 6px;display:flex;flex-direction:column;gap:14px}
+.ncs-l{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut,#98a0b3);margin-bottom:8px}
+.ncs-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ncs-chips button{height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);font:600 13px/1 inherit;cursor:pointer}
+.ncs-chips button:hover{border-color:var(--lime-line,rgba(200,255,77,.4))}
+.ncs-chips button.on{background:var(--lime,#c8ff4d);border-color:transparent;color:var(--lime-ink,#0a0f04)}
+.ncs-dates{display:none;gap:12px}
+.ncs-dates label{flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mut,#98a0b3);font-weight:600}
+.ncs-dates input,.ncs-modal select{height:44px;border-radius:14px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);padding:0 12px;font:500 14px inherit;width:100%;box-sizing:border-box;color-scheme:inherit}
+.ncs-dates input:focus,.ncs-modal select:focus{outline:0;border-color:var(--pri,#c8ff4d);box-shadow:0 0 0 4px var(--lime-soft,rgba(200,255,77,.12))}
+.ncs-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:480px){.ncs-row{grid-template-columns:1fr}}
+.ncs-seg{display:flex;border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:14px;overflow:hidden;height:44px}
+.ncs-seg button{flex:1;border:0;background:var(--field,rgba(255,255,255,.04));color:var(--mut,#98a0b3);font:650 13px inherit;cursor:pointer}
+.ncs-seg button.on{background:var(--lime-soft,rgba(200,255,77,.12));color:var(--pri,#c8ff4d);box-shadow:inset 0 0 0 1.5px var(--lime-line,rgba(200,255,77,.4))}
+.ncs-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 16px;border-radius:18px;background:var(--field,rgba(255,255,255,.04));border:1px solid var(--bd,rgba(255,255,255,.08))}
+.ncs-sum small{display:block;font-size:11px;color:var(--mut,#98a0b3);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.ncs-sum b{font-size:14.5px;font-variant-numeric:tabular-nums}
+.ncs-bad{color:var(--bad,#ff6b6b);font-size:13px;grid-column:1/-1}
+.ncs-f{display:flex;justify-content:flex-end;gap:10px;padding:14px 26px 24px}
+.ncs-btn{height:46px;padding:0 22px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);font:650 14px/1 inherit;cursor:pointer}
+.ncs-btn.pri{background:var(--lime,#c8ff4d);border-color:transparent;color:var(--lime-ink,#0a0f04);box-shadow:0 12px 28px -12px var(--lime,#c8ff4d)}
+.ncs-btn[disabled]{opacity:.5;pointer-events:none}
