@@ -92,7 +92,7 @@
   function pendingVers() { return S.vers.filter(function (v) { return v.status === 'pending'; }); }
   function pendingWds() { return S.wds.filter(function (w) { return w.status === 'pending'; }); }
   function unreadTotal() { return S.users.reduce(function (a, u) { return a + (u.unreadChat || 0); }, 0); }
-  function addrs(u) { var a = u.cryptoAddress; if (!a) return []; if (typeof a === 'string') return [['', a]]; return Object.keys(a).filter(function (k) { return a[k]; }).map(function (k) { var v = a[k]; return [k, typeof v === 'string' ? v : (v && (v.address || v.addr)) || JSON.stringify(v)]; }); }
+  function addrs(u) { var a = u.cryptoAddress; if (!a) return []; if (typeof a === 'string') return [['', a]]; return Object.keys(a).filter(function (k) { return /^(btc|eth|usdt|sol|bnb)$/i.test(k) && a[k] && typeof a[k] === 'string'; }).map(function (k) { return [k.toUpperCase(), a[k]]; }); }
   function userBy(email) { email = String(email).toLowerCase(); for (var i = 0; i < S.users.length; i++) if (String(S.users[i].email).toLowerCase() === email) return S.users[i]; return null; }
   function kyc(u) { var v = S.verBy && S.verBy[String(u.email).toLowerCase()]; return v ? v.status : (u.verified ? 'approved' : 'none'); }
   function kycPill(s) { return s === 'approved' ? '<span class="ap-pill ok">Verified</span>' : s === 'pending' ? '<span class="ap-pill warn">KYC pending</span>' : s === 'rejected' ? '<span class="ap-pill bad">Rejected</span>' : '<span class="ap-pill mute">Not started</span>'; }
