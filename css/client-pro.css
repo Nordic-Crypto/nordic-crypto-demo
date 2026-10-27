@@ -97,3 +97,14 @@ body.cp-priv #balanceCurrent,body.cp-priv .cp-alloc,body.cp-priv .cp-merch b{fil
  #dash .nc3-hero,#exchangeDash .ex-hero{flex-direction:column;align-items:flex-start;gap:14px}
  #dash .nc3-asset-grid>div[style*="span 2"]{grid-column:auto!important}
 }
+
+#cardDash.cp-nocard{position:relative}
+#cardDash.cp-nocard>*:not(.cp-nocard-cta){opacity:.18;filter:grayscale(1)}
+.cp-nocard-cta{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;z-index:5}
+.cp-nocard-cta b{font-size:1.15rem;color:#fff}
+.cp-nocard-cta span{font-size:.82rem;color:#9fb3c8;margin-bottom:6px}
+.cp-nocard-cta .btn{height:40px;padding:0 20px}
+#dash .nc3-card-actions{opacity:.5;pointer-events:none}
+#cardDash.cp-nocard.frozen::before,#cardDash.cp-nocard::before{content:none!important;display:none!important}
+#cardDash.cp-nocard.frozen,#cardDash.cp-nocard{opacity:1!important;filter:none!important}
+#cardDash.cp-nocard .cp-nocard-cta{background:radial-gradient(circle at 50% 50%,rgba(10,15,25,.85),rgba(10,15,25,.55));border-radius:inherit}
