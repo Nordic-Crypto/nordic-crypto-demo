@@ -157,6 +157,72 @@
     var b = e.target.closest && e.target.closest('#verifyScreen .vtype-btn'); if (b) setTimeout(applyType, 0);
   }, true);
 
+
+  /* ============================================================
+     LIVE KYC STATUS — no more "Check status" clicking.
+     While the Pending / Rejected screen is open we poll the server;
+     the moment the admin decides, the client is moved on:
+       approved → celebration card → the right dashboard
+                  (Banking or Exchange, as chosen by the admin)
+       rejected → the "rejected" screen with the reason
+     ============================================================ */
+  var live = { busy: false, done: false, t: 0 };
+  function vis(id) { var e = $(id); return !!e && (e.classList.contains('on') || e.style.display === 'flex') && e.style.display !== 'none'; }
+  function waiting() { return (vis('pendingScreen') || vis('rejectedScreen')) && localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail; }
+  function api(action) {
+    var base = window.WORKER_URL || window.WORKER_LOGIN_URL, tk = typeof window.getSessionToken === 'function' ? window.getSessionToken() : localStorage.getItem('session_token');
+    if (!base || !tk) return Promise.resolve(null);
+    return fetch(base + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tk }) }).then(function (r) { return r.json(); }).catch(function () { return null; });
+  }
+  function celebrate(type, done) {
+    var old = $('kpCele'); if (old) old.remove();
+    var bank = type !== 'exchange', o = document.createElement('div'); o.id = 'kpCele'; o.className = 'kp-cele';
+    o.innerHTML = '<div class="kp-cele-box"><div class="kp-ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg></div>' +
+      '<h2>You are verified!</h2><p>' + (bank ? 'Your <b>Banking</b> account is ready: card, IBAN and crypto in one place.' : 'Your <b>Exchange</b> account is ready: deposit and trade crypto instantly.') + '</p>' +
+      '<button type="button" class="btn b1" id="kpCeleGo">' + (bank ? 'Open my account' : 'Start trading') + '</button></div>';
+    for (var i = 0; i < 26; i++) { var c = document.createElement('i'); c.style.cssText = 'left:' + (Math.random() * 100) + '%;background:' + ['#7df3c8', '#9b8cff', '#47dcff', '#fbbf24', '#f472b6'][i % 5] + ';animation-delay:' + (Math.random() * .6) + 's;animation-duration:' + (1.6 + Math.random() * 1.4) + 's'; o.appendChild(c); }
+    document.body.appendChild(o);
+    var go = function () { if (!o.parentNode) return; o.classList.add('out'); setTimeout(function () { o.remove(); }, 350); done(); };
+    $('kpCeleGo').onclick = go; setTimeout(go, 6000);
+    try { if (typeof window.playChime === 'function') window.playChime(); } catch (e) { }
+  }
+  function openApp(type) {
+    var fin = function () {
+      ['pendingScreen', 'rejectedScreen', 'verifyScreen'].forEach(function (id) { var e = $(id); if (e) { e.classList.remove('on'); e.style.cssText = 'display:none'; } });
+      var side = $('sideBar'), main = $('mainApp'); if (side) side.style.display = 'flex'; if (main) main.style.display = 'flex';
+      if (window.st) { window.st.verification = Object.assign({}, window.st.verification || {}, { status: 'approved' }); window.st.user = window.st.user || {}; window.st.user.verified = true; if (type) window.st.user.accountType = type; }
+      window._lastAppliedAccountType = null; if (document.body) document.body.dataset.acctApplied = '0';
+      try { if (typeof window.render === 'function') window.render(); } catch (e) { }
+      try { if (typeof window.applyAccountType === 'function') window.applyAccountType(); } catch (e) { }
+      var nav = document.querySelector('[data-p="dash"]'); try { if (nav) nav.click(); } catch (e) { }
+      live.done = false;
+    };
+    if (typeof window.loadFromServer === 'function') { var called = false; var once = function () { if (called) return; called = true; fin(); }; try { window.loadFromServer(once); } catch (e) { once(); } setTimeout(once, 4000); } else fin();
+  }
+  function poll() {
+    if (live.busy || live.done || !waiting()) return;
+    live.busy = true;
+    api('getUserState').then(function (d) {
+      live.busy = false; if (!d || d.error) return;
+      var v = d.verification || null; if (!v) return;
+      if (v.status === 'approved') {
+        live.done = true;
+        var type = v.accountType || (d.user && d.user.accountType) || (window.st && window.st.user && window.st.user.accountType) || 'banking';
+        try { var em = localStorage.getItem('user_email'); if (em) localStorage.setItem('nc_kyc_approved_' + em, '1'); } catch (e) { }
+        celebrate(type, function () { openApp(type); });
+      } else if (v.status === 'rejected' && vis('pendingScreen')) {
+        live.done = true; setTimeout(function () { live.done = false; }, 3000);
+        if (typeof window.toast === 'function') window.toast('Verification was not approved', true);
+        if (typeof window.showRejectedScreen === 'function') window.showRejectedScreen(v.reason);
+      }
+    }).catch(function () { live.busy = false; });
+  }
+  setInterval(poll, 4000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+  window.addEventListener('online', poll); window.addEventListener('focus', poll);
+  // make the old button instant too
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#btnCheckKycStatus')) setTimeout(poll, 50); }, true);
+
   window.NCVerify = { getDocs: docs, reset: function () { SLOTS.forEach(clear); applyType(); } };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
