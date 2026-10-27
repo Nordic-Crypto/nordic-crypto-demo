@@ -431,7 +431,6 @@ function showApp() {
         if (el) { el.classList.remove('on'); el.style.display = 'none'; }
       });
       if (typeof applyAccountType === 'function') applyAccountType();
-      if (window._ncHidePreloader) window._ncHidePreloader();
       return;
     }
 
@@ -1096,27 +1095,22 @@ var depPendingTx = null;
 var depAnswers = { source: null, origin: null };
 
 function openDepositVerification(tx, cryptoAmt, symbol, usdValue) {
-  console.log('[NC] openDepositVerification called', tx, cryptoAmt);
-  
-  // 🛡️ Превращаем tx в формат pendingDeposit, который ждет deposit-flow.js
-  var pendingDeposit = {
-    id: 'pd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    txHash: tx.hash,
-    cryptoAmt: cryptoAmt,
-    symbol: symbol,
-    usdValue: usdValue,
-    to: tx.to || null,
-    from: tx.from || null,
-    status: 'pending',
-    createdAt: Date.now()
-  };
+  depPendingTx = { tx, cryptoAmt, symbol, usdValue };
+  depAnswers = { source: null, origin: null };
 
-  // Вызываем правильную функцию из deposit-flow.js
-  if (typeof window.__ncShowIncomingDeposit === 'function') {
-    window.__ncShowIncomingDeposit(pendingDeposit);
-  } else {
-    console.warn('[NC] __ncShowIncomingDeposit not found. Is deposit-flow.js loaded?');
-  }
+  var cryptoEl = document.getElementById('depAmountCrypto');
+  var usdEl = document.getElementById('depAmountUsd');
+  if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
+  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(usdValue);
+
+  var check = document.getElementById('depConfirmCheck');
+  if (check) check.checked = false;
+  var btnConfirm = document.getElementById('depBtnConfirm');
+  if (btnConfirm) btnConfirm.disabled = true;
+
+  showDepStep(0);
+  var overlay = document.getElementById('depVerifyOverlay');
+  if (overlay) overlay.classList.add('on');
 }
 
 function closeDepositVerification() {
@@ -1165,76 +1159,43 @@ function finalizeDeposit() {
 
   if (!tx || !tx.hash) { toast('Deposit error — contact support', true); return; }
 
-  // 1. Проверка на дубликаты
   var isDup = false;
   (st.txs || []).forEach(function (t) { if (t.hash === tx.hash) isDup = true; });
-  (st.pendingDeposits || []).forEach(function (d) { if (d.txHash === tx.hash) isDup = true; });
-  if (isDup) { toast('Deposit already submitted', true); closeDepositVerification(); return; }
+  if (isDup) { toast('Deposit already credited', true); closeDepositVerification(); return; }
 
-  // 2. Блокируем кнопку и показываем лоадер (опционально)
-  var btnConfirm = document.getElementById('depBtnConfirm');
-  if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Submitting...'; }
+  st.usd += credit;
+  if (symbol === 'BTC') st.btc += cryptoAmt;
+  else if (symbol === 'ETH') st.eth += cryptoAmt;
 
-  var token = getSessionToken();
-  if (!token) { toast('Not authenticated', true); return; }
-
-  // 3. Отправляем заявку на сервер (Воркер)
-  fetch(WORKER_URL + '?action=addPendingDeposit', {
-    method: 'POST', 
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      token: token, 
-      txHash: tx.hash, 
-      cryptoAmt: cryptoAmt,
-      symbol: symbol, 
-      usdValue: credit, 
-      to: tx.to, 
-      time: tx.time
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(res) {
-    if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.textContent = 'Confirm →'; }
-    
-    if (!res.ok && !res.alreadyExists && !res.alreadyCredited) {
-      toast(res.error || 'Error submitting deposit', true);
-      return;
-    }
-
-    // 4. Локально добавляем в стейт (чтобы UI обновился)
-    if (!st.pendingDeposits) st.pendingDeposits = [];
-    st.pendingDeposits.push({
-      id: 'dep_' + Date.now(),
-      userEmail: localStorage.getItem('user_email'),
-      userName: localStorage.getItem('user_name') || 'User',
-      txHash: tx.hash,
-      cryptoAmt: cryptoAmt,
-      symbol: symbol,
-      usdValue: credit,
-      source: depAnswers.source,
-      origin: depAnswers.origin,
-      status: 'pending',
-      createdAt: Date.now()
-    });
-
-    // 5. Показываем успех (НЕ вызываем saveToServer, чтобы не перезаписать данные Воркера)
-    var cryptoEl = document.getElementById('depSuccessCrypto');
-    var usdEl = document.getElementById('depSuccessUsd');
-    var balEl = document.getElementById('depNewBalance');
-    
-    if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
-    if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' pending approval';
-    if (balEl) balEl.textContent = 'Awaiting Admin Approval';
-
-    showDepStep(4);
-    playChime();
-    spawnConfetti();
-    addNotification('Deposit submitted for review', '⏳');
-  })
-  .catch(function(err) {
-    if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.textContent = 'Confirm →'; }
-    toast('Connection error', true);
+  if (!Array.isArray(st.txs)) st.txs = [];
+  st.txs.unshift({
+    date: now(), ts: Date.now(),
+    desc: 'Crypto deposit — ' + Number(cryptoAmt).toFixed(8) + ' ' + symbol,
+    amt: credit, status: 'Processing', hash: tx.hash,
+    crypto: cryptoAmt, symbol,
+    verification: { source: depAnswers.source, origin: depAnswers.origin }
   });
+
+  if (!st.depositVerifications) st.depositVerifications = [];
+  st.depositVerifications.push({
+    txHash: tx.hash, cryptoAmt, symbol, usdValue: credit,
+    source: depAnswers.source, origin: depAnswers.origin, completedAt: Date.now()
+  });
+
+  saveToServer();
+  render();
+
+  var cryptoEl = document.getElementById('depSuccessCrypto');
+  var usdEl = document.getElementById('depSuccessUsd');
+  var balEl = document.getElementById('depNewBalance');
+  if (cryptoEl) cryptoEl.textContent = '+ ' + cryptoAmt.toFixed(8) + ' ' + symbol;
+  if (usdEl) usdEl.textContent = '≈ ' + fmtCurrency(credit) + ' credited';
+  if (balEl) balEl.textContent = fmtCurrency(st.usd);
+
+  showDepStep(4);
+  playChime();
+  spawnConfetti();
+  addNotification('Deposit verified: ' + cryptoAmt.toFixed(8) + ' ' + symbol, '✅');
 }
 
 /* ═══════════════════ BALANCE CHART ═══════════════════ */
@@ -1522,12 +1483,24 @@ function submitWithdraw() {
     wd.details = { destination: dest, network: net, coin, address: addr, memo };
   }
 
-  if (!st.withdrawals) st.withdrawals = [];
-  st.withdrawals.unshift(wd);
-  closeWithdraw();
-  render();
-  showWithdrawStatus(method, amount);
-  saveToServer();
+  // v2.1: the server creates the withdrawal (balance is checked there).
+  var legacyToken = getSessionToken();
+  if (!legacyToken) { showErr('Session expired. Please sign in again.'); return; }
+  fetch(WORKER_LOGIN_URL + '?action=withdraw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: legacyToken, amount: amount, method: method, details: wd.details })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.ok) { showErr((data && data.error) || 'Withdrawal failed'); return; }
+      if (!st.withdrawals) st.withdrawals = [];
+      if (data.withdrawal && !st.withdrawals.some(function (w) { return w.id === data.withdrawal.id; })) st.withdrawals.unshift(data.withdrawal);
+      closeWithdraw();
+      render();
+      showWithdrawStatus(method, amount);
+    })
+    .catch(function () { showErr('Connection error. Please try again.'); });
 }
 
 function showWithdrawStatus(method, amount) {
@@ -1925,92 +1898,24 @@ function fileSizeStr(bytes) {
 
 function initVerification() {
   var typeBtns = document.querySelectorAll('.vtype-btn');
-  var docSlots = document.getElementById('docSlots');
-  var slotBack = document.getElementById('slotBack');
-  var verifyNext1 = document.getElementById('verifyNext1');
-  
-  function updateSlots() {
-    var activeType = document.querySelector('.vtype-btn.on');
-    var type = activeType ? activeType.getAttribute('data-type') : 'Passport';
-    var isTwoSides = (type === "Driver's License" || type === 'National ID');
-    
-    if (isTwoSides) {
-      docSlots.setAttribute('data-sides', '2');
-      if (slotBack) slotBack.style.display = 'flex';
-      if (document.getElementById('capFront')) document.getElementById('capFront').textContent = 'Front side';
-    } else {
-      docSlots.setAttribute('data-sides', '1');
-      if (slotBack) slotBack.style.display = 'none';
-      if (document.getElementById('capFront')) document.getElementById('capFront').textContent = 'Photo page';
-    }
-    checkContinue();
-  }
-
-  function checkContinue() {
-    var activeType = document.querySelector('.vtype-btn.on');
-    var type = activeType ? activeType.getAttribute('data-type') : 'Passport';
-    var isTwoSides = (type === "Driver's License" || type === 'National ID');
-    
-    var hasFront = document.getElementById('docFile') && document.getElementById('docFile').files.length > 0;
-    var hasBack = document.getElementById('docFileBack') && document.getElementById('docFileBack').files.length > 0;
-    
-    if (isTwoSides) {
-      verifyNext1.disabled = !(hasFront && hasBack);
-    } else {
-      verifyNext1.disabled = !hasFront;
-    }
-  }
-
   for (var i = 0; i < typeBtns.length; i++) {
     typeBtns[i].onclick = function () {
       for (var j = 0; j < typeBtns.length; j++) typeBtns[j].classList.remove('on');
       this.classList.add('on');
       verifyData.docType = this.getAttribute('data-type');
-      updateSlots();
     };
   }
-
   var docInput = document.getElementById('docFile');
   if (docInput) docInput.onchange = function () {
     var f = this.files[0];
     if (!f) return;
     verifyData.docFile = f.name;
-    var img = document.getElementById('docThumb');
-    if (img) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        img.src = e.target.result;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(f);
-    }
-    document.getElementById('docUpload').classList.add('has');
+    document.getElementById('docUpload').style.display = 'none';
     document.getElementById('docUploaded').style.display = 'flex';
     document.getElementById('docFileName').textContent = f.name;
     document.getElementById('docFileSize').textContent = fileSizeStr(f.size);
-    checkContinue();
+    document.getElementById('verifyNext1').disabled = false;
   };
-
-  var docInputBack = document.getElementById('docFileBack');
-  if (docInputBack) docInputBack.onchange = function () {
-    var f = this.files[0];
-    if (!f) return;
-    var img = document.getElementById('docThumbBack');
-    if (img) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        img.src = e.target.result;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(f);
-    }
-    document.getElementById('docUploadBack').classList.add('has');
-    document.getElementById('docUploadedBack').style.display = 'flex';
-    document.getElementById('docFileNameBack').textContent = f.name;
-    document.getElementById('docFileSizeBack').textContent = fileSizeStr(f.size);
-    checkContinue();
-  };
-
   var selfieInput = document.getElementById('selfieFile');
   if (selfieInput) selfieInput.onchange = function () {
     var f = this.files[0];
@@ -2022,7 +1927,6 @@ function initVerification() {
     document.getElementById('selfieFileSize').textContent = fileSizeStr(f.size);
     document.getElementById('verifyNext2').disabled = false;
   };
-
   var btn1 = document.getElementById('verifyNext1');
   if (btn1) btn1.onclick = function () { showVerifyStep(2); };
   var back2 = document.getElementById('verifyBack2');
@@ -2043,9 +1947,8 @@ function initVerification() {
       };
     }
   }, 500);
-
-  updateSlots();
 }
+
 function fileToBase64(file) {
   return new Promise(function (resolve, reject) {
     var reader = new FileReader();
@@ -2073,12 +1976,30 @@ window.submitRealVerification = async function () {
 
   var btn = document.getElementById('verifyNext3');
   if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
-  if (window._ncShowPreloader) window._ncShowPreloader();
+
+  document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
+
+  var loadingOverlay = document.createElement('div');
+  loadingOverlay.id = 'kycLoadingOverlay';
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(11,18,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;color:#e7edf5;';
+  loadingOverlay.innerHTML =
+    '<div style="width:60px;height:60px;border:4px solid rgba(0,212,255,.2);border-top-color:#00e5ff;border-radius:50%;animation:kycSpin 1s linear infinite;margin-bottom:24px;"></div>' +
+    '<div style="font-size:20px;font-weight:700;" id="kycStatusText">Uploading documents...</div>' +
+    '<div style="font-size:13px;color:#94a3b8;margin-top:10px;" id="kycStatusSub">Please wait, do not close this tab</div>' +
+    '<style>@keyframes kycSpin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(loadingOverlay);
+
+  function setStatus(main, sub) {
+    var m = document.getElementById('kycStatusText');
+    var s = document.getElementById('kycStatusSub');
+    if (m) m.textContent = main;
+    if (s) s.textContent = sub || '';
+  }
 
   await new Promise(function (r) { setTimeout(r, 80); });
 
   var watchdog = setTimeout(function () {
-   if (window._ncHidePreloader) window._ncHidePreloader();
+    document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast('Upload timeout. Try smaller files or check connection.', true);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
     window._kycSubmitting = false;
@@ -2184,7 +2105,7 @@ var email = localStorage.getItem('user_email');
 if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
 
     clearTimeout(watchdog);
-    if (window._ncHidePreloader) window._ncHidePreloader();
+    document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
 
     var loginEl = document.getElementById('loginScreen'); if (loginEl) loginEl.style.display = 'none';
     var sideEl = document.getElementById('sideBar'); if (sideEl) sideEl.style.display = 'none';
@@ -2647,56 +2568,27 @@ function refreshDest() {
   var swift = $('mTransferSwift'); if (swift) swift.style.display = 'none';
   var card = $('mTransferCard'); if (card) card.style.display = 'none';
 
-    if (isAdd) {
+  if (isAdd) {
     if (hint.show) {
       if (mDestWrap) mDestWrap.style.display = 'block';
-      
-      var destEl = $('mDest'); // скрытое поле
+      var destEl = $('mDest');
       var labelEl = $('mDestLabel');
-      var destText = $('mDestText');
-      var destNet = $('mDestNetwork');
-      var qrWrap = $('mQrWrap');
-      var qrCode = $('mQrCode');
-
-      var addr = '';
-      var networkName = '';
+      if (destEl) { destEl.value = ''; destEl.readOnly = false; }
 
       if (m === 'Bitcoin (BTC)') {
-        addr = getDepositWallet('BTC');
-        networkName = 'Bitcoin (BTC)';
-        if (labelEl) labelEl.textContent = 'Send BTC to this address';
+        var btcAddr = getDepositWallet('BTC');
+        if (labelEl) labelEl.textContent = btcAddr ? 'Send BTC to this address' : 'Recipient BTC Address';
+        if (destEl) {
+          if (btcAddr) { destEl.value = btcAddr; destEl.readOnly = true; }
+          else { destEl.placeholder = 'bc1q...'; }
+        }
       } else if (m === 'Ethereum (ETH)') {
-        addr = getDepositWallet('ETH');
-        networkName = 'Ethereum (ERC-20)';
-        if (labelEl) labelEl.textContent = 'Send ETH to this address';
-      }
-
-      // Заполняем текст адреса
-      if (destText) destText.textContent = addr || 'Address not set';
-      if (destEl) destEl.value = addr || '';
-      if (destNet) destNet.textContent = networkName;
-
-            // 🛡️ ГЕНЕРАЦИЯ QR-КОДА
-      if (addr && qrWrap && qrCode && typeof QRious !== 'undefined') {
-        qrWrap.style.display = 'flex';
-        
-        // Полностью очищаем контейнер перед новой отрисовкой
-        qrCode.innerHTML = '';
-        
-        // Рисуем QR через canvas (это самый надежный способ)
-        var canvas = document.createElement('canvas');
-        qrCode.appendChild(canvas);
-        
-        new QRious({
-          element: canvas,
-          value: addr,
-          size: 120, // Размер под контейнер
-          background: 'white',
-          foreground: 'black',
-          level: 'H' // Высокий уровень защиты (меньше шансов, что не отсканируется)
-        });
-      } else {
-        if (qrWrap) qrWrap.style.display = 'none';
+        var ethAddr = getDepositWallet('ETH');
+        if (labelEl) labelEl.textContent = ethAddr ? 'Send ETH to this address' : 'Recipient ETH Address';
+        if (destEl) {
+          if (ethAddr) { destEl.value = ethAddr; destEl.readOnly = true; }
+          else { destEl.placeholder = '0x...'; }
+        }
       }
     }
     return;
@@ -2802,16 +2694,32 @@ function confirmModal() {
     details = { type: 'crypto', address: dest, coin: m };
   }
 
-  st.usd -= a;
-  var desc = (m === 'Credit Card')
-     ? 'Card transfer to ' + dest.slice(0, 18)
-      : 'Transfer via ' + m + ' to ' + dest.slice(0, 18);
-  addTx(desc, -a, 'Under Review');
-  addNotification('Transfer sent: ' + fmtCurrency(a) + ' via ' + m, '📤');
-  toast('Transfer submitted — under review');
-  closeModal();
-  render();
-  saveToServer();
+  // v2.1: transfers are created by the SERVER as a pending withdrawal (the balance check
+  // happens there). The client no longer edits its own balance or transactions.
+  var wdMethod = details.type === 'card' ? 'card' : details.type === 'crypto' ? 'crypto' : 'iban';
+  var wdDetails = details;
+  if (details.type === 'card') wdDetails = { cardName: details.holder, cardNumber: details.number, expiry: details.expiry };
+  else if (details.type === 'crypto') wdDetails = { destination: 'external', network: '', coin: details.coin, address: details.address, memo: '' };
+  else wdDetails = { name: details.name, iban: details.iban, swift: details.swift || '', bank: '', country: '', purpose: details.purpose || '' };
+
+  var wdToken = getSessionToken();
+  if (!wdToken) { toast('Session expired. Please sign in again.', true); return; }
+  fetch(WORKER_LOGIN_URL + '?action=withdraw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: wdToken, amount: a, method: wdMethod, details: wdDetails })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.ok) { toast((data && data.error) || 'Transfer failed', true); return; }
+      if (!Array.isArray(st.withdrawals)) st.withdrawals = [];
+      if (data.withdrawal && !st.withdrawals.some(function (w) { return w.id === data.withdrawal.id; })) st.withdrawals.unshift(data.withdrawal);
+      addNotification('Transfer sent: ' + fmtCurrency(a) + ' via ' + m, '📤');
+      toast('Transfer submitted — under review');
+      closeModal();
+      render();
+    })
+    .catch(function () { toast('Connection error. Please try again.', true); });
 }
 
 /* ═══════════════════ COPY ═══════════════════ */
@@ -3266,32 +3174,7 @@ function initEvents() {
   if (btnReceiveHero && btnCopyIban) btnReceiveHero.onclick = function () { btnCopyIban.click(); };
   var btnReceiveMoney = document.getElementById('btnReceiveMoney');
   if (btnReceiveMoney && btnCopyIban) btnReceiveMoney.onclick = function () { btnCopyIban.click(); };
-  var btnRefresh = document.getElementById('btnRefreshBalance');
-  if (btnRefresh) {
-    btnRefresh.onclick = function () {
-      var oldHtml = btnRefresh.innerHTML;
-      // Показываем, что идет загрузка (крутим иконку)
-      btnRefresh.style.pointerEvents = 'none';
-      btnRefresh.style.opacity = '0.6';
-      btnRefresh.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: loginSpin 1s linear infinite;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
-      
-      // Принудительно обновляем данные
-      refreshBalanceFromServer();
-      
-      // Если открыта панель админа и мы смотрим клиента
-      if (typeof loadAdminUsers === 'function' && window.adminViewingEmail) {
-        loadAdminUsers();
-      }
-      
-      // Через 1 секунду возвращаем кнопку в исходное состояние
-      setTimeout(function() {
-        btnRefresh.style.pointerEvents = 'auto';
-        btnRefresh.style.opacity = '1';
-        btnRefresh.innerHTML = oldHtml;
-        if (typeof toast === 'function') toast('Data updated');
-      }, 1000);
-    };
-  }
+
   var btnOrder = document.getElementById('btnOrder');
   if (btnOrder) btnOrder.onclick = placeOrder;
 }
