@@ -1,0 +1,22 @@
+/* BRAND PRO — luxury emblem (Didone N + north star) and wordmark. Loaded last. */
+.logo i,.vlogo i,.onb-logo i,.signup-logo i{
+  font-size:0!important;color:transparent!important;transform:none!important;
+  background:url("../logo.png") center/contain no-repeat!important;
+  border-radius:27%!important;box-shadow:0 6px 18px rgba(198,255,61,.22),0 0 0 1px rgba(198,255,61,.12)!important;
+  width:36px!important;height:36px!important;flex:none}
+.vlogo i,.onb-logo i,.signup-logo i{width:30px!important;height:30px!important;display:inline-block}
+.blogo{box-shadow:0 6px 18px rgba(198,255,61,.22)!important;border-radius:27%!important;background:transparent!important}
+.blogo img{object-fit:contain!important;border-radius:0!important}
+/* wordmark: spaced capitals, light + lime */
+.logo span,.vlogo,.onb-logo,.signup-logo,.brand .nm,.login-logo-text{
+  font-family:Sora,'Inter',-apple-system,'Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:.2em!important;font-weight:600!important;font-size:.86rem}
+.logo{gap:12px}
+.logo span{font-size:.9rem}
+.logo b{color:var(--a,
+#c6ff3d);font-weight:700}
+.brand .nm,.login-logo-text{background:none!important;-webkit-text-fill-color:currentColor!important;animation:none!important}
+.brand .nm span,.login-logo-text span{color:
+#c6ff3d!important;font-weight:700}
+html[data-theme="light"] .logo b,html[data-theme="light"] .brand .nm span,html[data-theme="light"] .login-logo-text span{color:
+#4f7d00!important}
+@media(max-width:520px){.logo span{letter-spacing:.14em;font-size:.8rem}}
