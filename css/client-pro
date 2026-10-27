@@ -1,0 +1,99 @@
+/* ============================================================
+   NC CLIENT PRO v1 — Banking (#dash) + Exchange (#exchangeDash)
+   Load AFTER nc-premium.css. Pure overrides, no markup changes.
+   ============================================================ */
+
+/* ---------- shared ---------- */
+.cp-eye{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#9fb3c8;cursor:pointer;transition:.15s;padding:0;vertical-align:middle}
+.cp-eye:hover{color:#fff;background:rgba(255,255,255,.1)}
+.cp-eye svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.cp-priv #bal,body.cp-priv #balEur,body.cp-priv #exBalance,body.cp-priv #exBalanceBtc,body.cp-priv #btcB,body.cp-priv #ethB,body.cp-priv #btcPrice+span,
+body.cp-priv #exBtcAmt,body.cp-priv #exBtcVal,body.cp-priv #exEthAmt,body.cp-priv #exEthVal,body.cp-priv #statIncome30,body.cp-priv #statSpending30,
+body.cp-priv #balanceCurrent,body.cp-priv .cp-alloc,body.cp-priv .cp-merch b{filter:blur(9px);user-select:none;transition:filter .2s}
+.cp-num{font-variant-numeric:tabular-nums}
+
+/* ---------- BANKING ---------- */
+#dash .nc3-balance-card{display:flex!important;flex-direction:column;min-width:0;overflow:hidden}
+#dash .nc3-balance-card>div[style*="position:absolute"]{position:static!important;padding:18px 0 0!important;margin-top:auto}
+#dash .nc3-balance-top{align-items:flex-start;gap:12px}
+#dash .nc3-balance-top>div:last-child{display:none}
+#dash .nc3-balance{font-size:clamp(2rem,3.2vw,3.1rem)!important;line-height:1.05;white-space:nowrap;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+#dash .nc3-kicker .cp-eye{margin-left:8px;width:26px;height:26px;border-radius:8px}
+#dash #pnlLine,#dash #pnlExplain{display:none!important}
+#dash .nc3-mini-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#dash .nc3-mini-stat{min-width:0;padding:12px 12px!important}
+#dash .nc3-mini-label{display:block;font-size:.62rem!important;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dash .nc3-mini-value{display:block;font-size:clamp(.82rem,1.15vw,1.05rem)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#dash .nc3-overview{align-items:stretch}
+#dash .nc3-asset-value strong{font-variant-numeric:tabular-nums}
+#dash .nc3-asset-value span{font-weight:700}
+.cp-qa{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:2px 0 18px}
+.cp-qa button{display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 6px 12px;border-radius:18px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.02));color:#e8f1ff;font:650 12.5px/1 inherit;font-family:inherit;cursor:pointer;transition:transform .15s,border-color .15s,background .15s}
+.cp-qa button:hover{transform:translateY(-2px);border-color:rgba(101,221,255,.45);background:linear-gradient(160deg,rgba(101,221,255,.12),rgba(255,255,255,.03))}
+.cp-qa button:active{transform:scale(.97)}
+.cp-qa i{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--g,linear-gradient(135deg,#22d3ee,#6366f1));box-shadow:0 8px 20px -8px var(--s,rgba(34,211,238,.7))}
+.cp-qa svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.cp-ins{margin-top:18px}
+.cp-card{background:linear-gradient(160deg,rgba(18,26,40,.92),rgba(10,15,25,.92));border:1px solid rgba(255,255,255,.07);border-radius:22px;padding:22px}
+.cp-card h2{margin:2px 0 0;font-size:1.05rem}
+.cp-row2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+.cp-merch{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+.cp-merch div{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center}
+.cp-merch em{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:12px;color:#fff;background:var(--c)}
+.cp-merch span{font-size:13px;color:#dce8f7;min-width:0}
+.cp-merch span i{display:block;height:6px;border-radius:9px;background:rgba(255,255,255,.07);margin-top:7px;overflow:hidden}
+.cp-merch span i u{display:block;height:100%;border-radius:9px;background:var(--c);text-decoration:none}
+.cp-merch b{font-size:13px;font-variant-numeric:tabular-nums}
+.cp-split{display:flex;height:12px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.06);margin:16px 0 14px}
+.cp-split i{display:block;height:100%}
+.cp-leg{display:flex;flex-direction:column;gap:10px;font-size:13px;color:#cfe0f3}
+.cp-leg div{display:flex;align-items:center;gap:9px}
+.cp-leg u{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none;text-decoration:none}
+.cp-leg b{margin-left:auto;font-variant-numeric:tabular-nums}
+.cp-big{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:10px}
+.cp-sub{font-size:12px;color:#7f93ab;margin-top:3px}
+.cp-empty{padding:26px 8px;text-align:center;color:#7f93ab;font-size:13px}
+
+/* ---------- EXCHANGE ---------- */
+#exchangeDash .ex-balance{font-size:clamp(2rem,3.4vw,3.1rem)!important;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+#exchangeDash .ex-bal-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#exchangeDash .ex-stat-mini{min-width:0;padding:13px 14px!important}
+#exchangeDash .ex-stat-mini span{display:block;font-size:.62rem!important;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#exchangeDash .ex-stat-mini strong{display:block;font-size:clamp(.85rem,1.25vw,1.1rem)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#exchangeDash .ex-coin-price strong,#exchangeDash .ex-asset-amount,#exchangeDash .ex-asset-value{font-variant-numeric:tabular-nums}
+#exchangeDash .ex-hero-actions .cp-eye{align-self:center}
+.cp-alloc{margin-top:16px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.cp-alloc h5{margin:0;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#8aa0bb;font-weight:700}
+.cp-alloc .cp-split{margin:12px 0 12px}
+.cp-alloc .cp-leg{flex-direction:row;flex-wrap:wrap;gap:8px 18px;font-size:12px}
+.cp-alloc .cp-leg b{margin-left:6px;color:#fff}
+.cp-up{color:#10b981!important}.cp-dn{color:#ef4444!important}.cp-flat{color:#8aa0bb!important}
+
+/* ---------- responsive ---------- */
+@media(max-width:900px){.cp-qa{grid-template-columns:repeat(5,minmax(64px,1fr));overflow-x:auto;gap:10px;padding-bottom:4px;scrollbar-width:none}.cp-qa::-webkit-scrollbar{display:none}.cp-row2{grid-template-columns:1fr}}
+@media(max-width:560px){#dash .nc3-mini-stats,#exchangeDash .ex-bal-stats{gap:8px}#dash .nc3-mini-stat,#exchangeDash .ex-stat-mini{padding:10px 9px!important}.cp-qa button{font-size:11.5px;padding:12px 4px 10px;border-radius:16px}.cp-qa i{width:40px;height:40px}}
+@media(prefers-reduced-motion:reduce){.cp-qa button{transition:none}}
+
+/* narrow-card safety: stack tiles as rows instead of truncating */
+#dash .nc3-balance-card,#exchangeDash .ex-balance-card{container-type:inline-size}
+@container (max-width:420px){
+ #dash .nc3-mini-stats,#exchangeDash .ex-bal-stats{grid-template-columns:1fr!important;gap:8px}
+ #dash .nc3-mini-stat,#exchangeDash .ex-stat-mini{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px!important}
+ #dash .nc3-mini-label,#exchangeDash .ex-stat-mini span{font-size:.68rem!important;overflow:visible}
+ #dash .nc3-mini-value,#exchangeDash .ex-stat-mini strong{font-size:.95rem!important;overflow:visible;text-align:right}
+}
+#exchangeDash .ex-bal-top{flex-wrap:wrap;gap:10px}
+#exchangeDash .ex-bal-badge{position:static!important;flex:none}
+.cp-spark{flex:1;min-height:86px;margin:10px -4px 0;position:relative}
+.cp-spark svg{position:absolute;inset:0;width:100%;height:100%}
+.cp-spark small{position:absolute;left:4px;top:0;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:#7f93ab;font-weight:700}
+
+/* mobile: stack grids, never overflow the viewport */
+@media(max-width:900px){
+ #dash,#exchangeDash,#dash .nc3-dashboard,#exchangeDash .ex-dashboard{min-width:0;max-width:100%;overflow-x:clip}
+ #dash .nc3-overview,#dash .nc3-lower,#dash .nc3-bottom-row,#dash .nc3-asset-grid,#dash .nc3-action-grid,#exchangeDash .ex-main-grid,#exchangeDash .ex-assets-grid,.cp-row2{grid-template-columns:minmax(0,1fr)!important}
+ #dash .nc3-stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #dash .nc3-overview>*,#dash .nc3-lower>*,#exchangeDash .ex-main-grid>*{min-width:0}
+ #dash .nc3-hero,#exchangeDash .ex-hero{flex-direction:column;align-items:flex-start;gap:14px}
+ #dash .nc3-asset-grid>div[style*="span 2"]{grid-column:auto!important}
+}
