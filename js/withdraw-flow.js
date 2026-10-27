@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — WITHDRAWAL FLOW v2.0
+   NORDIC CRYPTO — WITHDRAWAL FLOW v2.1
    ============================================================
    Full 3-stage flow (form → processing → success)
    Overrides legacy submitWithdraw.
@@ -16,7 +16,7 @@
 (function () {
   'use strict';
 
-  var WF_VERSION = '2.0.0';
+  var WF_VERSION = '2.1.0';
 
   // ============================================================
   // 🎯 SVG ИКОНКИ (замена эмодзи)
@@ -520,6 +520,7 @@
   // ============================================================
   // 🎯 OVERRIDE submitWithdraw
   // ============================================================
+  var _wdBusy = false;
   window.submitWithdraw = function () {
     var amountEl = $('wdAmount');
     var methodEl = $('wdMethod');
@@ -594,30 +595,51 @@ if (amount > __balance) {
       details = { destination: dest, network: net, coin: coin, address: addr, memo: memo };
     }
 
-    // Save to state
-    var wd = {
-      id: 'wd_' + Date.now(),
-      amount: amount,
-      currency: (window.st.currency || 'USD'),
-      method: method,
-      status: 'pending',
-      createdAt: Date.now(),
-      reviewedAt: null,
-      reason: '',
-      reviewedBy: '',
-      details: details
-    };
-    if (!window.st) window.st = { withdrawals: [], txs: [], usd: 0 };
-if (!window.st.withdrawals) window.st.withdrawals = [];
-window.st.withdrawals.unshift(wd);
+    // v2.1: the SERVER creates the withdrawal and checks the balance.
+    // The client can no longer push withdrawals into its own state.
+    if (_wdBusy) return;
+    _wdBusy = true;
+    var submitBtn = document.querySelector('#withdrawModal .wd-btn-submit');
+    if (submitBtn) submitBtn.disabled = true;
 
-    if (typeof window.saveToServer === 'function') window.saveToServer();
-    if (typeof window.render === 'function') window.render();
+    var token = (typeof window.getSessionToken === 'function') ? window.getSessionToken() : localStorage.getItem('session_token');
+    if (!token) {
+      _wdBusy = false;
+      if (submitBtn) submitBtn.disabled = false;
+      return showErr('Session expired. Please sign in again.');
+    }
 
-    // 🎯 Show method-specific flow
-    if (method === 'iban')         processIban(amount, details);
-    else if (method === 'card')    processCard(amount, details);
-    else if (method === 'crypto')  processCrypto(amount, details);
+    var base = window.WORKER_URL || window.WORKER_LOGIN_URL;
+    fetch(base + '?action=withdraw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, amount: amount, method: method, details: details })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        _wdBusy = false;
+        if (submitBtn) submitBtn.disabled = false;
+        if (!data || !data.ok) {
+          return showErr((data && data.error) || 'Withdrawal failed. Please try again.');
+        }
+        var wd = data.withdrawal;
+        if (!window.st) window.st = { withdrawals: [], txs: [], usd: 0 };
+        if (!window.st.withdrawals) window.st.withdrawals = [];
+        if (wd && !window.st.withdrawals.some(function (w) { return w.id === wd.id; })) {
+          window.st.withdrawals.unshift(wd);
+        }
+        if (typeof window.render === 'function') window.render();
+
+        // 🎯 Show method-specific flow (animation only after the server accepted it)
+        if (method === 'iban')         processIban(amount, details);
+        else if (method === 'card')    processCard(amount, details);
+        else if (method === 'crypto')  processCrypto(amount, details);
+      })
+      .catch(function () {
+        _wdBusy = false;
+        if (submitBtn) submitBtn.disabled = false;
+        showErr('Connection error. Please try again.');
+      });
   };
 
   // ============================================================
