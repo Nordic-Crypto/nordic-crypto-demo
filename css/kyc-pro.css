@@ -1,0 +1,54 @@
+/* NC KYC PRO v1 — load AFTER the page's own styles */
+#verifyScreen .slot{cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s}
+#verifyScreen .slot:hover{border-color:rgba(125,243,200,.6)!important;background:rgba(125,243,200,.04)!important}
+#verifyScreen .slot.drag{border-color:#7df3c8!important;background:rgba(125,243,200,.1)!important;box-shadow:0 0 0 4px rgba(125,243,200,.15)}
+/* scan line: GPU-driven, sits between the corner brackets */
+#verifyScreen .slot:not(.has):not(.round)::after{display:none!important}
+.kp-scan{position:absolute;left:14px;right:14px;top:14px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#7df3c8,transparent);box-shadow:0 0 16px 2px rgba(125,243,200,.7);z-index:2;pointer-events:none;animation:kpScan 2.8s ease-in-out infinite}
+@keyframes kpScan{0%,100%{transform:translateY(0);opacity:0}12%,88%{opacity:1}50%{transform:translateY(var(--kp-h,120px))}}
+#verifyScreen .slot{--kp-h:clamp(80px,16vw,150px)}
+#verifyScreen .slot.has .kp-scan,#verifyScreen .slot.round .kp-scan{display:none}
+/* preview: show the WHOLE photo, never crop it */
+#verifyScreen .slot-img{object-fit:contain!important;background:#05080f!important;border-radius:12px!important}
+#verifyScreen .slot.round .slot-img{object-fit:cover!important}
+#verifyScreen .slot.has{border-style:solid!important;border-color:#7df3c8!important;background:#05080f!important}
+#verifyScreen .slot.has::after{display:none!important}
+#verifyScreen .slot.has .upload-inner{opacity:0!important}
+#verifyScreen .slot.kp-nopreview .upload-inner{opacity:1!important}
+#verifyScreen .slot.kp-nopreview .upload-text::after{content:" ✓ selected";color:#7df3c8}
+.kp-bar{position:absolute;left:8px;right:8px;top:8px;display:none;align-items:center;gap:6px;z-index:4}
+#verifyScreen .slot.has .kp-bar{display:flex}
+.kp-tag{margin-right:auto;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 9px;border-radius:99px;background:rgba(6,16,31,.78);color:#7df3c8;border:1px solid rgba(125,243,200,.4);backdrop-filter:blur(6px)}
+.kp-btn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.18);background:rgba(6,16,31,.78);color:#fff;cursor:pointer;backdrop-filter:blur(6px);transition:.15s}
+.kp-btn:hover{background:#fff;color:#06101f;transform:scale(1.08)}
+.kp-btn[data-kp=del]:hover{background:#ef4444;color:#fff;border-color:#ef4444}
+.kp-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#verifyScreen .slot.round .kp-bar{top:auto;bottom:12px;justify-content:center}
+#verifyScreen .slot.round .kp-tag{display:none}
+.kp-busy::before{content:"";position:absolute;inset:0;z-index:5;background:rgba(5,8,15,.7)}
+.kp-busy::after{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px;border-radius:50%;border:3px solid rgba(125,243,200,.25);border-top-color:#7df3c8;z-index:6;animation:kpSpin .8s linear infinite;display:block!important}
+@keyframes kpSpin{to{transform:rotate(360deg)}}
+/* file info row stays visible under the photo */
+#verifyScreen .slotw:has(.slot.has) .uploaded-file{display:flex!important;flex-wrap:wrap}
+#verifyScreen .uploaded-file .file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+.kp-q{flex-basis:100%;font-size:12px;margin-top:-2px}
+.kp-q.ok{color:#7df3c8}.kp-q.warn{color:#fbbf24}.kp-q.mute{color:#94a3b8}
+.kp-need{min-height:18px;margin:12px 0 -4px;text-align:center;font-size:12.5px;color:#fbbf24}
+/* two-sides layout */
+#verifyScreen .docslots[data-sides="2"]{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important}
+#verifyScreen .docslots[data-sides="2"] #slotBack{display:flex!important}
+@media(max-width:540px){#verifyScreen .docslots[data-sides="2"]{grid-template-columns:1fr!important}}
+/* lightbox */
+.kp-lb{position:fixed;inset:0;z-index:200000;background:rgba(3,6,12,.92);display:grid;place-items:center;padding:24px;cursor:zoom-out;animation:kpIn .2s}
+.kp-lb img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.kp-lb button{position:absolute;top:18px;right:22px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:26px;cursor:pointer}
+@keyframes kpIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.kp-scan,.kp-busy::after{animation:none}}
+/* round selfie frame (beats the generic .slot width/ratio rules) */
+#verifyScreen .slot.round{width:210px!important;max-width:100%!important;aspect-ratio:1!important;border-radius:50%!important;margin:0 auto!important}
+#verifyScreen .slot.round .slot-img{border-radius:50%!important;object-fit:cover!important}
+#verifyScreen .slotw:has(.slot.round){align-items:center}
+#verifyScreen .slotw:has(.slot.round) .uploaded-file{max-width:420px}
+/* file info row */
+#verifyScreen .uploaded-file .file-name{flex:1 1 0!important;min-width:60px;max-width:none!important}
+#verifyScreen .uploaded-file .file-size{flex:none;white-space:nowrap}
