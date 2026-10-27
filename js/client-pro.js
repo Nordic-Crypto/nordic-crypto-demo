@@ -222,10 +222,24 @@
     var m = $('mMethod'); if (m) m.addEventListener('change', function () { setTimeout(fillDeposit, 0); });
   }
 
+
+  /* ---------- no card yet: friendly CTA instead of a "FROZEN / NO CARD" placeholder ---------- */
+  function noCard() {
+    var c = $('cardDash'); if (!c) return;
+    var has = !!(S().card && S().card.num), cta = $('cpNoCard');
+    c.classList.toggle('cp-nocard', !has);
+    if (!has && !cta) {
+      var d = document.createElement('div'); d.id = 'cpNoCard'; d.className = 'cp-nocard-cta';
+      d.innerHTML = '<b>No card yet</b><span>Order a virtual or metal card in a minute.</span><button type="button" class="btn b1">Order my card</button>';
+      d.querySelector('button').onclick = function () { var n = document.querySelector('.nav [data-p], [data-p="newcard"], [data-p="order"]'); var all = document.querySelectorAll('[data-p]'); for (var i = 0; i < all.length; i++) { if (/order/i.test(all[i].textContent)) { all[i].click(); return; } } };
+      c.appendChild(d);
+    } else if (has && cta) cta.remove();
+  }
+
   /* ---------- loop ---------- */
   function tick() {
     if (!window.st) return;
-    hookDeposit(); buildBanking(); buildExchange(); renderBankingBits(); renderExchange(); loadCg();
+    hookDeposit(); noCard(); buildBanking(); buildExchange(); renderBankingBits(); renderExchange(); loadCg();
   }
   function start() { applyPriv(); tick(); setInterval(tick, 1200); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
