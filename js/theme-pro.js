@@ -61,7 +61,7 @@
     }
     return getComputedStyle(document.body).backgroundColor;
   }
-  var SKIP='#verifyScreen,#verifyScreen *,#pendingScreen,#pendingScreen *,#rejectedScreen,#rejectedScreen *,#onboard,#onboard *,.login-screen,.login-screen *,.pay,.pay *,.big,.big *,.cc,.cc *,.mc,.mc *,canvas,svg,svg *,img,.btn.b1,.b1,.b1 *,.nc3-primary,.nc3-primary *,.ex-btn-deposit,.ex-btn-deposit *,.ex-btn-trade,.ex-btn-trade *,.av,.av *,[data-ncskip],[data-ncskip] *,.kp-cele,.kp-cele *,.cp-nocard-cta .btn,.ex-asset-icon-big,.ex-coin-icon,.nc3-asset-icon,.nc3-action-icon,.nc3-icon-circle,.nc3-stat-icon,.nc3-card-action-icon,.ex-asset-icon-big *,.ex-coin-icon *,.badge,.ex-live-badge,.ex-bal-badge,.settings-role,.admin-nav-badge,.mi.on,.mi.on *';
+  var SKIP='.trade-terminal,.trade-terminal *,#verifyScreen,#verifyScreen *,#pendingScreen,#pendingScreen *,#rejectedScreen,#rejectedScreen *,#onboard,#onboard *,.login-screen,.login-screen *,.pay,.pay *,.big,.big *,.cc,.cc *,.mc,.mc *,canvas,svg,svg *,img,.btn.b1,.b1,.b1 *,.nc3-primary,.nc3-primary *,.ex-btn-deposit,.ex-btn-deposit *,.ex-btn-trade,.ex-btn-trade *,.av,.av *,[data-ncskip],[data-ncskip] *,.kp-cele,.kp-cele *,.cp-nocard-cta .btn,.ex-asset-icon-big,.ex-coin-icon,.nc3-asset-icon,.nc3-action-icon,.nc3-icon-circle,.nc3-stat-icon,.nc3-card-action-icon,.ex-asset-icon-big *,.ex-coin-icon *,.badge,.ex-live-badge,.ex-bal-badge,.settings-role,.admin-nav-badge,.mi.on,.mi.on *';
   function target(fg,bgL){
     var m=parse(fg),r=m[0],g=m[1],b=m[2];
     if(g>r+40&&g>b-20&&r<150)return 'var(--ok)';
