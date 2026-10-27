@@ -775,7 +775,7 @@
     // ---- Current price line ----
     var lastCandle = viewCandles[viewCandles.length - 1];
     var lastY = priceToY(lastCandle.c);
-    ctx.strokeStyle = 'rgba(139,92,246,0.4)';
+    ctx.strokeStyle = 'rgba(200,255,77,0.45)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(padLeft, lastY);
@@ -784,9 +784,9 @@
     ctx.setLineDash([]);
 
     // Current price badge
-    ctx.fillStyle = '#8b5cf6';
+    ctx.fillStyle = '#c8ff4d';
     ctx.fillRect(w - padRight + 2, lastY - 9, padRight - 4, 18);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#0a0f04';
     ctx.font = 'bold 10px ui-monospace, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(fmtPrice(lastCandle.c), w - padRight / 2 - 2, lastY + 3);
