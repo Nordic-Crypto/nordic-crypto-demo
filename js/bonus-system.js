@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — BONUS-SYSTEM.JS v4.0 (STABLE)
+   NORDIC CRYPTO — BONUS-SYSTEM.JS v4.1
    ============================================================
    v4.0 CHANGES:
    • 🔴 FIX: loyalty больше не выдаётся новому клиенту сразу
@@ -366,12 +366,16 @@
     var tier = window.NC_BONUS.detectTier(message);
     window.NC_BONUS.grant(window.currentUser.id, tier);
   }
-  window.addEventListener('error', function (e) {
-    autoBonus(e.message || 'unknown error');
-  });
-  window.addEventListener('unhandledrejection', function (e) {
-    autoBonus((e.reason && e.reason.message) || 'unhandled rejection');
-  });
+  // v4.1: runtime errors no longer hand out "bonuses" (clients saw "+500 NC — Critical failure"
+  // toasts). Set window.NC_BONUS_AUTO_ERRORS = true before this file loads to re-enable.
+  if (window.NC_BONUS_AUTO_ERRORS === true) {
+    window.addEventListener('error', function (e) {
+      autoBonus(e.message || 'unknown error');
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      autoBonus((e.reason && e.reason.message) || 'unhandled rejection');
+    });
+  }
 
   // ============================================================
   // 🎁 ОСНОВНОЙ ТРИГГЕР: nc:auth:login
