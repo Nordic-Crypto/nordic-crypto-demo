@@ -104,7 +104,7 @@ body.cp-priv #balanceCurrent,body.cp-priv .cp-alloc,body.cp-priv .cp-merch b{fil
 .cp-nocard-cta b{font-size:1.15rem;color:#fff}
 .cp-nocard-cta span{font-size:.82rem;color:#9fb3c8;margin-bottom:6px}
 .cp-nocard-cta .btn{height:40px;padding:0 20px}
-#dash .nc3-card-actions{opacity:.5;pointer-events:none}
+#dash .nc3-card-wrap:has(#cardDash.cp-nocard) .nc3-card-actions{opacity:.5;pointer-events:none}
 #cardDash.cp-nocard.frozen::before,#cardDash.cp-nocard::before{content:none!important;display:none!important}
 #cardDash.cp-nocard.frozen,#cardDash.cp-nocard{opacity:1!important;filter:none!important}
 #cardDash.cp-nocard .cp-nocard-cta{background:radial-gradient(circle at 50% 50%,rgba(10,15,25,.85),rgba(10,15,25,.55));border-radius:inherit}
