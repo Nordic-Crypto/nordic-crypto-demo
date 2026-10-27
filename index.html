@@ -202,8 +202,8 @@ section{padding:96px 0;position:relative}
 .fld .col{flex:1;min-width:0}
 .out{font:800 1.7rem Sora,sans-serif}
 /* countries */
-.cn{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.cn button{padding:24px 10px;border-radius:24px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;font-weight:650;font-size:.95rem;transition:.2s}
+.cn{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+.cn button{padding:24px 6px;border-radius:24px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;font-weight:650;font-size:.95rem;transition:.2s}
 .cn button span{font-size:2.4rem;line-height:1}
 .cn button:hover{transform:translateY(-5px);border-color:var(--a)}
 .cn button.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 14%,var(--bg))}
@@ -261,7 +261,7 @@ footer p{max-width:820px;font-size:.78rem}
  .hero .grid,.split{grid-template-columns:1fr}.stage{min-height:auto;margin-top:26px}
  .bento{grid-template-columns:repeat(2,1fr)}.c3,.c4,.c2{grid-column:span 2}
  .pgrid,.steps{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.st:nth-child(2){border-right:0}.st:nth-child(-n+2){border-bottom:1px solid var(--line)}
- .cn{grid-template-columns:repeat(3,1fr)}
+ .cn{grid-template-columns:repeat(4,1fr)}
  .links{display:none;position:absolute;top:68px;left:0;right:0;flex-direction:column;background:var(--bg);padding:12px 22px;border-bottom:1px solid var(--line);margin:0}
  .links.open{display:flex}.burger{display:grid;place-items:center}.nav .btn.g{display:none}
 }
@@ -338,7 +338,7 @@ footer p{max-width:820px;font-size:.78rem}
 <div class="wrap"><div class="stats reveal" id="stats">
  <div class="st"><b class="num" data-n="5">0</b><span data-i="st1"></span></div>
  <div class="st"><b class="num" data-n="6">0</b><span data-i="st2"></span></div>
- <div class="st"><b class="num" data-n="7">0</b><span data-i="st3"></span></div>
+ <div class="st"><b class="num" data-n="8">0</b><span data-i="st3"></span></div>
  <div class="st"><b class="num" data-n="0">0</b><span data-i="st4"></span></div>
 </div></div>
 
@@ -464,7 +464,7 @@ footer p{max-width:820px;font-size:.78rem}
 (function(){
 'use strict';
 var WORKER='https://nordic-deposit-checker.otis-790.workers.dev';
-var LANGS=[['en','🇬🇧','English'],['da','🇩🇰','Dansk'],['fi','🇫🇮','Suomi'],['es','🇪🇸','Español'],['no','🇳🇴','Norsk'],['sv','🇸🇪','Svenska'],['fr','🇫🇷','Français']];
+var LANGS=[['en','🇬🇧','English'],['da','🇩🇰','Dansk'],['fi','🇫🇮','Suomi'],['es','🇪🇸','Español'],['no','🇳🇴','Norsk'],['sv','🇸🇪','Svenska'],['fr','🇫🇷','Français'],['de','🇩🇪','Deutsch']];
 var T={
 en:{nav_f:'Features',nav_c:'Cards',nav_k:'Calculator',nav_p:'Fees',nav_q:'FAQ',signin:'Sign in',open:'Open account',
 eyebrow:'Banking and crypto, one account',h1a:'A bank account',h1b:'built for crypto.',lead:'Receive, exchange, spend and send — from one app. Virtual and metal cards, IBAN and live rates in your pocket.',try:'Try the calculator →',t1:'Virtual & metal cards',t2:'Protected sign-in',t3:'Chat support',f_in:'Incoming',f_card:'Card payment',ph_hi:'Good morning',q_add:'Add',q_send:'Send',q_ex:'Swap',q_card:'Card',
@@ -587,43 +587,66 @@ login_t:'Bon retour',login_s:'Connectez-vous à votre compte.',su_t:'Créez votr
 e_fill:'Remplissez tous les champs.',e_mail:'Saisissez un e-mail valide.',e_len:'Le mot de passe doit contenir au moins 6 caractères.',e_match:'Les mots de passe ne correspondent pas.',e_net:'Problème de connexion. Réessayez.',e_name:'Saisissez votre nom.'}
 };
 var X={
-en:{ann:'Now open for clients in 🇩🇰 Denmark · 🇫🇮 Finland · 🇪🇸 Spain · 🇳🇴 Norway · 🇸🇪 Sweden · 🇫🇷 France',st1:'crypto assets',st2:'currencies',st3:'languages',st4:'hidden fees',
+en:{ann:'Now open for clients in 🇩🇰 Denmark · 🇫🇮 Finland · 🇪🇸 Spain · 🇳🇴 Norway · 🇸🇪 Sweden · 🇫🇷 France · 🇩🇪 Germany',st1:'crypto assets',st2:'currencies',st3:'languages',st4:'hidden fees',
 bn_h:'Everything your money needs.',bn_p:'Swap, spend, hide, track and receive — each part of the app is built to be quick and clear.',
 bn1d:'Swap between EUR, USD and major crypto in a tap at live market rates.',bn2t:'Privacy mode',bn2d:'Hide your balance with one tap when someone is looking.',bn3t:'Spending insights',bn3d:'See where your money goes, by category, at a glance.',bn4d:'Freeze your card, set limits and manage everything from the app.',bn5d:'Your own deposit address and QR code for every asset.',bn6t:'Many currencies',bn6d:'Hold and move money in 6 currencies and 5 crypto assets.',
 m_freeze:'Freeze card',m_limits:'Limits',m_bal:'Total balance',m_addr:'Deposit address',m_c1:'Food',m_c2:'Travel',m_c3:'Shops',m_c4:'Fun',m_active:'ACTIVE',m_frozen:'FROZEN',
 cn_k:'Countries',cn_h:'Made for the Nordics and beyond.',cn_p:'Pick your country and the site switches to your language.'},
-da:{ann:'Nu åben for kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spanien · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrig',st1:'kryptoaktiver',st2:'valutaer',st3:'sprog',st4:'skjulte gebyrer',
+da:{ann:'Nu åben for kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spanien · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrig · 🇩🇪 Tyskland',st1:'kryptoaktiver',st2:'valutaer',st3:'sprog',st4:'skjulte gebyrer',
 bn_h:'Alt, dine penge har brug for.',bn_p:'Veksle, brug, skjul, følg og modtag — hver del af appen er lavet til at være hurtig og klar.',
 bn1d:'Skift mellem EUR, USD og større kryptovalutaer med et tryk til live-kurs.',bn2t:'Privatlivstilstand',bn2d:'Skjul din saldo med ét tryk, når nogen kigger med.',bn3t:'Forbrugsoverblik',bn3d:'Se, hvor pengene går hen, fordelt på kategori.',bn4d:'Frys dit kort, sæt grænser og styr alt fra appen.',bn5d:'Din egen indbetalingsadresse og QR-kode til hvert aktiv.',bn6t:'Mange valutaer',bn6d:'Hold og flyt penge i 6 valutaer og 5 kryptoaktiver.',
 m_freeze:'Frys kort',m_limits:'Grænser',m_bal:'Samlet saldo',m_addr:'Indbetalingsadresse',m_c1:'Mad',m_c2:'Rejser',m_c3:'Butikker',m_c4:'Fritid',m_active:'AKTIV',m_frozen:'FROSSET',
 cn_k:'Lande',cn_h:'Lavet til Norden og videre.',cn_p:'Vælg dit land, så skifter siden til dit sprog.'},
-fi:{ann:'Nyt auki asiakkaille maissa 🇩🇰 Tanska · 🇫🇮 Suomi · 🇪🇸 Espanja · 🇳🇴 Norja · 🇸🇪 Ruotsi · 🇫🇷 Ranska',st1:'kryptovaraa',st2:'valuuttaa',st3:'kieltä',st4:'piilokulua',
+fi:{ann:'Nyt auki asiakkaille maissa 🇩🇰 Tanska · 🇫🇮 Suomi · 🇪🇸 Espanja · 🇳🇴 Norja · 🇸🇪 Ruotsi · 🇫🇷 Ranska · 🇩🇪 Saksa',st1:'kryptovaraa',st2:'valuuttaa',st3:'kieltä',st4:'piilokulua',
 bn_h:'Kaikki, mitä rahasi tarvitsevat.',bn_p:'Vaihda, maksa, piilota, seuraa ja vastaanota — jokainen osa sovellusta on tehty nopeaksi ja selkeäksi.',
 bn1d:'Vaihda EUR, USD ja suurimmat kryptot yhdellä napautuksella reaaliaikaiseen kurssiin.',bn2t:'Yksityisyystila',bn2d:'Piilota saldosi yhdellä napautuksella, kun joku katsoo.',bn3t:'Kulutusnäkymä',bn3d:'Näe yhdellä silmäyksellä, mihin rahasi menevät.',bn4d:'Jäädytä korttisi, aseta rajat ja hallitse kaikkea sovelluksesta.',bn5d:'Oma talletusosoite ja QR-koodi jokaiselle varalle.',bn6t:'Monta valuuttaa',bn6d:'Säilytä ja siirrä rahaa 6 valuutassa ja 5 kryptovarassa.',
 m_freeze:'Jäädytä kortti',m_limits:'Rajat',m_bal:'Kokonaissaldo',m_addr:'Talletusosoite',m_c1:'Ruoka',m_c2:'Matkat',m_c3:'Kaupat',m_c4:'Vapaa-aika',m_active:'AKTIIVINEN',m_frozen:'JÄÄDYTETTY',
 cn_k:'Maat',cn_h:'Tehty Pohjoismaihin ja pidemmälle.',cn_p:'Valitse maasi, niin sivusto vaihtuu kielellesi.'},
-es:{ann:'Ya abierto para clientes en 🇩🇰 Dinamarca · 🇫🇮 Finlandia · 🇪🇸 España · 🇳🇴 Noruega · 🇸🇪 Suecia · 🇫🇷 Francia',st1:'criptoactivos',st2:'divisas',st3:'idiomas',st4:'comisiones ocultas',
+es:{ann:'Ya abierto para clientes en 🇩🇰 Dinamarca · 🇫🇮 Finlandia · 🇪🇸 España · 🇳🇴 Noruega · 🇸🇪 Suecia · 🇫🇷 Francia · 🇩🇪 Alemania',st1:'criptoactivos',st2:'divisas',st3:'idiomas',st4:'comisiones ocultas',
 bn_h:'Todo lo que tu dinero necesita.',bn_p:'Cambia, gasta, oculta, sigue y recibe: cada parte de la app está pensada para ser rápida y clara.',
 bn1d:'Cambia entre EUR, USD y las principales criptomonedas con un toque a precio de mercado.',bn2t:'Modo privado',bn2d:'Oculta tu saldo con un toque cuando alguien mire.',bn3t:'Análisis de gastos',bn3d:'Mira en qué se va tu dinero, por categoría y de un vistazo.',bn4d:'Congela tu tarjeta, fija límites y gestiona todo desde la app.',bn5d:'Tu propia dirección de depósito y código QR para cada activo.',bn6t:'Muchas divisas',bn6d:'Guarda y mueve dinero en 6 divisas y 5 criptoactivos.',
 m_freeze:'Congelar tarjeta',m_limits:'Límites',m_bal:'Saldo total',m_addr:'Dirección de depósito',m_c1:'Comida',m_c2:'Viajes',m_c3:'Tiendas',m_c4:'Ocio',m_active:'ACTIVA',m_frozen:'CONGELADA',
 cn_k:'Países',cn_h:'Hecho para los países nórdicos y más allá.',cn_p:'Elige tu país y la web cambia a tu idioma.'},
-no:{ann:'Nå åpen for kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spania · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrike',st1:'kryptoaktiva',st2:'valutaer',st3:'språk',st4:'skjulte gebyrer',
+no:{ann:'Nå åpen for kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spania · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrike · 🇩🇪 Tyskland',st1:'kryptoaktiva',st2:'valutaer',st3:'språk',st4:'skjulte gebyrer',
 bn_h:'Alt pengene dine trenger.',bn_p:'Veksle, bruk, skjul, følg og motta — hver del av appen er laget for å være rask og tydelig.',
 bn1d:'Bytt mellom EUR, USD og de største kryptovalutaene med ett trykk til live kurs.',bn2t:'Privatmodus',bn2d:'Skjul saldoen med ett trykk når noen ser på.',bn3t:'Forbruksinnsikt',bn3d:'Se hvor pengene går, fordelt på kategori.',bn4d:'Frys kortet, sett grenser og styr alt fra appen.',bn5d:'Din egen innskuddsadresse og QR-kode for hvert aktivum.',bn6t:'Mange valutaer',bn6d:'Ha og flytt penger i 6 valutaer og 5 kryptoaktiva.',
 m_freeze:'Frys kort',m_limits:'Grenser',m_bal:'Total saldo',m_addr:'Innskuddsadresse',m_c1:'Mat',m_c2:'Reise',m_c3:'Butikker',m_c4:'Fritid',m_active:'AKTIV',m_frozen:'FRYST',
 cn_k:'Land',cn_h:'Laget for Norden og videre.',cn_p:'Velg landet ditt, så bytter siden til ditt språk.'},
-sv:{ann:'Nu öppet för kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spanien · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrike',st1:'kryptotillgångar',st2:'valutor',st3:'språk',st4:'dolda avgifter',
+sv:{ann:'Nu öppet för kunder i 🇩🇰 Danmark · 🇫🇮 Finland · 🇪🇸 Spanien · 🇳🇴 Norge · 🇸🇪 Sverige · 🇫🇷 Frankrike · 🇩🇪 Tyskland',st1:'kryptotillgångar',st2:'valutor',st3:'språk',st4:'dolda avgifter',
 bn_h:'Allt dina pengar behöver.',bn_p:'Växla, handla, dölj, följ och ta emot — varje del av appen är gjord för att vara snabb och tydlig.',
 bn1d:'Byt mellan EUR, USD och de största kryptovalutorna med ett tryck till liveurs.',bn2t:'Privat läge',bn2d:'Dölj ditt saldo med ett tryck när någon tittar.',bn3t:'Utgiftsöversikt',bn3d:'Se vart pengarna går, fördelat per kategori.',bn4d:'Frys kortet, sätt gränser och styr allt från appen.',bn5d:'Din egen insättningsadress och QR-kod för varje tillgång.',bn6t:'Många valutor',bn6d:'Ha och flytta pengar i 6 valutor och 5 kryptotillgångar.',
 m_freeze:'Frys kort',m_limits:'Gränser',m_bal:'Totalt saldo',m_addr:'Insättningsadress',m_c1:'Mat',m_c2:'Resor',m_c3:'Butiker',m_c4:'Nöje',m_active:'AKTIVT',m_frozen:'FRYST',
 cn_k:'Länder',cn_h:'Gjort för Norden och längre.',cn_p:'Välj ditt land så byter sidan till ditt språk.'},
-fr:{ann:'Désormais ouvert aux clients en 🇩🇰 Danemark · 🇫🇮 Finlande · 🇪🇸 Espagne · 🇳🇴 Norvège · 🇸🇪 Suède · 🇫🇷 France',st1:'crypto-actifs',st2:'devises',st3:'langues',st4:'frais cachés',
+fr:{ann:'Désormais ouvert aux clients en 🇩🇰 Danemark · 🇫🇮 Finlande · 🇪🇸 Espagne · 🇳🇴 Norvège · 🇸🇪 Suède · 🇫🇷 France · 🇩🇪 Germany',st1:'crypto-actifs',st2:'devises',st3:'langues',st4:'frais cachés',
 bn_h:'Tout ce dont votre argent a besoin.',bn_p:'Échangez, dépensez, masquez, suivez et recevez : chaque partie de l’app est conçue pour être rapide et claire.',
 bn1d:'Passez de l’EUR ou l’USD aux principales cryptos en un geste, au cours du marché.',bn2t:'Mode discret',bn2d:'Masquez votre solde d’un geste quand quelqu’un regarde.',bn3t:'Analyse des dépenses',bn3d:'Voyez où va votre argent, par catégorie, d’un coup d’œil.',bn4d:'Bloquez votre carte, fixez des plafonds et gérez tout depuis l’app.',bn5d:'Votre propre adresse de dépôt et QR code pour chaque actif.',bn6t:'Multi-devises',bn6d:'Détenez et déplacez de l’argent en 6 devises et 5 crypto-actifs.',
 m_freeze:'Bloquer la carte',m_limits:'Plafonds',m_bal:'Solde total',m_addr:'Adresse de dépôt',m_c1:'Repas',m_c2:'Voyages',m_c3:'Boutiques',m_c4:'Loisirs',m_active:'ACTIVE',m_frozen:'BLOQUÉE',
 cn_k:'Pays',cn_h:'Pensé pour le Nord et au-delà.',cn_p:'Choisissez votre pays et le site passe dans votre langue.'}
 };
 for(var _l in X){Object.assign(T[_l],X[_l])}
+T.de={nav_f:'Funktionen',nav_c:'Karten',nav_k:'Rechner',nav_p:'Gebühren',nav_q:'FAQ',signin:'Anmelden',open:'Konto eröffnen',
+eyebrow:'Banking und Krypto auf einem Konto',h1a:'Ein Bankkonto',h1b:'gebaut für Krypto.',lead:'Empfangen, tauschen, bezahlen und senden — in einer App. Virtuelle und Metallkarten, IBAN und Live-Kurse in der Hosentasche.',try:'Rechner ausprobieren →',t1:'Virtuelle & Metallkarten',t2:'Geschützter Login',t3:'Chat-Support',f_in:'Eingang',f_card:'Kartenzahlung',ph_hi:'Guten Morgen',q_add:'Einzahlen',q_send:'Senden',q_ex:'Tauschen',q_card:'Karte',
+f_k:'Alles an einem Ort',f_h:'Vier Aktionen. Eine App.',f_p:'Alles, was du täglich mit Geld machst — ohne zwischen Bank und Börse zu wechseln.',
+ft1:'Empfangen',fd1:'Lass dich in Krypto bezahlen und sieh es mit deiner eigenen Einzahlungsadresse sofort auf deinem Konto.',ft2:'Tauschen',fd2:'Wechsle mit einem Tipp zwischen EUR, USD und den wichtigsten Kryptowährungen zum Live-Kurs.',ft3:'Karten',fd3:'Bezahle überall mit einer virtuellen oder Metall-Visa-Karte, verbunden mit deinem Guthaben.',ft4:'Senden',fd4:'Sende an Krypto-Wallets oder ins Ausland per SEPA und SWIFT.',
+s_k:'Erste Schritte',s_h:'Dein Konto in drei Schritten',s1t:'Konto erstellen',s1d:'Wähle Banking oder Exchange und registriere dich in unter einer Minute mit deiner E-Mail.',s2t:'Identität bestätigen',s2d:'Lade deinen Ausweis und ein Selfie hoch. Das Ergebnis siehst du in der App, sobald wir es geprüft haben.',s3t:'Loslegen',s3d:'Zahle ein, bestelle eine Karte und beginne zu senden, zu tauschen und zu bezahlen.',
+c_k:'Karten',c_h:'Wähle eine Karte, die zu dir passt.',c_v:'Virtuell',c_m:'Metall',c_col:'Farbe wählen',c_cta:'Karte holen',
+v_price:'5,00 USDT',m_price:'ab 100,00 USDT',v1:'Sofort ausgestellt, bereit für Online-Zahlungen',v2:'Zur Wallet auf deinem Handy hinzufügen',v3:'In der App sperren, entsperren und Limits setzen',m1:'Premium-Metallkarte mit deinem Namen',m2:'Direkt zu dir nach Hause geliefert',m3:'Kontaktlos und Geldautomaten-Abhebungen',
+b_k:'Dein Geld im Blick',b_h:'Dein Guthaben auf einen Blick.',b_p:'Verfolge dein Portfolio und deine Ausgaben über eine Woche, einen Monat oder ein Jahr.',b_note:'Beispieldiagramm.',
+sec_k:'Sicherheit',sec_h:'Standardmäßig gesichert.',se1:'Zwei-Faktor-Anmeldung',sd1:'Ein zusätzlicher Schritt schützt dein Konto.',se2:'Sitzungs-Fingerabdruck',sd2:'Sitzungen sind an dein Gerät gebunden.',se3:'Ratenbegrenzung',sd3:'Brute-Force-Versuche werden blockiert.',se4:'CSRF-Schutz',sd4:'Anfragen werden durchgehend geprüft.',
+k_k:'Rechner',k_h:'Sieh, was dein Geld wert ist.',k_p:'Wähle eine Währung und einen Vermögenswert und sieh eine Schätzung zum aktuellen Kurs.',k_send:'Du sendest',k_get:'Du erhältst (ca.)',k_note:'Nur eine Schätzung. Netzwerk- und Servicegebühren können anfallen.',k_rate:'Kurs',
+p_k:'Gebühren',p_h:'Preise, die du in zehn Sekunden verstehst.',p1:'Karten und Konten',p1a:'Visa virtuell',p1b:'Visa Metall',p1bv:'ab 100,00 USDT',p1c:'Virtuelle Konten',p2:'Aufladen und Ausgeben',p2a:'Krypto-Einzahlung',p2b:'Kartenzahlungen',p2c:'Geldautomaten-Abhebung',p3:'Geld senden',p3a:'Krypto-Wallets',p3av:'Netzwerkgebühr',free:'Kostenlos',p_zero:'Keine versteckten Gebühren.',
+v_k:'Vergleich',v_h:'Warum NordicCrypto',v_bank:'Typische Bank',v_ex:'Krypto-Börse',cr1:'Mit Krypto per Karte bezahlen',cr2:'IBAN-Konto',cr3:'Krypto in der App tauschen',cr4:'Virtuelle Karte in Minuten',cr5:'Kostenlose Krypto-Einzahlung',
+q_h:'Fragen und Antworten.',
+fq:[['Was ist NordicCrypto?','Ein Konto, das Alltags-Banking — Karten, IBAN, Überweisungen — mit Krypto verbindet: empfangen, tauschen und bezahlen in einer App.'],['Wie bekomme ich eine Karte?','Eröffne ein Konto, bestätige deine Identität und bestelle in der App eine virtuelle oder Metallkarte.'],['Wie zahle ich Geld ein?','Öffne in der App „Einzahlen“. Du siehst deine persönliche Einzahlungsadresse und einen QR-Code.'],['Wie hebe ich ab?','Wähle in der App „Senden“, gib das Ziel ein und bestätige. Gebühren werden vor der Bestätigung angezeigt.'],['Ist mein Geld sicher?','Der Login ist geschützt, Sitzungen sind an dein Gerät gebunden und Versuche werden begrenzt. Halte dein Passwort geheim.'],['Wie erreiche ich den Support?','Nutze den Chat in der App. Wir antworten dort.']],
+fin_h:'Eröffne dein Konto in einer Minute.',fin_p:'Kein Papierkram, kein Filialbesuch.',foot:'Krypto-Assets sind volatil und du kannst Geld verlieren. Gebühren werden in der App vor jeder Bestätigung angezeigt.',
+login_t:'Willkommen zurück',login_s:'Melde dich bei deinem Konto an.',su_t:'Konto erstellen',su_s:'Wähle die Kontoart und leg los.',ph_name:'Vollständiger Name',ph_email:'E-Mail',ph_pass:'Passwort',ph_pass2:'Passwort bestätigen',at_b:'Banking',at_bd:'Karte + IBAN + Exchange',at_e:'Exchange',at_ed:'Nur Krypto-Handel',btn_in:'Anmelden',btn_su:'Konto erstellen →',sw_in:'Noch kein Konto?',sw_su:'Konto erstellen',sw_up:'Schon ein Konto?',sw_lg:'Anmelden',open_app:'App öffnen',
+e_fill:'Bitte alle Felder ausfüllen.',e_mail:'Gültige E-Mail eingeben.',e_len:'Das Passwort muss mindestens 6 Zeichen haben.',e_match:'Die Passwörter stimmen nicht überein.',e_net:'Verbindungsproblem. Bitte erneut versuchen.',e_name:'Bitte Namen eingeben.',
+ann:'Jetzt offen für Kunden in 🇩🇰 Dänemark · 🇫🇮 Finnland · 🇪🇸 Spanien · 🇳🇴 Norwegen · 🇸🇪 Schweden · 🇫🇷 Frankreich · 🇩🇪 Deutschland',st1:'Krypto-Assets',st2:'Währungen',st3:'Sprachen',st4:'versteckte Gebühren',
+bn_h:'Alles, was dein Geld braucht.',bn_p:'Tauschen, bezahlen, verbergen, verfolgen und empfangen — jeder Teil der App ist schnell und klar.',
+bn1d:'Wechsle mit einem Tipp zwischen EUR, USD und den wichtigsten Kryptowährungen zum Live-Kurs.',bn2t:'Privatmodus',bn2d:'Verberge dein Guthaben mit einem Tipp, wenn jemand mitschaut.',bn3t:'Ausgabenübersicht',bn3d:'Sieh auf einen Blick, wohin dein Geld fließt — nach Kategorie.',bn4d:'Sperre deine Karte, setze Limits und verwalte alles in der App.',bn5d:'Deine eigene Einzahlungsadresse und ein QR-Code für jeden Vermögenswert.',bn6t:'Viele Währungen',bn6d:'Halte und bewege Geld in 6 Währungen und 5 Krypto-Assets.',
+m_freeze:'Karte sperren',m_limits:'Limits',m_bal:'Gesamtguthaben',m_addr:'Einzahlungsadresse',m_c1:'Essen',m_c2:'Reisen',m_c3:'Shops',m_c4:'Freizeit',m_active:'AKTIV',m_frozen:'GESPERRT',
+cn_k:'Länder',cn_h:'Gemacht für den Norden und darüber hinaus.',cn_p:'Wähle dein Land und die Seite wechselt in deine Sprache.'};
+
 var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 var lang='en';
 function dict(){return T[lang]||T.en}
@@ -791,7 +814,7 @@ if('IntersectionObserver' in window){new IntersectionObserver(function(es,o){es.
 $('#eye').onclick=function(){$('#prv').classList.toggle('hid')};
 $('#ccSw').onclick=function(){var f=$('#ccT').classList.toggle('fz');this.classList.toggle('on',f);$('#ccS').textContent=tr(f?'m_frozen':'m_active')};
 /* countries */
-var CN=[['🇩🇰','Danmark','da'],['🇫🇮','Suomi','fi'],['🇪🇸','España','es'],['🇳🇴','Norge','no'],['🇸🇪','Sverige','sv'],['🇫🇷','France','fr']];
+var CN=[['🇩🇰','Danmark','da'],['🇫🇮','Suomi','fi'],['🇪🇸','España','es'],['🇳🇴','Norge','no'],['🇸🇪','Sverige','sv'],['🇫🇷','France','fr'],['🇩🇪','Deutschland','de']];
 $('#cn').innerHTML=CN.map(function(c){return '<button data-l="'+c[2]+'"><span>'+c[0]+'</span>'+c[1]+'</button>'}).join('');
 $('#cn').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setLang(b.dataset.l,true)});
 function extraLang(){
