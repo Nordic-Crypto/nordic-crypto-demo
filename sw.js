@@ -1,27 +1,4 @@
-/* ============================================================
-   NordicCrypto — Service Worker SELF-DESTRUCT
-   Убивает старый кэш и убирает регистрацию
-   ============================================================ */
-self.addEventListener('install', function(e){
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', function(e){
-  e.waitUntil(
-    caches.keys().then(function(keys){
-      return Promise.all(keys.map(function(k){ return caches.delete(k); }));
-    }).then(function(){
-      return self.registration.unregister();
-    }).then(function(){
-      return self.clients.matchAll();
-    }).then(function(clients){
-      clients.forEach(function(c){
-        try { c.navigate(c.url); } catch(e){}
-      });
-    })
-  );
-});
-
-self.addEventListener('fetch', function(e){
-  e.respondWith(fetch(e.request));
-});
+/* NordicCrypto: minimal service worker. Makes the site installable as an app; it never caches anything, so clients always get the latest version. */
+self.addEventListener('install', function () { self.skipWaiting(); });
+self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
+self.addEventListener('fetch', function () { /* network only */ });
