@@ -609,7 +609,8 @@
         (m._failed ? 'outline:1px solid #ff5470;' : '') + (m._sending ? 'opacity:.7;' : '') + '">' + esc(m.text) +
         '<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right;">' + fmtTime(m.ts) +
         (m._failed ? ' \u00B7 <span data-acact="retry" data-mid="' + esc(m.clientMsgId) + '" style="cursor:pointer;text-decoration:underline;">retry</span>' : '') +
-        (isAdmin && !m._sending && !m._failed ? (m.read ? ' \u2713\u2713' : ' \u2713') : '') + '</div></div></div>';
+        (isAdmin && !m._sending && !m._failed ? (m.read ? ' \u2713\u2713' : ' \u2713') : '') +
+        (m.id && !m._sending && !m._failed ? ' \u00B7 <span data-acact="del" data-id="' + esc(m.id) + '" title="Delete message" style="cursor:pointer;opacity:.9">\uD83D\uDDD1 Delete</span>' : '') + '</div></div></div>';
     }
     if (!all.length) html = '<div style="text-align:center;color:#8b95a5;padding:30px;">No messages</div>';
     if (AC.typingClient) html += '<div style="color:#8b95a5;font-size:12px;padding:4px 6px;">Client is typing...</div>';
@@ -709,6 +710,16 @@
       if (act === 'close') acClose();
       else if (act === 'send') acSend();
       else if (act === 'end') { if (typeof window.endAdminChat === 'function') window.endAdminChat(email); }
+      else if (act === 'del') {
+        var did = a.getAttribute('data-id');
+        if (!did || !window.confirm('Delete this message? It will disappear for the client too.')) return;
+        AC.server = AC.server.filter(function (x) { return x.id !== did; });
+        acRender(true);
+        post('deleteChatMessage', { email: email, id: did }).then(function (d) {
+          if (!d || !d.ok) { toastMsg((d && d.error) || 'Could not delete', true); acPoll(); }
+          else toastMsg('Message deleted');
+        }).catch(function () { toastMsg('Connection problem', true); acPoll(); });
+      }
       else if (act === 'retry') {
         var mid = a.getAttribute('data-mid');
         AC.pending.forEach(function (p) { if (p.clientMsgId === mid) acTransmit(p, email); });
