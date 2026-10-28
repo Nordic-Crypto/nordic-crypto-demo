@@ -38,6 +38,6 @@
   }
   var busy=false;
   function run(){if(busy)return;busy=true;try{walk(document.body)}finally{busy=false}}
-  function start(){run();new MutationObserver(function(){run()}).observe(document.body,{childList:true,subtree:true,characterData:true})}
+  function start(){run();var tm=0;new MutationObserver(function(){if(tm)return;tm=setTimeout(function(){tm=0;run()},120)}).observe(document.body,{childList:true,subtree:true,characterData:true})}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
