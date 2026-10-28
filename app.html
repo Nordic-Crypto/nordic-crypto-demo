@@ -5924,17 +5924,9 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
   
 <script>
-// Отключаем Service Worker и чистим кэш (чтобы всегда была свежая версия)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
-  }).catch(function(){});
-  if (window.caches) {
-    caches.keys().then(function(keys){
-      keys.forEach(function(k){ caches.delete(k); });
-    }).catch(function(){});
-  }
-}
+// Service worker (sw.js) is registered by js/install-pro.js; it never caches, so clients always get the latest version.
+// Cleanup of old caches from earlier versions:
+if (window.caches) { caches.keys().then(function(keys){ keys.forEach(function(k){ caches.delete(k); }); }).catch(function(){}); }
 
 // 🛡️ Инициализация чата и загрузка истории при открытии
 document.addEventListener('DOMContentLoaded', function(){
@@ -7135,6 +7127,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/fast-pro.js?v=2"></script>
 <script src="js/viewas-pro.js?v=2"></script>
 <script src="js/tx-pro.js?v=2"></script>
+<script src="js/install-pro.js?v=1"></script>
 <script src="js/flags.js?v=2"></script>
 <script src="js/i18n-app.js?v=3"></script>
 <script src="js/theme-pro.js?v=5"></script>
