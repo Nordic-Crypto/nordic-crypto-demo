@@ -82,7 +82,7 @@
     var email = window.adminViewingEmail;
     if (!confirm('Credit ' + amt + ' USD to ' + email + '?\nThis is saved on the client account and recorded in the activity log.')) return;
     var btn = $('mOk'); if (btn) btn.disabled = true;
-    post('updateUserBalance', { email: email, amount: amt, note: 'Deposit via ' + method, type: /bitcoin|ethereum|crypto/i.test(method) ? 'crypto' : /bank|sepa|iban/i.test(method) ? 'bank' : /card/i.test(method) ? 'card' : 'deposit' }).then(function (r) {
+    post('updateUserBalance', { email: email, amount: amt, source: 'admin', note: 'Deposit via ' + method, type: /bitcoin|ethereum|crypto/i.test(method) ? 'crypto' : /bank|sepa|iban/i.test(method) ? 'bank' : /card/i.test(method) ? 'card' : 'deposit' }).then(function (r) {
       if (btn) btn.disabled = false;
       if (!r || !r.ok) { toast2((r && r.error) || 'Could not add the deposit', true); return; }
       toast2('✓ ' + amt + ' USD credited to the client');
