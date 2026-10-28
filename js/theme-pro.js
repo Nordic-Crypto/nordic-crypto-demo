@@ -1,5 +1,20 @@
 /* guard: app.html has no login form of its own — without a session go to the login page (no black screen) */
 (function(){try{if(!/index\.html$/.test(location.pathname)&&!localStorage.getItem('session_token')){location.replace('index.html')}}catch(e){}})();
+/* guard 2: a stored token the server no longer accepts (expired / password changed / account disabled) -> back to login instead of a dead page */
+(function(){try{
+  if(/index\.html$/.test(location.pathname))return;
+  var t=localStorage.getItem('session_token');if(!t)return;
+  setTimeout(function(){
+    fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=getUserState',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})})
+    .then(function(r){return r.json()}).then(function(d){
+      if(d&&d.ok===false&&/authenticat|session|expired|disabled|token/i.test(String(d.error||''))){
+        ['session_token','user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});
+        try{sessionStorage.removeItem('nc_f5_recovery')}catch(e){}
+        location.replace('index.html');
+      }
+    }).catch(function(){});
+  },2500);
+}catch(e){}})();
 /* NC THEME PRO — theme switch (dark/light), shared with the landing page via localStorage 'nc_theme' */
 (function(){
   'use strict';
