@@ -238,9 +238,9 @@
 
   /* ---------- loop ---------- */
   function tick() {
-    if (!window.st) return;
+    if (!window.st || document.hidden) return;
     hookDeposit(); noCard(); buildBanking(); buildExchange(); renderBankingBits(); renderExchange(); loadCg();
   }
-  function start() { applyPriv(); tick(); setInterval(tick, 1200); }
+  function start() { applyPriv(); tick(); setInterval(tick, 2000); document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
