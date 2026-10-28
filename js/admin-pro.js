@@ -174,6 +174,8 @@
       '<div class="ap-kpis ap-fade">' +
       kpi('users', 'Clients', num(st.totalClients != null ? st.totalClients : us.length), '<b>+' + sumToday + '</b> today · +' + sumYest + ' yesterday', spark(sign.map(function (x) { return x.v; }), '#47dcff'), '#47dcff', 'rgba(71,220,255,.14)') +
       kpi('wallet', 'Total balance', usdC(totalBal), 'across ' + us.length + ' accounts', spark(us.map(function (u) { return u.balance || 0; }).sort(function (a, b) { return a - b; }), '#10b981'), '#34d399', 'rgba(16,185,129,.14)') +
+      kpi('inn', 'Real deposits', usdC(st.realDeposits || 0), 'money actually received from clients', spark([0, st.realDeposits || 0].sort(function (a, b) { return a - b; }), '#34d399'), '#34d399', 'rgba(16,185,129,.14)') +
+      kpi('wallet', 'Admin credits', usdC(st.adminCredits || 0), 'added from the admin panel (not real money)', spark([0, st.adminCredits || 0], '#fbbf24'), '#fbbf24', 'rgba(245,158,11,.14)') +
       kpi('inn', 'Total deposits', usdC(st.totalDeposits || 0), '<b>+' + usdC(st.depositsToday || 0) + '</b> today · +' + usdC(st.depositsYesterday || 0) + ' yesterday', spark([st.depositsYesterday || 0, st.depositsToday || 0, st.totalDeposits ? st.totalDeposits / Math.max(1, us.length) : 0].sort(function (a, b) { return a - b; }), '#f59e0b'), '#fbbf24', 'rgba(245,158,11,.14)') +
       kpi('pulse', 'Transactions', num(st.totalTx != null ? st.totalTx : S.txs.length), 'last 14 days: <b>' + tx14.reduce(function (a, x) { return a + x.v; }, 0) + '</b>', spark(tx14.map(function (x) { return x.v; }), '#a78bfa'), '#a78bfa', 'rgba(139,92,246,.14)') +
       '</div>' +
@@ -241,13 +243,14 @@
     var rows = list.slice((S.page - 1) * PAGE, S.page * PAGE);
     function th(k, l, cls) { var on = S.sort.k === k; return '<th class="s ' + (cls || '') + '" data-s="' + k + '">' + l + (on ? '<span class="arr">' + (S.sort.d > 0 ? '↑' : '↓') + '</span>' : '') + '</th>'; }
     box.className = '';
-    box.innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
+    box.innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
           '<td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b></td>' +
+          '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
           '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
           '<td><div class="acts"><button class="ap-btn sm ic" data-act="add" data-e="' + esc(u.email) + '" title="Add balance">' + ic('wallet') + '</button><button class="ap-btn sm ic" data-act="view" data-e="' + esc(u.email) + '" title="View as client">' + ic('eye') + '</button><button class="ap-btn sm" data-open="' + esc(u.email) + '">Open</button></div></td></tr>';
-      }).join('') : '<tr><td colspan="8"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
+      }).join('') : '<tr><td colspan="10"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
       '</tbody></table></div><div class="ap-foot"><span>' + list.length + ' of ' + all.length + ' clients</span><span style="display:flex;gap:8px;align-items:center"><button class="ap-btn sm" data-p="-1" ' + (S.page <= 1 ? 'disabled' : '') + '>Prev</button>Page ' + S.page + ' / ' + pages + '<button class="ap-btn sm" data-p="1" ' + (S.page >= pages ? 'disabled' : '') + '>Next</button></span></div></div>';
     var cnE = $('navClientsCount'); if (cnE) cnE.textContent = all.length;
   }
@@ -278,6 +281,10 @@
       '<div class="ap-dr-h">' + av(n, e, 'lg') + '<div style="min-width:0;flex:1"><h2>' + esc(n) + '</h2><p>' + esc(e) + '</p><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + typePill(u.accountType) + kycPill(ks) + (u.card ? '<span class="ap-pill ' + (u.card.status === 'Frozen' ? 'bad' : 'ok') + '">Card ' + esc(u.card.status) + '</span>' : '') + '</div></div><button class="ap-btn ic" id="apDrX" aria-label="Close">' + ic('x') + '</button></div>' +
       '<div class="ap-dr-b">' +
       '<div class="ap-stats"><div class="ap-stat big"><small>Balance</small><b>' + usd(u.balance) + '</b></div><div class="ap-stat"><small>BTC</small><b>' + crypto(u.btc) + '</b></div><div class="ap-stat"><small>ETH</small><b>' + crypto(u.eth) + '</b></div><div class="ap-stat"><small>Transactions</small><b>' + num(u.txCount) + '</b></div></div>' +
+      '<div class="ap-sec"><h4>Balance breakdown</h4><div class="ap-kv">' +
+      '<div><span>Real deposits (money received)</span><b style="color:#34d399">' + usd(u.realDeposits) + '</b></div>' +
+      '<div><span>Added by admin (bonus / manual)</span><b style="color:#fbbf24">' + usd(u.adminCredits) + '</b></div>' +
+      '<div><span>Real balance (balance − admin credits)</span><b>' + usd((u.balance || 0) - (u.adminCredits || 0)) + '</b></div></div></div>' +
       '<div class="ap-sec"><h4>Quick actions</h4><div class="ap-agrid">' +
       '<button class="ap-btn pri" data-act="add" data-e="' + esc(e) + '">' + ic('wallet') + ' Add balance</button>' +
       '<button class="ap-btn" data-act="view" data-e="' + esc(e) + '">' + ic('eye') + ' View as client</button>' +
