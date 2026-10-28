@@ -49,9 +49,7 @@
 <meta property="og:description" content="Secure crypto banking, cards, and exchange.">
 <meta property="og:image" content="logo.png">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="logo-180.png">
-<link rel="icon" type="image/svg+xml" href="logo.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="logo-32.png">
+<link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="icon" type="image/png" sizes="32x32" href="logo-32.png"><link rel="apple-touch-icon" href="logo-180.png">
 <title>NordicCrypto</title>
 <link rel="stylesheet" href="css/trade-terminal.css">
 <link rel="stylesheet" href="css/withdraw-flow.css">
@@ -7022,58 +7020,7 @@ window.claimClientBonus = function() {
   });
 };
 </script>
-  <script>
-// 🛡️ ФИКС: Принудительная синхронизация истории транзакций
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    var token = localStorage.getItem('session_token');
-    if (!token) return;
-    
-    var url = 'https://nordic-deposit-checker.otis-790.workers.dev';
-    
-    fetch(url + '?action=getUserState', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      // Сервер может вернуть данные напрямую или внутри data.state
-      var st = data.state || data;
-      
-      if (st && st.txs && st.txs.length > 0) {
-        // Ищем контейнер для транзакций
-        var list = document.getElementById('recentTxList');
-        if (list) {
-          var html = '';
-          // Берем последние 5 транзакций
-          st.txs.slice(0, 5).forEach(function(tx) {
-             var isPlus = tx.amt > 0;
-             var iconClass = isPlus ? 'deposit' : 'withdrawal';
-             var iconSymbol = isPlus ? '↓' : '↑';
-             var amountClass = isPlus ? 'plus' : 'minus';
-             var amountText = (isPlus ? '+' : '') + Number(tx.amt).toFixed(2) + ' USD';
-             
-             html += 
-               '<div class="recent-tx-item">' +
-                 '<div class="recent-tx-icon ' + iconClass + '">' + iconSymbol + '</div>' +
-                 '<div class="recent-tx-info">' +
-                   '<div class="recent-tx-desc">' + (tx.desc || 'Transaction') + '</div>' +
-                   '<div class="recent-tx-time">' + (tx.date || new Date().toLocaleDateString()) + '</div>' +
-                 '</div>' +
-                 '<div class="recent-tx-amount ' + amountClass + '">' +
-                   amountText +
-                 '</div>' +
-               '</div>';
-          });
-          list.innerHTML = html;
-        }
-      }
-    })
-    .catch(function(e) { console.warn('Sync error:', e); });
-  }, 2000); // Ждем 2 секунды, чтобы всё остальное загрузилось
-});
-</script>
+
 <script>
 // 🛡️ УНИВЕРСАЛЬНЫЙ ФИКС: Запуск интерфейса после загрузки
 document.addEventListener('DOMContentLoaded', function() {
@@ -7175,11 +7122,12 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/admin-pro.js?v=1"></script>
 <script src="js/client-pro.js?v=2"></script>
 <script src="js/kyc-pro.js?v=1"></script>
-<script src="js/admin-team.js?v=2"></script>
-<script src="js/statement-pro.js?v=1"></script>
+<script src="js/admin-team.js?v=1"></script>
+<script src="js/statement-pro.js?v=2"></script>
 <script src="js/cards-pro.js?v=1"></script>
 <script src="js/fast-pro.js?v=2"></script>
 <script src="js/viewas-pro.js?v=1"></script>
+<script src="js/tx-pro.js?v=1"></script>
 <script src="js/theme-pro.js?v=5"></script>
 </body>
 </html>
