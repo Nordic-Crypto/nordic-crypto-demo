@@ -4303,7 +4303,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
   <link rel="stylesheet" href="css/nc-premium.css?v=2">
 <link rel="stylesheet" href="css/admin-crm.css?v=1">
-<link rel="stylesheet" href="css/admin-pro.css?v=1">
+<link rel="stylesheet" href="css/admin-pro.css?v=2">
 <link rel="stylesheet" href="css/client-pro.css?v=1">
 <link rel="stylesheet" href="css/kyc-pro.css?v=1">
 <link rel="stylesheet" href="css/admin-team.css?v=1">
@@ -5510,6 +5510,13 @@ document.addEventListener('DOMContentLoaded', function(){
         <option value="crypto">₿ Crypto deposit</option>
         <option value="card">💳 Card deposit</option>
         <option value="correction">🔧 Correction</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Source of funds</label>
+      <select class="fc" id="adminBalanceSource">
+        <option value="admin">🛠 Added by admin (not real money)</option>
+        <option value="real">✅ Real money received from client</option>
       </select>
     </div>
     <div class="fg"><label>Note</label><input type="text" class="fc" id="adminBalanceNote"></div>
@@ -7119,15 +7126,15 @@ document.addEventListener('DOMContentLoaded', function() {
   window._ncHidePreloader = hidePreloader;
 })();
 </script>
-<script src="js/admin-pro.js?v=1"></script>
+<script src="js/admin-pro.js?v=2"></script>
 <script src="js/client-pro.js?v=2"></script>
 <script src="js/kyc-pro.js?v=1"></script>
 <script src="js/admin-team.js?v=1"></script>
 <script src="js/statement-pro.js?v=2"></script>
 <script src="js/cards-pro.js?v=1"></script>
 <script src="js/fast-pro.js?v=2"></script>
-<script src="js/viewas-pro.js?v=1"></script>
-<script src="js/tx-pro.js?v=1"></script>
+<script src="js/viewas-pro.js?v=2"></script>
+<script src="js/tx-pro.js?v=2"></script>
 <script src="js/flags.js?v=2"></script>
 <script src="js/i18n-app.js?v=3"></script>
 <script src="js/theme-pro.js?v=5"></script>
