@@ -39,6 +39,12 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  /* make https links clickable (text is escaped first, so this is safe) */
+  function linkify(t) {
+    return esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g, function (u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;word-break:break-all">' + u + '</a>';
+    });
+  }
   function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
   function lsDel(k) { try { window.localStorage.removeItem(k); } catch (e) {} }
@@ -370,7 +376,7 @@
         var stat = statusHtml(m, mine, i === lastMine);
         var metaInner = meta + (stat ? (meta ? ' ' : '') + stat : '');
         html += '<div class="chat-msg ' + (mine ? 'client' : 'admin') + (same ? ' same-author' : '') + '">' +
-          '<div><div class="chat-bubble' + (m._failed ? ' failed' : '') + '">' + esc(m.text) + '</div>' +
+          '<div><div class="chat-bubble' + (m._failed ? ' failed' : '') + '">' + linkify(m.text) + '</div>' +
           (metaInner ? '<div class="chat-msg-meta">' + metaInner + '</div>' : '') + '</div></div>';
         prevFrom = m.from; prevTs = m.ts;
       }
@@ -606,7 +612,7 @@
       html += '<div style="display:flex;margin-bottom:10px;' + (isAdmin ? 'justify-content:flex-end;' : '') + '">' +
         '<div style="max-width:72%;padding:10px 14px;border-radius:16px;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;' +
         (isAdmin ? 'background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;' : 'background:rgba(255,255,255,0.06);color:#e7edf5;') +
-        (m._failed ? 'outline:1px solid #ff5470;' : '') + (m._sending ? 'opacity:.7;' : '') + '">' + esc(m.text) +
+        (m._failed ? 'outline:1px solid #ff5470;' : '') + (m._sending ? 'opacity:.7;' : '') + '">' + linkify(m.text) +
         '<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right;">' + fmtTime(m.ts) +
         (m._failed ? ' \u00B7 <span data-acact="retry" data-mid="' + esc(m.clientMsgId) + '" style="cursor:pointer;text-decoration:underline;">retry</span>' : '') +
         (isAdmin && !m._sending && !m._failed ? (m.read ? ' \u2713\u2713' : ' \u2713') : '') +
