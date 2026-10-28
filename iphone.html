@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NordicCrypto — iPhone app</title>
+<link rel="icon" href="logo-32.png"><meta name="robots" content="noindex">
+<style>body{margin:0;background:#0b1220;color:#eef4ff;font:16px/1.4 -apple-system,Helvetica,Arial,sans-serif}.w{max-width:560px;margin:0 auto;padding:14px}h1{font-size:22px;margin:8px 0 12px}
+.l{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.l a{padding:8px 12px;border-radius:10px;background:#1a2233;color:#eef4ff;text-decoration:none;font-weight:600}.l a.on{background:#c6ff3d;color:#07080c}
+img{width:100%;height:auto;display:block;border-radius:16px;margin:0 0 14px;background:#fff}</style></head><body><div class="w"><h1>NordicCrypto — iPhone</h1><div class="l" id="l"></div><div id="im"></div></div>
+<script>
+var N={en:'English',da:'Dansk',fi:'Suomi',es:'Español',no:'Norsk',sv:'Svenska',fr:'Français',de:'Deutsch'},q=new URLSearchParams(location.search).get('l'),c=q;
+try{c=c||localStorage.getItem('nc_lang')}catch(e){}c=N[c]?c:(N[(navigator.language||'en').slice(0,2)]?(navigator.language||'en').slice(0,2):'en');
+document.documentElement.lang=c;
+document.getElementById('l').innerHTML=Object.keys(N).map(function(k){return '<a href="?l='+k+'"'+(k===c?' class="on"':'')+'>'+N[k]+'</a>'}).join('');
+document.getElementById('im').innerHTML='<img alt="NordicCrypto iPhone" src="iphone-'+c+'.jpg">';
+</script></body></html>
