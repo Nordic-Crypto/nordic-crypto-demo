@@ -31,6 +31,7 @@
   document.addEventListener('click', function (e) {
     var t = e.target; if (!t || !t.closest || !t.closest('#mOk')) return;
     try {
+      if (window.adminViewingEmail) return;
       if (typeof mode === 'undefined' || mode !== 'add') return;
       var m = ($('mMethod') || {}).value, a = Number(($('mAmount') || {}).value);
       if (!(a > 0) || (m !== 'Bitcoin (BTC)' && m !== 'Ethereum (ETH)')) return;
