@@ -18,8 +18,9 @@
     if (c >= 32 && c <= 255) return c;
     return 63;                                         // ?
   }
+  function T(x) { try { return window.NCI18N ? window.NCI18N.t(x) : x; } catch (e) { return x; } }
   function clean(s) {
-    return String(s == null ? '' : s).replace(/→/g, '->').replace(/≈/g, '~').replace(/[←-⇿☀-➿\u{1F000}-\u{1FFFF}️‍]/gu, '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    return T(String(s == null ? '' : s)).replace(/→/g, '->').replace(/≈/g, '~').replace(/[←-⇿☀-➿\u{1F000}-\u{1FFFF}️‍]/gu, '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
   }
   function enc(s) { var o = ''; for (var i = 0; i < s.length; i++) { var c = code(s.charAt(i)); o += String.fromCharCode(c < 0 ? 45 : c); } return o; }
   function tw(s, size, bold) { var W = bold ? WB : WR, t = 0; s = enc(s); for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); t += (W[c - 32] != null ? W[c - 32] : 556); } return t * size / 1000; }
@@ -110,7 +111,7 @@
 
   function compute(opt) {
     var s = S(), cur = opt.cur, r = rate(cur), p = period(opt.period, opt.from, opt.to);
-    var all = (s.txs || []).map(function (t) { return { ts: tsOf(t), desc: clean(t.desc || t.description || 'Transaction'), usd: Number(t.amt) || 0, status: t.status || 'Completed', done: isDone(t), dead: isDead(t) }; })
+    var all = (window.NCTX ? window.NCTX.all() : (s.txs || [])).map(function (t) { return { ts: tsOf(t), desc: clean(t.desc || t.description || 'Transaction'), usd: Number(t.amt) || 0, status: t.status || 'Completed', done: isDone(t), dead: isDead(t) }; })
       .sort(function (x, y) { return x.ts - y.ts; });
     var nowUsd = cents(Number(s.usd) || 0);
     var after = 0;
@@ -246,7 +247,7 @@
       yy += 24;
     }
     ensure(70, false);
-    var note = 'This statement lists the transactions recorded on your NordicCrypto account for the period shown. ' + (d.cur !== 'USD' ? 'Amounts are held in USD and shown here in ' + d.cur + ' at 1 USD = ' + d.rate.toFixed(4) + ' ' + d.cur + ' (rate on the statement date). ' : '') + 'If you see anything you do not recognise, contact support in the app straight away. Reference ' + ref + '.';
+    var note = T('This statement lists the transactions recorded on your NordicCrypto account for the period shown.') + ' ' + (d.cur !== 'USD' ? T('Amounts are held in USD and shown here in {c} at 1 USD = {r} {c} (rate on the statement date).').replace(/\{c\}/g, d.cur).replace('{r}', d.rate.toFixed(4)) + ' ' : '') + T('If you see anything you do not recognise, contact support in the app straight away.') + ' ' + T('Reference {r}.').replace('{r}', ref);
     doc.wrap(note, R - M, 8, false).forEach(function (ln, i) { doc.text(M, yy + i * 11, ln, { size: 8, color: MUT }); });
     var N = doc.pages.length;
     for (var i = 0; i < N; i++) {
@@ -261,7 +262,7 @@
   function buildCsv(d) {
     var q = function (v) { v = String(v == null ? '' : v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     var f = function (c) { return (c / 100).toFixed(2); };
-    var lines = [['Date', 'Description', 'Money out', 'Money in', 'Balance', 'Currency', 'Status']];
+    var lines = [['Date', 'Description', 'Money out', 'Money in', 'Balance', 'Currency', 'Status'].map(T)];
     d.rows.slice().reverse().forEach(function (t) { lines.push([new Date(t.ts).toISOString().slice(0, 19).replace('T', ' '), t.desc, t.c < 0 ? f(-t.c) : '', t.c > 0 ? f(t.c) : '', f(t.bal), d.cur, 'Completed']); });
     d.pending.slice().reverse().forEach(function (t) { lines.push([new Date(t.ts).toISOString().slice(0, 19).replace('T', ' '), t.desc, t.c < 0 ? f(-t.c) : '', t.c > 0 ? f(t.c) : '', '', d.cur, t.status]); });
     return new Blob(['﻿' + lines.map(function (r) { return r.map(q).join(','); }).join('\r\n')], { type: 'text/csv;charset=utf-8' });
