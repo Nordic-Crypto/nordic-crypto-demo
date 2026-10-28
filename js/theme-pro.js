@@ -106,7 +106,9 @@
   }
   var busy=false;
   function run(){
-    if(busy)return;busy=true;
+    if(busy||document.hidden)return;
+    if(document.documentElement.getAttribute('data-theme')!=='light')return;   /* dark theme = the legacy colours are already right; skip the heavy walk */
+    busy=true;
     try{
       var root=document.querySelector('.main')||document.body;
       var scopes=[root].concat([].slice.call(document.querySelectorAll('.mask.on,.admin-panel')));
@@ -141,5 +143,4 @@
   });
   function start(){mo.observe(document.body,{childList:true,subtree:true,characterData:true});later(300)}
   if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
-  setInterval(run,4000);
 })();
