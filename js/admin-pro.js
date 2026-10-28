@@ -123,7 +123,7 @@
     var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), w = 100, h = 40, pts = [];
     var rng = (mx - mn) || 1;
     vals.forEach(function (v, i) { pts.push((vals.length === 1 ? 50 : (i / (vals.length - 1)) * w).toFixed(1) + ',' + (h - 4 - ((v - mn) / rng) * (h - 10)).toFixed(1)); });
-    var id = 'g' + Math.random().toString(36).slice(2, 7);
+    var hs = 0, hk = color + pts.join(' '); for (var q = 0; q < hk.length; q++) hs = (hs * 31 + hk.charCodeAt(q)) | 0; var id = 'g' + (hs >>> 0).toString(36);
     return '<svg class="ap-spark" viewBox="0 0 100 40" preserveAspectRatio="none"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity=".35"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs><polyline fill="url(#' + id + ')" stroke="none" points="0,40 ' + pts.join(' ') + ' 100,40"/><polyline fill="none" stroke="' + color + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="' + pts.join(' ') + '"/></svg>';
   }
   function dayKey(t) { var d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
@@ -138,6 +138,16 @@
     var tot = parts.reduce(function (a, p) { return a + p.v; }, 0) || 1, r = 15.9155, off = 25, svg = '<svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="' + r + '" fill="none" stroke="var(--ap-s3)" stroke-width="5"/>';
     parts.forEach(function (p) { var pct = p.v / tot * 100; if (pct > 0) svg += '<circle cx="21" cy="21" r="' + r + '" fill="none" stroke="' + p.c + '" stroke-width="5" stroke-dasharray="' + pct.toFixed(2) + ' ' + (100 - pct).toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '"/>'; off -= pct; });
     return svg + '<text x="21" y="23" text-anchor="middle" font-size="8" font-weight="800" fill="var(--ap-ink)">' + tot + '</text></svg>';
+  }
+  /* write only when the markup really changed, and never replay the fade-in on refreshes (stops the dashboard from flickering every 15 s) */
+  function ncSet(el) {
+    return {
+      set innerHTML(h) {
+        if (el.__h === h && el.__len === el.innerHTML.length) return;
+        el.innerHTML = h; el.__h = h; el.__len = el.innerHTML.length;
+        if (el.__seen) el.classList.add('ap-still'); else el.__seen = 1;
+      }
+    };
   }
   function renderDash() {
     var sec = document.querySelector('[data-section="stats"]'); if (!sec) return;
@@ -167,7 +177,7 @@
     us.forEach(function (u) { if (u.createdAt) feed.push({ t: parseT(u.createdAt), ic: 'user', c: '#a78bfa', tint: 'rgba(139,92,246,.14)', h: 'New client', s: (u.name || u.email), email: u.email }); });
     feed.sort(function (a, b) { return b.t - a.t; }); feed = feed.slice(0, 12);
 
-    root.innerHTML =
+    ncSet(root).innerHTML =
       '<div class="ap-greet ap-fade"><div><h2>' + greet + ', admin</h2><p>' + (pv.length + pw.length + pd.length + ur ? 'You have <b style="color:var(--ap-warn)">' + (pv.length + pw.length + pd.length + ur) + '</b> items that need attention.' : 'Everything is under control. Nothing is waiting.') + '</p></div>' +
       '<div style="display:flex;gap:8px"><button class="ap-btn" id="apExport">' + ic('dl') + ' Export clients</button><button class="ap-btn pri" id="apRefreshDash">' + ic('refresh') + ' Refresh</button></div></div>' +
       (oldKyc.length ? '<div class="ap-alert">' + ic('alert', 'lg') + '<span><b>' + oldKyc.length + ' KYC review' + (oldKyc.length > 1 ? 's are' : ' is') + ' waiting more than 24 hours.</b> Fast verification keeps new clients active.</span><button class="ap-btn sm" data-go="verifications">Review now</button></div>' : '') +
@@ -243,7 +253,7 @@
     var rows = list.slice((S.page - 1) * PAGE, S.page * PAGE);
     function th(k, l, cls) { var on = S.sort.k === k; return '<th class="s ' + (cls || '') + '" data-s="' + k + '">' + l + (on ? '<span class="arr">' + (S.sort.d > 0 ? '↑' : '↓') + '</span>' : '') + '</th>'; }
     box.className = '';
-    box.innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
+    ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
           '<td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b></td>' +
@@ -375,7 +385,7 @@
     var list = S.vers.filter(function (v) { return S.vFilter === 'all' || v.status === S.vFilter; }).sort(function (a, b) { return parseT(b.submittedAt) - parseT(a.submittedAt); });
     if (!S.loaded) { box.innerHTML = '<div class="ap-card" style="padding:20px"><div class="ap-skel"></div></div>'; return; }
     if (!list.length) { box.innerHTML = '<div class="ap-card"><div class="ap-empty">' + ic('shield') + (S.vFilter === 'pending' ? 'No verifications are waiting. Nice work.' : 'Nothing here yet') + '</div></div>'; return; }
-    box.innerHTML = '<div class="ap-vgrid">' + list.map(function (v) {
+    ncSet(box).innerHTML = '<div class="ap-vgrid">' + list.map(function (v) {
       var pi = v.personalInfo || {}, addr = [pi.street, pi.city, pi.zip, pi.country].filter(Boolean).join(', '), old = v.status === 'pending' && v.submittedAt && Date.now() - parseT(v.submittedAt) > 86400000;
       return '<div class="ap-card ap-vc ap-fade"><div class="ap-vc-top">' + av(v.name, v.email) + '<div class="who"><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.email) + '</small></div>' + kycPill(v.status) + '</div>' +
         '<div class="ap-meta"><span>' + ic('card') + esc(v.docType || 'No document') + '</span><span>' + ic('pulse') + dt(parseT(v.submittedAt)) + '</span>' + (old ? '<span style="color:#fbbf24">' + ic('alert') + 'Waiting > 24h</span>' : '') + (addr ? '<span>' + ic('user') + esc(addr) + '</span>' : '') + '</div>' +
