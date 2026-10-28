@@ -70,6 +70,10 @@
       else if (pd.status === 'approved') out.push({ ts: pd.creditedAt || pd.approvedAt || pd.createdAt, desc: desc, amt: amt, status: 'Completed', hash: pd.txHash, crypto: pd.cryptoAmt, symbol: pd.symbol, type: 'crypto', pendingDeposit: true });
     });
     wds.forEach(function (w) {
+      if (!wdSeen[w.id] && w.status === 'approved') {   // старые записи без wdId: «Withdrawal approved — IBAN» с той же суммой
+        var twin = out.filter(function (t) { return !t.wdId && !t._twin && /^withdrawal/i.test(t.desc || '') && Math.abs(Number(t.amt) + Number(w.amount)) < 0.005; })[0];
+        if (twin) { twin._twin = 1; wdSeen[w.id] = 1; return; }
+      }
       if (wdSeen[w.id] && w.status !== 'rejected') return;
       if (wdSeen[w.id] && w.status === 'rejected') { /* tx уже отфильтрован выше */ }
       out.push({ ts: w.reviewedAt && w.status !== 'pending' ? w.reviewedAt : w.createdAt, desc: 'Withdrawal via ' + String(w.method || 'iban').toUpperCase(), amt: -(Number(w.amount) || 0),
