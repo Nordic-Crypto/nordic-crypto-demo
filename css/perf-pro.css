@@ -1,0 +1,11 @@
+/* PERF PRO — lite mode: same layout and colours, without the effects that make weak computers stutter */
+html.nc-lite *,html.nc-lite *::before,html.nc-lite *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.nc-lite .mesh,html.nc-lite .grain,html.nc-lite .pay-shine{display:none!important}
+html.nc-lite .mesh i{filter:none!important;animation:none!important}
+html.nc-lite .phone,html.nc-lite .f1,html.nc-lite .f2,html.nc-lite .mt,html.nc-lite .tick,html.nc-lite #tick{animation:none!important}
+html.nc-lite .reveal{opacity:1!important;transform:none!important;transition:none!important}
+html.nc-lite nav{background:var(--bg)!important}
+html.nc-lite *{text-shadow:none!important}
+html.nc-lite .brand .nm,html.nc-lite .login-logo-text{animation:none!important}
+html.nc-lite .pay:hover{transform:none!important}
+@media (prefers-reduced-motion:reduce){html *{scroll-behavior:auto!important}}
