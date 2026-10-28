@@ -174,6 +174,7 @@
     try {
       if (typeof u === 'string' && u.indexOf('action=updateUserBalance') > -1 && o && typeof o.body === 'string') {
         var b = JSON.parse(o.body);
+        if (!b.source) { var ss = document.getElementById('adminBalanceSource'); b.source = ss && ss.value === 'real' ? 'real' : 'admin'; o = Object.assign({}, o, { body: JSON.stringify(b) }); }
         if (!b.type) {
           var sel = document.getElementById('adminBalanceType'), ty = sel ? sel.value : '';
           if (LBL[ty]) {
@@ -240,4 +241,27 @@
   function again() { try { window.renderRecentTx(); window.renderTx(); if (document.getElementById('exRecentTx')) window.renderExchangeTx(); } catch (e) {} }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', again); else again();
   setTimeout(again, 1500); setTimeout(again, 4000);
+})();
+
+/* default "source of funds" follows the operation type: bank/crypto/card -> real money, bonus/correction -> admin */
+(function () {
+  function sync() {
+    var t = document.getElementById('adminBalanceType'), s = document.getElementById('adminBalanceSource');
+    if (!t || !s || t.__ncSrc) return;
+    t.__ncSrc = 1;
+    t.addEventListener('change', function () { s.value = /^(bank|crypto|card)$/.test(t.value) ? 'real' : 'admin'; });
+  }
+  document.addEventListener('click', function () { setTimeout(sync, 0); }, true);
+  if (document.readyState !== 'loading') sync(); else document.addEventListener('DOMContentLoaded', sync);
+})();
+(function () {
+  function watch() {
+    var m = document.getElementById('adminBalanceMask'); if (!m || m.__ncW) return; m.__ncW = 1;
+    new MutationObserver(function () {
+      if (!m.classList.contains('on')) return;
+      var t = document.getElementById('adminBalanceType'), s = document.getElementById('adminBalanceSource');
+      if (t && s) s.value = /^(bank|crypto|card)$/.test(t.value) ? 'real' : 'admin';
+    }).observe(m, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (document.readyState !== 'loading') watch(); else document.addEventListener('DOMContentLoaded', watch);
 })();
