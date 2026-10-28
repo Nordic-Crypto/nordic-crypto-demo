@@ -54,7 +54,7 @@ body:has(#adminPanel.on) #chatToggle,body:has(#adminPanel.on) #chatPanel{display
 .ap-empty .ap-ico{width:34px;height:34px;opacity:.5}
 .ap-skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--ap-s2),var(--ap-s3),var(--ap-s2));background-size:200% 100%;animation:apSk 1.2s infinite}
 @keyframes apSk{to{background-position:-200% 0}}
-.ap-fade{animation:apIn .25s ease both}
+.ap-fade{animation:apIn .25s ease both}.ap-still .ap-fade,.ap-still.ap-fade{animation:none}
 @keyframes apIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* dashboard --------------------------------------------- */
