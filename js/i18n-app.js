@@ -265,7 +265,7 @@
     'html[data-theme="light"] .nc-lang-menu{background:#fff}html[data-theme="light"] .nc-lang-btn{background:rgba(0,0,0,.04)}' +
     '.nc-lang-chip{border:1px solid var(--bd2,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:inherit;border-radius:999px;padding:6px 11px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}' +
     '.nc-lang-chip.on{border-color:var(--pri,#c8ff3d);color:var(--pri,#c8ff3d)}' +
-    '@media(max-width:640px){#ncLangCode{display:none}.nc-lang-btn{padding:7px 9px}.nc-lang-btn svg{display:none}.top>div:last-child{gap:6px!important;flex-wrap:wrap;justify-content:flex-end}.nc-lang-menu{left:0;right:auto}}';
+    '@media(max-width:640px){#ncLangCode{display:none}.nc-lang-btn{padding:7px 9px}.nc-lang-btn svg{display:none}.top{height:auto!important;min-height:64px;padding-top:8px!important;padding-bottom:8px!important}.top>div:last-child{gap:6px!important;flex-wrap:wrap;justify-content:flex-end;flex:1;min-width:0}.top .st{display:none!important}}@media(max-width:430px){#btnRefreshBalance{display:none!important}.top .top-icon,.top .settings-btn,.top .notif-bell{width:36px!important;height:36px!important}.nc-lang-menu{left:0;right:auto}}';
   document.head.appendChild(css);
 
   function start() {
