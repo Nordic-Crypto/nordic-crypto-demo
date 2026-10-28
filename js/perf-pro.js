@@ -21,6 +21,7 @@
     if (ms === 10000 && src.indexOf('listPendingDeposits') > -1 && src.indexOf('listVerifications') > -1) return { normal: 5000, hidden: 30000 };
     if (ms === 15000 && src.indexOf('syncPendingDeposits') > -1) return { fast: 4000, normal: 8000, hidden: 45000, hiddenFast: 12000 };
     if (ms === 15000 && src.indexOf('fetchBlockchainConfirmations') > -1) return { normal: 5000, hidden: 20000 };
+    if (ms === 60000 && src.indexOf('refreshBalanceFromServer') > -1) return { normal: 12000, hidden: 45000 };   /* client sees admin credits within ~12 s */
     if (name === 'poll' && ms === 4000 && src.indexOf('kyc') > -1) return { normal: 4000, hidden: 20000 };
     return null;
   }
