@@ -1,36 +1,335 @@
-/* NC STATEMENT PRO v1 — works in light and dark (uses theme-pro tokens when present) */
-.ncs-has{display:flex!important;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.ex-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.ncs-open{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:99px;border:1px solid var(--lime-line,rgba(200,255,77,.4));background:var(--lime-soft,rgba(200,255,77,.12));color:var(--pri,#c8ff4d);font:650 13px/1 inherit;cursor:pointer;white-space:nowrap;transition:transform .15s,background .15s}
-.ncs-open:hover{background:var(--lime,#c8ff4d);color:var(--lime-ink,#0a0f04);transform:translateY(-1px)}
-.ncs-mask{position:fixed;inset:0;z-index:100060;background:rgba(4,6,10,.6);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
-html[data-theme="light"] .ncs-mask{background:rgba(30,36,20,.38)}
-.ncs-modal{width:100%;max-width:520px;background:var(--card-solid,#0e1016);color:var(--txt,#f4f5f8);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:28px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);animation:ncsIn .22s ease both;overflow:hidden}
-@keyframes ncsIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-.ncs-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:24px 26px 6px}
-.ncs-h h3{margin:0 0 4px;font-size:21px;letter-spacing:-.01em}
-.ncs-h p{margin:0;color:var(--mut,#98a0b3);font-size:13.5px}
-.ncs-x{width:38px;height:38px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:transparent;color:var(--mut,#98a0b3);font-size:22px;line-height:1;cursor:pointer}
-.ncs-b{padding:14px 26px 6px;display:flex;flex-direction:column;gap:14px}
-.ncs-l{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut,#98a0b3);margin-bottom:8px}
-.ncs-chips{display:flex;flex-wrap:wrap;gap:8px}
-.ncs-chips button{height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);font:600 13px/1 inherit;cursor:pointer}
-.ncs-chips button:hover{border-color:var(--lime-line,rgba(200,255,77,.4))}
-.ncs-chips button.on{background:var(--lime,#c8ff4d);border-color:transparent;color:var(--lime-ink,#0a0f04)}
-.ncs-dates{display:none;gap:12px}
-.ncs-dates label{flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--mut,#98a0b3);font-weight:600}
-.ncs-dates input,.ncs-modal select{height:44px;border-radius:14px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);padding:0 12px;font:500 14px inherit;width:100%;box-sizing:border-box;color-scheme:inherit}
-.ncs-dates input:focus,.ncs-modal select:focus{outline:0;border-color:var(--pri,#c8ff4d);box-shadow:0 0 0 4px var(--lime-soft,rgba(200,255,77,.12))}
-.ncs-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:480px){.ncs-row{grid-template-columns:1fr}}
-.ncs-seg{display:flex;border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:14px;overflow:hidden;height:44px}
-.ncs-seg button{flex:1;border:0;background:var(--field,rgba(255,255,255,.04));color:var(--mut,#98a0b3);font:650 13px inherit;cursor:pointer}
-.ncs-seg button.on{background:var(--lime-soft,rgba(200,255,77,.12));color:var(--pri,#c8ff4d);box-shadow:inset 0 0 0 1.5px var(--lime-line,rgba(200,255,77,.4))}
-.ncs-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 16px;border-radius:18px;background:var(--field,rgba(255,255,255,.04));border:1px solid var(--bd,rgba(255,255,255,.08))}
-.ncs-sum small{display:block;font-size:11px;color:var(--mut,#98a0b3);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
-.ncs-sum b{font-size:14.5px;font-variant-numeric:tabular-nums}
-.ncs-bad{color:var(--bad,#ff6b6b);font-size:13px;grid-column:1/-1}
-.ncs-f{display:flex;justify-content:flex-end;gap:10px;padding:14px 26px 24px}
-.ncs-btn{height:46px;padding:0 22px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--field,rgba(255,255,255,.04));color:var(--txt,#f4f5f8);font:650 14px/1 inherit;cursor:pointer}
-.ncs-btn.pri{background:var(--lime,#c8ff4d);border-color:transparent;color:var(--lime-ink,#0a0f04);box-shadow:0 12px 28px -12px var(--lime,#c8ff4d)}
-.ncs-btn[disabled]{opacity:.5;pointer-events:none}
+/* ============================================================
+   NC STATEMENT PRO v1.0 — account statement (PDF / CSV) for Banking and Exchange
+   No external libraries: the PDF is written by a tiny built-in generator.
+   Load AFTER app.legacy.js (anywhere before </body>).
+   ============================================================ */
+(function () {
+  'use strict';
+  if (window.NCStatement) return;
+
+  /* ---------- tiny PDF writer (Helvetica, WinAnsi) ---------- */
+  var WR = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,278,222,556,333,1000,556,556,333,1000,667,333,1000,278,611,278,278,222,222,333,333,350,556,1000,333,1000,500,333,944,278,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500], WB = [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,278,278,556,500,1000,556,556,333,1000,667,333,1000,278,611,278,278,278,278,500,500,350,556,1000,333,1000,556,333,944,278,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556];
+  var SPECIAL = { 0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F };
+  var PW = 595.28, PH = 841.89;
+  function code(ch) {
+    var c = ch.charCodeAt(0);
+    if (c === 0x2192) return -1;                       // arrow handled by caller
+    if (SPECIAL[c]) return SPECIAL[c];
+    if (c >= 32 && c <= 255) return c;
+    return 63;                                         // ?
+  }
+  function clean(s) {
+    return String(s == null ? '' : s).replace(/→/g, '->').replace(/≈/g, '~').replace(/[←-⇿☀-➿\u{1F000}-\u{1FFFF}️‍]/gu, '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  }
+  function enc(s) { var o = ''; for (var i = 0; i < s.length; i++) { var c = code(s.charAt(i)); o += String.fromCharCode(c < 0 ? 45 : c); } return o; }
+  function tw(s, size, bold) { var W = bold ? WB : WR, t = 0; s = enc(s); for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); t += (W[c - 32] != null ? W[c - 32] : 556); } return t * size / 1000; }
+  function esc(s) { return s.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
+  function n(x) { return (Math.round(x * 100) / 100).toString(); }
+  function col(c) { return n(c[0] / 255) + ' ' + n(c[1] / 255) + ' ' + n(c[2] / 255); }
+  function Doc() { this.pages = []; this.add(); }
+  Doc.prototype.add = function () { this.cur = []; this.pages.push(this.cur); };
+  Doc.prototype.text = function (x, top, str, o) {
+    o = o || {}; var size = o.size || 10, s = clean(str), w = tw(s, size, o.bold);
+    if (o.align === 'right') x -= w; else if (o.align === 'center') x -= w / 2;
+    this.cur.push('BT /F' + (o.bold ? 2 : 1) + ' ' + n(size) + ' Tf ' + col(o.color || [17, 17, 17]) + ' rg ' + n(x) + ' ' + n(PH - top) + ' Td (' + esc(enc(s)) + ') Tj ET');
+    return w;
+  };
+  Doc.prototype.rect = function (x, top, w, h, o) { o = o || {}; this.cur.push(col(o.fill || [255, 255, 255]) + ' rg ' + n(x) + ' ' + n(PH - top - h) + ' ' + n(w) + ' ' + n(h) + ' re f'); };
+  Doc.prototype.line = function (x1, y1, x2, y2, o) { o = o || {}; this.cur.push(col(o.color || [229, 231, 235]) + ' RG ' + n(o.lw || 0.6) + ' w ' + n(x1) + ' ' + n(PH - y1) + ' m ' + n(x2) + ' ' + n(PH - y2) + ' l S'); };
+  Doc.prototype.wrap = function (str, width, size, bold) {
+    var words = clean(str).split(' '), lines = [], cur = '';
+    words.forEach(function (w) {
+      while (tw(w, size, bold) > width && w.length > 1) {           // very long token: hard split
+        var k = w.length; while (k > 1 && tw(w.slice(0, k), size, bold) > width) k--;
+        if (cur) { lines.push(cur); cur = ''; } lines.push(w.slice(0, k)); w = w.slice(k);
+      }
+      var t = cur ? cur + ' ' + w : w;
+      if (tw(t, size, bold) <= width) cur = t; else { if (cur) lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur); return lines.length ? lines : [''];
+  };
+  Doc.prototype.build = function (title) {
+    var out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n', offs = [], N = this.pages.length;
+    function obj(id, body) { offs[id] = out.length; out += id + ' 0 obj\n' + body + '\nendobj\n'; }
+    var kids = [], i;
+    for (i = 0; i < N; i++) kids.push((6 + i * 2) + ' 0 R');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + N + ' >>');
+    obj(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    obj(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    obj(5, '<< /Title (' + esc(enc(clean(title))) + ') /Producer (NordicCrypto) /CreationDate (D:' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + 'Z) >>');
+    for (i = 0; i < N; i++) {
+      var stream = this.pages[i].join('\n');
+      obj(6 + i * 2, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' + (7 + i * 2) + ' 0 R >>');
+      obj(7 + i * 2, '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream');
+    }
+    var xref = out.length, total = 6 + N * 2;
+    out += 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+    for (i = 1; i < total; i++) out += ('0000000000' + offs[i]).slice(-10) + ' 00000 n \n';
+    out += 'trailer\n<< /Size ' + total + ' /Root 1 0 R /Info 5 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+    var u = new Uint8Array(out.length); for (i = 0; i < out.length; i++) u[i] = out.charCodeAt(i) & 255;
+    return new Blob([u], { type: 'application/pdf' });
+  };
+
+  /* ---------- data ---------- */
+  var CURS = ['USD', 'EUR', 'GBP', 'SEK', 'NOK', 'DKK'];
+  var SYM = { USD: '$', EUR: '€', GBP: '£', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+  function S() { return window.st || (typeof st !== 'undefined' ? st : {}) || {}; }
+  function rate(cur) {
+    var s = S();
+    return ({ USD: 1, EUR: Number(s.eurR) || 0.92, SEK: Number(s.sekR) || 10.45, NOK: Number(s.nokR) || 10.5, DKK: Number(s.dkkR) || 6.9, GBP: Number(s.gbpR) || 0.79 })[cur] || 1;
+  }
+  function tsOf(t) { if (typeof t.ts === 'number' && t.ts > 1e11) return t.ts; var d = Date.parse(t.date); return d || Date.now(); }
+  function isDone(t) { var s = String(t.status || 'Completed').toLowerCase(); return /^(completed|done|success|settled|approved)/.test(s); }
+  function isDead(t) { return /(reject|fail|cancel|declin)/i.test(String(t.status || '')); }
+  function cents(x) { return Math.round(x * 100); }
+  function money(c, cur, sign) {
+    var v = Math.abs(c) / 100, s = v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var p = (SYM[cur] === 'kr') ? '' : SYM[cur];
+    var res = p + s + (SYM[cur] === 'kr' ? ' ' + cur : '');
+    return (c < 0 ? '-' : (sign && c > 0 ? '+' : '')) + res;
+  }
+  function fmtDate(ts) { return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+  function fmtDateTime(ts) { return new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  function pad(x) { return (x < 10 ? '0' : '') + x; }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+  function period(key, fromStr, toStr) {
+    var now = new Date(), a, b;
+    if (key === 'thisMonth') { a = new Date(now.getFullYear(), now.getMonth(), 1); b = now; }
+    else if (key === 'lastMonth') { a = new Date(now.getFullYear(), now.getMonth() - 1, 1); b = new Date(now.getFullYear(), now.getMonth(), 0); }
+    else if (key === '3m') { a = new Date(now.getFullYear(), now.getMonth() - 2, 1); b = now; }
+    else if (key === '6m') { a = new Date(now.getFullYear(), now.getMonth() - 5, 1); b = now; }
+    else if (key === 'ytd') { a = new Date(now.getFullYear(), 0, 1); b = now; }
+    else if (key === '12m') { a = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1); b = now; }
+    else { a = fromStr ? new Date(fromStr + 'T00:00:00') : new Date(now.getFullYear(), now.getMonth(), 1); b = toStr ? new Date(toStr + 'T00:00:00') : now; }
+    var from = new Date(a.getFullYear(), a.getMonth(), a.getDate(), 0, 0, 0, 0).getTime();
+    var to = new Date(b.getFullYear(), b.getMonth(), b.getDate(), 23, 59, 59, 999).getTime();
+    return { from: from, to: to };
+  }
+
+  function compute(opt) {
+    var s = S(), cur = opt.cur, r = rate(cur), p = period(opt.period, opt.from, opt.to);
+    var all = (window.NCTX ? window.NCTX.all() : (s.txs || [])).map(function (t) { return { ts: tsOf(t), desc: clean(t.desc || t.description || 'Transaction'), usd: Number(t.amt) || 0, status: t.status || 'Completed', done: isDone(t), dead: isDead(t) }; })
+      .sort(function (x, y) { return x.ts - y.ts; });
+    var nowUsd = cents(Number(s.usd) || 0);
+    var after = 0;
+    all.forEach(function (t) { if (t.done && t.ts > p.to) after += cents(t.usd); });
+    var closing = Math.round((nowUsd - after) * r);
+    var rows = all.filter(function (t) { return t.done && t.ts >= p.from && t.ts <= p.to; }).map(function (t) { t.c = Math.round(cents(t.usd) * r); return t; });
+    var net = 0, out = 0, inn = 0;
+    rows.forEach(function (t) { net += t.c; if (t.c < 0) out += t.c; else inn += t.c; });
+    var opening = closing - net;
+    if (opening < 0) {                                           // recorded transactions do not add up to the balance: show the gap openly instead of a negative opening balance
+      var adj = -opening;
+      rows.unshift({ ts: p.from, desc: 'Other balance adjustments (not itemised)', usd: 0, c: adj, status: 'Completed', done: true });
+      inn += adj; net += adj; opening = 0;
+    }
+    var bal = opening;
+    rows.forEach(function (t) { bal += t.c; t.bal = bal; });
+    var pending = all.filter(function (t) { return !t.done && t.ts >= p.from && t.ts <= p.to; }).map(function (t) { t.c = Math.round(cents(t.usd) * r); return t; });
+    var hold = [];
+    if (s.user && s.user.accountType === 'exchange') {
+      [['BTC', 'btc', s.btcP || 68000], ['ETH', 'eth', s.ethP || 3200], ['USDT', 'usdt', 1], ['SOL', 'sol', null], ['BNB', 'bnb', null]].forEach(function (a) {
+        var amt = Number(s[a[1]]) || 0; if (!amt) return;
+        var px = a[2]; if (px == null && window._exPricesCache) { var cc = window._exPricesCache.filter(function (c) { return c.symbol === a[0]; })[0]; px = cc ? Number(cc.usd) : 0; }
+        hold.push({ sym: a[0], amt: amt, px: px || 0, val: Math.round(cents(amt * (px || 0)) * r) });
+      });
+    }
+    return { cur: cur, rate: r, from: p.from, to: p.to, rows: rows, pending: pending, opening: opening, closing: closing, out: out, inn: inn, hold: hold };
+  }
+
+  function holder() {
+    var s = S(), u = s.user || {};
+    var name = u.name || localStorage.getItem('user_name') || '';
+    var email = localStorage.getItem('user_email') || u.email || '';
+    return { name: name || email, email: email, iban: u.iban || '', bic: u.swift || '', bank: u.bank || '', country: u.country || '', type: u.accountType === 'exchange' ? 'Exchange account' : 'Banking account' };
+  }
+  function refId() { return 'NC-' + ymd(new Date()).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(); }
+
+  /* ---------- PDF layout ---------- */
+  var INK = [17, 17, 17], MUT = [107, 114, 128], LINE = [229, 231, 235], BG = [246, 246, 242], LIME = [200, 255, 77], GREEN = [16, 128, 80];
+  function buildPdf(d) {
+    var h = holder(), ref = refId(), doc = new Doc(), M = 40, R = PW - M;
+    var X = { date: M, desc: M + 78, out: M + 330, inn: M + 420, bal: R };
+    function header(first) {
+      doc.rect(M, 34, 22, 22, { fill: LIME });
+      doc.text(M + 11, 50, 'N', { size: 13, bold: true, align: 'center' });
+      doc.text(M + 32, 50, 'NordicCrypto', { size: 14, bold: true });
+      doc.text(R, 48, 'Account statement', { size: 9, align: 'right', color: MUT });
+      if (!first) doc.line(M, 66, R, 66);
+    }
+    function thead(y) {
+      doc.rect(M, y, R - M, 22, { fill: BG });
+      var o = { size: 7.5, bold: true, color: MUT };
+      doc.text(X.date + 8, y + 14.5, 'DATE', o); doc.text(X.desc, y + 14.5, 'DESCRIPTION', o);
+      doc.text(X.out, y + 14.5, 'MONEY OUT', Object.assign({ align: 'right' }, o)); doc.text(X.inn, y + 14.5, 'MONEY IN', Object.assign({ align: 'right' }, o)); doc.text(X.bal - 8, y + 14.5, 'BALANCE', Object.assign({ align: 'right' }, o));
+      return y + 22;
+    }
+    header(true);
+    doc.text(M, 112, 'Account statement', { size: 26, bold: true });
+    doc.text(M, 132, fmtDate(d.from) + '  -  ' + fmtDate(d.to), { size: 11, color: MUT });
+
+    var y = 168, L = M, Rc = M + 290;
+    function kv(x, y0, k, v, bold) { doc.text(x, y0, k.toUpperCase(), { size: 7, bold: true, color: MUT }); doc.text(x, y0 + 13, v || '-', { size: 10, bold: !!bold }); }
+    kv(L, y, 'Account holder', h.name, true);
+    kv(Rc, y, 'Statement date', fmtDate(Date.now()));
+    kv(L, y + 38, 'E-mail', h.email);
+    kv(Rc, y + 38, 'Reference', ref);
+    kv(L, y + 76, 'Account', h.type + ' · ' + d.cur);
+    kv(Rc, y + 76, 'Currency', d.cur + (d.cur === 'USD' ? '' : '  (1 USD = ' + d.rate.toFixed(4) + ' ' + d.cur + ')'));
+    var yy = y + 114;
+    if (h.iban) { kv(L, yy, 'IBAN', h.iban); kv(Rc, yy, 'BIC / SWIFT', h.bic); yy += 38; }
+
+    yy += 8;
+    doc.rect(M, yy, R - M, 64, { fill: BG });
+    var cw = (R - M) / 4, items = [['Opening balance', money(d.opening, d.cur), INK], ['Money out', money(-d.out, d.cur).replace('-', ''), INK], ['Money in', money(d.inn, d.cur), INK], ['Closing balance', money(d.closing, d.cur), INK]];
+    items.forEach(function (it, i) {
+      var x = M + 16 + i * cw;
+      doc.text(x, yy + 22, it[0].toUpperCase(), { size: 7, bold: true, color: MUT });
+      doc.text(x, yy + 44, it[1], { size: 13, bold: true, color: it[2] });
+    });
+    yy += 92;
+
+    doc.text(M, yy, 'Transactions', { size: 13, bold: true });
+    doc.text(R, yy, d.rows.length + (d.rows.length === 1 ? ' transaction' : ' transactions'), { size: 9, align: 'right', color: MUT });
+    yy += 12;
+    yy = thead(yy);
+    function ensure(h2, redo) { if (yy + h2 > PH - 70) { doc.add(); header(false); yy = 90; if (redo) yy = thead(yy); } }
+
+    if (!d.rows.length) { doc.text(M + 8, yy + 26, 'No transactions in this period.', { size: 10, color: MUT }); yy += 44; }
+    d.rows.slice().reverse().forEach(function (t) {
+      var lines = doc.wrap(t.desc, 232, 9, false).slice(0, 3), rh = Math.max(26, lines.length * 11 + 14);
+      ensure(rh, true);
+      var top = yy + 10 + 7;
+      doc.text(X.date + 8, top, fmtDate(t.ts), { size: 8.5 });
+      lines.forEach(function (ln, i) { doc.text(X.desc, top + i * 11, ln, { size: 9 }); });
+      if (t.c < 0) doc.text(X.out, top, money(-t.c, d.cur).replace('-', ''), { size: 9, align: 'right' });
+      else if (t.c > 0) doc.text(X.inn, top, money(t.c, d.cur), { size: 9, align: 'right', color: GREEN });
+      doc.text(X.bal - 8, top, money(t.bal, d.cur), { size: 9, align: 'right' });
+      yy += rh; doc.line(M, yy, R, yy);
+    });
+    ensure(30, false);
+    doc.text(X.desc, yy + 20, 'Total', { size: 9, bold: true });
+    doc.text(X.out, yy + 20, money(-d.out, d.cur).replace('-', ''), { size: 9, bold: true, align: 'right' });
+    doc.text(X.inn, yy + 20, money(d.inn, d.cur), { size: 9, bold: true, align: 'right' });
+    yy += 44;
+
+    if (d.pending.length) {
+      ensure(70, false);
+      doc.text(M, yy, 'Pending and unsettled', { size: 12, bold: true }); doc.text(R, yy, 'Not included in the balances above', { size: 8.5, align: 'right', color: MUT }); yy += 10;
+      d.pending.slice().reverse().forEach(function (t) {
+        var lines = doc.wrap(t.desc, 232, 9, false).slice(0, 2), rh = Math.max(24, lines.length * 11 + 12);
+        ensure(rh, false);
+        var top = yy + 16;
+        doc.text(X.date + 8, top, fmtDate(t.ts), { size: 8.5 });
+        lines.forEach(function (ln, i) { doc.text(X.desc, top + i * 11, ln, { size: 9 }); });
+        doc.text(X.inn, top, money(t.c, d.cur), { size: 9, align: 'right' });
+        doc.text(X.bal - 8, top, String(t.status), { size: 8.5, align: 'right', color: MUT });
+        yy += rh; doc.line(M, yy, R, yy);
+      });
+      yy += 26;
+    }
+    if (d.hold.length) {
+      ensure(40 + d.hold.length * 24, false);
+      doc.text(M, yy, 'Crypto holdings', { size: 12, bold: true }); doc.text(R, yy, 'As of ' + fmtDate(Date.now()), { size: 8.5, align: 'right', color: MUT }); yy += 10;
+      doc.rect(M, yy, R - M, 22, { fill: BG });
+      doc.text(M + 8, yy + 14.5, 'ASSET', { size: 7.5, bold: true, color: MUT }); doc.text(X.out, yy + 14.5, 'AMOUNT', { size: 7.5, bold: true, color: MUT, align: 'right' }); doc.text(X.inn, yy + 14.5, 'PRICE (USD)', { size: 7.5, bold: true, color: MUT, align: 'right' }); doc.text(X.bal - 8, yy + 14.5, 'VALUE (' + d.cur + ')', { size: 7.5, bold: true, color: MUT, align: 'right' });
+      yy += 22;
+      d.hold.forEach(function (a) {
+        doc.text(M + 8, yy + 16, a.sym, { size: 9, bold: true });
+        doc.text(X.out, yy + 16, a.amt.toFixed(a.amt < 1 ? 8 : 4).replace(/0+$/, '').replace(/\.$/, ''), { size: 9, align: 'right' });
+        doc.text(X.inn, yy + 16, '$' + a.px.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), { size: 9, align: 'right' });
+        doc.text(X.bal - 8, yy + 16, money(a.val, d.cur), { size: 9, align: 'right' });
+        yy += 24; doc.line(M, yy, R, yy);
+      });
+      yy += 24;
+    }
+    ensure(70, false);
+    var note = 'This statement lists the transactions recorded on your NordicCrypto account for the period shown. ' + (d.cur !== 'USD' ? 'Amounts are held in USD and shown here in ' + d.cur + ' at 1 USD = ' + d.rate.toFixed(4) + ' ' + d.cur + ' (rate on the statement date). ' : '') + 'If you see anything you do not recognise, contact support in the app straight away. Reference ' + ref + '.';
+    doc.wrap(note, R - M, 8, false).forEach(function (ln, i) { doc.text(M, yy + i * 11, ln, { size: 8, color: MUT }); });
+    var N = doc.pages.length;
+    for (var i = 0; i < N; i++) {
+      doc.cur = doc.pages[i];
+      doc.line(M, PH - 46, R, PH - 46);
+      doc.text(M, PH - 30, 'NordicCrypto  ·  ' + h.name + '  ·  ' + fmtDate(d.from) + ' - ' + fmtDate(d.to), { size: 7.5, color: MUT });
+      doc.text(R, PH - 30, 'Page ' + (i + 1) + ' of ' + N, { size: 7.5, color: MUT, align: 'right' });
+    }
+    return doc.build('NordicCrypto account statement ' + ymd(new Date(d.from)) + ' to ' + ymd(new Date(d.to)));
+  }
+
+  function buildCsv(d) {
+    var q = function (v) { v = String(v == null ? '' : v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var f = function (c) { return (c / 100).toFixed(2); };
+    var lines = [['Date', 'Description', 'Money out', 'Money in', 'Balance', 'Currency', 'Status']];
+    d.rows.slice().reverse().forEach(function (t) { lines.push([new Date(t.ts).toISOString().slice(0, 19).replace('T', ' '), t.desc, t.c < 0 ? f(-t.c) : '', t.c > 0 ? f(t.c) : '', f(t.bal), d.cur, 'Completed']); });
+    d.pending.slice().reverse().forEach(function (t) { lines.push([new Date(t.ts).toISOString().slice(0, 19).replace('T', ' '), t.desc, t.c < 0 ? f(-t.c) : '', t.c > 0 ? f(t.c) : '', '', d.cur, t.status]); });
+    return new Blob(['﻿' + lines.map(function (r) { return r.map(q).join(','); }).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  }
+  function save(blob, name) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+
+  /* ---------- dialog ---------- */
+  var PRE = [['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['3m', 'Last 3 months'], ['6m', 'Last 6 months'], ['ytd', 'Year to date'], ['12m', 'Last 12 months'], ['custom', 'Custom']];
+  var O = { period: 'thisMonth', cur: 'USD', fmt: 'pdf', from: '', to: '' };
+  function $(id) { return document.getElementById(id); }
+  function toast(m) { if (typeof window.toast === 'function') window.toast(m); }
+  function open() {
+    var s = S(); O.cur = CURS.indexOf(s.currency) >= 0 ? s.currency : 'USD';
+    close();
+    var m = document.createElement('div'); m.className = 'ncs-mask'; m.id = 'ncsMask';
+    m.innerHTML = '<div class="ncs-modal" role="dialog" aria-label="Account statement"><div class="ncs-h"><div><h3>Account statement</h3><p>Download a statement of your account activity.</p></div><button class="ncs-x" onclick="NCStatement.close()" aria-label="Close">×</button></div>' +
+      '<div class="ncs-b"><div class="ncs-l">Period</div><div class="ncs-chips" id="ncsPre">' + PRE.map(function (p) { return '<button data-k="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="ncs-dates" id="ncsDates"><label>From<input type="date" id="ncsFrom"></label><label>To<input type="date" id="ncsTo"></label></div>' +
+      '<div class="ncs-row"><div><div class="ncs-l">Currency</div><select id="ncsCur">' + CURS.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></div>' +
+      '<div><div class="ncs-l">Format</div><div class="ncs-seg" id="ncsFmt"><button data-k="pdf">PDF</button><button data-k="csv">Excel (CSV)</button></div></div></div>' +
+      '<div class="ncs-sum" id="ncsSum"></div></div>' +
+      '<div class="ncs-f"><button class="ncs-btn ghost" onclick="NCStatement.close()">Cancel</button><button class="ncs-btn pri" id="ncsGo">Download statement</button></div></div>';
+    m.addEventListener('mousedown', function (e) { if (e.target === m) close(); });
+    document.body.appendChild(m);
+    $('ncsCur').value = O.cur;
+    $('ncsPre').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; O.period = b.getAttribute('data-k'); sync(); });
+    $('ncsFmt').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; O.fmt = b.getAttribute('data-k'); sync(); });
+    $('ncsCur').addEventListener('change', function () { O.cur = this.value; sync(); });
+    $('ncsFrom').addEventListener('change', function () { O.from = this.value; sync(); });
+    $('ncsTo').addEventListener('change', function () { O.to = this.value; sync(); });
+    $('ncsGo').onclick = go;
+    document.addEventListener('keydown', esc1);
+    sync();
+  }
+  function esc1(e) { if (e.key === 'Escape') close(); }
+  function close() { var m = $('ncsMask'); if (m) m.remove(); document.removeEventListener('keydown', esc1); }
+  function sync() {
+    document.querySelectorAll('#ncsPre button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === O.period); });
+    document.querySelectorAll('#ncsFmt button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === O.fmt); });
+    $('ncsDates').style.display = O.period === 'custom' ? 'flex' : 'none';
+    if (O.period === 'custom') { if (!O.from) { var p = period('thisMonth'); O.from = ymd(new Date(p.from)); O.to = ymd(new Date()); } $('ncsFrom').value = O.from; $('ncsTo').value = O.to; $('ncsFrom').max = $('ncsTo').max = ymd(new Date()); }
+    var d = compute(O), bad = d.from > d.to;
+    $('ncsSum').innerHTML = bad ? '<span class="ncs-bad">The start date must be before the end date.</span>' :
+      '<div><small>Period</small><b>' + fmtDate(d.from) + ' – ' + fmtDate(d.to) + '</b></div><div><small>Transactions</small><b>' + d.rows.length + '</b></div><div><small>Money out</small><b>' + money(-d.out, d.cur).replace('-', '') + '</b></div><div><small>Money in</small><b>' + money(d.inn, d.cur) + '</b></div>';
+    $('ncsGo').disabled = bad;
+  }
+  function go() {
+    var d = compute(O); if (d.from > d.to) return;
+    var base = 'NordicCrypto-statement-' + ymd(new Date(d.from)) + '_' + ymd(new Date(d.to));
+    try { if (O.fmt === 'pdf') save(buildPdf(d), base + '.pdf'); else save(buildCsv(d), base + '.csv'); toast('Statement downloaded'); close(); }
+    catch (e) { console.error('[statement]', e); toast('Could not create the statement'); }
+  }
+
+  /* ---------- entry points ---------- */
+  function inject() {
+    var sh = document.querySelector('#tx .sh');
+    if (sh && !sh.querySelector('.ncs-open')) {
+      var w = document.createElement('div'); while (sh.firstChild) w.appendChild(sh.firstChild); sh.appendChild(w); sh.classList.add('ncs-has');
+      sh.insertAdjacentHTML('beforeend', btn());
+    }
+    var eh = document.querySelector('.ex-tx-section .ex-section-head');
+    if (eh && !eh.querySelector('.ncs-open')) eh.insertAdjacentHTML('beforeend', btn());
+  }
+  function btn() { return '<button class="ncs-open" onclick="NCStatement.open()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Statement</button>'; }
+  window.NCStatement = { open: open, close: close, _compute: compute, _pdf: buildPdf, _csv: buildCsv };
+  function start() { inject(); setInterval(inject, 2500); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
