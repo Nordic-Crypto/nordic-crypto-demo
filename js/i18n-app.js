@@ -196,10 +196,11 @@
     var host = document.querySelector('.top > div:last-child') || document.querySelector('.top');
     if (!host) return;
     var cur = flagOf(lang);
-    var w = document.createElement('div'); w.className = 'curr-switch nc-lang'; w.id = 'ncLang'; w.setAttribute('data-nci18n', 'off');
-    w.innerHTML = '<button type="button" class="curr-btn-top" id="ncLangBtn" aria-haspopup="listbox" title="Language"><span id="ncLangFlag">' + cur[1] + '</span><span id="ncLangCode">' + lang.toUpperCase() + '</span><svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M6 9l6 6 6-6"/></svg></button>' +
-      '<div class="curr-menu nc-lang-menu" id="ncLangMenu" role="listbox">' + LANGS.map(function (l) { return '<div class="curr-opt' + (l[0] === lang ? ' on' : '') + '" role="option" data-l="' + l[0] + '"><span>' + l[1] + '&nbsp; ' + l[2] + '</span><span class="curr-rate">' + l[0].toUpperCase() + '</span></div>'; }).join('') + '</div>';
+    var w = document.createElement('div'); w.className = 'nc-lang'; w.id = 'ncLang'; w.setAttribute('data-nci18n', 'off');
+    w.innerHTML = '<button type="button" class="nc-lang-btn" id="ncLangBtn" aria-haspopup="listbox" title="Language"><span id="ncLangFlag">' + cur[1] + '</span><span id="ncLangCode">' + lang.toUpperCase() + '</span><svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      '<div class="nc-lang-menu" id="ncLangMenu" role="listbox">' + LANGS.map(function (l) { return '<div class="nc-lang-opt' + (l[0] === lang ? ' on' : '') + '" role="option" data-l="' + l[0] + '"><span>' + l[1] + '&nbsp; ' + l[2] + '</span><span class="nc-lang-rate">' + l[0].toUpperCase() + '</span></div>'; }).join('') + '</div>';
     var cs = document.getElementById('currSwitch');
+    w.addEventListener('click', function (e) { e.stopPropagation(); });
     if (cs && cs.parentNode === host) host.insertBefore(w, cs); else host.insertBefore(w, host.firstChild);
     w.querySelector('#ncLangBtn').onclick = function (e) { e.stopPropagation(); document.getElementById('ncLangMenu').classList.toggle('on'); };
     w.querySelector('#ncLangMenu').onclick = function (e) { var o = e.target.closest('[data-l]'); if (!o) return; e.stopPropagation(); setLang(o.getAttribute('data-l')); document.getElementById('ncLangMenu').classList.remove('on'); };
@@ -254,10 +255,17 @@
   };
 
   var css = document.createElement('style');
-  css.textContent = '.nc-lang-menu{min-width:190px!important}.nc-lang .curr-opt{gap:8px}' +
+  css.textContent = '.nc-lang{position:relative;display:inline-block}' +
+    '.nc-lang-btn{display:flex;align-items:center;gap:7px;padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:999px;color:var(--txt,#f8fafc);cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600}' +
+    '.nc-lang-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:190px;background:linear-gradient(180deg,var(--pan2,#1a1f2e),#0f151e);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.45);padding:6px;display:none;z-index:99999}' +
+    '.nc-lang-menu.on{display:block}' +
+    '.nc-lang-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:.88rem;color:var(--txt,#f8fafc)}' +
+    '.nc-lang-opt span:first-child{font-weight:600;flex:1}.nc-lang-opt:hover{background:rgba(255,255,255,.06)}' +
+    '.nc-lang-opt.on{background:rgba(200,255,61,.12);color:var(--pri,#c8ff3d)}.nc-lang-rate{font-size:.7rem;opacity:.6}' +
+    'html[data-theme="light"] .nc-lang-menu{background:#fff}html[data-theme="light"] .nc-lang-btn{background:rgba(0,0,0,.04)}' +
     '.nc-lang-chip{border:1px solid var(--bd2,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:inherit;border-radius:999px;padding:6px 11px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}' +
     '.nc-lang-chip.on{border-color:var(--pri,#c8ff3d);color:var(--pri,#c8ff3d)}' +
-    '@media(max-width:640px){#ncLangCode{display:none}.nc-lang .curr-btn-top{padding:7px 9px}.nc-lang .curr-btn-top svg{display:none}.top>div:last-child{gap:6px!important;flex-wrap:wrap;justify-content:flex-end}.nc-lang-menu{left:0;right:auto}}';
+    '@media(max-width:640px){#ncLangCode{display:none}.nc-lang-btn{padding:7px 9px}.nc-lang-btn svg{display:none}.top>div:last-child{gap:6px!important;flex-wrap:wrap;justify-content:flex-end}.nc-lang-menu{left:0;right:auto}}';
   document.head.appendChild(css);
 
   function start() {
