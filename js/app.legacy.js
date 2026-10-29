@@ -311,7 +311,7 @@ function showLoginScreen() {
     // login lives on index.html: leave once per 30 s so we never redirect in a loop
     try {
       var k = 'nc_login_redirect_ts', last = Number(sessionStorage.getItem(k) || 0);
-      if (Date.now() - last > 30000) { sessionStorage.setItem(k, String(Date.now())); window.location.replace('/index.html'); return; }
+      if (Date.now() - last > 30000) { sessionStorage.setItem(k, String(Date.now())); window.location.replace('/'); return; }
     } catch (e) {}
   }
   var side = document.getElementById('sideBar');
@@ -505,12 +505,12 @@ async function doLogout() {
       '<div style="width:80px;height:80px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 20px 50px -10px rgba(16,185,129,.7);">✓</div>' +
       '<h1 style="font-size:1.8rem;font-weight:800;margin-bottom:12px;background:linear-gradient(100deg,#fff,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent;">Signed out</h1>' +
       '<p style="color:#94a3b8;font-size:.95rem;margin-bottom:32px;">You have been securely logged out of your account.</p>' +
-      '<button onclick="window.location.href=\'index.html\'" style="width:100%;padding:16px;background:linear-gradient(135deg,#00e5ff,#8b5cf6);border:none;border-radius:14px;color:#fff;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;box-shadow:0 15px 35px -10px rgba(0,229,255,.5);">Back to home →</button>' +
+      '<button onclick="window.location.href=\'/\'" style="width:100%;padding:16px;background:linear-gradient(135deg,#00e5ff,#8b5cf6);border:none;border-radius:14px;color:#fff;font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;box-shadow:0 15px 35px -10px rgba(0,229,255,.5);">Back to home →</button>' +
     '</div>';
   document.body.appendChild(overlay);
 
-  setTimeout(function () { window.location.replace('/index.html'); }, 2000);
-  setTimeout(function () { window.location.href = '/index.html'; }, 4000);
+  setTimeout(function () { window.location.replace('/'); }, 2000);
+  setTimeout(function () { window.location.href = '/'; }, 4000);
 }
 
 var _inactivityListenersAttached = false;
