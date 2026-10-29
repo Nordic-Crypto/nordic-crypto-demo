@@ -1,6 +1,6 @@
 /* NordicCrypto: clean, ordered client dashboard (banking). One idea per block, no duplicates. */
 #dash .nc3-dashboard{display:flex;flex-direction:column;gap:20px;padding-bottom:40px}
-#dash .nc3-dashboard>*{margin:0!important}
+#dash .nc3-dashboard>*{margin:0!important;order:20}   /* anything else that other scripts add (e.g. Nordic Coins) goes to the very bottom */
 #dash .nc3-hero{order:1;padding:4px 2px 0!important}
 #dash #cpQa{order:2}
 #dash .nc3-overview{order:3}
