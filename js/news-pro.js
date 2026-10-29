@@ -3,7 +3,7 @@
   'use strict';
   if (window.__newsLoaded) return; window.__newsLoaded = true;
   var BASE = window.WORKER_LOGIN_URL || window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
-  var TAB = 'news', armed = false, armTimer = null;
+  var OLD = 'The Cloudflare Worker is not updated yet. Paste the newest worker.js into Cloudflare (Edit code) and press Deploy.', TAB = 'news', armed = false, armTimer = null;
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function token() { return typeof window.getSessionToken === 'function' ? window.getSessionToken() : localStorage.getItem('session_token'); }
@@ -54,8 +54,8 @@
     return { mode: mode, subject: $('nnSubject').value, title: $('nnTitle').value, body: $('nnBody').value, bullets: $('nnBullets').value.split('\n'), ctaText: $('nnCta').value, ctaUrl: $('nnUrl').value.trim(), lang: 'en' };
   }
   function msg(t, ok) { $('nnMsg').innerHTML = t ? '<div class="msg ' + (ok ? 'ok' : 'er') + '">' + esc(t) + '</div>' : ''; }
-  function preview() { msg(''); post('sendAnnouncement', data('preview')).then(function (r) { if (r && r.ok) $('nnFrame').srcdoc = r.html; else msg((r && r.error) || 'Error'); }); }
-  function test() { msg('Sending…', true); post('sendAnnouncement', data('test')).then(function (r) { msg(r && r.ok ? 'Test sent to ' + r.sentTo + '. Check your inbox.' : ((r && r.error) || 'Error'), r && r.ok); }); }
+  function preview() { msg(''); post('sendAnnouncement', data('preview')).then(function (r) { if (r && r.ok && r.html) $('nnFrame').srcdoc = r.html; else if (r && r.ok) msg(OLD); else msg((r && r.error) || 'Error'); }); }
+  function test() { msg('Sending…', true); post('sendAnnouncement', data('test')).then(function (r) { if (r && r.ok && !r.sentTo) return msg(OLD); msg(r && r.ok ? 'Test sent to ' + r.sentTo + '. Check your inbox.' : ((r && r.error) || 'Error'), r && r.ok); }); }
   function disarm() { armed = false; clearTimeout(armTimer); var b = $('nnSend'); if (b) b.textContent = '🚀 Send to all clients'; }
   function send() {
     var b = $('nnSend');
@@ -63,6 +63,7 @@
     disarm(); msg('Sending…', true);
     var d = data('send'); d.confirm = true;
     post('sendAnnouncement', d).then(function (r) {
+      if (r && r.ok && r.sent == null) { msg(OLD); return; }
       if (r && r.ok) msg('Sent to ' + r.sent + ' clients.', true);
       else msg(((r && r.recipients) ? 'Sent ' + r.sent + ', failed ' + r.failed + '. ' : '') + ((r && r.error) || 'Error'));
       load();
@@ -71,6 +72,7 @@
   function load() {
     post('newsLog').then(function (r) {
       if (!r || !r.ok) return;
+      if (r.clients == null) { msg(OLD); return; }
       $('nnClients').textContent = r.clients; $('nnOff').textContent = r.unsubscribed;
       $('nnHist').innerHTML = (r.log && r.log.length) ? r.log.map(function (x) { return '<div><span>' + esc(x.subject) + '</span><span style="color:#8b95a5;white-space:nowrap">' + esc(new Date(x.at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })) + ' · ' + x.sent + (x.failed ? ' / ' + x.failed + ' failed' : '') + '</span></div>'; }).join('') : '<div style="color:#8b95a5">Nothing sent yet</div>';
     });
