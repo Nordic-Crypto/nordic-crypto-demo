@@ -32,7 +32,7 @@
   var D0 = null, busy = false;
   function paint(el, d) {
     var c = d.cfg, t = d.tier, nx = d.next, prog = '';
-    if (nx) { var span = nx.min - t.min, got = Math.max(0, d.realDeposits - t.min); prog = '<div class="bar"><i style="width:' + Math.min(100, Math.round(got / span * 100)) + '%"></i></div><p>Deposit ' + usd(nx.min - d.realDeposits) + ' more to reach ' + esc(nx.name) + ' (' + pct(nx.rate) + ' cashback)</p>'; }
+    if (nx) { var span = nx.min - t.min, got = Math.max(0, d.volume - t.min); prog = '<div class="bar"><i style="width:' + Math.min(100, Math.round(got / span * 100)) + '%"></i></div><p>Deposit ' + usd(nx.min - d.realDeposits) + ' more to reach ' + esc(nx.name) + ' (' + pct(nx.rate) + ' cashback)</p>'; }
     else prog = '<p>You are on the top tier</p>';
     var link = location.origin + '/index.html?ref=' + d.code;
     el.innerHTML =
