@@ -1,25 +1,25 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT-FIX.JS v2.0.2
+   NORDIC CRYPTO — CHAT-FIX.JS v2.0.3
    ============================================================
    Load AFTER app.legacy.js, fixes.js and polling-hub.js.
    Replaces: toggleChat, startTicket, sendChatMsg, renderChatMessages,
    markChatRead, updateChatBadge, openAdminChat, sendAdminChatMsg,
    loadAdminChats.
 
-   v2.0.2 (mobile):
-   - SCROLL GUARD: if any script (even an old one) throws the list to the
-     bottom while you read older messages, the jump is cancelled.
-   - Chat is full screen on phones (nothing of the page is visible below).
-   - Close button (X) is always visible and works.
+   v2.0.3:
+   - SCROLL GUARD (2 layers): any script that sets scrollTop / calls scrollTo
+     to throw the list to the bottom while you read older messages is blocked.
+   - Own close button (X) in the chat header; every foreign button/icon in the
+     header is hidden, so the X can never be replaced or covered.
+   - Chat is full screen on phones, page behind it does not scroll.
    - No autofocus on phones (it opened the keyboard and moved the list).
-   - Page behind the chat does not scroll while the chat is open.
    ============================================================ */
 (function () {
   'use strict';
   if (window.__ncChatV2) return;
   window.__ncChatV2 = true;
 
-  var VERSION = '2.0.2';
+  var VERSION = '2.0.3';
   var POLL_OPEN = 1000, POLL_BURST = 600, POLL_HIDDEN_OPEN = 4000, POLL_CLOSED = 10000, POLL_BG = 30000;
   var BURST_MS = 30000, MAX_LEN = 4000, REQ_TIMEOUT = 12000, RECENT_MS = 60000;
   var NEAR_BOTTOM_PX = 90, JUMP_PX = 250;
@@ -72,15 +72,44 @@
   function fmtTime(ts) {
     try { return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
   }
-  function distFromBottom(box) { return box.scrollHeight - box.scrollTop - box.clientHeight; }
+  var nativeTop = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop');
+  function getTop(box) { return nativeTop.get.call(box); }
+  function rawSetTop(box, v) { nativeTop.set.call(box, v); }
+  function distFromBottom(box) { return box.scrollHeight - getTop(box) - box.clientHeight; }
 
   /* scrolling that WE start is always allowed; anything else that jumps the list down is cancelled */
-  function allowScroll() { allowUntil = Date.now() + 400; }
+  function allowScroll() { allowUntil = Date.now() + 150; }
   function setBottom(box) {
     allowScroll();
-    box.scrollTop = box.scrollHeight;
-    lastTop = box.scrollTop;
+    rawSetTop(box, box.scrollHeight);
+    lastTop = getTop(box);
     userAway = false;
+  }
+  // a script (not us, not the user) wants to throw the list far down while the user reads older messages
+  function blocksJump(box, v) {
+    if (!userAway) return false;                     // our own code uses the raw setter, so no time window is needed here
+    return (Number(v) - getTop(box)) > JUMP_PX;
+  }
+  function guardBox(box) {
+    if (box.__ncGuard) return;
+    box.__ncGuard = true;
+    try {
+      Object.defineProperty(box, 'scrollTop', {
+        configurable: true,
+        get: function () { return nativeTop.get.call(this); },
+        set: function (v) { if (blocksJump(this, v)) return; nativeTop.set.call(this, v); }
+      });
+      var nativeScrollTo = box.scrollTo, nativeScroll = box.scroll;
+      var wrap = function (orig) {
+        return function (a, b) {
+          var top = (a && typeof a === 'object') ? a.top : b;
+          if (top !== undefined && blocksJump(box, top)) return;
+          return orig.apply(box, arguments);
+        };
+      };
+      if (nativeScrollTo) box.scrollTo = wrap(nativeScrollTo);
+      if (nativeScroll) box.scroll = wrap(nativeScroll);
+    } catch (e) {}
   }
 
   function post(action, body) {
@@ -379,7 +408,7 @@
     pendingRender = false;
     c.renderSig = sig;
 
-    var prevTop = box.scrollTop;
+    var prevTop = getTop(box);
     var atBottom = distFromBottom(box) < NEAR_BOTTOM_PX;
     var lastMine = -1;
     for (i = list.length - 1; i >= 0; i--) { if (list[i].from === mineRole) { lastMine = i; break; } }
@@ -412,7 +441,7 @@
 
     var stick = toBottom || (!userAway && atBottom);
     if (stick) setBottom(box);
-    else { allowScroll(); box.scrollTop = prevTop; lastTop = box.scrollTop; }   // keep the place the user is reading
+    else { allowScroll(); rawSetTop(box, prevTop); lastTop = getTop(box); }   // keep the place the user is reading
   }
 
   function flushPending() {
@@ -433,18 +462,19 @@
       else if (a.getAttribute('data-ncact') === 'discard') discardMessage(mid);
     });
 
-    lastTop = box.scrollTop;
+    lastTop = getTop(box);
+    guardBox(box);
 
     // SCROLL GUARD. A scroll that is not ours, not the user's, and throws the list far down
     // while the user is reading older messages is cancelled.
     box.addEventListener('scroll', function () {
-      var now = Date.now(), top = box.scrollTop;
+      var now = Date.now(), top = getTop(box);
       if (now < restoreUntil) return;
       var userDriven = mouseDown || (now - lastInput < 250);
       var ours = now < allowUntil;
       if (!userDriven && !ours && userAway && (top - lastTop) > JUMP_PX) {
         restoreUntil = now + 120;
-        box.scrollTop = lastTop;
+        rawSetTop(box, lastTop);
         return;
       }
       lastTop = top;
@@ -469,31 +499,25 @@
   }
   document.addEventListener('mouseup', function () { mouseDown = false; }, true);
 
-  /* ---------- close button (always visible) and full-screen state ---------- */
+  /* ---------- close button: our own, in every chat header ---------- */
   var X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   function ensureCloseBtn() {
     var p = $('chatPanel');
     if (!p) return;
-    var old = p.querySelector('[onclick*="toggleChat"],[data-chat-close],.chat-close,#chatClose');
-    if (old) {
-      if (!old.__ncFixed) {
-        old.__ncFixed = 1;
-        old.innerHTML = X_SVG;
-        old.setAttribute('aria-label', 'Close chat');
-        old.classList.add('nc-chat-x');
-      }
-      var f = $('ncChatClose'); if (f && f.parentNode) f.parentNode.removeChild(f);
-      return;
+    var heads = p.querySelectorAll('.chat-header'), i, j, has, h, b;
+    for (i = 0; i < heads.length; i++) {
+      h = heads[i]; has = false;
+      for (j = 0; j < h.children.length; j++) { if (h.children[j].classList.contains('nc-x')) { has = true; break; } }
+      if (has) continue;
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nc-x';
+      b.setAttribute('aria-label', 'Close chat');
+      b.innerHTML = X_SVG;
+      b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); closeChat(); });
+      h.appendChild(b);
     }
-    if ($('ncChatClose')) return;
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.id = 'ncChatClose';
-    b.className = 'nc-chat-x nc-chat-x-float';
-    b.setAttribute('aria-label', 'Close chat');
-    b.innerHTML = X_SVG;
-    b.addEventListener('click', function (e) { e.stopPropagation(); closeChat(); });
-    p.appendChild(b);
+    var old = $('ncChatClose'); if (old && old.parentNode) old.parentNode.removeChild(old);   // from v2.0.2
   }
   function syncOpenClass() {
     try { document.documentElement.classList.toggle('nc-chat-open', isOpen()); } catch (e) {}
@@ -961,13 +985,14 @@
       '.chat-msg-status.failed{color:#ff5470;cursor:pointer}' +
       '.chat-msg-status.failed:hover{text-decoration:underline}' +
       '.chat-bubble.failed{background:rgba(255,84,112,.15);border:1px solid rgba(255,84,112,.4)}' +
-      /* close button: always visible, no foreign icon */
-      '.nc-chat-x{display:flex!important;align-items:center;justify-content:center;width:36px!important;height:36px!important;min-width:36px;padding:0!important;border-radius:12px!important;' +
-        'border:1px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.10)!important;color:#fff!important;cursor:pointer;flex:none;font-size:0!important;' +
-        '-webkit-mask:none!important;mask:none!important;background-image:none!important;opacity:1!important;visibility:visible!important}' +
-      '.nc-chat-x::before,.nc-chat-x::after{content:none!important;display:none!important}' +
-      '.nc-chat-x svg{display:block;pointer-events:none}' +
-      '.nc-chat-x-float{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:20;background:#1b1d3a!important}' +
+      /* header: only the agent and OUR close button are shown, nothing foreign can cover or replace the X */
+      '#chatPanel .chat-header>*:not(.chat-agent):not(.nc-x){display:none!important}' +
+      '#chatPanel .chat-header{padding-right:16px!important;align-items:center!important;position:relative}' +
+      '#chatPanel .chat-header .nc-x{display:flex!important;align-items:center;justify-content:center;width:40px!important;height:40px!important;min-width:40px!important;flex:none;' +
+        'margin:0 0 0 auto!important;padding:0!important;border-radius:12px!important;border:1px solid rgba(255,255,255,.22)!important;background:rgba(255,255,255,.12)!important;' +
+        'color:#fff!important;cursor:pointer;position:static!important;opacity:1!important;visibility:visible!important;font-size:0!important}' +
+      '#chatPanel .chat-header .nc-x:hover{background:rgba(255,84,112,.28)!important;border-color:rgba(255,84,112,.55)!important}' +
+      '#chatPanel .chat-header .nc-x svg{display:block;width:18px;height:18px;pointer-events:none}' +
       /* phones: the chat takes the whole screen, nothing of the page shows below it */
       '@media (max-width:640px){' +
         '#chatPanel{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;' +
