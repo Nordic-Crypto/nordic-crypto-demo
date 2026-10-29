@@ -1,28 +1,28 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT-FIX.JS v2.0.1
+   NORDIC CRYPTO — CHAT-FIX.JS v2.0.2
    ============================================================
    Load AFTER app.legacy.js, fixes.js and polling-hub.js.
    Replaces: toggleChat, startTicket, sendChatMsg, renderChatMessages,
    markChatRead, updateChatBadge, openAdminChat, sendAdminChatMsg,
    loadAdminChats.
 
-   v2.0.1 — scroll fix (mobile):
-   - The chat no longer jumps to the bottom while the user reads older
-     messages. It only scrolls down when the user is already at the
-     bottom, when they send a message, or when the chat is opened.
-   - Re-renders are postponed while a finger is on the screen, so
-     momentum scrolling on iOS/Android is not interrupted.
-   - The scroll position is kept when the list is re-rendered.
+   v2.0.2 (mobile):
+   - SCROLL GUARD: if any script (even an old one) throws the list to the
+     bottom while you read older messages, the jump is cancelled.
+   - Chat is full screen on phones (nothing of the page is visible below).
+   - Close button (X) is always visible and works.
+   - No autofocus on phones (it opened the keyboard and moved the list).
+   - Page behind the chat does not scroll while the chat is open.
    ============================================================ */
 (function () {
   'use strict';
   if (window.__ncChatV2) return;
   window.__ncChatV2 = true;
 
-  var VERSION = '2.0.1';
+  var VERSION = '2.0.2';
   var POLL_OPEN = 1000, POLL_BURST = 600, POLL_HIDDEN_OPEN = 4000, POLL_CLOSED = 10000, POLL_BG = 30000;
   var BURST_MS = 30000, MAX_LEN = 4000, REQ_TIMEOUT = 12000, RECENT_MS = 60000;
-  var NEAR_BOTTOM_PX = 90;
+  var NEAR_BOTTOM_PX = 90, JUMP_PX = 250;
 
   var S = {};                 // per-account store, never shared between accounts
   var lastCtx = null, loopTimer = null, lastTyping = 0, typingStop = null, markTimer = null, draftTimer = null;
@@ -30,6 +30,7 @@
   var touching = false;       // a finger is on the message list
   var pendingRender = false;  // a render was postponed because of touching
   var touchTimer = null;
+  var lastTop = 0, lastInput = 0, allowUntil = 0, restoreUntil = 0, mouseDown = false;
 
   /* ---------- helpers ---------- */
   function $(id) { return document.getElementById(id); }
@@ -67,10 +68,20 @@
   function otherRole() { return roleNow() === 'admin' ? 'client' : 'admin'; }
   function isOpen() { var p = $('chatPanel'); return !!p && p.style.display === 'flex'; }
   function visible() { return !document.hidden; }
+  function isTouchDevice() { try { return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); } catch (e) { return false; } }
   function fmtTime(ts) {
     try { return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
   }
   function distFromBottom(box) { return box.scrollHeight - box.scrollTop - box.clientHeight; }
+
+  /* scrolling that WE start is always allowed; anything else that jumps the list down is cancelled */
+  function allowScroll() { allowUntil = Date.now() + 400; }
+  function setBottom(box) {
+    allowScroll();
+    box.scrollTop = box.scrollHeight;
+    lastTop = box.scrollTop;
+    userAway = false;
+  }
 
   function post(action, body) {
     var url = workerUrl();
@@ -395,12 +406,13 @@
     if (window._adminTyping) {
       html += '<div class="chat-msg admin chat-typing"><div><div class="chat-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div><div class="chat-msg-meta">Elena is typing...</div></div></div>';
     }
+    allowScroll();                                                          // innerHTML below may move the scroll position
     box.innerHTML = html;
     if (window.__ncImgHydrate) window.__ncImgHydrate(box);
 
     var stick = toBottom || (!userAway && atBottom);
-    if (stick) { box.scrollTop = box.scrollHeight; userAway = false; }
-    else box.scrollTop = prevTop;                                           // keep the place the user is reading
+    if (stick) setBottom(box);
+    else { allowScroll(); box.scrollTop = prevTop; lastTop = box.scrollTop; }   // keep the place the user is reading
   }
 
   function flushPending() {
@@ -421,11 +433,30 @@
       else if (a.getAttribute('data-ncact') === 'discard') discardMessage(mid);
     });
 
-    // remember whether the user is reading older messages
+    lastTop = box.scrollTop;
+
+    // SCROLL GUARD. A scroll that is not ours, not the user's, and throws the list far down
+    // while the user is reading older messages is cancelled.
     box.addEventListener('scroll', function () {
+      var now = Date.now(), top = box.scrollTop;
+      if (now < restoreUntil) return;
+      var userDriven = mouseDown || (now - lastInput < 250);
+      var ours = now < allowUntil;
+      if (!userDriven && !ours && userAway && (top - lastTop) > JUMP_PX) {
+        restoreUntil = now + 120;
+        box.scrollTop = lastTop;
+        return;
+      }
+      lastTop = top;
       userAway = distFromBottom(box) >= NEAR_BOTTOM_PX;
       if (!userAway) flushPending();
     }, { passive: true });
+
+    // real user input (wheel / keyboard / scrollbar drag)
+    var mark = function () { lastInput = Date.now(); };
+    box.addEventListener('wheel', mark, { passive: true });
+    box.addEventListener('keydown', mark, true);
+    box.addEventListener('mousedown', function () { mouseDown = true; lastInput = Date.now(); }, true);
 
     // don't rebuild the list while a finger is on it (and a bit after, for momentum scroll)
     box.addEventListener('touchstart', function () { touching = true; clearTimeout(touchTimer); }, { passive: true });
@@ -435,6 +466,37 @@
     }
     box.addEventListener('touchend', touchDone, { passive: true });
     box.addEventListener('touchcancel', touchDone, { passive: true });
+  }
+  document.addEventListener('mouseup', function () { mouseDown = false; }, true);
+
+  /* ---------- close button (always visible) and full-screen state ---------- */
+  var X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  function ensureCloseBtn() {
+    var p = $('chatPanel');
+    if (!p) return;
+    var old = p.querySelector('[onclick*="toggleChat"],[data-chat-close],.chat-close,#chatClose');
+    if (old) {
+      if (!old.__ncFixed) {
+        old.__ncFixed = 1;
+        old.innerHTML = X_SVG;
+        old.setAttribute('aria-label', 'Close chat');
+        old.classList.add('nc-chat-x');
+      }
+      var f = $('ncChatClose'); if (f && f.parentNode) f.parentNode.removeChild(f);
+      return;
+    }
+    if ($('ncChatClose')) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'ncChatClose';
+    b.className = 'nc-chat-x nc-chat-x-float';
+    b.setAttribute('aria-label', 'Close chat');
+    b.innerHTML = X_SVG;
+    b.addEventListener('click', function (e) { e.stopPropagation(); closeChat(); });
+    p.appendChild(b);
+  }
+  function syncOpenClass() {
+    try { document.documentElement.classList.toggle('nc-chat-open', isOpen()); } catch (e) {}
   }
 
   /* ---------- badge ---------- */
@@ -571,7 +633,7 @@
     descEl.value = '';
     ensureView();
     sendMessage('[' + topic.toUpperCase() + ' \u2022 ' + priority.toUpperCase() + ']\n\n' + desc, ticket);
-    setTimeout(function () { var i = $('chatInput'); if (i) i.focus(); }, 80);
+    if (!isTouchDevice()) setTimeout(function () { var i = $('chatInput'); if (i) i.focus(); }, 80);
     return Promise.resolve();
   };
 
@@ -591,7 +653,9 @@
     var p = $('chatPanel');
     if (!p) return;
     p.style.display = 'flex';
+    syncOpenClass();
     bindMessageClicks();
+    ensureCloseBtn();
     syncContext();
     ensureView();
     userAway = false;
@@ -599,16 +663,19 @@
     updateBadge();
     markReadSoon();
     pollNow();
-    setTimeout(function () {
-      var i = $('chatInput'), conv = $('chatConversation');
-      if (i && conv && conv.style.display === 'flex') i.focus();
-    }, 100);
+    if (!isTouchDevice()) {                       // on phones the keyboard would open and move the list
+      setTimeout(function () {
+        var i = $('chatInput'), conv = $('chatConversation');
+        if (i && conv && conv.style.display === 'flex') i.focus();
+      }, 100);
+    }
   }
   function closeChat() {
     var p = $('chatPanel');
     if (!p) return;
     saveDrafts();
     p.style.display = 'none';
+    syncOpenClass();
     window._adminTyping = false;
     sendTyping(false);
     updateBadge();
@@ -791,7 +858,7 @@
         var now = Date.now();
         if (now - AC.lastTyping > 2500 && AC.email) { AC.lastTyping = now; post('setTyping', { email: AC.email, who: 'admin', typing: true }).catch(noop); }
       });
-      input.focus();
+      if (!isTouchDevice()) input.focus();
     }
     acLoop();
     return Promise.resolve();
@@ -874,27 +941,53 @@
   window.addEventListener('online', function () { pollNow(); });
   window.addEventListener('beforeunload', saveDrafts);
 
+  // keyboard opened / window resized: if the user was at the bottom, stay at the bottom
+  function onResize() {
+    var b = $('chatMessages');
+    if (b && isOpen() && !userAway) setBottom(b);
+  }
+  window.addEventListener('resize', onResize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+
   function injectStyles() {
     if ($('ncChatStyles')) return;
     var style = document.createElement('style');
     style.id = 'ncChatStyles';
     style.textContent =
-      '#chatMessages{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
+      '#chatMessages{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;overflow-anchor:none}' +
       '.chat-msg-status{font-size:11px;opacity:.85;font-weight:700}' +
       '.chat-msg-status.sending,.chat-msg-status.sent{color:#94a3b8}' +
       '.chat-msg-status.read{color:#47dcff}' +
       '.chat-msg-status.failed{color:#ff5470;cursor:pointer}' +
       '.chat-msg-status.failed:hover{text-decoration:underline}' +
-      '.chat-bubble.failed{background:rgba(255,84,112,.15);border:1px solid rgba(255,84,112,.4)}';
+      '.chat-bubble.failed{background:rgba(255,84,112,.15);border:1px solid rgba(255,84,112,.4)}' +
+      /* close button: always visible, no foreign icon */
+      '.nc-chat-x{display:flex!important;align-items:center;justify-content:center;width:36px!important;height:36px!important;min-width:36px;padding:0!important;border-radius:12px!important;' +
+        'border:1px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.10)!important;color:#fff!important;cursor:pointer;flex:none;font-size:0!important;' +
+        '-webkit-mask:none!important;mask:none!important;background-image:none!important;opacity:1!important;visibility:visible!important}' +
+      '.nc-chat-x::before,.nc-chat-x::after{content:none!important;display:none!important}' +
+      '.nc-chat-x svg{display:block;pointer-events:none}' +
+      '.nc-chat-x-float{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:20;background:#1b1d3a!important}' +
+      /* phones: the chat takes the whole screen, nothing of the page shows below it */
+      '@media (max-width:640px){' +
+        '#chatPanel{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;' +
+          'height:100vh!important;height:100dvh!important;max-height:none!important;margin:0!important;border-radius:0!important;z-index:100100!important;' +
+          'padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}' +
+        'html.nc-chat-open,html.nc-chat-open body{overflow:hidden!important}' +
+      '}';
     document.head.appendChild(style);
   }
 
   function start() {
     injectStyles();
     bindMessageClicks();
+    ensureCloseBtn();
+    syncOpenClass();
     syncContext();
     updateBadge();
     setTimeout(loop, 400);
+    // the chat markup can be re-created by other scripts: re-attach everything (cheap and idempotent)
+    setInterval(function () { bindMessageClicks(); ensureCloseBtn(); syncOpenClass(); }, 2000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 
