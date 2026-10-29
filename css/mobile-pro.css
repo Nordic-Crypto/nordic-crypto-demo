@@ -1,0 +1,46 @@
+/* NordicCrypto: phone layout. Bottom tab bar instead of the side rail (gives the content +78px), tighter cards, amounts never cut off. */
+@media(max-width:760px){
+  #sideBar.side{position:fixed!important;left:0;right:0;bottom:0;top:auto;width:100%!important;height:calc(60px + env(safe-area-inset-bottom));padding:5px 6px env(safe-area-inset-bottom)!important;flex-direction:row!important;border-right:0!important;border-top:1px solid rgba(255,255,255,.09);z-index:900;background:rgba(7,10,18,.97);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  #sideBar .brand,#sideBar .umi{display:none!important}
+  #sideBar .menu{display:flex!important;flex:1;flex-direction:row;justify-content:space-around;align-items:stretch;gap:2px;margin:0!important;padding:0!important;overflow-x:auto;scrollbar-width:none}
+  #sideBar .menu::-webkit-scrollbar{display:none}
+  #sideBar .mi{flex:1 1 0;min-width:58px;flex-direction:column;gap:3px;padding:5px 2px!important;justify-content:center;align-items:center;border-radius:12px;margin:0!important}
+  #sideBar .mi svg{width:21px;height:21px;flex:none}
+  #sideBar .mi .tx{display:block!important;font-size:10px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;letter-spacing:0}
+  .body{padding:14px 12px calc(84px + env(safe-area-inset-bottom))!important}
+  .top{padding:0 12px!important}
+  #chatToggle{bottom:calc(74px + env(safe-area-inset-bottom))!important;right:14px!important;width:52px!important;height:52px!important}
+  #chatPanel{bottom:calc(132px + env(safe-area-inset-bottom))!important;right:10px!important;max-height:calc(100vh - 200px)!important}
+  #ncInst,#ncPush{bottom:calc(72px + env(safe-area-inset-bottom))!important}
+
+  /* panels: less padding, so the numbers get the room */
+  .nc3-balance-card,.nc3-card-wrap,.nc3-chart-panel,.nc3-transactions,.nc3-iban{padding:14px!important}
+  .nc3-balance{font-size:clamp(1.7rem,9.4vw,2.5rem)!important;white-space:nowrap}
+  #dash .nc3-mini-stats{grid-template-columns:1fr!important;gap:8px}
+  #dash .nc3-mini-stat{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
+  #dash .nc3-mini-value{font-size:.95rem;white-space:nowrap;text-align:right}
+
+  /* quick actions: all five visible, no sideways scroll */
+  .cp-qa{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;overflow:visible!important}
+  .cp-qa button{font-size:10.5px!important;padding:10px 2px 8px!important;line-height:1.15;word-break:break-word}
+  .cp-qa i{width:36px!important;height:36px!important}
+  .nc3-card-action{padding:10px 4px!important}
+  .nc3-card-action-label{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+  /* assets */
+  .nc3-asset{grid-template-columns:38px minmax(0,1fr) auto!important;gap:10px!important;padding:12px!important;min-height:0!important}
+  .nc3-asset-value strong{font-size:.86rem!important;white-space:nowrap}
+  .nc3-asset-icon{width:38px!important;height:38px!important;min-width:0}.nc3-asset-icon svg{width:22px!important;height:22px!important}
+  .nc3-asset-amount{font-size:.68rem!important;word-break:break-all}
+
+  /* transactions: icon | text | amount, amount never wraps, text takes what is left */
+  .recent-tx-item{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto;gap:10px!important;padding:10px!important;align-items:center}
+  .recent-tx-icon{width:34px!important;height:34px!important}
+  .recent-tx-desc{font-size:.82rem!important;line-height:1.25;overflow-wrap:anywhere}
+  .recent-tx-amount{font-size:.8rem!important;white-space:nowrap;align-self:start}
+  .recent-tx-badge{margin-top:3px}
+}
+@media(max-width:360px){
+  .cp-qa button{font-size:9.5px!important}
+  .nc3-balance{font-size:clamp(1.5rem,9vw,2rem)!important}
+}
