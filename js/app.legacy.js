@@ -1219,7 +1219,7 @@ function renderBalanceChart() {
   var points = [];
   var balanceHistory = st.balanceHistory || [];
   if (balanceHistory.length > 2) {
-    balanceHistory.forEach(function (p) { points.push({ t: p.t, v: p.v }); });
+    balanceHistory.forEach(function (p) { var pt = p.t || p.ts; if (pt && isFinite(p.v)) points.push({ t: pt, v: p.v }); });
     points.push({ t: Date.now(), v: st.usd });
   } else {
     for (var d = 0; d <= days; d++) {
@@ -1237,7 +1237,7 @@ function renderBalanceChart() {
   var w = 500, h = 180, pad = 50;
   var minT, maxT;
   if (balanceHistory.length > 2) {
-    minT = balanceHistory[0].t; maxT = Date.now();
+    minT = points.length ? points[0].t : Date.now() - 5 * 60 * 1000; maxT = Date.now();
     if (maxT - minT < 5 * 60 * 1000) minT = maxT - 5 * 60 * 1000;
   } else {
     minT = nowT - days * dayMs; maxT = nowT;
@@ -4917,7 +4917,7 @@ function initAdminPanel() {
     var typeEl = document.getElementById('adminBalanceType');
     var type = typeEl ? typeEl.value : 'bonus';
     if (!amount || amount === 0) { toast('Enter valid amount', true); return; }
-    var meta = { 'bonus': { icon: '🎁', label: 'Bonus' }, 'bank': { icon: '🏦', label: 'Bank deposit' }, 'crypto': { icon: '₿', label: 'Crypto deposit' }, 'card': { icon: '💳', label: 'Card deposit' }, 'correction': { icon: '🔧', label: 'Correction' } };
+    var meta = { 'bonus': { icon: '🎁', label: 'Bonus' }, 'bank': { icon: '🏦', label: 'Bank deposit' }, 'crypto': { icon: '₿', label: 'Crypto deposit' }, 'card': { icon: '💳', label: 'Card deposit' }, 'correction': { icon: '🔧', label: 'Correction' }, 'payment': { icon: '💳', label: 'Card payment' } };
     var m = meta[type] || meta['bonus'];
     try {
       var token = getSessionToken();
@@ -4935,7 +4935,7 @@ function initAdminPanel() {
       try {
         await fetch(WORKER_LOGIN_URL + '?action=sendMessage', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, email: adminTargetEmail, text: m.icon + ' ' + m.label + ': +' + amount + ' USD', icon: m.icon })
+          body: JSON.stringify({ token, email: adminTargetEmail, text: m.icon + ' ' + m.label + ': ' + (amount > 0 ? '+' : '') + amount + ' USD', icon: m.icon })
         });
       } catch (e) {}
       toast('✓ Balance updated');
