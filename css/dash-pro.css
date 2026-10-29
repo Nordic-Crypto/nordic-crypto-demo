@@ -1,0 +1,23 @@
+/* NordicCrypto: clean, ordered client dashboard (banking). One idea per block, no duplicates. */
+#dash .nc3-dashboard{display:flex;flex-direction:column;gap:20px;padding-bottom:40px}
+#dash .nc3-dashboard>*{margin:0!important}
+#dash .nc3-hero{order:1;padding:4px 2px 0!important}
+#dash #cpQa{order:2}
+#dash .nc3-overview{order:3}
+#dash #ncRewards{order:4}
+#dash .nc3-assets{order:5}
+#dash .nc3-lower{order:6}
+#dash #cpIns{order:7}
+#dash .nc3-bottom-row{order:8;grid-template-columns:1fr!important;margin-bottom:0!important}
+/* duplicates removed: the shortcuts repeat the quick-action row, the four tiles repeat the balance and cash-flow cards */
+#dash .nc3-actions-section{display:none!important}
+#dash .nc3-stat-strip{display:none!important}
+#dash .nc3-assets .nc3-asset-grid>div[style*="span 2"]{display:none!important}
+/* section titles: same rhythm everywhere */
+#dash .nc3-section-head{margin-bottom:12px}
+#dash .nc3-lower{align-items:stretch}
+/* daily bonus lives inside the rewards card now */
+#ncRewards .nc-dailybtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(239,68,68,.10));border:1px solid rgba(245,158,11,.3);color:inherit}
+#ncRewards .nc-dailybtn b{display:block;font-size:14px}#ncRewards .nc-dailybtn small{display:block;opacity:.7;font-size:12px;margin-top:2px}
+#ncRewards .nc-dailybtn .ic{font-size:22px}
+@media(max-width:900px){#dash .nc3-dashboard{gap:16px}}
