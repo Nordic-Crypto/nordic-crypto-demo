@@ -16,12 +16,26 @@
   var current = null;
   function targets() { return [].slice.call(document.querySelectorAll('#userAvatar, .umi .av')); }
   function paint() {
+    settingsRow();
     targets().forEach(function (el) {
       if (current) { el.style.backgroundImage = 'url(' + current + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; el.style.color = 'transparent'; }
       else { el.style.backgroundImage = ''; el.style.color = ''; }
       el.style.cursor = 'pointer'; el.title = T.title;
       if (!el.__ncAv) { el.__ncAv = 1; el.addEventListener('click', openSheet); }
     });
+  }
+  function settingsRow() {
+    var row = document.querySelector('#settingsMask .settings-row'); if (!row) return;
+    var b = document.getElementById('ncAvSet');
+    if (!b) {
+      b = document.createElement('div'); b.id = 'ncAvSet';
+      b.style.cssText = 'width:56px;height:56px;border-radius:50%;flex-shrink:0;margin-right:14px;display:flex;align-items:center;justify-content:center;font:700 18px system-ui;color:#05070a;background:linear-gradient(135deg,#8b5cf6,#38bdf8);cursor:pointer;position:relative';
+      b.title = T.up; b.addEventListener('click', openSheet);
+      row.style.display = 'flex'; row.style.alignItems = 'center'; row.insertBefore(b, row.firstChild);
+    }
+    var nm = (localStorage.getItem('user_name') || 'U').trim().split(' ').map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
+    b.textContent = current ? '' : nm;
+    b.style.background = current ? 'url(' + current + ') center/cover' : 'linear-gradient(135deg,#8b5cf6,#38bdf8)';
   }
   function load() {
     if (!tok()) return;
@@ -88,6 +102,6 @@
     };
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
-  function boot() { paint(); load(); setInterval(paint, 3000); }
+  function boot() { paint(); settingsRow(); load(); setInterval(function () { paint(); settingsRow(); }, 2000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
