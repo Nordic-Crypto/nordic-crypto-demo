@@ -20,22 +20,68 @@
   function left(ms) { var s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); s = s % 60; return (d ? d + 'd ' : '') + (h || d ? pad(h) + ':' : '') + pad(m) + ':' + pad(s); }
 
   /* ---------- client screen ---------- */
-  var TXT = { en: ['Maintenance in progress', 'We are improving NordicCrypto. Your funds are safe. We will be back shortly.', 'Back in'], sv: ['Underhåll pågår', 'Vi förbättrar NordicCrypto. Dina pengar är säkra. Vi är snart tillbaka.', 'Tillbaka om'], da: ['Vedligeholdelse i gang', 'Vi forbedrer NordicCrypto. Dine penge er i sikkerhed. Vi er snart tilbage.', 'Tilbage om'], fi: ['Huolto käynnissä', 'Parannamme NordicCryptoa. Varasi ovat turvassa. Palaamme pian.', 'Takaisin'], es: ['Mantenimiento en curso', 'Estamos mejorando NordicCrypto. Tus fondos están a salvo. Volvemos enseguida.', 'Volvemos en'], no: ['Vedlikehold pågår', 'Vi forbedrer NordicCrypto. Pengene dine er trygge. Vi er snart tilbake.', 'Tilbake om'], fr: ['Maintenance en cours', 'Nous améliorons NordicCrypto. Vos fonds sont en sécurité. Nous revenons bientôt.', 'Retour dans'], de: ['Wartungsarbeiten', 'Wir verbessern NordicCrypto. Ihre Gelder sind sicher. Wir sind gleich zurück.', 'Zurück in'] };
+  var TXT = {
+    en: ['Scheduled maintenance', 'We’ll be right back', 'NordicCrypto is being upgraded with new features and security improvements.', 'Your funds are safe', 'No action needed', ['Days', 'Hours', 'Min', 'Sec'], 'Questions? Write to'],
+    sv: ['Planerat underhåll', 'Vi är snart tillbaka', 'NordicCrypto uppgraderas med nya funktioner och förbättrad säkerhet.', 'Dina pengar är säkra', 'Inget behöver göras', ['Dagar', 'Tim', 'Min', 'Sek'], 'Frågor? Skriv till'],
+    da: ['Planlagt vedligeholdelse', 'Vi er snart tilbage', 'NordicCrypto opgraderes med nye funktioner og bedre sikkerhed.', 'Dine penge er i sikkerhed', 'Ingen handling nødvendig', ['Dage', 'Timer', 'Min', 'Sek'], 'Spørgsmål? Skriv til'],
+    fi: ['Suunniteltu huolto', 'Palaamme pian', 'NordicCryptoa päivitetään uusilla ominaisuuksilla ja paremmalla tietoturvalla.', 'Varasi ovat turvassa', 'Toimenpiteitä ei tarvita', ['Päivää', 'Tuntia', 'Min', 'Sek'], 'Kysyttävää? Kirjoita'],
+    es: ['Mantenimiento programado', 'Volvemos enseguida', 'Estamos actualizando NordicCrypto con nuevas funciones y mejoras de seguridad.', 'Tus fondos están a salvo', 'No necesitas hacer nada', ['Días', 'Horas', 'Min', 'Seg'], '¿Preguntas? Escribe a'],
+    no: ['Planlagt vedlikehold', 'Vi er snart tilbake', 'NordicCrypto oppgraderes med nye funksjoner og bedre sikkerhet.', 'Pengene dine er trygge', 'Ingen handling nødvendig', ['Dager', 'Timer', 'Min', 'Sek'], 'Spørsmål? Skriv til'],
+    fr: ['Maintenance programmée', 'Nous revenons bientôt', 'NordicCrypto est mis à niveau avec de nouvelles fonctionnalités et une sécurité renforcée.', 'Vos fonds sont en sécurité', 'Aucune action requise', ['Jours', 'Heures', 'Min', 'Sec'], 'Des questions ? Écrivez à'],
+    de: ['Geplante Wartung', 'Wir sind gleich zurück', 'NordicCrypto wird mit neuen Funktionen und verbesserter Sicherheit aktualisiert.', 'Ihre Gelder sind sicher', 'Keine Aktion erforderlich', ['Tage', 'Std', 'Min', 'Sek'], 'Fragen? Schreiben Sie an']
+  };
+  var DEFAULT_MSG = /^We are upgrading NordicCrypto with new features/;
   var tick = null;
   function lang() { var l = ls('nc_lang') || ls('lang') || 'en'; return TXT[l] ? l : 'en'; }
+  function css() {
+    if ($('ncMaintCss')) return; var s = document.createElement('style'); s.id = 'ncMaintCss';
+    s.textContent = '#ncMaintScreen{position:fixed;inset:0;z-index:2147483000;overflow:auto;background:#06070a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}' +
+      '#ncMaintScreen .bg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 520px at 50% -8%,rgba(198,255,61,.17),transparent 62%),radial-gradient(700px 480px at 85% 110%,rgba(71,220,255,.09),transparent 60%),radial-gradient(600px 420px at 8% 95%,rgba(139,92,246,.10),transparent 60%)}' +
+      '#ncMaintScreen .grid{position:fixed;inset:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:52px 52px;-webkit-mask-image:radial-gradient(ellipse at 50% 35%,#000 20%,transparent 72%);mask-image:radial-gradient(ellipse at 50% 35%,#000 20%,transparent 72%)}' +
+      '#ncMaintScreen .card{position:relative;width:100%;max-width:520px;padding:38px 30px 28px;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-align:center;animation:ncMIn .7s cubic-bezier(.2,.8,.2,1) both}' +
+      '#ncMaintScreen .logo{position:relative;width:68px;height:68px;margin:0 auto 22px;border-radius:20px;background:#c6ff3d;color:#0a0b08;font:900 36px/68px Arial,sans-serif;box-shadow:0 10px 40px rgba(198,255,61,.35)}' +
+      '#ncMaintScreen .logo:after{content:"";position:absolute;inset:-9px;border-radius:27px;border:2px solid rgba(198,255,61,.45);animation:ncMPulse 2.4s ease-out infinite}' +
+      '#ncMaintScreen .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);color:#fbbf24;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}' +
+      '#ncMaintScreen .badge i{width:7px;height:7px;border-radius:50%;background:#fbbf24;animation:ncMBlink 1.4s ease-in-out infinite}' +
+      '#ncMaintScreen h1{margin:18px 0 10px;font-size:clamp(28px,6.4vw,38px);line-height:1.1;letter-spacing:-.03em;font-weight:800}' +
+      '#ncMaintScreen .sub{margin:0 auto;max-width:400px;color:#9aa3b2;font-size:15px;line-height:1.65}' +
+      '#ncMaintScreen .note{margin:18px auto 0;max-width:420px;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);color:#d7dbe3;font-size:14px;line-height:1.55}' +
+      '#ncMaintScreen .cd{display:flex;justify-content:center;gap:10px;margin:28px 0 16px}' +
+      '#ncMaintScreen .t{min-width:76px;padding:14px 6px 11px;border-radius:16px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)}' +
+      '#ncMaintScreen .t b{display:block;font:800 34px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#c6ff3d;letter-spacing:-.02em;font-variant-numeric:tabular-nums}' +
+      '#ncMaintScreen .t span{display:block;margin-top:8px;font-size:11px;color:#7d8696;letter-spacing:.1em;text-transform:uppercase}' +
+      '#ncMaintScreen .bar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:0 6px}' +
+      '#ncMaintScreen .bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#8fd400,#c6ff3d);box-shadow:0 0 18px rgba(198,255,61,.6);transition:width 1s linear}' +
+      '#ncMaintScreen .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:24px 0 0}' +
+      '#ncMaintScreen .chips span{padding:8px 13px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:12.5px;color:#cbd2de}' +
+      '#ncMaintScreen .foot{margin-top:22px;font-size:12.5px;color:#6f7888}#ncMaintScreen .foot a{color:#c6ff3d;text-decoration:none}' +
+      '@keyframes ncMIn{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}@keyframes ncMPulse{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.35);opacity:0}}@keyframes ncMBlink{50%{opacity:.25}}' +
+      '@media(max-width:420px){#ncMaintScreen .card{padding:30px 18px 22px;border-radius:24px}#ncMaintScreen .cd{gap:7px}#ncMaintScreen .t{min-width:0;flex:1;padding:12px 2px 9px}#ncMaintScreen .t b{font-size:26px}}' +
+      '@media(prefers-reduced-motion:reduce){#ncMaintScreen *{animation:none!important}}';
+    document.head.appendChild(s);
+  }
   function showClient(m) {
-    var o = $('ncMaintScreen');
-    if (!o) {
-      o = document.createElement('div'); o.id = 'ncMaintScreen';
-      o.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:#0a0b08;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;text-align:center';
-      document.body.appendChild(o); document.documentElement.style.overflow = 'hidden';
+    css();
+    var o = $('ncMaintScreen'), L = lang(), t = TXT[L], custom = m.message && !DEFAULT_MSG.test(m.message);
+    if (!o) { o = document.createElement('div'); o.id = 'ncMaintScreen'; document.body.appendChild(o); document.documentElement.style.overflow = 'hidden'; }
+    var key = L + '|' + (m.message || '') + '|' + (m.until || '');
+    if (o.getAttribute('data-k') !== key) {
+      o.setAttribute('data-k', key);
+      o.innerHTML = '<div class="bg"></div><div class="grid"></div><div class="card"><div class="logo">N</div><div class="badge"><i></i>' + esc(t[0]) + '</div><h1>' + esc(t[1]) + '</h1><p class="sub">' + esc(t[2]) + '</p>' +
+        (custom ? '<div class="note">' + esc(m.message) + '</div>' : '') +
+        (m.until ? '<div class="cd"><div class="t" id="ncTd" style="display:none"><b>00</b><span>' + esc(t[5][0]) + '</span></div><div class="t" id="ncTh"><b>00</b><span>' + esc(t[5][1]) + '</span></div><div class="t" id="ncTm"><b>00</b><span>' + esc(t[5][2]) + '</span></div><div class="t" id="ncTs"><b>00</b><span>' + esc(t[5][3]) + '</span></div></div><div class="bar"><i id="ncTp"></i></div>' : '') +
+        '<div class="chips"><span>🔒 ' + esc(t[3]) + '</span><span>✓ ' + esc(t[4]) + '</span></div><div class="foot">' + esc(t[6]) + ' <a href="mailto:support@nordiccrypto.net">support@nordiccrypto.net</a></div></div>';
     }
-    var t = TXT[lang()];
-    o.innerHTML = '<div style="max-width:440px"><div style="width:58px;height:58px;margin:0 auto 22px;border-radius:16px;background:#c6ff3d;color:#0a0b08;font:900 30px/58px Arial">N</div>' +
-      '<h1 style="margin:0 0 12px;font-size:26px;letter-spacing:-.02em">' + esc(t[0]) + '</h1><p style="margin:0 0 22px;color:#9aa3af;line-height:1.6;font-size:15px">' + esc(m.message && m.message.length < 240 && lang() === 'en' ? m.message : t[1]) + '</p>' +
-      (m.until ? '<div style="display:inline-block;padding:12px 22px;border-radius:14px;background:#14161a;border:1px solid #23262c"><span style="color:#9aa3af;font-size:13px">' + esc(t[2]) + '</span> <b id="ncMaintCd" style="font:700 20px ui-monospace,Menlo,Consolas,monospace;color:#c6ff3d;margin-left:6px"></b></div>' : '') + '</div>';
     clearInterval(tick);
-    function upd() { var c = $('ncMaintCd'); if (c && m.until) { var ms = m.until - Date.now(); c.textContent = left(ms); if (ms <= 0) { clearInterval(tick); poll(); } } }
+    function set(id, v) { var e = $(id); if (e) e.firstChild.textContent = v; }
+    function upd() {
+      if (!m.until) return; var ms = m.until - Date.now(); if (ms < 0) ms = 0;
+      var s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), mi = Math.floor(s % 3600 / 60), se = s % 60;
+      var td = $('ncTd'); if (td) td.style.display = d > 0 ? '' : 'none';
+      set('ncTd', pad(d)); set('ncTh', pad(h)); set('ncTm', pad(mi)); set('ncTs', pad(se));
+      var p = $('ncTp'); if (p && m.started) p.style.width = Math.min(100, Math.max(2, (Date.now() - m.started) / (m.until - m.started) * 100)) + '%';
+      if (ms <= 0) { clearInterval(tick); poll(); }
+    }
     upd(); tick = setInterval(upd, 1000);
   }
   function hideClient() { var o = $('ncMaintScreen'); if (o) { o.remove(); document.documentElement.style.overflow = ''; } clearInterval(tick); }
