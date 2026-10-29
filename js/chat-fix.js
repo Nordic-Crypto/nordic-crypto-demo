@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT-FIX.JS v2.0.3
+   NORDIC CRYPTO — CHAT-FIX.JS v2.0.4
    ============================================================
    Load AFTER app.legacy.js, fixes.js and polling-hub.js.
    Replaces: toggleChat, startTicket, sendChatMsg, renderChatMessages,
@@ -19,7 +19,7 @@
   if (window.__ncChatV2) return;
   window.__ncChatV2 = true;
 
-  var VERSION = '2.0.3';
+  var VERSION = '2.0.4';
   var POLL_OPEN = 1000, POLL_BURST = 600, POLL_HIDDEN_OPEN = 4000, POLL_CLOSED = 10000, POLL_BG = 30000;
   var BURST_MS = 30000, MAX_LEN = 4000, REQ_TIMEOUT = 12000, RECENT_MS = 60000;
   var NEAR_BOTTOM_PX = 90, JUMP_PX = 250;
@@ -318,7 +318,7 @@
 
     var typ = d.typing || {};
     var skew = d.now ? (now - Number(d.now)) : 0;
-    window._adminTyping = roleNow() === 'client' && typ.admin === true && (now - skew - Number(typ.adminTs || 0)) < 4000;
+    window._adminTyping = roleNow() === 'client' && typ.admin === true && (now - skew - Number(typ.adminTs || 0)) < 6000;
 
     updateBadge();
     if (fresh.length) {
@@ -717,7 +717,7 @@
   function acModal() { return $('adminChatModal'); }
   function acClose() {
     clearTimeout(AC.timer);
-    AC.timer = null; AC.email = null; AC.pending = []; AC.server = [];
+    AC.timer = null; AC.email = null; AC.pending = []; AC.server = []; AC.lastMark = 0;
     var m = acModal();
     if (m && m.parentNode) m.parentNode.removeChild(m);
     document.removeEventListener('keydown', acKey);
@@ -771,9 +771,10 @@
       AC.server = server;
       var t = d.typing || {};
       var skew = d.now ? (Date.now() - Number(d.now)) : 0;
-      AC.typingClient = t.client === true && (Date.now() - skew - Number(t.clientTs || 0)) < 4000;
+      AC.typingClient = t.client === true && (Date.now() - skew - Number(t.clientTs || 0)) < 6000;
       acRender(false);
-      if (hadNew && visible()) {
+      if (hadNew && visible() && Date.now() - (AC.lastMark || 0) > 5000) {
+        AC.lastMark = Date.now();
         server.forEach(function (s) { if (s.from === 'client') s.read = true; });
         post('markChatRead', { email: email, from: 'client' }).catch(noop);
       }
@@ -880,7 +881,7 @@
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); acSend(); } });
       input.addEventListener('input', function () {
         var now = Date.now();
-        if (now - AC.lastTyping > 2500 && AC.email) { AC.lastTyping = now; post('setTyping', { email: AC.email, who: 'admin', typing: true }).catch(noop); }
+        if (now - AC.lastTyping > 2000 && AC.email) { AC.lastTyping = now; post('setTyping', { email: AC.email, who: 'admin', typing: true }).catch(noop); }
       });
       if (!isTouchDevice()) input.focus();
     }
