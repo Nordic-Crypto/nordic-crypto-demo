@@ -189,6 +189,13 @@
       kpi('inn', 'Total deposits', usdC(st.totalDeposits || 0), '<b>+' + usdC(st.depositsToday || 0) + '</b> today · +' + usdC(st.depositsYesterday || 0) + ' yesterday', spark([st.depositsYesterday || 0, st.depositsToday || 0, st.totalDeposits ? st.totalDeposits / Math.max(1, us.length) : 0].sort(function (a, b) { return a - b; }), '#f59e0b'), '#fbbf24', 'rgba(245,158,11,.14)') +
       kpi('pulse', 'Transactions', num(st.totalTx != null ? st.totalTx : S.txs.length), 'last 14 days: <b>' + tx14.reduce(function (a, x) { return a + x.v; }, 0) + '</b>', spark(tx14.map(function (x) { return x.v; }), '#a78bfa'), '#a78bfa', 'rgba(139,92,246,.14)') +
       '</div>' +
+      (function () {
+        var td = st.today || null; if (!td) return '';
+        function c(l, v, col) { return '<div class="ap-stat"><small>' + l + '</small><b' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</b></div>'; }
+        return '<div class="ap-card ap-fade"><div class="ap-card-h"><div><h3>Today</h3><small>Since midnight</small></div></div><div class="ap-stats" style="padding:16px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">' +
+          c('New clients', num(td.newClients)) + c('Real deposits', usd(td.real), '#34d399') + c('Admin credits', usd(td.admin), '#fbbf24') + c('Withdrawals paid', usd(td.wdAmt)) +
+          c('Withdrawals waiting', num(td.wdPending), td.wdPending ? '#f87171' : '') + c('Deposit requests', num((td.reqPending || 0) + (td.pendingDeps || 0)), (td.reqPending || td.pendingDeps) ? '#fbbf24' : '') + '</div></div>';
+      })() +
       '<div class="ap-card ap-fade"><div class="ap-card-h"><div><h3>Action center</h3><small>Everything that needs a decision</small></div></div><div class="ap-actions">' +
       act('shield', 'KYC reviews', pv.length, 'verifications', '#fbbf24', 'rgba(245,158,11,.14)') +
       act('out', 'Withdrawals', pw.length, 'withdrawals', '#f87171', 'rgba(239,68,68,.14)') +
@@ -294,7 +301,8 @@
       '<div class="ap-sec"><h4>Balance breakdown</h4><div class="ap-kv">' +
       '<div><span>Real deposits (money received)</span><b style="color:#34d399">' + usd(u.realDeposits) + '</b></div>' +
       '<div><span>Added by admin (bonus / manual)</span><b style="color:#fbbf24">' + usd(u.adminCredits) + '</b></div>' +
-      '<div><span>Real balance (balance − admin credits)</span><b>' + usd((u.balance || 0) - (u.adminCredits || 0)) + '</b></div></div></div>' +
+      '<div><span>Real balance (balance − admin credits)</span><b>' + usd((u.balance || 0) - (u.adminCredits || 0)) + '</b></div></div>' +
+      '<div style="margin-top:8px"><button class="ap-btn" data-act="credits" data-e="' + esc(e) + '">Review credits (real / admin)</button></div></div>' +
       '<div class="ap-sec"><h4>Quick actions</h4><div class="ap-agrid">' +
       '<button class="ap-btn pri" data-act="add" data-e="' + esc(e) + '">' + ic('wallet') + ' Add balance</button>' +
       '<button class="ap-btn" data-act="view" data-e="' + esc(e) + '">' + ic('eye') + ' View as client</button>' +
@@ -323,6 +331,7 @@
   function doAct(a, e) {
     var u = userBy(e) || { email: e, name: e }, n = u.name || e;
     if (a === 'add') return window.adminAddBalance(e, n);
+    if (a === 'credits') return window.ncReviewCredits && window.ncReviewCredits(e, n);
     if (a === 'view') { closeDrawer(); return window.adminViewClient(e); }
     if (a === 'addr') return window.adminSetCryptoAddress(e, n);
     if (a === 'iban') return window.adminSetIban(e);
@@ -473,6 +482,7 @@
     var c = $('navChatsCount'); if (c && S.loaded) { var u = unreadTotal(); c.textContent = u; c.style.display = u ? 'inline-block' : 'none'; }
   }
   function boot() {
+    window.__ncApRefresh = function () { load(true); };
     fixNav(); renderDash(); renderClients();
     var adm = $('adminPanel');
     if (adm && adm.classList.contains('on')) load(true);
