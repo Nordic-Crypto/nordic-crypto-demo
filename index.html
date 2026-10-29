@@ -749,7 +749,7 @@ $('#burger').onclick=function(){$('#links').classList.toggle('open')};
 $$('#links a').forEach(function(a){a.onclick=function(){$('#links').classList.remove('open')}});
 
 /* ---------- auth ---------- */
-var mode='login',busy=false;
+var mode='login',busy=false,needCode=false;
 function hasSession(){try{return !!localStorage.getItem('session_token')}catch(e){return false}}
 var SESSION_OK=false;
 function navState(){
@@ -776,7 +776,7 @@ function authText(){
  $('#mTitle').textContent=tr(tk[0]);$('#mSub').textContent=tr(tk[1]);$('#mSubmit').textContent=tr(tk[2]);
  $('#mSwText').textContent=(fg||rs)?'':tr(li?'sw_in':'sw_up');$('#mSwBtn').textContent=(fg||rs)?tr('bk'):tr(li?'sw_su':'sw_lg');
  $('#fName').style.display=su?'':'none';$('#fTypes').style.display=su?'':'none';$('#fRef').style.display=su?'':'none';
- $('#fPass2').style.display=(su||rs)?'':'none';$('#fPass').style.display=fg?'none':'';$('#fCode').style.display=rs?'':'none';
+ $('#fPass2').style.display=(su||rs)?'':'none';$('#fPass').style.display=fg?'none':'';$('#fCode').style.display=(rs||(li&&needCode))?'':'none';
  $('#fEmail').readOnly=rs;
  $('#mForgotRow').style.display=li?'':'none';
  $('#fPass').autocomplete=li?'current-password':'new-password';
@@ -786,15 +786,15 @@ function openAuth(m){mode=m;showErr('');authText();$('#mask').classList.add('on'
 function closeAuth(){$('#mask').classList.remove('on');document.body.style.overflow=''}
 document.addEventListener('click',function(e){
  var b=e.target.closest('[data-auth]');if(!b)return;e.preventDefault();
- var a=b.dataset.auth;if(a==='app'){location.href='app.html';return}
- if(hasSession()&&SESSION_OK&&a!=='login'){location.href='app.html';return}
+ var a=b.dataset.auth;if(a==='app'){location.href='/app';return}
+ if(hasSession()&&SESSION_OK&&a!=='login'){location.href='/app';return}
  openAuth(a);
 });
 (function(){try{var q=new URLSearchParams(location.search).get('ref');if(q){localStorage.setItem('nc_ref',q.replace(/[^A-Za-z0-9]/g,'').slice(0,12).toUpperCase());}var r=localStorage.getItem('nc_ref');if(r){$('#fRef').value=r;if(q){setTimeout(function(){openAuth('signup')},400)}}}catch(e){}})();
 verifySession();
 $('#mClose').onclick=closeAuth;$('#mask').addEventListener('mousedown',function(e){if(e.target===this)closeAuth()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAuth()});
-$('#mSwBtn').onclick=function(){mode=(mode==='forgot'||mode==='reset')?'login':(mode==='login'?'signup':'login');$('#fEmail').readOnly=false;showErr('');authText()};
+$('#mSwBtn').onclick=function(){needCode=false;$('#fCode').maxLength=6;mode=(mode==='forgot'||mode==='reset')?'login':(mode==='login'?'signup':'login');$('#fEmail').readOnly=false;showErr('');authText()};
 $('#mForgot').onclick=function(){mode='forgot';showErr('');authText();$('#fEmail').focus()};
 $('#mForm').addEventListener('submit',function(e){
  e.preventDefault();if(busy)return;
@@ -814,7 +814,7 @@ $('#mForm').addEventListener('submit',function(e){
  if(!email||!pw)return showErr(tr('e_fill'));
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return showErr(tr('e_mail'));
  if(!li){if(!name)return showErr(tr('e_name'));if(pw.length<6)return showErr(tr('e_len'));if(pw!==pw2)return showErr(tr('e_match'))}
- var body=li?{email:email,password:pw,lang:lang}:{lang:lang,name:name,email:email,password:pw,ref:($('#fRef').value||'').trim(),accountType:($('input[name=at]:checked')||{}).value||'banking'};
+ var body=li?{email:email,password:pw,lang:lang,code:needCode?($('#fCode').value||'').trim():undefined}:{lang:lang,name:name,email:email,password:pw,ref:($('#fRef').value||'').trim(),accountType:($('input[name=at]:checked')||{}).value||'banking'};
  busy=true;showErr('');var btn=$('#mSubmit');btn.disabled=true;btn.style.opacity=.6;
  fetch(WORKER+'?action='+(li?'login':'register'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
  .then(function(r){return r.json()}).then(function(d){
@@ -822,8 +822,8 @@ $('#mForm').addEventListener('submit',function(e){
    try{['user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});
     localStorage.setItem('session_token',d.token);localStorage.setItem('user_email',d.user.email);localStorage.setItem('user_role',d.user.role||'user');
     var nm=d.user.name||(d.user.email.split('@')[0]);localStorage.setItem('user_name',d.user.name||nm.charAt(0).toUpperCase()+nm.slice(1));}catch(x){}
-   location.href='app.html';
-  }else{busy=false;btn.disabled=false;btn.style.opacity=1;showErr((d&&d.error)||tr('e_net'))}
+   location.href='/app';
+  }else{busy=false;btn.disabled=false;btn.style.opacity=1;if(d&&d.needTotp){needCode=true;authText();$('#fCode').value='';$('#fCode').maxLength=8;$('#fCode').placeholder='2FA code';setTimeout(function(){$('#fCode').focus()},50)}showErr((d&&d.error)||tr('e_net'))}
  }).catch(function(){busy=false;btn.disabled=false;btn.style.opacity=1;showErr(tr('e_net'))});
 });
 
