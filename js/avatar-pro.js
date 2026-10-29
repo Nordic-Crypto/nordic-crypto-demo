@@ -18,24 +18,30 @@
   function paint() {
     settingsRow();
     targets().forEach(function (el) {
-      if (current) { el.style.backgroundImage = 'url(' + current + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; el.style.color = 'transparent'; }
-      else { el.style.backgroundImage = ''; el.style.color = ''; }
+      var st = el.style;
+      if (current) { st.setProperty('background-image', 'url(' + current + ')', 'important'); st.setProperty('background-size', 'cover', 'important'); st.setProperty('background-position', 'center', 'important'); st.setProperty('background-color', 'transparent', 'important'); st.setProperty('color', 'transparent', 'important'); st.setProperty('font-size', '0', 'important'); }
+      else { ['background-image', 'background-size', 'background-position', 'background-color', 'color', 'font-size'].forEach(function (k) { st.removeProperty(k); }); }
       el.style.cursor = 'pointer'; el.title = T.title;
       if (!el.__ncAv) { el.__ncAv = 1; el.addEventListener('click', openSheet); }
     });
   }
   function settingsRow() {
-    var row = document.querySelector('#settingsMask .settings-row'); if (!row) return;
-    var b = document.getElementById('ncAvSet');
-    if (!b) {
-      b = document.createElement('div'); b.id = 'ncAvSet';
-      b.style.cssText = 'width:56px;height:56px;border-radius:50%;flex-shrink:0;margin-right:14px;display:flex;align-items:center;justify-content:center;font:700 18px system-ui;color:#05070a;background:linear-gradient(135deg,#8b5cf6,#38bdf8);cursor:pointer;position:relative';
-      b.title = T.up; b.addEventListener('click', openSheet);
-      row.style.display = 'flex'; row.style.alignItems = 'center'; row.insertBefore(b, row.firstChild);
+    var box = document.querySelector('#settingsMask .box'); if (!box) return;
+    var w = document.getElementById('ncAvSetW');
+    if (!w) {
+      w = document.createElement('div'); w.id = 'ncAvSetW';
+      w.style.cssText = 'display:flex;flex-direction:column;align-items:center;margin:0 0 22px;cursor:pointer';
+      w.innerHTML = '<div id="ncAvSet" style="width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 32px system-ui;color:#05070a;position:relative;background:linear-gradient(135deg,#8b5cf6,#38bdf8)">' +
+        '<span id="ncAvIni"></span><span style="position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;background:#c8ff3d;border:3px solid #12161d;display:flex;align-items:center;justify-content:center">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05070a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>' +
+        '<div style="margin-top:10px;font:600 13px system-ui;color:#c8ff3d">' + (RU ? 'Изменить фото' : 'Change photo') + '</div>';
+      w.addEventListener('click', openSheet);
+      var h = box.querySelector('p.d'); if (h && h.parentNode === box) h.parentNode.insertBefore(w, h.nextSibling); else box.insertBefore(w, box.firstChild);
     }
+    var av = document.getElementById('ncAvSet'), ini = document.getElementById('ncAvIni');
     var nm = (localStorage.getItem('user_name') || 'U').trim().split(' ').map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase();
-    b.textContent = current ? '' : nm;
-    b.style.background = current ? 'url(' + current + ') center/cover' : 'linear-gradient(135deg,#8b5cf6,#38bdf8)';
+    ini.textContent = current ? '' : nm;
+    av.style.background = current ? 'url(' + current + ') center/cover' : 'linear-gradient(135deg,#8b5cf6,#38bdf8)';
   }
   function load() {
     if (!tok()) return;
