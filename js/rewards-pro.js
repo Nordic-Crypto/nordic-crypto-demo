@@ -40,6 +40,7 @@
       '<div class="bd">' + prog +
       '<p>Cashback this month: ' + usd(d.cashbackMonth) + ' of ' + usd(t.cap) + '</p>' +
       '<div class="r"><p>' + (d.welcomeDone ? '✓ Welcome bonus received' : 'Get ' + usd(c.welcome.amount) + ' on your first deposit of ' + usd(c.welcome.minDeposit) + ' or more') + '</p></div>' +
+      '<div class="r"><button type="button" class="nc-dailybtn" data-rw="daily"><span class="ic">🎁</span><span><b>Premium Bonus</b><small>Claim daily $5 reward</small></span></button></div>' +
       '<div class="r"><p>Invite a friend: you both get ' + usd(c.referral.referrer) + ' after their first deposit of ' + usd(c.referral.minDeposit) + ' or more</p>' +
       '<small>Your referral code</small><div class="code nc-no-i18n" data-nci18n="off"><b>' + esc(d.code) + '</b></div>' +
       '<div class="code"><button type="button" class="p" data-rw="copy"><span>Copy link</span></button>' + (navigator.share ? '<button type="button" data-rw="share"><span>Share</span></button>' : '') + '</div>' +
@@ -64,6 +65,7 @@
       el.addEventListener('click', function (e) {
         var b = e.target.closest ? e.target.closest('[data-rw]') : null; if (!b) return;
         if (b.getAttribute('data-rw') === 'toggle') { el.classList.toggle('open'); return; }
+        if (b.getAttribute('data-rw') === 'daily') { if (typeof window.openClientBonus === 'function') window.openClientBonus(); return; }
         if (b.getAttribute('data-rw') === 'share') { try { navigator.share({ title: 'NordicCrypto', url: el.__link }); } catch (x) {} return; }
         var done = function () { if (typeof toast === 'function') toast(window.NCI18N && NCI18N.t ? (NCI18N.t('Link copied') || 'Link copied') : 'Link copied'); };
         try { navigator.clipboard.writeText(el.__link).then(done, done); } catch (x) { done(); }
