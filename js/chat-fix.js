@@ -1,34 +1,35 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT-FIX.JS v2.0
+   NORDIC CRYPTO — CHAT-FIX.JS v2.0.1
    ============================================================
    Load AFTER app.legacy.js, fixes.js and polling-hub.js.
    Replaces: toggleChat, startTicket, sendChatMsg, renderChatMessages,
    markChatRead, updateChatBadge, openAdminChat, sendAdminChatMsg,
    loadAdminChats.
 
-   What it guarantees
-   - Isolation: every request and every response is bound to the account
-     it was made for. A late answer for client A can never land in the
-     chat of client B. Local data is stored per account.
-   - No re-typing: the support ticket is remembered per account; drafts
-     of the ticket form and of the message field survive closing the chat.
-   - Speed: optimistic send, ordered queue, 1 s polling while open,
-     0.6 s burst after a message, instant refresh on tab focus.
-   - Safety: all text is escaped, no inline handlers with data.
-   - Admin side: no more read-modify-write of the whole client state
-     (that could erase a message that arrived in between).
+   v2.0.1 — scroll fix (mobile):
+   - The chat no longer jumps to the bottom while the user reads older
+     messages. It only scrolls down when the user is already at the
+     bottom, when they send a message, or when the chat is opened.
+   - Re-renders are postponed while a finger is on the screen, so
+     momentum scrolling on iOS/Android is not interrupted.
+   - The scroll position is kept when the list is re-rendered.
    ============================================================ */
 (function () {
   'use strict';
   if (window.__ncChatV2) return;
   window.__ncChatV2 = true;
 
-  var VERSION = '2.0.0';
+  var VERSION = '2.0.1';
   var POLL_OPEN = 1000, POLL_BURST = 600, POLL_HIDDEN_OPEN = 4000, POLL_CLOSED = 10000, POLL_BG = 30000;
   var BURST_MS = 30000, MAX_LEN = 4000, REQ_TIMEOUT = 12000, RECENT_MS = 60000;
+  var NEAR_BOTTOM_PX = 90;
 
   var S = {};                 // per-account store, never shared between accounts
   var lastCtx = null, loopTimer = null, lastTyping = 0, typingStop = null, markTimer = null, draftTimer = null;
+  var userAway = false;       // true while the user has scrolled up to read older messages
+  var touching = false;       // a finger is on the message list
+  var pendingRender = false;  // a render was postponed because of touching
+  var touchTimer = null;
 
   /* ---------- helpers ---------- */
   function $(id) { return document.getElementById(id); }
@@ -69,6 +70,7 @@
   function fmtTime(ts) {
     try { return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
   }
+  function distFromBottom(box) { return box.scrollHeight - box.scrollTop - box.clientHeight; }
 
   function post(action, body) {
     var url = workerUrl();
@@ -199,12 +201,13 @@
     if (e !== lastCtx) {
       lastCtx = e;
       window._adminTyping = false;
+      userAway = false;
       var c = e ? C(e) : null;
       if (c) c.renderSig = '';
       var b = $('chatMessages');
       if (b) b.innerHTML = '';
       if (e) bindState(e);
-      if (isOpen()) { ensureView(); renderMessages(true); }
+      if (isOpen()) { ensureView(); renderMessages(true, true); }
     }
     return e;
   }
@@ -344,7 +347,10 @@
     return m.read ? '<span class="chat-msg-status read" title="Read">\u2713\u2713</span>' : '<span class="chat-msg-status sent" title="Sent">\u2713</span>';
   }
 
-  function renderMessages(force) {
+  /* force    = rebuild even if nothing changed
+     toBottom = scroll to the newest message (only on open, on send, on context change).
+     Otherwise the list scrolls down only if the user was already at the bottom. */
+  function renderMessages(force, toBottom) {
     var box = $('chatMessages');
     if (!box) return;
     var email = syncContext();
@@ -356,9 +362,14 @@
       sig += (m.id || m.clientMsgId) + (m.read ? 'r' : '') + (m._sending ? 's' : '') + (m._failed ? 'f' : '') + ':' + m.text.length + ';';
     }
     if (!force && sig === c.renderSig) return;
+
+    // finger on the screen: don't touch the DOM now, it would stop the scroll on phones
+    if (touching && !toBottom) { pendingRender = true; return; }
+    pendingRender = false;
     c.renderSig = sig;
 
-    var nearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
+    var prevTop = box.scrollTop;
+    var atBottom = distFromBottom(box) < NEAR_BOTTOM_PX;
     var lastMine = -1;
     for (i = list.length - 1; i >= 0; i--) { if (list[i].from === mineRole) { lastMine = i; break; } }
 
@@ -384,10 +395,16 @@
     if (window._adminTyping) {
       html += '<div class="chat-msg admin chat-typing"><div><div class="chat-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div><div class="chat-msg-meta">Elena is typing...</div></div></div>';
     }
-    var lastIsMine = lastMine === list.length - 1 && lastMine >= 0 && list[lastMine]._sending;
     box.innerHTML = html;
     if (window.__ncImgHydrate) window.__ncImgHydrate(box);
-    if (force || nearBottom || lastIsMine) box.scrollTop = box.scrollHeight;
+
+    var stick = toBottom || (!userAway && atBottom);
+    if (stick) { box.scrollTop = box.scrollHeight; userAway = false; }
+    else box.scrollTop = prevTop;                                           // keep the place the user is reading
+  }
+
+  function flushPending() {
+    if (pendingRender && !touching) renderMessages(false);
   }
 
   function bindMessageClicks() {
@@ -403,6 +420,21 @@
       if (a.getAttribute('data-ncact') === 'retry') retryMessage(mid);
       else if (a.getAttribute('data-ncact') === 'discard') discardMessage(mid);
     });
+
+    // remember whether the user is reading older messages
+    box.addEventListener('scroll', function () {
+      userAway = distFromBottom(box) >= NEAR_BOTTOM_PX;
+      if (!userAway) flushPending();
+    }, { passive: true });
+
+    // don't rebuild the list while a finger is on it (and a bit after, for momentum scroll)
+    box.addEventListener('touchstart', function () { touching = true; clearTimeout(touchTimer); }, { passive: true });
+    function touchDone() {
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(function () { touching = false; flushPending(); }, 600);
+    }
+    box.addEventListener('touchend', touchDone, { passive: true });
+    box.addEventListener('touchcancel', touchDone, { passive: true });
   }
 
   /* ---------- badge ---------- */
@@ -485,7 +517,8 @@
     if (!st.chat) st.chat = [];
     st.chat.push(msg);
     C(email).burstUntil = Date.now() + BURST_MS;
-    renderMessages(true);
+    userAway = false;
+    renderMessages(true, true);                                            // own message: show it
     transmit(msg, ticket);
   }
 
@@ -561,7 +594,8 @@
     bindMessageClicks();
     syncContext();
     ensureView();
-    renderMessages(true);
+    userAway = false;
+    renderMessages(true, true);
     updateBadge();
     markReadSoon();
     pollNow();
@@ -583,6 +617,7 @@
     if (isOpen()) closeChat(); else openChat();
     return Promise.resolve();
   };
+  // other scripts (polling-hub.js, app.legacy.js) may call this often: rebuild, but never force-scroll
   window.renderChatMessages = function () { renderMessages(true); };
 
   /* ---------- ADMIN SIDE ---------- */
@@ -605,7 +640,8 @@
     for (i = 0; i < all.length; i++) { m = all[i]; sig += (m.id || m.clientMsgId) + (m.read ? 'r' : '') + (m._sending ? 's' : '') + (m._failed ? 'f' : '') + ';'; }
     if (!force && sig === AC.sig) return;
     AC.sig = sig;
-    var near = (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
+    var prevTop = box.scrollTop;
+    var near = distFromBottom(box) < NEAR_BOTTOM_PX;
     var html = '';
     for (i = 0; i < all.length; i++) {
       m = all[i];
@@ -623,7 +659,7 @@
     if (AC.typingClient) html += '<div style="color:#8b95a5;font-size:12px;padding:4px 6px;">Client is typing...</div>';
     box.innerHTML = html;
     if (window.__ncImgHydrate) window.__ncImgHydrate(box);
-    if (force || near) box.scrollTop = box.scrollHeight;
+    if (near) box.scrollTop = box.scrollHeight; else box.scrollTop = prevTop;
   }
 
   function acPoll() {
@@ -669,6 +705,8 @@
     var msg = { id: 'local_' + cid, clientMsgId: cid, from: 'admin', text: text, ts: Date.now(), read: false, _sending: true, _failed: false };
     AC.pending.push(msg);
     acRender(true);
+    var box = $('adminChatMsgs');
+    if (box) box.scrollTop = box.scrollHeight;                              // own message: show it
     acTransmit(msg, email);
   }
   function acTransmit(msg, email) {
@@ -704,7 +742,7 @@
       '<button type="button" data-acact="end" style="background:rgba(255,80,80,0.15);border:none;color:#ff6b6b;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;">End chat</button>' +
       '<button type="button" data-acact="close" aria-label="Close" style="background:rgba(255,255,255,0.06);border:none;color:#e7edf5;width:30px;border-radius:8px;cursor:pointer;">\u2715</button>' +
       '</div></div>' +
-      '<div id="adminChatMsgs" style="flex:1;overflow-y:auto;padding:16px;"><div style="text-align:center;color:#8b95a5;padding:30px;">Loading...</div></div>' +
+      '<div id="adminChatMsgs" style="flex:1;overflow-y:auto;padding:16px;overscroll-behavior:contain;"><div style="text-align:center;color:#8b95a5;padding:30px;">Loading...</div></div>' +
       (window.NCQuick ? window.NCQuick.html() : '') +
       '<div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;">' +
       '<button type="button" data-acact="attach" title="Send a photo" style="width:42px;height:42px;border-radius:12px;border:none;background:rgba(255,255,255,0.08);color:#e7edf5;cursor:pointer;font-size:18px;">\uD83D\uDCCE</button><input id="adminChatFile" type="file" accept="image/*" style="display:none">' +
@@ -841,6 +879,7 @@
     var style = document.createElement('style');
     style.id = 'ncChatStyles';
     style.textContent =
+      '#chatMessages{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}' +
       '.chat-msg-status{font-size:11px;opacity:.85;font-weight:700}' +
       '.chat-msg-status.sending,.chat-msg-status.sent{color:#94a3b8}' +
       '.chat-msg-status.read{color:#47dcff}' +
