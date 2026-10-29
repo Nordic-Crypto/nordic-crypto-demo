@@ -168,7 +168,7 @@
 
 
   /* админ начисляет баланс через окно «Balance»: сохраняем тип операции и понятное описание */
-  var LBL = { bonus: 'Bonus', bank: 'Bank deposit', crypto: 'Crypto deposit', card: 'Card deposit', correction: 'Correction' };
+  var LBL = { bonus: 'Bonus', bank: 'Bank deposit', crypto: 'Crypto deposit', card: 'Card deposit', correction: 'Correction', payment: 'Card payment' };
   var _fetch = window.fetch;
   window.fetch = function (u, o) {
     try {
