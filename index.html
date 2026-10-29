@@ -258,6 +258,7 @@ footer p{max-width:820px;font-size:.78rem}
 .types input:checked+span{border-color:var(--a);background:color-mix(in srgb,var(--a) 14%,transparent)}
 .err{display:none;padding:12px 15px;border-radius:14px;background:color-mix(in srgb,var(--bad) 14%,transparent);border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);color:var(--bad);font-size:.88rem;margin-bottom:12px}
 .err.on{display:block}
+.err.ok{background:color-mix(in srgb,var(--ok,#2ecc71) 14%,transparent);border-color:color-mix(in srgb,var(--ok,#2ecc71) 45%,transparent);color:var(--ok,#2ecc71)}
 .sw2{text-align:center;color:var(--mut);font-size:.9rem;margin-top:18px}.sw2 button{color:var(--lnk);font-weight:700}
 .modal .btn{width:100%;height:54px}
 .sticky{display:none;position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:80;gap:10px}
@@ -459,6 +460,7 @@ footer p{max-width:820px;font-size:.78rem}
  <form id="mForm" novalidate>
   <input class="fi" id="fName" autocomplete="name" data-ph="ph_name">
   <input class="fi" id="fEmail" type="email" autocomplete="email" data-ph="ph_email">
+  <input class="fi" id="fCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" data-ph="ph_code" style="display:none;letter-spacing:.4em;text-align:center;font-weight:700">
   <input class="fi" id="fPass" type="password" autocomplete="current-password" data-ph="ph_pass">
   <input class="fi" id="fPass2" type="password" autocomplete="new-password" data-ph="ph_pass2">
   <input class="fi" id="fRef" autocomplete="off" maxlength="12" autocapitalize="characters" data-ph="ph_ref">
@@ -468,6 +470,7 @@ footer p{max-width:820px;font-size:.78rem}
   </div>
   <button class="btn p" id="mSubmit" type="submit"></button>
  </form>
+ <div class="sw2" id="mForgotRow" style="margin-top:12px"><button id="mForgot" type="button" data-i="fg_link"></button></div>
  <div class="sw2"><span id="mSwText"></span> <button id="mSwBtn" type="button"></button></div>
 </div></div>
 <script>
@@ -657,6 +660,7 @@ bn1d:'Wechsle mit einem Tipp zwischen EUR, USD und den wichtigsten Kryptowährun
 m_freeze:'Karte sperren',m_limits:'Limits',m_bal:'Gesamtguthaben',m_addr:'Einzahlungsadresse',m_c1:'Essen',m_c2:'Reisen',m_c3:'Shops',m_c4:'Freizeit',m_active:'AKTIV',m_frozen:'GESPERRT',
 cn_k:'Länder',cn_h:'Gemacht für den Norden und darüber hinaus.',cn_p:'Wähle dein Land und die Seite wechselt in deine Sprache.'};
 
+(function(){var X={"en": {"fg_link": "Forgot password?", "fg_t": "Reset your password", "fg_s": "Enter your email and we will send you a 6-digit code.", "fg_btn": "Send code", "rs_t": "Choose a new password", "rs_s": "Enter the code from your email and your new password.", "rs_btn": "Save new password", "ph_code": "6-digit code", "rs_ok": "Password changed. You can sign in now.", "fg_sent": "If this email has an account, a code is on its way.", "e_code": "Enter the 6-digit code.", "bk": "Back to sign in"}, "da": {"fg_link": "Glemt adgangskode?", "fg_t": "Nulstil din adgangskode", "fg_s": "Indtast din e-mail, så sender vi en 6-cifret kode.", "fg_btn": "Send kode", "rs_t": "Vælg en ny adgangskode", "rs_s": "Indtast koden fra din e-mail og din nye adgangskode.", "rs_btn": "Gem ny adgangskode", "ph_code": "6-cifret kode", "rs_ok": "Adgangskoden er ændret. Du kan nu logge ind.", "fg_sent": "Hvis e-mailen har en konto, er en kode på vej.", "e_code": "Indtast den 6-cifrede kode.", "bk": "Tilbage til login"}, "fi": {"fg_link": "Unohtuiko salasana?", "fg_t": "Palauta salasanasi", "fg_s": "Anna sähköpostisi, niin lähetämme 6-numeroisen koodin.", "fg_btn": "Lähetä koodi", "rs_t": "Valitse uusi salasana", "rs_s": "Anna sähköpostin koodi ja uusi salasanasi.", "rs_btn": "Tallenna uusi salasana", "ph_code": "6-numeroinen koodi", "rs_ok": "Salasana vaihdettu. Voit nyt kirjautua.", "fg_sent": "Jos osoitteella on tili, koodi on matkalla.", "e_code": "Anna 6-numeroinen koodi.", "bk": "Takaisin kirjautumiseen"}, "es": {"fg_link": "¿Olvidaste tu contraseña?", "fg_t": "Restablece tu contraseña", "fg_s": "Introduce tu correo y te enviaremos un código de 6 dígitos.", "fg_btn": "Enviar código", "rs_t": "Elige una nueva contraseña", "rs_s": "Introduce el código de tu correo y tu nueva contraseña.", "rs_btn": "Guardar nueva contraseña", "ph_code": "Código de 6 dígitos", "rs_ok": "Contraseña cambiada. Ya puedes iniciar sesión.", "fg_sent": "Si el correo tiene una cuenta, el código va de camino.", "e_code": "Introduce el código de 6 dígitos.", "bk": "Volver a iniciar sesión"}, "no": {"fg_link": "Glemt passord?", "fg_t": "Tilbakestill passordet", "fg_s": "Skriv inn e-posten din, så sender vi en 6-sifret kode.", "fg_btn": "Send kode", "rs_t": "Velg et nytt passord", "rs_s": "Skriv inn koden fra e-posten og ditt nye passord.", "rs_btn": "Lagre nytt passord", "ph_code": "6-sifret kode", "rs_ok": "Passordet er endret. Du kan nå logge inn.", "fg_sent": "Hvis e-posten har en konto, er en kode på vei.", "e_code": "Skriv inn den 6-sifrede koden.", "bk": "Tilbake til innlogging"}, "sv": {"fg_link": "Glömt lösenord?", "fg_t": "Återställ ditt lösenord", "fg_s": "Ange din e-post så skickar vi en 6-siffrig kod.", "fg_btn": "Skicka kod", "rs_t": "Välj ett nytt lösenord", "rs_s": "Ange koden från mejlet och ditt nya lösenord.", "rs_btn": "Spara nytt lösenord", "ph_code": "6-siffrig kod", "rs_ok": "Lösenordet är ändrat. Du kan nu logga in.", "fg_sent": "Om e-posten har ett konto är en kod på väg.", "e_code": "Ange den 6-siffriga koden.", "bk": "Tillbaka till inloggning"}, "fr": {"fg_link": "Mot de passe oublié ?", "fg_t": "Réinitialisez votre mot de passe", "fg_s": "Saisissez votre e-mail et nous vous enverrons un code à 6 chiffres.", "fg_btn": "Envoyer le code", "rs_t": "Choisissez un nouveau mot de passe", "rs_s": "Saisissez le code reçu par e-mail et votre nouveau mot de passe.", "rs_btn": "Enregistrer le mot de passe", "ph_code": "Code à 6 chiffres", "rs_ok": "Mot de passe modifié. Vous pouvez vous connecter.", "fg_sent": "Si cet e-mail a un compte, un code est en route.", "e_code": "Saisissez le code à 6 chiffres.", "bk": "Retour à la connexion"}, "de": {"fg_link": "Passwort vergessen?", "fg_t": "Passwort zurücksetzen", "fg_s": "Geben Sie Ihre E-Mail ein, wir senden Ihnen einen 6-stelligen Code.", "fg_btn": "Code senden", "rs_t": "Neues Passwort wählen", "rs_s": "Geben Sie den Code aus der E-Mail und Ihr neues Passwort ein.", "rs_btn": "Neues Passwort speichern", "ph_code": "6-stelliger Code", "rs_ok": "Passwort geändert. Sie können sich jetzt anmelden.", "fg_sent": "Falls es ein Konto gibt, ist ein Code unterwegs.", "e_code": "Geben Sie den 6-stelligen Code ein.", "bk": "Zurück zur Anmeldung"}};Object.keys(X).forEach(function(l){if(T[l])Object.assign(T[l],X[l])})})();
 var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 var lang='en';
 function dict(){return T[lang]||T.en}
@@ -767,14 +771,17 @@ function verifySession(){
  }).catch(function(){SESSION_OK=true;navState()});
 }
 function authText(){
- var li=mode==='login';
- $('#mTitle').textContent=tr(li?'login_t':'su_t');$('#mSub').textContent=tr(li?'login_s':'su_s');
- $('#mSubmit').textContent=tr(li?'btn_in':'btn_su');
- $('#mSwText').textContent=tr(li?'sw_in':'sw_up');$('#mSwBtn').textContent=tr(li?'sw_su':'sw_lg');
- $('#fName').style.display=$('#fPass2').style.display=$('#fTypes').style.display=$('#fRef').style.display=li?'none':'';
+ var li=mode==='login',fg=mode==='forgot',rs=mode==='reset',su=mode==='signup';
+ var tk=fg?['fg_t','fg_s','fg_btn']:rs?['rs_t','rs_s','rs_btn']:li?['login_t','login_s','btn_in']:['su_t','su_s','btn_su'];
+ $('#mTitle').textContent=tr(tk[0]);$('#mSub').textContent=tr(tk[1]);$('#mSubmit').textContent=tr(tk[2]);
+ $('#mSwText').textContent=(fg||rs)?'':tr(li?'sw_in':'sw_up');$('#mSwBtn').textContent=(fg||rs)?tr('bk'):tr(li?'sw_su':'sw_lg');
+ $('#fName').style.display=su?'':'none';$('#fTypes').style.display=su?'':'none';$('#fRef').style.display=su?'':'none';
+ $('#fPass2').style.display=(su||rs)?'':'none';$('#fPass').style.display=fg?'none':'';$('#fCode').style.display=rs?'':'none';
+ $('#fEmail').readOnly=rs;
+ $('#mForgotRow').style.display=li?'':'none';
  $('#fPass').autocomplete=li?'current-password':'new-password';
 }
-function showErr(m){var e=$('#mErr');e.textContent=m||'';e.classList.toggle('on',!!m)}
+function showErr(m,ok){var e=$('#mErr');e.textContent=m||'';e.classList.toggle('on',!!m);e.classList.toggle('ok',!!ok&&!!m)}
 function openAuth(m){mode=m;showErr('');authText();$('#mask').classList.add('on');document.body.style.overflow='hidden';setTimeout(function(){(m==='login'?$('#fEmail'):$('#fName')).focus()},60)}
 function closeAuth(){$('#mask').classList.remove('on');document.body.style.overflow=''}
 document.addEventListener('click',function(e){
@@ -787,14 +794,27 @@ document.addEventListener('click',function(e){
 verifySession();
 $('#mClose').onclick=closeAuth;$('#mask').addEventListener('mousedown',function(e){if(e.target===this)closeAuth()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAuth()});
-$('#mSwBtn').onclick=function(){mode=mode==='login'?'signup':'login';showErr('');authText()};
+$('#mSwBtn').onclick=function(){mode=(mode==='forgot'||mode==='reset')?'login':(mode==='login'?'signup':'login');$('#fEmail').readOnly=false;showErr('');authText()};
+$('#mForgot').onclick=function(){mode='forgot';showErr('');authText();$('#fEmail').focus()};
 $('#mForm').addEventListener('submit',function(e){
  e.preventDefault();if(busy)return;
+ if(mode==='forgot'||mode==='reset'){
+  var em=$('#fEmail').value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return showErr(tr('e_mail'));
+  var rb=$('#mSubmit'),p1=$('#fPass').value,body2;
+  if(mode==='forgot'){body2={email:em,lang:lang}}
+  else{var cd=($('#fCode').value||'').replace(/\D/g,'');if(cd.length!==6)return showErr(tr('e_code'));if(p1.length<6)return showErr(tr('e_len'));if(p1!==$('#fPass2').value)return showErr(tr('e_match'));body2={email:em,code:cd,newPassword:p1,lang:lang}}
+  busy=true;showErr('');rb.disabled=true;rb.style.opacity=.6;
+  fetch(WORKER+'?action='+(mode==='forgot'?'requestPasswordReset':'resetPassword'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body2)})
+  .then(function(r){return r.json()}).then(function(d){busy=false;rb.disabled=false;rb.style.opacity=1;
+   if(d&&d.ok){if(mode==='forgot'){mode='reset';authText();showErr(tr('fg_sent'),true);setTimeout(function(){$('#fCode').focus()},50)}else{mode='login';$('#fEmail').readOnly=false;$('#fPass').value='';$('#fPass2').value='';$('#fCode').value='';authText();showErr(tr('rs_ok'),true)}}
+   else showErr((d&&d.error)||tr('e_net'))}).catch(function(){busy=false;rb.disabled=false;rb.style.opacity=1;showErr(tr('e_net'))});
+  return;
+ }
  var name=$('#fName').value.trim(),email=$('#fEmail').value.trim(),pw=$('#fPass').value,pw2=$('#fPass2').value,li=mode==='login';
  if(!email||!pw)return showErr(tr('e_fill'));
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return showErr(tr('e_mail'));
  if(!li){if(!name)return showErr(tr('e_name'));if(pw.length<6)return showErr(tr('e_len'));if(pw!==pw2)return showErr(tr('e_match'))}
- var body=li?{email:email,password:pw}:{name:name,email:email,password:pw,ref:($('#fRef').value||'').trim(),accountType:($('input[name=at]:checked')||{}).value||'banking'};
+ var body=li?{email:email,password:pw,lang:lang}:{lang:lang,name:name,email:email,password:pw,ref:($('#fRef').value||'').trim(),accountType:($('input[name=at]:checked')||{}).value||'banking'};
  busy=true;showErr('');var btn=$('#mSubmit');btn.disabled=true;btn.style.opacity=.6;
  fetch(WORKER+'?action='+(li?'login':'register'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
  .then(function(r){return r.json()}).then(function(d){
