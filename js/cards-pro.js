@@ -3,6 +3,8 @@
 (function () {
   'use strict';
   if (window.__cardsPro) return; window.__cardsPro = true;
+  /* card numbers saved with spaces were split twice ("4147 200 0 12 34 6 205"): keep digits only, then group by 4 */
+  window.fmtCard = function (num) { var d = String(num == null ? '' : num).replace(/\D/g, ''); return d.replace(/(.{4})/g, '$1 ').trim(); };
   var NAMES = { cosmic: 'Midnight', purple: 'Amethyst', silver: 'Platinum', black: 'Onyx', gold: 'Gold', ocean: 'Lagoon', mountain: 'Fjord', aurora: 'Aurora', city: 'Dusk' };
   function $(id) { return document.getElementById(id); }
   function hide() { var m = $('designMask'); if (m) { m.classList.remove('on'); m.style.display = 'none'; } }
