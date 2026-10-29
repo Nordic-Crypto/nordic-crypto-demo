@@ -21,7 +21,7 @@
   };
   function register() { if (window.NCI18N && NCI18N.add) { Object.keys(D).forEach(function (l) { NCI18N.add(l, D[l]); }); return true; } return false; }
 
-  var css = '.nc-rw{margin:14px 0;padding:18px;border-radius:20px;background:linear-gradient(135deg,rgba(198,255,61,.10),rgba(139,92,246,.12));border:1px solid rgba(255,255,255,.12);color:var(--tx,#eef4ff)}' +
+  var css = '.nc-rw .hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;user-select:none}.nc-rw .hd .cb{opacity:.85;font-size:13px}.nc-rw .hd .chev{margin-left:auto;font-style:normal;font-size:22px;line-height:1;opacity:.7;transition:transform .2s}.nc-rw.open .chev{transform:rotate(90deg)}.nc-rw .bd{display:none;margin-top:12px}.nc-rw.open .bd{display:block}.nc-rw{margin:14px 0;padding:12px 16px;border-radius:20px;background:linear-gradient(135deg,rgba(198,255,61,.10),rgba(139,92,246,.12));border:1px solid rgba(255,255,255,.12);color:var(--tx,#eef4ff)}' +
     '.nc-rw h3{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px}.nc-rw .t{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.nc-rw .b{padding:5px 12px;border-radius:999px;font-weight:800;font-size:13px;background:#c6ff3d;color:#07080c}' +
     '.nc-rw .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:6px 0}.nc-rw .bar i{display:block;height:100%;background:linear-gradient(90deg,#c6ff3d,#8b5cf6)}' +
     '.nc-rw p{margin:6px 0;font-size:13px;opacity:.85;line-height:1.45}.nc-rw .r{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)}' +
@@ -32,18 +32,18 @@
   var D0 = null, busy = false;
   function paint(el, d) {
     var c = d.cfg, t = d.tier, nx = d.next, prog = '';
-    if (nx) { var span = nx.min - t.min, got = Math.max(0, d.volume - t.min); prog = '<div class="bar"><i style="width:' + Math.min(100, Math.round(got / span * 100)) + '%"></i></div><p>Deposit ' + usd(nx.min - d.realDeposits) + ' more to reach ' + esc(nx.name) + ' (' + pct(nx.rate) + ' cashback)</p>'; }
+    if (nx) { var span = nx.min - t.min, got = Math.max(0, d.volume - t.min); prog = '<div class="bar"><i style="width:' + Math.min(100, Math.round(got / span * 100)) + '%"></i></div><p>Deposit ' + usd(nx.min - (d.volume != null ? d.volume : d.realDeposits)) + ' more to reach ' + esc(nx.name) + ' (' + pct(nx.rate) + ' cashback)</p>'; }
     else prog = '<p>You are on the top tier</p>';
     var link = location.origin + '/index.html?ref=' + d.code;
     el.innerHTML =
-      '<h3>🎁 <span>Rewards</span></h3>' +
-      '<div class="t"><span class="b">' + esc(t.name) + '</span><span>' + pct(t.rate) + ' cashback</span></div>' + prog +
+      '<div class="hd" data-rw="toggle" role="button" tabindex="0"><span>🎁</span><b><span>Rewards</span></b><span class="b">' + esc(t.name) + '</span><span class="cb">' + pct(t.rate) + ' cashback</span><i class="chev">›</i></div>' +
+      '<div class="bd">' + prog +
       '<p>Cashback this month: ' + usd(d.cashbackMonth) + ' of ' + usd(t.cap) + '</p>' +
       '<div class="r"><p>' + (d.welcomeDone ? '✓ Welcome bonus received' : 'Get ' + usd(c.welcome.amount) + ' on your first deposit of ' + usd(c.welcome.minDeposit) + ' or more') + '</p></div>' +
       '<div class="r"><p>Invite a friend: you both get ' + usd(c.referral.referrer) + ' after their first deposit of ' + usd(c.referral.minDeposit) + ' or more</p>' +
       '<small>Your referral code</small><div class="code nc-no-i18n" data-nci18n="off"><b>' + esc(d.code) + '</b></div>' +
       '<div class="code"><button type="button" class="p" data-rw="copy"><span>Copy link</span></button>' + (navigator.share ? '<button type="button" data-rw="share"><span>Share</span></button>' : '') + '</div>' +
-      '<small>Friends joined: ' + (d.referral.invited || []).length + ' · Rewards earned: ' + usd(d.referral.earned) + '</small></div>';
+      '<small>Friends joined: ' + (d.referral.invited || []).length + ' · Rewards earned: ' + usd(d.referral.earned) + '</small></div></div>';
     el.__link = link;
   }
   function ensure() {
@@ -55,7 +55,7 @@
     var el = $('ncRewards');
     var anchor = null;
     if (useEx) { var a0 = $('cpAlloc') || host.querySelector('.ex-bal-stats'); if (a0) { var n = a0; while (n.parentNode && n.parentNode !== host) n = n.parentNode; anchor = n; } }
-    else anchor = $('cpQa') || host.querySelector('.nc3-hero');
+    else anchor = host.querySelector('.nc3-overview') || $('cpQa');
     if (el && anchor && el.previousElementSibling !== anchor && el.parentNode !== anchor.parentNode) { el.remove(); el = null; }
     if (!el) {
       if (!anchor) return;
@@ -63,6 +63,7 @@
       anchor.parentNode.insertBefore(el, anchor.nextSibling);
       el.addEventListener('click', function (e) {
         var b = e.target.closest ? e.target.closest('[data-rw]') : null; if (!b) return;
+        if (b.getAttribute('data-rw') === 'toggle') { el.classList.toggle('open'); return; }
         if (b.getAttribute('data-rw') === 'share') { try { navigator.share({ title: 'NordicCrypto', url: el.__link }); } catch (x) {} return; }
         var done = function () { if (typeof toast === 'function') toast(window.NCI18N && NCI18N.t ? (NCI18N.t('Link copied') || 'Link copied') : 'Link copied'); };
         try { navigator.clipboard.writeText(el.__link).then(done, done); } catch (x) { done(); }
