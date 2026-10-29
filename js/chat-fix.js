@@ -376,7 +376,7 @@
         var stat = statusHtml(m, mine, i === lastMine);
         var metaInner = meta + (stat ? (meta ? ' ' : '') + stat : '');
         html += '<div class="chat-msg ' + (mine ? 'client' : 'admin') + (same ? ' same-author' : '') + '">' +
-          '<div><div class="chat-bubble' + (m._failed ? ' failed' : '') + '">' + linkify(m.text) + '</div>' +
+          '<div><div class="chat-bubble' + (m._failed ? ' failed' : '') + '">' + linkify(m.text) + (window.__ncImg ? window.__ncImg(m, window.adminViewingEmail ? ctxEmail() : '') : '') + '</div>' +
           (metaInner ? '<div class="chat-msg-meta">' + metaInner + '</div>' : '') + '</div></div>';
         prevFrom = m.from; prevTs = m.ts;
       }
@@ -386,6 +386,7 @@
     }
     var lastIsMine = lastMine === list.length - 1 && lastMine >= 0 && list[lastMine]._sending;
     box.innerHTML = html;
+    if (window.__ncImgHydrate) window.__ncImgHydrate(box);
     if (force || nearBottom || lastIsMine) box.scrollTop = box.scrollHeight;
   }
 
@@ -612,7 +613,7 @@
       html += '<div style="display:flex;margin-bottom:10px;' + (isAdmin ? 'justify-content:flex-end;' : '') + '">' +
         '<div style="max-width:72%;padding:10px 14px;border-radius:16px;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;' +
         (isAdmin ? 'background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;' : 'background:rgba(255,255,255,0.06);color:#e7edf5;') +
-        (m._failed ? 'outline:1px solid #ff5470;' : '') + (m._sending ? 'opacity:.7;' : '') + '">' + linkify(m.text) +
+        (m._failed ? 'outline:1px solid #ff5470;' : '') + (m._sending ? 'opacity:.7;' : '') + '">' + linkify(m.text) + (window.__ncImg ? window.__ncImg(m, AC.email) : '') +
         '<div style="font-size:10px;opacity:.6;margin-top:4px;text-align:right;">' + fmtTime(m.ts) +
         (m._failed ? ' \u00B7 <span data-acact="retry" data-mid="' + esc(m.clientMsgId) + '" style="cursor:pointer;text-decoration:underline;">retry</span>' : '') +
         (isAdmin && !m._sending && !m._failed ? (m.read ? ' \u2713\u2713' : ' \u2713') : '') +
@@ -621,6 +622,7 @@
     if (!all.length) html = '<div style="text-align:center;color:#8b95a5;padding:30px;">No messages</div>';
     if (AC.typingClient) html += '<div style="color:#8b95a5;font-size:12px;padding:4px 6px;">Client is typing...</div>';
     box.innerHTML = html;
+    if (window.__ncImgHydrate) window.__ncImgHydrate(box);
     if (force || near) box.scrollTop = box.scrollHeight;
   }
 
@@ -703,7 +705,9 @@
       '<button type="button" data-acact="close" aria-label="Close" style="background:rgba(255,255,255,0.06);border:none;color:#e7edf5;width:30px;border-radius:8px;cursor:pointer;">\u2715</button>' +
       '</div></div>' +
       '<div id="adminChatMsgs" style="flex:1;overflow-y:auto;padding:16px;"><div style="text-align:center;color:#8b95a5;padding:30px;">Loading...</div></div>' +
+      (window.NCQuick ? window.NCQuick.html() : '') +
       '<div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;">' +
+      '<button type="button" data-acact="attach" title="Send a photo" style="width:42px;height:42px;border-radius:12px;border:none;background:rgba(255,255,255,0.08);color:#e7edf5;cursor:pointer;font-size:18px;">\uD83D\uDCCE</button><input id="adminChatFile" type="file" accept="image/*" style="display:none">' +
       '<input id="adminChatInput" placeholder="Reply..." autocomplete="off" style="flex:1;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#e7edf5;font-size:13px;outline:none;">' +
       '<button type="button" data-acact="send" style="width:42px;height:42px;border-radius:12px;border:none;background:linear-gradient(135deg,#5f2ee5,#8b5cf6);color:#fff;cursor:pointer;">\u2192</button>' +
       '</div></div>';
@@ -715,6 +719,7 @@
       var act = a.getAttribute('data-acact');
       if (act === 'close') acClose();
       else if (act === 'send') acSend();
+      else if (act === 'attach') { var fi = $('adminChatFile'); if (fi) fi.click(); }
       else if (act === 'end') { if (typeof window.endAdminChat === 'function') window.endAdminChat(email); }
       else if (act === 'del') {
         var did = a.getAttribute('data-id');
@@ -730,6 +735,13 @@
         var mid = a.getAttribute('data-mid');
         AC.pending.forEach(function (p) { if (p.clientMsgId === mid) acTransmit(p, email); });
         acRender(true);
+      }
+    });
+    if (window.NCQuick) window.NCQuick.bind(modal);
+    modal.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'adminChatFile') {
+        var file = e.target.files && e.target.files[0]; e.target.value = '';
+        if (window.NCChatExtra) window.NCChatExtra.sendImage(email, file, function () { acPoll(); });
       }
     });
     document.body.appendChild(modal);
