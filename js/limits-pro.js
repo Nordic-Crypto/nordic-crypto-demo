@@ -157,6 +157,11 @@
     api('getUserLimits', { email: email }).then(function (d) { if (d && d.ok) show(d); else $('nclBody').textContent = (d && d.error) || 'Could not load'; }).catch(function () { $('nclBody').textContent = 'Connection error'; });
   }
 
-  setInterval(function () { buildActs(); adminPanel(); drawerBtn(); }, 800);
-  buildActs();
+  function tickAll() { buildActs(); adminPanel(); drawerBtn(); }
+  var busyL = false;
+  new MutationObserver(function (list) {
+    if (busyL) return;
+    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { busyL = true; try { tickAll(); } finally { busyL = false; } break; }
+  }).observe(document.body, { childList: true, subtree: true });
+  setInterval(tickAll, 2000); tickAll();
 })();
