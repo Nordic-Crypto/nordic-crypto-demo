@@ -75,7 +75,7 @@
   function openLimits() {
     close();
     ov = document.createElement('div'); ov.className = 'ncl-ov';
-    ov.innerHTML = '<div class="ncl-box"><div class="ncl-h"><h2>Limits</h2><button class="ncl-x" id="nclX">×</button></div><p class="ncl-sub">Withdrawal limits on your account</p><div id="nclBody" style="color:#8b95a5;padding:20px 0;text-align:center">Loading…</div></div>';
+    ov.innerHTML = '<div class="ncl-box"><div class="ncl-h"><h2>Limits</h2><button class="ncl-x" id="nclX">\u00d7</button></div><p class="ncl-sub">Withdrawal limits on your account</p><div id="nclBody" style="color:#8b95a5;padding:20px 0;text-align:center">Loading…</div></div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
     $('nclX').onclick = close;
@@ -107,7 +107,7 @@
     var role = ''; try { role = localStorage.getItem('user_role'); } catch (e) {} if (role !== 'admin') return;
     var box = document.createElement('div'); box.className = 'ncl-adm'; box.id = 'nclAdm';
     function row(k, name) { return '<div>' + name + '</div><input class="ncl-in" id="nclc_' + k + '" type="number" min="0" step="1"><input class="ncl-in" id="nclt_' + k + '" type="number" min="0" step="1"><input class="ncl-in" id="ncld_' + k + '" type="number" min="0" step="1">'; }
-    box.innerHTML = '<h3>Withdrawal limits</h3><div style="color:#8b95a5;font-size:12px">Apply to all clients. Amounts in USD. Window renews on a rolling basis.</div>' +
+    box.innerHTML = '<h3>Withdrawal limits (default for all clients)</h3><div style="color:#8b95a5;font-size:12px">Amounts in USD. For a single client open Clients → client → “Withdrawal limits”.</div>' +
       '<div class="ncl-grid"><div></div><div>Max withdrawals</div><div>Max per transaction</div><div>Max per day</div>' + row('bank', 'Bank') + row('crypto', 'Crypto') + row('card', 'Card') + '</div>' +
       '<div style="display:flex;gap:10px;align-items:center;margin-top:12px"><label style="font-size:12px;color:#8b95a5">Window (hours)</label><input class="ncl-in" id="nclw" type="number" min="1" max="168" style="width:90px">' +
       '<button class="ncl-btn" id="nclSave" style="width:auto;padding:10px 20px;margin-left:auto">Save limits</button></div><div id="nclMsg" style="font-size:12px;margin-top:8px;min-height:16px"></div>';
@@ -122,6 +122,41 @@
     };
   }
 
-  setInterval(function () { buildActs(); adminPanel(); }, 800);
+  /* ---------- per-client limits (Admin → client drawer) ---------- */
+  function drawerBtn() {
+    var b = document.querySelector('.ap-dr [data-act="iban"]'); if (!b || !b.parentNode) return;
+    if (b.parentNode.querySelector('[data-ncl-e]')) return;
+    var e = b.getAttribute('data-e'); if (!e) return;
+    var n = document.createElement('button'); n.className = b.className.replace(/\bpri\b|\bbad\b|\bfull\b/g, '').trim(); n.setAttribute('data-ncl-e', e); n.type = 'button';
+    n.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;vertical-align:-3px;margin-right:6px"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Withdrawal limits';
+    b.parentNode.insertBefore(n, b.nextSibling);
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-ncl-e]'); if (!b) return;
+    ev.preventDefault(); ev.stopPropagation(); openUserLimits(b.getAttribute('data-ncl-e'));
+  }, true);
+  function openUserLimits(email) {
+    close();
+    ov = document.createElement('div'); ov.className = 'ncl-ov'; ov.style.zIndex = 100002;
+    ov.innerHTML = '<div class="ncl-box"><div class="ncl-h"><h2>Withdrawal limits</h2><button class="ncl-x" id="nclX">\u00d7</button></div><p class="ncl-sub">' + esc(email) + '<br>Empty field = use the global limit.</p><div id="nclBody" style="color:#8b95a5;padding:16px 0;text-align:center">Loading…</div></div>';
+    document.body.appendChild(ov); ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); $('nclX').onclick = close;
+    function show(d) {
+      var h = '<div class="ncl-grid" style="grid-template-columns:78px 1fr 1fr 1fr;margin-top:0"><div></div><div>Withdrawals</div><div>Per transaction $</div><div>Per day $</div>';
+      ['bank', 'crypto', 'card'].forEach(function (k) {
+        var o = d.override[k] || {}, g = d.global[k];
+        function inp(f, v, ph) { return '<input class="ncl-in" id="ncu_' + k + '_' + f + '" type="number" min="0" step="1" value="' + (v == null ? '' : v) + '" placeholder="' + ph + '">'; }
+        h += '<div>' + NAMES[k][0].split(' ')[0] + '</div>' + inp('count', o.count, g.count) + inp('maxTx', o.maxTx, g.maxTx) + inp('maxDay', o.maxDay, g.maxDay);
+      });
+      h += '</div><div id="nclMsg" style="font-size:12px;margin:12px 0 0;min-height:16px"></div><div style="display:flex;gap:10px;margin-top:10px"><button class="ncl-btn" id="ncuReset" style="background:rgba(255,255,255,.08);color:#fff">Reset to global</button><button class="ncl-btn" id="ncuSave">Save</button></div>';
+      $('nclBody').style.cssText = ''; $('nclBody').innerHTML = h;
+      function msg(t, bad) { var m = $('nclMsg'); m.textContent = t; m.style.color = bad ? '#ff6b86' : '#34d399'; }
+      function send(cfg) { api('setUserLimits', { email: email, config: cfg }).then(function (r) { if (r && r.ok) { show(r); var m = $('nclMsg'); m.textContent = Object.keys(r.override).length ? 'Saved for this client.' : 'This client now uses the global limits.'; m.style.color = '#34d399'; } else msg((r && r.error) || 'Failed', true); }).catch(function () { msg('Connection error', true); }); }
+      $('ncuSave').onclick = function () { var cfg = {}; ['bank', 'crypto', 'card'].forEach(function (k) { cfg[k] = { count: $('ncu_' + k + '_count').value, maxTx: $('ncu_' + k + '_maxTx').value, maxDay: $('ncu_' + k + '_maxDay').value }; }); send(cfg); };
+      $('ncuReset').onclick = function () { send({}); };
+    }
+    api('getUserLimits', { email: email }).then(function (d) { if (d && d.ok) show(d); else $('nclBody').textContent = (d && d.error) || 'Could not load'; }).catch(function () { $('nclBody').textContent = 'Connection error'; });
+  }
+
+  setInterval(function () { buildActs(); adminPanel(); drawerBtn(); }, 800);
   buildActs();
 })();
