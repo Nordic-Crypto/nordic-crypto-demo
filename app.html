@@ -6224,7 +6224,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261104"></script>
+<script src="js/app.legacy.js?v=20261105"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -6609,6 +6609,24 @@ document.addEventListener('click', function(e) {
         list.innerHTML = '<div class="admin-empty">No withdrawals yet.</div>';
         return;
       }
+      function ncEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+      function ncRow(l,v,mono){return '<div class="awd-row" style="gap:12px"><span>'+l+'</span><b style="'+(mono?'font-family:ui-monospace,Menlo,monospace;font-size:12px;':'')+'word-break:break-all;text-align:right;max-width:70%">'+(v===''||v==null?'—':ncEsc(v))+'</b></div>';}
+      function ncWdRows(w){
+        var d=w.details||{}, m=String(w.method||'iban').toLowerCase();
+        if(m==='crypto'){
+          var r='';
+          r+=ncRow('Coin',d.coin);
+          if(d.coinAmount) r+=ncRow('Send exactly', d.coinAmount+' '+(d.coin||'')+(d.rate?'  (@ $'+Number(d.rate).toLocaleString('en-US')+')':''));
+          if(d.inputCurrency&&d.inputCurrency!=='USD'&&d.inputAmount) r+=ncRow('Client entered', d.inputAmount+' '+d.inputCurrency);
+          r+=ncRow('Network',d.network);
+          r+=ncRow('Address',d.address,true);
+          if(d.memo) r+=ncRow('Memo / Tag',d.memo,true);
+          if(d.destination&&d.destination!=='external') r+=ncRow('Destination',d.destination);
+          return r;
+        }
+        if(m==='card') return ncRow('Holder',d.cardName)+ncRow('Card',d.cardNumber,true)+ncRow('Expiry',d.expiry);
+        return ncRow('Name',d.name)+ncRow('IBAN',d.iban,true)+ncRow('SWIFT',d.swift,true)+(d.bank?ncRow('Bank',d.bank):'')+(d.country?ncRow('Country',d.country):'');
+      }
       var html = '';
       withdrawals.forEach(function(w) {
         var isPending = w.status === 'pending';
@@ -6627,9 +6645,7 @@ document.addEventListener('click', function(e) {
             '</div>' +
             '<div class="awd-amount">$' + Number(w.amount).toFixed(2) + ' <span style="font-size:12px;color:#7c9cbb">via ' + (w.method || 'iban').toUpperCase() + '</span></div>' +
             '<div class="awd-details">' +
-              '<div class="awd-row"><span>Name</span><b>' + (w.details && w.details.name || '—') + '</b></div>' +
-              '<div class="awd-row"><span>IBAN</span><b>' + (w.details && w.details.iban || '—') + '</b></div>' +
-              '<div class="awd-row"><span>SWIFT</span><b>' + (w.details && w.details.swift || '—') + '</b></div>' +
+              ncWdRows(w) +
             '</div>' +
             (isPending ? 
               '<div class="awd-actions">' +
@@ -7143,5 +7159,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/i18n-app.js?v=3"></script>
 <script src="js/theme-pro.js?v=5"></script>
 <script src="js/avatar-pro.js?v=3"></script>
+<script src="js/withdraw-crypto.js?v=1"></script>
 </body>
 </html>
