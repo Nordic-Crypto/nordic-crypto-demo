@@ -160,12 +160,11 @@
   }
 
   function tickAll() { buildActs(); adminPanel(); drawerBtn(); }
-  var busyL = false;
-  var obsL = new MutationObserver(function (list) {
-    if (busyL) return;
-    var now = Date.now(); if (now - (obsL.t0 || 0) > 1000) { obsL.t0 = now; obsL.n = 0; } if (++obsL.n > 60) return;   // safety valve: never spin
-    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { busyL = true; try { tickAll(); } finally { busyL = false; } break; }
-  });
-  obsL.observe(document.body, { childList: true, subtree: true });
+  // MutationObserver -> requestAnimationFrame: runs before the next paint (no flicker) but never loops inside one task (no freeze)
+  var rafL = 0;
+  new MutationObserver(function (list) {
+    if (rafL) return;
+    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { rafL = requestAnimationFrame(function () { rafL = 0; try { tickAll(); } catch (e) {} }); break; }
+  }).observe(document.body, { childList: true, subtree: true });
   setInterval(tickAll, 2000); tickAll();
 })();
