@@ -1594,6 +1594,7 @@ function openTxDetails(tx) {
       rows += txdRow('Method', (wd.method || 'iban').toUpperCase());
       if (wd.details) {
         var d = wd.details;
+        if (d.payCurrency && d.payAmount) rows += txdRow('Withdrawn in', escapeHtml(d.payAmount + ' ' + d.payCurrency));
         if (d.name) rows += txdRow('Recipient', escapeHtml(d.name));
         if (d.iban) rows += txdRow('IBAN', escapeHtml(d.iban), true);
         if (d.swift) rows += txdRow('SWIFT / BIC', escapeHtml(d.swift), true);
@@ -4531,16 +4532,16 @@ function renderAdminWithdrawalCard(w) {
   var statusMap = { 'pending': { cls: 'pend', txt: '⏳ Pending' }, 'approved': { cls: 'ok', txt: '✅ Approved' }, 'rejected': { cls: 'fail', txt: '❌ Rejected' } };
   var s = statusMap[w.status] || statusMap['pending'];
   var d = w.details || {};
-  var details = '';
+  var details = (d.payCurrency && d.payAmount) ? '<div class="awd-row"><span>Client withdraws in</span><b>' + escapeHtml(d.payAmount + ' ' + d.payCurrency) + '</b></div>' : '';
   if (w.method === 'iban') {
-    details = '<div class="awd-row"><span>Name</span><b>' + escapeHtml(d.name || '—') + '</b></div>' +
+    details += '<div class="awd-row"><span>Name</span><b>' + escapeHtml(d.name || '—') + '</b></div>' +
       '<div class="awd-row"><span>IBAN</span><b>' + escapeHtml(d.iban || '—') + '</b></div>' +
       '<div class="awd-row"><span>SWIFT</span><b>' + escapeHtml(d.swift || '—') + '</b></div>';
   } else if (w.method === 'card') {
-    details = '<div class="awd-row"><span>Holder</span><b>' + escapeHtml(d.cardName || '—') + '</b></div>' +
+    details += '<div class="awd-row"><span>Holder</span><b>' + escapeHtml(d.cardName || '—') + '</b></div>' +
       '<div class="awd-row"><span>Card</span><b>' + escapeHtml(d.cardNumber || '—') + '</b></div>';
   } else if (w.method === 'crypto') {
-    details = '<div class="awd-row"><span>Coin</span><b>' + escapeHtml(d.coin || '—') + '</b></div>' +
+    details += '<div class="awd-row"><span>Coin</span><b>' + escapeHtml(d.coin || '—') + '</b></div>' +
       (d.coinAmount ? '<div class="awd-row"><span>Send exactly</span><b>' + escapeHtml(d.coinAmount + ' ' + (d.coin || '')) + (d.rate ? ' (@ $' + escapeHtml(d.rate) + ')' : '') + '</b></div>' : '') +
       '<div class="awd-row"><span>Network</span><b>' + escapeHtml(d.network || '—') + '</b></div>' +
       '<div class="awd-row"><span>Address</span><b style="word-break:break-all;font-family:monospace;font-size:12px">' + escapeHtml(d.address || '—') + '</b></div>' +
