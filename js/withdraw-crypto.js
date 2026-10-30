@@ -4,25 +4,25 @@
   'use strict';
   if (window.__ncWdCrypto) return; window.__ncWdCrypto = 1;
   var WORKER = 'https://nordic-deposit-checker.otis-790.workers.dev';
-  var cur = 'USD'; // amount currency: USD | EUR | COIN
+  var cur = 'FIAT'; // crypto amount unit: FIAT (the currency picked in "Withdraw in") | COIN
 
   function $(id) { return document.getElementById(id); }
   function S() { return window.st || {}; }
   function coin() { return ($('wdCryptoCoin') || {}).value || 'USDT'; }
+  var CURS = [['USD', 'US dollar'], ['EUR', 'Euro'], ['SEK', 'Swedish krona'], ['NOK', 'Norwegian krone'], ['DKK', 'Danish krone'], ['GBP', 'British pound'], ['CAD', 'Canadian dollar']];
+  function locCode() { var e = $('ncwCur'); return (e && e.value) || 'USD'; }          // currency chosen in "Withdraw in"
+  function rateOf(code) { var s = S(), m = { USD: 1, EUR: s.eurR || 0.92, SEK: s.sekR || 10.45, NOK: s.nokR || 10.5, DKK: s.dkkR || 6.9, GBP: s.gbpR || 0.79, CAD: s.cadR || 1.38 }; return m[code] || 1; }   // 1 USD = rate units
+  function locRate() { return rateOf(locCode()); }
   function priceUsd(c) { var s = S(); if (c === 'ETH') return s.ethP || 0; if (c === 'BTC') return s.btcP || 0; return 1; }
-  function locCode() { var c = String(S().currency || 'USD').toUpperCase(); return c === 'USD' ? 'EUR' : c; }   // client's own currency (EUR by default for USD users)
-  function locRate() { var s = S(), m = { EUR: s.eurR || 0.92, SEK: s.sekR || 10.45, NOK: s.nokR || 10.5, DKK: s.dkkR || 6.9, GBP: s.gbpR || 0.79, CAD: s.cadR || 1.38 }; return m[locCode()] || 1; }   // 1 USD = locRate units
   function dp(c) { return (c === 'ETH' || c === 'BTC') ? 8 : 2; }
   function nf(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function toUsd(v) {
-    if (cur === 'LOC') return v / locRate();
     if (cur === 'COIN') return v * priceUsd(coin());
-    return v;
+    return v / locRate();
   }
   function fromUsd(u, to) {
-    if (to === 'LOC') return u * locRate();
     if (to === 'COIN') { var p = priceUsd(coin()); return p ? u / p : 0; }
-    return u;
+    return u * locRate();
   }
   function round2(x) { return Math.round(x * 100) / 100; }
 
@@ -69,21 +69,21 @@
     var rate = priceUsd(c);
     box.innerHTML = '<small>' + (v > 0 ? 'You will receive ≈' : 'Enter amount to see conversion') + '</small>' +
       '<b>' + (v > 0 ? nf(rcv, dp(c)) + ' ' + c : '— ' + c) + '</b>' +
-      '<small>' + (v > 0 ? 'Debited from balance: $' + nf(u, 2) + (cur === 'LOC' ? ' (' + nf(v, 2) + ' ' + locCode() + ')' : '') + ' · ' : '') +
+      '<small>' + (v > 0 ? 'Debited from balance: $' + nf(u, 2) + (cur === 'FIAT' && locCode() !== 'USD' ? ' (' + nf(v, 2) + ' ' + locCode() + ')' : '') + ' · ' : '') +
       (c === 'USDT' || c === 'USDC' ? '1 ' + c + ' = $1.00' : '1 ' + c + ' = $' + nf(rate, 2) + ' (' + nf(rate * locRate(), 2) + ' ' + locCode() + ')') + '</small>';
   }
   function setCur(x) {
     cur = x;
     var seg = $('ncwSeg'); if (seg) [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === x); });
-    var inp = $('wdAmount'); if (inp) { inp.placeholder = '0.00 ' + (x === 'COIN' ? coin() : x === 'LOC' ? locCode() : x); inp.step = x === 'COIN' && dp(coin()) === 8 ? '0.0001' : '0.01'; }
+    var inp = $('wdAmount'); if (inp) { inp.placeholder = '0.00 ' + (x === 'COIN' ? coin() : locCode()); inp.step = x === 'COIN' && dp(coin()) === 8 ? '0.0001' : '0.01'; }
     updatePreview();
   }
-  function syncCoinButton() { var g = $('ncwSeg'); if (!g) return; var b = g.querySelector('[data-c=COIN]'); if (b) b.textContent = coin(); var l = g.querySelector('[data-c=LOC]'); if (l) l.textContent = locCode(); }
+  function syncCoinButton() { var g = $('ncwSeg'); if (!g) return; var b = g.querySelector('[data-c=COIN]'); if (b) b.textContent = coin(); var l = g.querySelector('[data-c=FIAT]'); if (l) l.textContent = locCode(); }
   function enhance() {
     var f = $('wdFieldsCrypto'); if (!f || $('ncwSeg')) return;
     var wrap = document.createElement('div');
     wrap.innerHTML = '<label class="wd-label">Amount in <button type="button" class="ncw-max" id="ncwMax">Max</button></label>' +
-      '<div class="ncw-seg" id="ncwSeg"><button type="button" data-c="USD" class="on">USD</button><button type="button" data-c="LOC">EUR</button><button type="button" data-c="COIN">ETH</button></div>' +
+      '<div class="ncw-seg" id="ncwSeg"><button type="button" data-c="FIAT" class="on">USD</button><button type="button" data-c="COIN">ETH</button></div>' +
       '<div class="ncw-recv" id="ncwRecv"></div>';
     f.insertBefore(wrap, f.firstChild);
     $('ncwSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setCur(b.dataset.c); });
@@ -102,16 +102,41 @@
     });
     // default: ETH, as most clients withdraw to Ethereum
     if (cs && cs.value !== 'ETH') { cs.value = 'ETH'; var n0 = $('wdCryptoNetwork'); if (n0) n0.value = 'ERC20'; }
-    syncCoinButton(); setCur('USD');
+    syncCoinButton(); setCur('FIAT');
   }
   function tick() {
     var m = $('wdMethod'), isC = m && m.value === 'crypto';
-    enhance(); syncCoinButton();
+    enhance(); enhanceCur(); syncCoinButton();
     var seg = $('ncwSeg'); if (seg) {
-      if (!isC && cur !== 'USD') { cur = 'USD'; var inp = $('wdAmount'); if (inp) inp.placeholder = '0.00'; [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === 'USD'); }); }
+      if (!isC && cur !== 'FIAT') { cur = 'FIAT'; [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === 'FIAT'); }); }
     }
     if (isC) updatePreview();
   }
+  /* ---------- "Withdraw in" currency (all methods) ---------- */
+  var wasOpen = false;
+  function pendingUsd() { return (S().withdrawals || []).filter(function (w) { return w.status === 'pending'; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0); }
+  function enhanceCur() {
+    var amt = $('wdAmount'); if (!amt) return;
+    if (!$('ncwCur')) {
+      var w = document.createElement('div');
+      w.innerHTML = '<label class="wd-label">Withdraw in</label><select id="ncwCur" class="wd-input">' + CURS.map(function (c) { return '<option value="' + c[0] + '">' + c[0] + ' — ' + c[1] + '</option>'; }).join('') + '</select>';
+      var lab = amt.previousElementSibling; amt.parentNode.insertBefore(w, lab && lab.tagName === 'LABEL' ? lab : amt);
+      var h = document.createElement('div'); h.id = 'ncwHint'; h.style.cssText = 'font-size:12px;color:#8b95a5;margin:6px 0 0;min-height:0'; amt.parentNode.insertBefore(h, amt.nextSibling);
+      $('ncwCur').addEventListener('change', function () { syncCoinButton(); setCur(cur); refreshCur(); });
+      amt.addEventListener('input', refreshCur);
+    }
+    var m = $('withdrawModal'), open = !!(m && m.style.display !== 'none' && m.offsetParent !== null);
+    if (open && !wasOpen) { var d = String(S().currency || 'USD').toUpperCase(); var sel = $('ncwCur'); sel.value = CURS.some(function (c) { return c[0] === d; }) ? d : 'USD'; syncCoinButton(); setCur(cur); }
+    wasOpen = open; refreshCur();
+  }
+  function refreshCur() {
+    var amt = $('wdAmount'), h = $('ncwHint'), mth = $('wdMethod'); if (!amt || !h) return;
+    var code = locCode(), isC = mth && mth.value === 'crypto', v = parseFloat(amt.value) || 0;
+    var av = $('wdAvailable'); if (av) { var avail = Math.max(0, (S().usd || 0) - pendingUsd()), t = nf(avail * locRate(), 2) + ' ' + code; if (av.textContent !== t) av.textContent = t; }
+    var t2 = (!isC && code !== 'USD' && v > 0) ? '≈ $' + nf(round2(v / locRate()), 2) + ' will be debited from your balance (1 USD = ' + nf(locRate(), 4) + ' ' + code + ')' : '';
+    if (h.textContent !== t2) h.textContent = t2;
+  }
+
   setInterval(tick, 400);
 
   /* ---------- address validation ---------- */
@@ -140,7 +165,7 @@
     function showErr(m) { if (errEl) { errEl.textContent = m; errEl.style.display = 'block'; } }
     if (errEl) errEl.style.display = 'none';
     var v = parseFloat($('wdAmount').value) || 0, c = coin(), net = $('wdCryptoNetwork').value;
-    var usd = round2(toUsd(v));
+    var usd = round2(toUsd(v)), fiatCode = locCode();
     var addr = ($('wdCryptoAddress').value || '').trim(), memo = (($('wdCryptoMemo') || {}).value || '').trim();
     var dest = ($('wdCryptoDest') || {}).value || 'external';
     if (!(v > 0) || usd < 1) return showErr('Minimum withdrawal is $1.00');
@@ -149,12 +174,13 @@
     var rate = priceUsd(c), coinAmt = rate ? Math.floor(usd / rate * Math.pow(10, dp(c))) / Math.pow(10, dp(c)) : 0;
     var token = localStorage.getItem('session_token');
     if (!token) return showErr('Session expired. Please sign in again.');
-    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: cur === 'COIN' ? c : cur === 'LOC' ? locCode() : cur, inputAmount: String(v), localRate: Math.round(locRate() * 10000) / 10000 };
+    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: cur === 'COIN' ? c : locCode(), inputAmount: String(v), payCurrency: locCode() };
 
-    overlay('<div class="ncw-swap"><div class="ncw-coin a">USD</div><div class="ncw-arrow"></div><div class="ncw-coin b">' + esc(c) + '</div></div>' +
-      '<h3>Processing withdrawal</h3><p>$' + nf(usd, 2) + ' → ≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</p>' +
+    var fcode = cur === 'FIAT' ? fiatCode : 'USD';
+    overlay('<div class="ncw-swap"><div class="ncw-coin a">' + esc(fcode) + '</div><div class="ncw-arrow"></div><div class="ncw-coin b">' + esc(c) + '</div></div>' +
+      '<h3>Processing withdrawal</h3><p>' + (cur === 'FIAT' ? nf(v, 2) + ' ' + esc(locCode()) : '$' + nf(usd, 2)) + ' → ≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</p>' +
       '<div class="ncw-steps">' +
-      '<div class="ncw-st act" data-ncws="0"><i></i>Converting USD to ' + esc(c) + '</div>' +
+      '<div class="ncw-st act" data-ncws="0"><i></i>Converting ' + esc(fcode) + ' to ' + esc(c) + '</div>' +
       '<div class="ncw-st" data-ncws="1"><i></i>Checking address ' + esc(short(addr)) + '</div>' +
       '<div class="ncw-st" data-ncws="2"><i></i>Sending to compliance review</div></div>');
 
@@ -174,7 +200,7 @@
         try { if (typeof window.closeWithdraw === 'function') window.closeWithdraw(); if (typeof window.render === 'function') window.render(); } catch (e) {}
         return sleep(450).then(function () {
           overlay('<div class="ncw-ok"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div><h3>Request submitted</h3><p>Your withdrawal is under review. We will notify you once it is sent.</p>' +
-            '<div class="ncw-sum"><div><span>Debited</span><b>$' + nf(usd, 2) + '</b></div><div><span>You receive</span><b>≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</b></div>' +
+            '<div class="ncw-sum"><div><span>Debited</span><b>$' + nf(usd, 2) + (cur === 'FIAT' && fiatCode !== 'USD' ? ' (' + nf(v, 2) + ' ' + esc(fiatCode) + ')' : '') + '</b></div><div><span>You receive</span><b>≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</b></div>' +
             '<div><span>Network</span><b>' + esc(NETN[net] || net) + '</b></div><div><span>To</span><b>' + esc(short(addr)) + '</b></div><div><span>Status</span><b style="color:#fbbf24">Under review</b></div></div>' +
             '<button class="ncw-btn" id="ncwDone">Done</button>');
           $('ncwDone').onclick = closeOv;
@@ -182,10 +208,26 @@
       });
   }
 
+  var ofetch = window.fetch;
+  window.fetch = function (u, o) {                          // adds the chosen currency to bank/card withdrawal requests
+    try {
+      if (window.__ncWdMeta && typeof u === 'string' && u.indexOf('action=withdraw') > -1 && o && typeof o.body === 'string') {
+        var b = JSON.parse(o.body);
+        if (b && b.method !== 'crypto') { b.details = Object.assign({}, b.details || {}, window.__ncWdMeta); o = Object.assign({}, o, { body: JSON.stringify(b) }); }
+        window.__ncWdMeta = null;
+      }
+    } catch (e) {}
+    return ofetch.call(this, u, o);
+  };
   var orig;
   function mine() {
     var m = $('wdMethod');
     if (m && m.value === 'crypto') return submitCrypto();
+    var code = locCode(), amt = $('wdAmount');
+    if (m && amt && code !== 'USD') {                       // bank / card in another currency: the balance is debited in USD
+      var v = parseFloat(amt.value) || 0;
+      if (v > 0) { var u = round2(v / locRate()); window.__ncWdMeta = { payCurrency: code }; amt.value = String(u); setTimeout(function () { if (amt.value === String(u)) amt.value = String(v); }, 500); setTimeout(function () { window.__ncWdMeta = null; }, 6000); }
+    } else window.__ncWdMeta = null;
     return typeof orig === 'function' ? orig.apply(this, arguments) : undefined;
   }
   function install() { if (window.submitWithdraw !== mine) { orig = window.submitWithdraw; window.submitWithdraw = mine; } }
