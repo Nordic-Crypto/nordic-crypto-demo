@@ -827,6 +827,7 @@ function fmtCurrency(usdAmount) {
   else if (cur === 'NOK') { amount = usdAmount * (st.nokR || 10.5); symbol = 'kr '; suffix = ' NOK'; }
   else if (cur === 'DKK') { amount = usdAmount * (st.dkkR || 6.9); symbol = 'kr '; suffix = ' DKK'; }
   else if (cur === 'GBP') { amount = usdAmount * (st.gbpR || 0.79); symbol = '£'; }
+  else if (cur === 'CAD') { amount = usdAmount * (st.cadR || 1.38); symbol = 'CA$'; }
   var formatted = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return symbol + formatted + suffix;
 }
@@ -842,6 +843,7 @@ function loadExchangeRates() {
         if (r.NOK) st.nokR = Number(r.NOK);
         if (r.DKK) st.dkkR = Number(r.DKK);
         if (r.GBP) st.gbpR = Number(r.GBP);
+        if (r.CAD) st.cadR = Number(r.CAD);
 
         var rateEUR = document.getElementById('rateEUR');
         if (rateEUR) rateEUR.textContent = '1$ = ' + st.eurR.toFixed(2) + '€';
@@ -851,6 +853,8 @@ function loadExchangeRates() {
         if (rateNOK && r.NOK) rateNOK.textContent = '1$ = ' + Number(r.NOK).toFixed(2) + 'kr';
         var rateDKK = document.getElementById('rateDKK');
         if (rateDKK && r.DKK) rateDKK.textContent = '1$ = ' + Number(r.DKK).toFixed(2) + 'kr';
+        var rateCAD = document.getElementById('rateCAD');
+        if (rateCAD && r.CAD) rateCAD.textContent = '1$ = ' + Number(r.CAD).toFixed(2) + 'CA$';
         var rateGBP = document.getElementById('rateGBP');
         if (rateGBP && r.GBP) rateGBP.textContent = '1$ = ' + Number(r.GBP).toFixed(2) + '£';
 
@@ -1832,8 +1836,8 @@ function renderIbanByAdmin() {
     if (bankEl && st.user.bank) bankEl.textContent = st.user.bank;
     var countryEl = document.getElementById('myCountry');
     if (countryEl) {
-      var names = { SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', DE: 'Germany', FR: 'France', ES: 'Spain', IT: 'Italy', NL: 'Netherlands', GB: 'United Kingdom', US: 'United States' };
-      var flags = { SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', DE: '🇩🇪', FR: '🇫🇷', ES: '🇪🇸', IT: '🇮🇹', NL: '🇳🇱', GB: '🇬🇧', US: '🇺🇸' };
+      var names = { SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', DE: 'Germany', FR: 'France', ES: 'Spain', IT: 'Italy', NL: 'Netherlands', GB: 'United Kingdom', US: 'United States', CA: 'Canada' };
+      var flags = { SE: '🇸🇪', NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', DE: '🇩🇪', FR: '🇫🇷', ES: '🇪🇸', IT: '🇮🇹', NL: '🇳🇱', GB: '🇬🇧', US: '🇺🇸', CA: '🇨🇦' };
       var code = st.user.country || 'SE';
       countryEl.textContent = (flags[code] || '') + ' ' + (names[code] || code) + ' (' + code + ')';
     }
@@ -3474,7 +3478,7 @@ function initCountryCurrencyLink() {
   if (!countryEl) return;
   countryEl.addEventListener('change', function () {
     var country = this.value;
-    var currencyMap = { SE: 'SEK', NO: 'NOK', DK: 'DKK', FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', GB: 'GBP', US: 'USD' };
+    var currencyMap = { SE: 'SEK', NO: 'NOK', DK: 'DKK', FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', GB: 'GBP', US: 'USD', CA: 'CAD' };
     var currency = currencyMap[country] || 'EUR';
     var btns = document.querySelectorAll('.cur-btn');
     for (var i = 0; i < btns.length; i++) {
@@ -5834,3 +5838,23 @@ console.log('%c[NordicCrypto] 🎁 Global error handler installed', 'color:#00d4
 /* 🎁 BONUS: version indicator */
 window.NC_VERSION = '7.1.0-' + new Date().toISOString().slice(0,10);
 console.log('%c[NordicCrypto] 📦 Version: ' + window.NC_VERSION, 'color:#9b8cff;font-weight:bold;font-size:13px');
+
+
+/* ═══════════════════ AUTO CURRENCY BY COUNTRY (once per account) ═══════════════════ */
+(function () {
+  var MAP = { SE: 'SEK', NO: 'NOK', DK: 'DKK', GB: 'GBP', UK: 'GBP', CA: 'CAD', US: 'USD',
+    FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', PT: 'EUR', AT: 'EUR', BE: 'EUR', IE: 'EUR', GR: 'EUR' };
+  var NAME = { SWEDEN: 'SE', NORWAY: 'NO', DENMARK: 'DK', FINLAND: 'FI', GERMANY: 'DE', FRANCE: 'FR', SPAIN: 'ES', ITALY: 'IT', NETHERLANDS: 'NL', 'UNITED KINGDOM': 'GB', 'UNITED STATES': 'US', CANADA: 'CA' };
+  function run() {
+    try {
+      var em = (localStorage.getItem('user_email') || '').toLowerCase(); if (!em || window.adminViewingEmail) return;
+      var flag = 'nc_cur_auto_' + em; if (localStorage.getItem(flag)) return;
+      if (typeof st === 'undefined' || !st || !st.verification || !st.verification.personalInfo) return;
+      var c = String(st.verification.personalInfo.country || '').trim().toUpperCase(); c = NAME[c] || c;
+      var cur = MAP[c]; if (!cur) return;
+      localStorage.setItem(flag, '1');
+      if ((st.currency || 'USD') === 'USD' && cur !== 'USD' && typeof setCurrency === 'function') { setCurrency(cur); if (typeof render === 'function') render(); }
+    } catch (e) {}
+  }
+  setInterval(run, 4000);
+})();
