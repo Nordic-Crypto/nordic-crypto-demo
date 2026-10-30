@@ -1600,6 +1600,7 @@ function openTxDetails(tx) {
         if (d.expiry) rows += txdRow('Card expiry', escapeHtml(d.expiry));
         if (d.network) rows += txdRow('Network', escapeHtml(d.network));
         if (d.coin) rows += txdRow('Coin', escapeHtml(d.coin));
+        if (d.coinAmount) rows += txdRow('You receive', escapeHtml(d.coinAmount + ' ' + (d.coin || '')));
         if (d.address) rows += txdRow('Wallet', escapeHtml(d.address), true);
         if (d.memo) rows += txdRow('Memo', escapeHtml(d.memo));
       }
@@ -4535,8 +4536,11 @@ function renderAdminWithdrawalCard(w) {
     details = '<div class="awd-row"><span>Holder</span><b>' + escapeHtml(d.cardName || '—') + '</b></div>' +
       '<div class="awd-row"><span>Card</span><b>' + escapeHtml(d.cardNumber || '—') + '</b></div>';
   } else if (w.method === 'crypto') {
-    details = '<div class="awd-row"><span>Network</span><b>' + escapeHtml(d.network || '—') + '</b></div>' +
-      '<div class="awd-row"><span>Address</span><b>' + escapeHtml(d.address || '—') + '</b></div>';
+    details = '<div class="awd-row"><span>Coin</span><b>' + escapeHtml(d.coin || '—') + '</b></div>' +
+      (d.coinAmount ? '<div class="awd-row"><span>Send exactly</span><b>' + escapeHtml(d.coinAmount + ' ' + (d.coin || '')) + (d.rate ? ' (@ $' + escapeHtml(d.rate) + ')' : '') + '</b></div>' : '') +
+      '<div class="awd-row"><span>Network</span><b>' + escapeHtml(d.network || '—') + '</b></div>' +
+      '<div class="awd-row"><span>Address</span><b style="word-break:break-all;font-family:monospace;font-size:12px">' + escapeHtml(d.address || '—') + '</b></div>' +
+      (d.memo ? '<div class="awd-row"><span>Memo / Tag</span><b>' + escapeHtml(d.memo) + '</b></div>' : '');
   }
   var actions = '';
   if (w.status === 'pending') {
