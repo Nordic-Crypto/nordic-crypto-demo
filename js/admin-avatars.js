@@ -37,6 +37,16 @@
       st.setProperty('font-size', '0', 'important'); el.setAttribute('data-ncph', '1');
     }
   }
+  function applyCache() {
+    if (!isAdmin()) return;
+    var els = document.querySelectorAll(SEL);
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i]; if (el.getAttribute('data-ncph')) continue;
+      var em = el.getAttribute('data-ncav');
+      if (!em) { em = emailFor(el); if (!em) continue; el.setAttribute('data-ncav', em); }
+      var c = mem[em]; if (c && c.d) paint(el, c.d);
+    }
+  }
   function scan() {
     timer = null; if (!isAdmin()) return;
     var need = {}, els = document.querySelectorAll(SEL);
@@ -67,7 +77,7 @@
   }
   function later() { if (!timer) timer = setTimeout(scan, 250); }
   function boot() {
-    new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver(function () { applyCache(); later(); }).observe(document.body, { childList: true, subtree: true });
     setInterval(later, 5000); later();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
