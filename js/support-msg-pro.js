@@ -88,13 +88,11 @@
     open(em, nm);
   }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  // inject synchronously right after the list is re-rendered (before the browser paints) so the icon never blinks
-  var busyInj = false;
-  var obsS = new MutationObserver(function (list) {
-    if (busyInj) return;
-    var now = Date.now(); if (now - (obsS.t0 || 0) > 1000) { obsS.t0 = now; obsS.n = 0; } if (++obsS.n > 60) return;   // safety valve
-    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { busyInj = true; try { inject(); } finally { busyInj = false; } break; }
-  });
-  obsS.observe(document.body, { childList: true, subtree: true });
+  // MutationObserver -> requestAnimationFrame: runs before the next paint (no flicker) but never loops inside one task (no freeze)
+  var rafS = 0;
+  new MutationObserver(function (list) {
+    if (rafS) return;
+    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { rafS = requestAnimationFrame(function () { rafS = 0; try { inject(); } catch (e) {} }); break; }
+  }).observe(document.body, { childList: true, subtree: true });
   setInterval(inject, 2000); inject();
 })();
