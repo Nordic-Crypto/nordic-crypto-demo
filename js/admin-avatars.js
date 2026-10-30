@@ -77,7 +77,7 @@
   }
   function later() { if (!timer) timer = setTimeout(scan, 250); }
   function boot() {
-    new MutationObserver(function () { applyCache(); later(); }).observe(document.body, { childList: true, subtree: true });
+    var rafA = 0; new MutationObserver(function () { if (rafA) return; rafA = requestAnimationFrame(function () { rafA = 0; try { applyCache(); } catch (e) {} later(); }); }).observe(document.body, { childList: true, subtree: true });
     setInterval(later, 5000); later();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
