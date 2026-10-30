@@ -10,16 +10,17 @@
   function S() { return window.st || {}; }
   function coin() { return ($('wdCryptoCoin') || {}).value || 'USDT'; }
   function priceUsd(c) { var s = S(); if (c === 'ETH') return s.ethP || 0; if (c === 'BTC') return s.btcP || 0; return 1; }
-  function eurR() { return S().eurR || 0.92; }              // 1 USD = eurR EUR
+  function locCode() { var c = String(S().currency || 'USD').toUpperCase(); return c === 'USD' ? 'EUR' : c; }   // client's own currency (EUR by default for USD users)
+  function locRate() { var s = S(), m = { EUR: s.eurR || 0.92, SEK: s.sekR || 10.45, NOK: s.nokR || 10.5, DKK: s.dkkR || 6.9, GBP: s.gbpR || 0.79, CAD: s.cadR || 1.38 }; return m[locCode()] || 1; }   // 1 USD = locRate units
   function dp(c) { return (c === 'ETH' || c === 'BTC') ? 8 : 2; }
   function nf(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function toUsd(v) {
-    if (cur === 'EUR') return v / eurR();
+    if (cur === 'LOC') return v / locRate();
     if (cur === 'COIN') return v * priceUsd(coin());
     return v;
   }
   function fromUsd(u, to) {
-    if (to === 'EUR') return u * eurR();
+    if (to === 'LOC') return u * locRate();
     if (to === 'COIN') { var p = priceUsd(coin()); return p ? u / p : 0; }
     return u;
   }
@@ -68,21 +69,21 @@
     var rate = priceUsd(c);
     box.innerHTML = '<small>' + (v > 0 ? 'You will receive ≈' : 'Enter amount to see conversion') + '</small>' +
       '<b>' + (v > 0 ? nf(rcv, dp(c)) + ' ' + c : '— ' + c) + '</b>' +
-      '<small>' + (v > 0 ? 'Debited from balance: $' + nf(u, 2) + (cur === 'EUR' ? ' (€' + nf(v, 2) + ')' : '') + ' · ' : '') +
-      (c === 'USDT' || c === 'USDC' ? '1 ' + c + ' = $1.00' : '1 ' + c + ' = $' + nf(rate, 2) + ' (€' + nf(rate * eurR(), 2) + ')') + '</small>';
+      '<small>' + (v > 0 ? 'Debited from balance: $' + nf(u, 2) + (cur === 'LOC' ? ' (' + nf(v, 2) + ' ' + locCode() + ')' : '') + ' · ' : '') +
+      (c === 'USDT' || c === 'USDC' ? '1 ' + c + ' = $1.00' : '1 ' + c + ' = $' + nf(rate, 2) + ' (' + nf(rate * locRate(), 2) + ' ' + locCode() + ')') + '</small>';
   }
   function setCur(x) {
     cur = x;
     var seg = $('ncwSeg'); if (seg) [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === x); });
-    var inp = $('wdAmount'); if (inp) { inp.placeholder = '0.00 ' + (x === 'COIN' ? coin() : x); inp.step = x === 'COIN' && dp(coin()) === 8 ? '0.0001' : '0.01'; }
+    var inp = $('wdAmount'); if (inp) { inp.placeholder = '0.00 ' + (x === 'COIN' ? coin() : x === 'LOC' ? locCode() : x); inp.step = x === 'COIN' && dp(coin()) === 8 ? '0.0001' : '0.01'; }
     updatePreview();
   }
-  function syncCoinButton() { var b = $('ncwSeg') && $('ncwSeg').querySelector('[data-c=COIN]'); if (b) b.textContent = coin(); }
+  function syncCoinButton() { var g = $('ncwSeg'); if (!g) return; var b = g.querySelector('[data-c=COIN]'); if (b) b.textContent = coin(); var l = g.querySelector('[data-c=LOC]'); if (l) l.textContent = locCode(); }
   function enhance() {
     var f = $('wdFieldsCrypto'); if (!f || $('ncwSeg')) return;
     var wrap = document.createElement('div');
     wrap.innerHTML = '<label class="wd-label">Amount in <button type="button" class="ncw-max" id="ncwMax">Max</button></label>' +
-      '<div class="ncw-seg" id="ncwSeg"><button type="button" data-c="USD" class="on">USD</button><button type="button" data-c="EUR">EUR</button><button type="button" data-c="COIN">ETH</button></div>' +
+      '<div class="ncw-seg" id="ncwSeg"><button type="button" data-c="USD" class="on">USD</button><button type="button" data-c="LOC">EUR</button><button type="button" data-c="COIN">ETH</button></div>' +
       '<div class="ncw-recv" id="ncwRecv"></div>';
     f.insertBefore(wrap, f.firstChild);
     $('ncwSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setCur(b.dataset.c); });
@@ -105,7 +106,7 @@
   }
   function tick() {
     var m = $('wdMethod'), isC = m && m.value === 'crypto';
-    enhance();
+    enhance(); syncCoinButton();
     var seg = $('ncwSeg'); if (seg) {
       if (!isC && cur !== 'USD') { cur = 'USD'; var inp = $('wdAmount'); if (inp) inp.placeholder = '0.00'; [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === 'USD'); }); }
     }
@@ -148,7 +149,7 @@
     var rate = priceUsd(c), coinAmt = rate ? Math.floor(usd / rate * Math.pow(10, dp(c))) / Math.pow(10, dp(c)) : 0;
     var token = localStorage.getItem('session_token');
     if (!token) return showErr('Session expired. Please sign in again.');
-    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: cur === 'COIN' ? c : cur, inputAmount: String(v), eurRate: Math.round(eurR() * 10000) / 10000 };
+    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: cur === 'COIN' ? c : cur === 'LOC' ? locCode() : cur, inputAmount: String(v), localRate: Math.round(locRate() * 10000) / 10000 };
 
     overlay('<div class="ncw-swap"><div class="ncw-coin a">USD</div><div class="ncw-arrow"></div><div class="ncw-coin b">' + esc(c) + '</div></div>' +
       '<h3>Processing withdrawal</h3><p>$' + nf(usd, 2) + ' → ≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</p>' +
