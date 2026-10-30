@@ -65,7 +65,9 @@
       }, true);
     }
     var f = isFrozen(), b = $('btnFreezeCard'); if (b) b.classList.toggle('frozen', f);
-    var l = $('ncxFzL'), s = $('ncxFzS'); if (l) l.textContent = f ? 'Unfreeze' : 'Freeze'; if (s) s.textContent = f ? 'Card frozen' : 'Card active';
+    var l = $('ncxFzL'), s = $('ncxFzS'), lt = f ? 'Unfreeze' : 'Freeze', stx = f ? 'Card frozen' : 'Card active';
+    if (l && l.textContent !== lt) l.textContent = lt;            // write only when changed: writing the same text re-triggers the MutationObserver
+    if (s && s.textContent !== stx) s.textContent = stx;
   }
 
   /* ---------- client limits screen ---------- */
@@ -159,9 +161,11 @@
 
   function tickAll() { buildActs(); adminPanel(); drawerBtn(); }
   var busyL = false;
-  new MutationObserver(function (list) {
+  var obsL = new MutationObserver(function (list) {
     if (busyL) return;
+    var now = Date.now(); if (now - (obsL.t0 || 0) > 1000) { obsL.t0 = now; obsL.n = 0; } if (++obsL.n > 60) return;   // safety valve: never spin
     for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { busyL = true; try { tickAll(); } finally { busyL = false; } break; }
-  }).observe(document.body, { childList: true, subtree: true });
+  });
+  obsL.observe(document.body, { childList: true, subtree: true });
   setInterval(tickAll, 2000); tickAll();
 })();
