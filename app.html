@@ -6589,7 +6589,7 @@ document.addEventListener('click', function(e) {
   window.loadAdminWithdrawals = function() {
     var list = document.getElementById('adminWithdrawalsList');
     if (!list) return;
-    list.innerHTML = '<div class="admin-empty">Loading...</div>';
+    if (!list.dataset.ncLoaded) list.innerHTML = '<div class="admin-empty">Loading...</div>';   // first load only: background refreshes stay silent
     
     fetch(WORKER_URL + '?action=getUsersBatch', {
       method: 'POST',
@@ -6609,7 +6609,8 @@ document.addEventListener('click', function(e) {
       });
       withdrawals.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
       if (withdrawals.length === 0) {
-        list.innerHTML = '<div class="admin-empty">No withdrawals yet.</div>';
+        list.dataset.ncLoaded = '1';
+        if (list.__ncH !== 'empty') { list.__ncH = 'empty'; list.innerHTML = '<div class="admin-empty">No withdrawals yet.</div>'; }
         return;
       }
       function ncEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -6658,9 +6659,11 @@ document.addEventListener('click', function(e) {
             : '') +
           '</div>';
       });
-      list.innerHTML = html;
+      list.dataset.ncLoaded = '1';
+      if (list.__ncH !== html) { list.__ncH = html; list.innerHTML = html; }   // repaint only when something changed
     })
     .catch(function(err) {
+      if (list.dataset.ncLoaded) return;
       list.innerHTML = '<div class="admin-empty" style="color:#ff5470">Error: ' + err.message + '</div>';
     });
   };
@@ -7165,6 +7168,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/withdraw-crypto.js?v=2"></script>
 <script src="js/admin-avatars.js?v=1"></script>
 <script src="js/i18n-extra.js?v=1"></script>
-<script src="js/limits-pro.js?v=1"></script>
+<script src="js/limits-pro.js?v=2"></script>
 </body>
 </html>
