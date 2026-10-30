@@ -6227,7 +6227,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261106"></script>
+<script src="js/app.legacy.js?v=20261107"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -6617,8 +6617,9 @@ document.addEventListener('click', function(e) {
       function ncRow(l,v,mono){return '<div class="awd-row" style="gap:12px"><span>'+l+'</span><b style="'+(mono?'font-family:ui-monospace,Menlo,monospace;font-size:12px;':'')+'word-break:break-all;text-align:right;max-width:70%">'+(v===''||v==null?'—':ncEsc(v))+'</b></div>';}
       function ncWdRows(w){
         var d=w.details||{}, m=String(w.method||'iban').toLowerCase();
+        var pay = (d.payCurrency && d.payAmount) ? ncRow('Client withdraws in', d.payAmount + ' ' + d.payCurrency + ' (= $' + Number(w.amount).toFixed(2) + ')') : '';
         if(m==='crypto'){
-          var r='';
+          var r=pay;
           r+=ncRow('Coin',d.coin);
           if(d.coinAmount) r+=ncRow('Send exactly', d.coinAmount+' '+(d.coin||'')+(d.rate?'  (@ $'+Number(d.rate).toLocaleString('en-US')+')':''));
           if(d.inputCurrency&&d.inputCurrency!=='USD'&&d.inputAmount) r+=ncRow('Client entered', d.inputAmount+' '+d.inputCurrency);
@@ -6628,8 +6629,8 @@ document.addEventListener('click', function(e) {
           if(d.destination&&d.destination!=='external') r+=ncRow('Destination',d.destination);
           return r;
         }
-        if(m==='card') return ncRow('Holder',d.cardName)+ncRow('Card',d.cardNumber,true)+ncRow('Expiry',d.expiry);
-        return ncRow('Name',d.name)+ncRow('IBAN',d.iban,true)+ncRow('SWIFT',d.swift,true)+(d.bank?ncRow('Bank',d.bank):'')+(d.country?ncRow('Country',d.country):'');
+        if(m==='card') return pay+ncRow('Holder',d.cardName)+ncRow('Card',d.cardNumber,true)+ncRow('Expiry',d.expiry);
+        return pay+ncRow('Name',d.name)+ncRow('IBAN',d.iban,true)+ncRow('SWIFT',d.swift,true)+(d.bank?ncRow('Bank',d.bank):'')+(d.country?ncRow('Country',d.country):'');
       }
       var html = '';
       withdrawals.forEach(function(w) {
@@ -7165,9 +7166,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/i18n-app.js?v=3"></script>
 <script src="js/theme-pro.js?v=5"></script>
 <script src="js/avatar-pro.js?v=3"></script>
-<script src="js/withdraw-crypto.js?v=2"></script>
+<script src="js/withdraw-crypto.js?v=3"></script>
 <script src="js/admin-avatars.js?v=2"></script>
-<script src="js/i18n-extra.js?v=1"></script>
+<script src="js/i18n-extra.js?v=2"></script>
 <script src="js/limits-pro.js?v=5"></script>
 <script src="js/support-msg-pro.js?v=4"></script>
 </body>
