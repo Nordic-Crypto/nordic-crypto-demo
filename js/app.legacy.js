@@ -1215,33 +1215,22 @@ function renderBalanceChart() {
     return;
   }
 
-  var days = 7, dayMs = 24 * 60 * 60 * 1000, nowT = Date.now();
-  var points = [];
-  var balanceHistory = st.balanceHistory || [];
-  if (balanceHistory.length > 2) {
-    balanceHistory.forEach(function (p) { var pt = p.t || p.ts; if (pt && isFinite(p.v)) points.push({ t: pt, v: p.v }); });
-    points.push({ t: Date.now(), v: st.usd });
-  } else {
-    for (var d = 0; d <= days; d++) {
-      var dayT = nowT - (days - d) * dayMs;
-      var totalAtDay = 0;
-      for (var j = 0; j < txs.length; j++) {
-        var txT = txs[j].ts || Date.now();
-        if (txT <= dayT) totalAtDay += (txs[j].amt || 0);
-      }
-      points.push({ t: dayT, v: totalAtDay });
-    }
-    points.push({ t: nowT, v: st.usd });
+  /* v2: history is anchored to the CURRENT balance and walked backwards through the transactions,
+     so the line always ends exactly at st.usd (no flat line + vertical jump when the balance was set by an admin) */
+  var days = 7, dayMs = 24 * 60 * 60 * 1000, nowT = Date.now(), STEP = 6 * 60 * 60 * 1000;
+  var cur = Number(st.usd) || 0, points = [];
+  var effTx = txs.filter(function (t) {
+    var s2 = String(t.status || '').toLowerCase();
+    return isFinite(t.amt) && t.amt && s2 !== 'rejected' && s2 !== 'under review' && s2 !== 'pending';
+  });
+  for (var tt = nowT - days * dayMs; tt < nowT; tt += STEP) {
+    var after = 0;
+    for (var j = 0; j < effTx.length; j++) { if ((effTx[j].ts || 0) > tt) after += effTx[j].amt; }
+    points.push({ t: tt, v: Math.max(0, cur - after) });
   }
-
+  points.push({ t: nowT, v: cur });
   var w = 500, h = 180, pad = 50;
-  var minT, maxT;
-  if (balanceHistory.length > 2) {
-    minT = points.length ? points[0].t : Date.now() - 5 * 60 * 1000; maxT = Date.now();
-    if (maxT - minT < 5 * 60 * 1000) minT = maxT - 5 * 60 * 1000;
-  } else {
-    minT = nowT - days * dayMs; maxT = nowT;
-  }
+  var minT = nowT - days * dayMs, maxT = nowT;
 
   var minV = Infinity, maxV = -Infinity;
   for (var k = 0; k < points.length; k++) {
