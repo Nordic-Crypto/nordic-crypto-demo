@@ -1,170 +1,50 @@
-/* limits-pro.js v1.0 — card action buttons (Freeze / Limits / Settings), client "Limits" screen, owner limits editor. Needs worker >= 6.8.0 */
+/* i18n-extra.js v1.0 — translations for the newer screens (profile photo, crypto withdrawal).
+   Adds phrases to NCI18N only AFTER the main dictionary of the active language has loaded (add() would otherwise mark it as loaded). */
 (function () {
   'use strict';
-  if (window.__ncLimits) return; window.__ncLimits = 1;
-  var WORKER = 'https://nordic-deposit-checker.otis-790.workers.dev';
-  function $(id) { return document.getElementById(id); }
-  function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
-  function api(a, b) { b = b || {}; b.token = tok(); return fetch(WORKER + '?action=' + a, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function money(usd) { try { return typeof window.fmtCurrency === 'function' ? window.fmtCurrency(usd) : '$' + Number(usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch (e) { return '$' + usd; } }
-  function wait(ms) { var m = Math.max(1, Math.ceil(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : m + 'm'; }
-
-  var css = document.createElement('style');
-  css.textContent =
-    '.ncx-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}' +
-    '.ncx-act{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:14px;border-radius:16px;cursor:pointer;text-align:left;font-family:inherit;color:#e7edf6;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.09);transition:transform .18s,border-color .18s,background .18s}' +
-    '.ncx-act:hover{transform:translateY(-2px);border-color:rgba(200,255,61,.45);background:linear-gradient(180deg,rgba(200,255,61,.08),rgba(255,255,255,.02))}.ncx-act:active{transform:scale(.98)}' +
-    '.ncx-ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#c8ff3d}' +
-    '.ncx-ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}' +
-    '.ncx-lb{font:700 13.5px system-ui;letter-spacing:.01em}.ncx-sub{display:block;margin-top:2px;font:500 11.5px system-ui;color:#8b95a5}' +
-    '.ncx-act.frozen{border-color:rgba(56,189,248,.5);background:linear-gradient(180deg,rgba(56,189,248,.12),rgba(255,255,255,.02))}.ncx-act.frozen .ncx-ic{color:#38bdf8;background:rgba(56,189,248,.12)}.ncx-act.frozen .ncx-sub{color:#38bdf8}' +
-    '@media(max-width:480px){.ncx-act{padding:12px;gap:10px}.ncx-sub{font-size:10.5px}}' +
-    '.ncl-ov{position:fixed;inset:0;z-index:100000;background:rgba(3,6,12,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;animation:nclIn .2s}' +
-    '@keyframes nclIn{from{opacity:0}}.ncl-box{width:100%;max-width:460px;max-height:92vh;overflow:auto;background:#12161d;color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:24px;font-family:system-ui}' +
-    '.ncl-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}.ncl-h h2{margin:0;font-size:20px}.ncl-x{background:rgba(255,255,255,.07);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}' +
-    '.ncl-sub{color:#8b95a5;font-size:13px;margin:0 0 16px}' +
-    '.ncl-card{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:16px;padding:14px 16px;margin-bottom:12px}' +
-    '.ncl-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}.ncl-top .ncx-ic{width:36px;height:36px}.ncl-top b{font-size:15px;flex:1}' +
-    '.ncl-chip{font:700 11px system-ui;padding:4px 10px;border-radius:99px;background:rgba(16,185,129,.15);color:#34d399}.ncl-chip.bad{background:rgba(255,84,112,.15);color:#ff6b86}' +
-    '.ncl-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 0;color:#9aa4b2}.ncl-row b{color:#fff;font-weight:600;text-align:right}' +
-    '.ncl-dots{display:flex;gap:6px;margin:2px 0 6px}.ncl-dots i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.1)}.ncl-dots i.on{background:linear-gradient(90deg,#8b5cf6,#38bdf8)}.ncl-dots i.full{background:#ff5470}' +
-    '.ncl-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 6px}.ncl-bar span{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#38bdf8);border-radius:3px}' +
-    '.ncl-note{font-size:12px;color:#8b95a5;line-height:1.5;margin:6px 2px 14px}' +
-    '.ncl-btn{display:block;width:100%;padding:13px;border:0;border-radius:12px;font:700 14px system-ui;cursor:pointer;background:linear-gradient(135deg,#8b5cf6,#38bdf8);color:#05070a}' +
-    '.ncl-in{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font:600 13px system-ui}' +
-    '.ncl-adm{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:16px;padding:16px;margin-bottom:18px}.ncl-adm h3{margin:0 0 4px;font-size:15px}' +
-    '.ncl-grid{display:grid;grid-template-columns:90px 1fr 1fr 1fr;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:#8b95a5}@media(max-width:560px){.ncl-grid{grid-template-columns:70px 1fr 1fr 1fr;font-size:10.5px}}';
-  document.head.appendChild(css);
-
-  /* ---------- card buttons ---------- */
-  var ICON = {
-    freeze: '<svg viewBox="0 0 24 24"><path d="M12 2v20M3.34 7l17.32 10M3.34 17L20.66 7"/><path d="M9.5 3.8L12 6l2.5-2.2M9.5 20.2L12 18l2.5 2.2"/></svg>',
-    limits: '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
-    settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'
+  var K = ['Profile photo', 'Upload photo', 'Remove photo', 'Close', 'Could not upload photo', 'Choose an image (JPG, PNG, WebP)', 'Photo updated', 'Change photo',
+    'Amount in', 'Max', 'You will receive ≈', 'Enter amount to see conversion', 'Processing withdrawal', 'Converting USD to {c}', 'Checking address {a}', 'Sending to compliance review',
+    'Withdrawal failed', 'Back', 'Request submitted', 'Your withdrawal is under review. We will notify you once it is sent.', 'Debited', 'You receive', 'Network', 'To', 'Status', 'Under review', 'Done',
+    'Minimum withdrawal is $1.00', 'Amount exceeds available balance', 'Session expired. Please sign in again.'];
+  var D = {
+    da: ['Profilbillede', 'Upload billede', 'Fjern billede', 'Luk', 'Billedet kunne ikke uploades', 'Vælg et billede (JPG, PNG, WebP)', 'Billedet er opdateret', 'Skift billede',
+      'Beløb i', 'Maks', 'Du modtager ca.', 'Indtast beløb for at se omregningen', 'Behandler udbetaling', 'Konverterer USD til {c}', 'Kontrollerer adresse {a}', 'Sender til compliance-gennemgang',
+      'Udbetaling mislykkedes', 'Tilbage', 'Anmodning sendt', 'Din udbetaling er under gennemgang. Vi giver dig besked, når den er sendt.', 'Trukket', 'Du modtager', 'Netværk', 'Til', 'Status', 'Under gennemgang', 'Færdig',
+      'Minimumsudbetaling er $1,00', 'Beløbet overstiger den disponible saldo', 'Sessionen er udløbet. Log ind igen.'],
+    fi: ['Profiilikuva', 'Lataa kuva', 'Poista kuva', 'Sulje', 'Kuvan lataus epäonnistui', 'Valitse kuva (JPG, PNG, WebP)', 'Kuva päivitetty', 'Vaihda kuva',
+      'Summa valuutassa', 'Maks.', 'Saat noin', 'Syötä summa nähdäksesi muunnoksen', 'Käsitellään nostoa', 'Muunnetaan USD → {c}', 'Tarkistetaan osoite {a}', 'Lähetetään vaatimustenmukaisuuden tarkistukseen',
+      'Nosto epäonnistui', 'Takaisin', 'Pyyntö lähetetty', 'Nostosi on tarkistettavana. Ilmoitamme, kun se on lähetetty.', 'Veloitettu', 'Saat', 'Verkko', 'Vastaanottaja', 'Tila', 'Tarkistettavana', 'Valmis',
+      'Vähimmäisnosto on 1,00 $', 'Summa ylittää käytettävissä olevan saldon', 'Istunto on vanhentunut. Kirjaudu uudelleen.'],
+    es: ['Foto de perfil', 'Subir foto', 'Eliminar foto', 'Cerrar', 'No se pudo subir la foto', 'Elige una imagen (JPG, PNG, WebP)', 'Foto actualizada', 'Cambiar foto',
+      'Importe en', 'Máx.', 'Recibirás aprox.', 'Introduce un importe para ver la conversión', 'Procesando retiro', 'Convirtiendo USD a {c}', 'Comprobando la dirección {a}', 'Enviando a revisión de cumplimiento',
+      'El retiro ha fallado', 'Atrás', 'Solicitud enviada', 'Tu retiro está en revisión. Te avisaremos cuando se envíe.', 'Cargado', 'Recibes', 'Red', 'Para', 'Estado', 'En revisión', 'Hecho',
+      'El retiro mínimo es de 1,00 $', 'El importe supera el saldo disponible', 'La sesión ha caducado. Inicia sesión de nuevo.'],
+    no: ['Profilbilde', 'Last opp bilde', 'Fjern bilde', 'Lukk', 'Kunne ikke laste opp bildet', 'Velg et bilde (JPG, PNG, WebP)', 'Bildet er oppdatert', 'Bytt bilde',
+      'Beløp i', 'Maks', 'Du mottar ca.', 'Skriv inn beløp for å se omregningen', 'Behandler uttak', 'Konverterer USD til {c}', 'Kontrollerer adresse {a}', 'Sender til compliance-gjennomgang',
+      'Uttaket mislyktes', 'Tilbake', 'Forespørsel sendt', 'Uttaket ditt er under gjennomgang. Vi varsler deg når det er sendt.', 'Belastet', 'Du mottar', 'Nettverk', 'Til', 'Status', 'Under gjennomgang', 'Ferdig',
+      'Minste uttak er $1,00', 'Beløpet overstiger tilgjengelig saldo', 'Økten har utløpt. Logg inn på nytt.'],
+    sv: ['Profilbild', 'Ladda upp bild', 'Ta bort bild', 'Stäng', 'Det gick inte att ladda upp bilden', 'Välj en bild (JPG, PNG, WebP)', 'Bilden är uppdaterad', 'Byt bild',
+      'Belopp i', 'Max', 'Du får ca', 'Ange belopp för att se omräkningen', 'Behandlar uttag', 'Konverterar USD till {c}', 'Kontrollerar adress {a}', 'Skickar till granskning',
+      'Uttaget misslyckades', 'Tillbaka', 'Begäran skickad', 'Ditt uttag granskas. Vi meddelar dig när det är skickat.', 'Debiterat', 'Du får', 'Nätverk', 'Till', 'Status', 'Granskas', 'Klar',
+      'Minsta uttag är 1,00 $', 'Beloppet överstiger tillgängligt saldo', 'Sessionen har gått ut. Logga in igen.'],
+    fr: ['Photo de profil', 'Téléverser une photo', 'Supprimer la photo', 'Fermer', 'Impossible de téléverser la photo', 'Choisissez une image (JPG, PNG, WebP)', 'Photo mise à jour', 'Changer la photo',
+      'Montant en', 'Max', 'Vous recevrez env.', 'Saisissez un montant pour voir la conversion', 'Traitement du retrait', 'Conversion de USD en {c}', 'Vérification de l’adresse {a}', 'Envoi à l’examen de conformité',
+      'Échec du retrait', 'Retour', 'Demande envoyée', 'Votre retrait est en cours d’examen. Nous vous préviendrons dès son envoi.', 'Débité', 'Vous recevez', 'Réseau', 'Vers', 'Statut', 'En cours d’examen', 'Terminé',
+      'Le retrait minimum est de 1,00 $', 'Le montant dépasse le solde disponible', 'Session expirée. Veuillez vous reconnecter.'],
+    de: ['Profilfoto', 'Foto hochladen', 'Foto entfernen', 'Schließen', 'Foto konnte nicht hochgeladen werden', 'Wählen Sie ein Bild (JPG, PNG, WebP)', 'Foto aktualisiert', 'Foto ändern',
+      'Betrag in', 'Max', 'Sie erhalten ca.', 'Betrag eingeben, um die Umrechnung zu sehen', 'Auszahlung wird bearbeitet', 'USD wird in {c} umgerechnet', 'Adresse {a} wird geprüft', 'Wird zur Compliance-Prüfung gesendet',
+      'Auszahlung fehlgeschlagen', 'Zurück', 'Anfrage gesendet', 'Ihre Auszahlung wird geprüft. Wir benachrichtigen Sie, sobald sie gesendet wurde.', 'Abgebucht', 'Sie erhalten', 'Netzwerk', 'An', 'Status', 'In Prüfung', 'Fertig',
+      'Die Mindestauszahlung beträgt 1,00 $', 'Der Betrag übersteigt das verfügbare Guthaben', 'Sitzung abgelaufen. Bitte melden Sie sich erneut an.']
   };
-  function isFrozen() {
-    var s = window.st; if (s && s.card && s.card.status) return String(s.card.status).toLowerCase() === 'frozen';
-    var b = $('btnFreeze'); return !!(b && /unfreeze/i.test(b.textContent || ''));
+  var done = {}, PROBES = ['Settings', 'Cancel', 'Dashboard', 'Transactions', 'Log out'];
+  function ready(l) { var N = window.NCI18N; if (!N) return false; for (var i = 0; i < PROBES.length; i++) { if (N.t(PROBES[i]) !== PROBES[i]) return true; } return false; }
+  function apply() {
+    var N = window.NCI18N; if (!N) return;
+    var l = N.lang; if (l === 'en' || done[l] || !D[l]) return;
+    if (!ready(l)) return;
+    var map = {}; K.forEach(function (k, i) { map[k] = D[l][i]; });
+    done[l] = 1; N.add(l, map);
   }
-  function buildActs() {
-    var host = document.querySelector('.nc3-card-actions, .ncx-acts'); if (!host) return;
-    if (!host.__ncx) {
-      host.__ncx = 1; host.className = 'ncx-acts';
-      host.innerHTML =
-        '<button type="button" class="ncx-act" id="btnFreezeCard" data-k="freeze"><span class="ncx-ic">' + ICON.freeze + '</span><span><span class="ncx-lb" id="ncxFzL">Freeze</span><span class="ncx-sub" id="ncxFzS">Card active</span></span></button>' +
-        '<button type="button" class="ncx-act" id="btnLimitsCard" data-k="limits"><span class="ncx-ic">' + ICON.limits + '</span><span><span class="ncx-lb">Limits</span><span class="ncx-sub">Withdrawal limits</span></span></button>' +
-        '<button type="button" class="ncx-act" id="btnSettingsCard" data-k="settings"><span class="ncx-ic">' + ICON.settings + '</span><span><span class="ncx-lb">Settings</span><span class="ncx-sub">Account & security</span></span></button>';
-      host.addEventListener('click', function (e) {
-        var b = e.target.closest('[data-k]'); if (!b) return;
-        e.stopPropagation(); e.preventDefault();
-        var k = b.getAttribute('data-k');
-        if (k === 'freeze') { var r = $('btnFreeze'); if (r) r.click(); }
-        else if (k === 'limits') openLimits();
-        else if (k === 'settings') { var sb = $('settingsBtn'); if (sb) sb.click(); }
-      }, true);
-    }
-    var f = isFrozen(), b = $('btnFreezeCard'); if (b) b.classList.toggle('frozen', f);
-    var l = $('ncxFzL'), s = $('ncxFzS'), lt = f ? 'Unfreeze' : 'Freeze', stx = f ? 'Card frozen' : 'Card active';
-    if (l && l.textContent !== lt) l.textContent = lt;            // write only when changed: writing the same text re-triggers the MutationObserver
-    if (s && s.textContent !== stx) s.textContent = stx;
-  }
-
-  /* ---------- client limits screen ---------- */
-  var ov;
-  function close() { if (ov) { ov.remove(); ov = null; } }
-  var NAMES = { bank: ['Bank transfer', '<svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>'], crypto: ['Crypto', '<svg viewBox="0 0 24 24"><path d="M9 7h5a2.5 2.5 0 010 5H9m0 0h6a2.5 2.5 0 010 5H9M9 7v10M11 4v3M14 4v3M11 17v3M14 17v3"/></svg>'], card: ['Card payout', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg>'] };
-  function openLimits() {
-    close();
-    ov = document.createElement('div'); ov.className = 'ncl-ov';
-    ov.innerHTML = '<div class="ncl-box"><div class="ncl-h"><h2>Limits</h2><button class="ncl-x" id="nclX">\u00d7</button></div><p class="ncl-sub">Withdrawal limits on your account</p><div id="nclBody" style="color:#8b95a5;padding:20px 0;text-align:center">Loading…</div></div>';
-    document.body.appendChild(ov);
-    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
-    $('nclX').onclick = close;
-    api('getLimits').then(function (d) {
-      if (!d || !d.ok) { $('nclBody').textContent = (d && d.error) || 'Could not load limits'; return; }
-      var html = '';
-      ['bank', 'crypto', 'card'].forEach(function (k) {
-        var u = d.limits[k], full = u.used >= u.count || u.usedAmount >= u.maxDay, dots = '';
-        for (var i = 0; i < Math.min(u.count, 12); i++) dots += '<i class="' + (i < u.used ? (full ? 'full' : 'on') : '') + '"></i>';
-        var pct = u.maxDay > 0 ? Math.min(100, u.usedAmount / u.maxDay * 100) : 100;
-        html += '<div class="ncl-card"><div class="ncl-top"><span class="ncx-ic">' + NAMES[k][1] + '</span><b>' + NAMES[k][0] + '</b>' +
-          '<span class="ncl-chip' + (full ? ' bad' : '') + '">' + (u.count <= 0 ? 'Unavailable' : full ? 'Limit reached' : 'Available') + '</span></div>' +
-          '<div class="ncl-row"><span>Withdrawals per ' + d.windowHours + 'h</span><b>' + u.used + ' / ' + u.count + '</b></div><div class="ncl-dots">' + dots + '</div>' +
-          '<div class="ncl-row"><span>Max per transaction</span><b>' + esc(money(u.maxTx)) + '</b></div>' +
-          '<div class="ncl-row"><span>Daily total</span><b>' + esc(money(u.usedAmount)) + ' / ' + esc(money(u.maxDay)) + '</b></div><div class="ncl-bar"><span style="width:' + pct.toFixed(0) + '%"></span></div>' +
-          (u.resetAt ? '<div class="ncl-row"><span>Available again in</span><b>' + wait(u.resetAt - (d.now || Date.now())) + '</b></div>' : '') + '</div>';
-      });
-      html += '<p class="ncl-note">Limits renew on a rolling ' + d.windowHours + '-hour basis: each withdrawal frees up its slot ' + d.windowHours + ' hours after it was made. Need higher limits? Contact support.</p><button class="ncl-btn" id="nclSup">Contact support</button>';
-      $('nclBody').style.cssText = ''; $('nclBody').innerHTML = html;
-      $('nclSup').onclick = function () { close(); var c = $('chatToggle'); if (c) c.click(); };
-    }).catch(function () { var b = $('nclBody'); if (b) b.textContent = 'Connection error'; });
-  }
-  window.openLimits = openLimits;
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-
-  /* ---------- owner editor (Admin → Withdrawals) ---------- */
-  function adminPanel() {
-    var sec = document.querySelector('.admin-section[data-section="withdrawals"]'); if (!sec || $('nclAdm')) return;
-    var role = ''; try { role = localStorage.getItem('user_role'); } catch (e) {} if (role !== 'admin') return;
-    var box = document.createElement('div'); box.className = 'ncl-adm'; box.id = 'nclAdm';
-    function row(k, name) { return '<div>' + name + '</div><input class="ncl-in" id="nclc_' + k + '" type="number" min="0" step="1"><input class="ncl-in" id="nclt_' + k + '" type="number" min="0" step="1"><input class="ncl-in" id="ncld_' + k + '" type="number" min="0" step="1">'; }
-    box.innerHTML = '<h3>Withdrawal limits (default for all clients)</h3><div style="color:#8b95a5;font-size:12px">Amounts in USD. For a single client open Clients → client → “Withdrawal limits”.</div>' +
-      '<div class="ncl-grid"><div></div><div>Max withdrawals</div><div>Max per transaction</div><div>Max per day</div>' + row('bank', 'Bank') + row('crypto', 'Crypto') + row('card', 'Card') + '</div>' +
-      '<div style="display:flex;gap:10px;align-items:center;margin-top:12px"><label style="font-size:12px;color:#8b95a5">Window (hours)</label><input class="ncl-in" id="nclw" type="number" min="1" max="168" style="width:90px">' +
-      '<button class="ncl-btn" id="nclSave" style="width:auto;padding:10px 20px;margin-left:auto">Save limits</button></div><div id="nclMsg" style="font-size:12px;margin-top:8px;min-height:16px"></div>';
-    sec.insertBefore(box, sec.firstChild);
-    function fill(c) { ['bank', 'crypto', 'card'].forEach(function (k) { $('nclc_' + k).value = c[k].count; $('nclt_' + k).value = c[k].maxTx; $('ncld_' + k).value = c[k].maxDay; }); $('nclw').value = c.windowHours; }
-    function msg(t, bad) { var m = $('nclMsg'); m.textContent = t; m.style.color = bad ? '#ff6b86' : '#34d399'; }
-    api('getLimitsConfig').then(function (d) { if (d && d.ok) fill(d.config); else msg((d && d.error) || 'Could not load', true); });
-    $('nclSave').onclick = function () {
-      var cfg = { windowHours: Number($('nclw').value) || 24 };
-      ['bank', 'crypto', 'card'].forEach(function (k) { cfg[k] = { count: Number($('nclc_' + k).value), maxTx: Number($('nclt_' + k).value), maxDay: Number($('ncld_' + k).value) }; });
-      api('setLimitsConfig', { config: cfg }).then(function (d) { if (d && d.ok) { fill(d.config); msg('Saved. New limits apply immediately.'); } else msg((d && d.error) || 'Failed', true); }).catch(function () { msg('Connection error', true); });
-    };
-  }
-
-  /* ---------- per-client limits (Admin → client drawer) ---------- */
-  function drawerBtn() {
-    var b = document.querySelector('.ap-dr [data-act="iban"]'); if (!b || !b.parentNode) return;
-    if (b.parentNode.querySelector('[data-ncl-e]')) return;
-    var e = b.getAttribute('data-e'); if (!e) return;
-    var n = document.createElement('button'); n.className = b.className.replace(/\bpri\b|\bbad\b|\bfull\b/g, '').trim(); n.setAttribute('data-ncl-e', e); n.type = 'button';
-    n.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;vertical-align:-3px;margin-right:6px"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Withdrawal limits';
-    b.parentNode.insertBefore(n, b.nextSibling);
-  }
-  document.addEventListener('click', function (ev) {
-    var b = ev.target.closest && ev.target.closest('[data-ncl-e]'); if (!b) return;
-    ev.preventDefault(); ev.stopPropagation(); openUserLimits(b.getAttribute('data-ncl-e'));
-  }, true);
-  function openUserLimits(email) {
-    close();
-    ov = document.createElement('div'); ov.className = 'ncl-ov'; ov.style.zIndex = 100002;
-    ov.innerHTML = '<div class="ncl-box"><div class="ncl-h"><h2>Withdrawal limits</h2><button class="ncl-x" id="nclX">\u00d7</button></div><p class="ncl-sub">' + esc(email) + '<br>Empty field = use the global limit.</p><div id="nclBody" style="color:#8b95a5;padding:16px 0;text-align:center">Loading…</div></div>';
-    document.body.appendChild(ov); ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); $('nclX').onclick = close;
-    function show(d) {
-      var h = '<div class="ncl-grid" style="grid-template-columns:78px 1fr 1fr 1fr;margin-top:0"><div></div><div>Withdrawals</div><div>Per transaction $</div><div>Per day $</div>';
-      ['bank', 'crypto', 'card'].forEach(function (k) {
-        var o = d.override[k] || {}, g = d.global[k];
-        function inp(f, v, ph) { return '<input class="ncl-in" id="ncu_' + k + '_' + f + '" type="number" min="0" step="1" value="' + (v == null ? '' : v) + '" placeholder="' + ph + '">'; }
-        h += '<div>' + NAMES[k][0].split(' ')[0] + '</div>' + inp('count', o.count, g.count) + inp('maxTx', o.maxTx, g.maxTx) + inp('maxDay', o.maxDay, g.maxDay);
-      });
-      h += '</div><div id="nclMsg" style="font-size:12px;margin:12px 0 0;min-height:16px"></div><div style="display:flex;gap:10px;margin-top:10px"><button class="ncl-btn" id="ncuReset" style="background:rgba(255,255,255,.08);color:#fff">Reset to global</button><button class="ncl-btn" id="ncuSave">Save</button></div>';
-      $('nclBody').style.cssText = ''; $('nclBody').innerHTML = h;
-      function msg(t, bad) { var m = $('nclMsg'); m.textContent = t; m.style.color = bad ? '#ff6b86' : '#34d399'; }
-      function send(cfg) { api('setUserLimits', { email: email, config: cfg }).then(function (r) { if (r && r.ok) { show(r); var m = $('nclMsg'); m.textContent = Object.keys(r.override).length ? 'Saved for this client.' : 'This client now uses the global limits.'; m.style.color = '#34d399'; } else msg((r && r.error) || 'Failed', true); }).catch(function () { msg('Connection error', true); }); }
-      $('ncuSave').onclick = function () { var cfg = {}; ['bank', 'crypto', 'card'].forEach(function (k) { cfg[k] = { count: $('ncu_' + k + '_count').value, maxTx: $('ncu_' + k + '_maxTx').value, maxDay: $('ncu_' + k + '_maxDay').value }; }); send(cfg); };
-      $('ncuReset').onclick = function () { send({}); };
-    }
-    api('getUserLimits', { email: email }).then(function (d) { if (d && d.ok) show(d); else $('nclBody').textContent = (d && d.error) || 'Could not load'; }).catch(function () { $('nclBody').textContent = 'Connection error'; });
-  }
-
-  function tickAll() { buildActs(); adminPanel(); drawerBtn(); }
-  // MutationObserver -> requestAnimationFrame: runs before the next paint (no flicker) but never loops inside one task (no freeze)
-  var rafL = 0;
-  new MutationObserver(function (list) {
-    if (rafL) return;
-    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { rafL = requestAnimationFrame(function () { rafL = 0; try { tickAll(); } catch (e) {} }); break; }
-  }).observe(document.body, { childList: true, subtree: true });
-  setInterval(tickAll, 2000); tickAll();
+  var tries = 0, iv = setInterval(function () { apply(); if (++tries > 60) clearInterval(iv); }, 500);
+  window.addEventListener('nc-lang', function () { tries = 0; clearInterval(iv); iv = setInterval(function () { apply(); if (++tries > 60) clearInterval(iv); }, 500); });
 })();
