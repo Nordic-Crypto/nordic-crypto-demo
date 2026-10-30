@@ -88,5 +88,11 @@
     open(em, nm);
   }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  setInterval(inject, 800);
+  // inject synchronously right after the list is re-rendered (before the browser paints) so the icon never blinks
+  var busyInj = false;
+  new MutationObserver(function (list) {
+    if (busyInj) return;
+    for (var i = 0; i < list.length; i++) if (list[i].addedNodes.length) { busyInj = true; try { inject(); } finally { busyInj = false; } break; }
+  }).observe(document.body, { childList: true, subtree: true });
+  setInterval(inject, 2000); inject();
 })();
