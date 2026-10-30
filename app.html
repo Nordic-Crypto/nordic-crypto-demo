@@ -4366,6 +4366,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="curr-opt" data-cur="NOK"><span>NOK</span> <span class="curr-rate" id="rateNOK">—</span></div>
         <div class="curr-opt" data-cur="DKK"><span>DKK</span> <span class="curr-rate" id="rateDKK">—</span></div>
         <div class="curr-opt" data-cur="GBP"><span>GBP</span> <span class="curr-rate" id="rateGBP">—</span></div>
+        <div class="curr-opt" data-cur="CAD"><span>CAD</span> <span class="curr-rate" id="rateCAD">—</span></div>
       </div>
     </div>
     <button class="settings-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
@@ -4706,7 +4707,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="fg" style="flex:2"><label>Full Name</label><input class="fc" id="oName" placeholder="Satoshi Sat Nakamoto"></div>
         <div class="fg" style="flex:1"><label>Card Type</label><select class="fc" id="oType"><option>Metal (Free)</option><option>Gold (+$100)</option></select></div>
       </div>
-      <div class="fg"><label>Country</label><select class="fc" id="oCountry"><option>Sweden</option><option>Norway</option><option>Finland</option><option>Denmark</option><option>Germany</option><option>United Kingdom</option><option>United States</option></select></div>
+      <div class="fg"><label>Country</label><select class="fc" id="oCountry"><option>Sweden</option><option>Norway</option><option>Finland</option><option>Denmark</option><option>Germany</option><option>United Kingdom</option><option>United States</option><option>Canada</option></select></div>
       <div class="fg"><label>City</label><input class="fc" id="oCity" placeholder="Stockholm"></div>
       <div class="fg"><label>Street Address</label><input class="fc" id="oStreet" placeholder="Drottninggatan 1"></div>
       <div class="fr">
@@ -4889,7 +4890,7 @@ document.addEventListener('DOMContentLoaded', function(){
               <option value="DE">🇩🇪 Germany (EUR)</option><option value="FR">🇫🇷 France (EUR)</option>
               <option value="ES">🇪🇸 Spain (EUR)</option><option value="IT">🇮🇹 Italy (EUR)</option>
               <option value="NL">🇳🇱 Netherlands (EUR)</option><option value="GB">🇬🇧 United Kingdom (GBP)</option>
-              <option value="US">🇺🇸 United States (USD)</option>
+              <option value="US">🇺🇸 United States (USD)</option><option value="CA">🇨🇦 Canada (CAD)</option>
             </select>
           </div>
           <div class="onb-nav">
@@ -4934,6 +4935,7 @@ document.addEventListener('DOMContentLoaded', function(){
               <button class="cur-btn" data-cur="NOK">NOK</button>
               <button class="cur-btn" data-cur="DKK">DKK</button>
               <button class="cur-btn" data-cur="GBP">GBP</button>
+              <button class="cur-btn" data-cur="CAD">CAD</button>
             </div>
           </div>
           <button class="btn b1" style="width:100%;margin-top:8px" id="btnCreateCard">✨ Create my card</button>
@@ -5150,6 +5152,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <option value="NL">Netherlands</option>
   <option value="GB">United Kingdom</option>
   <option value="US">United States</option>
+  <option value="CA">Canada</option>
 </select></div>
           <div class="verify-nav">
             <button type="button" class="btn b2" id="verifyBack3" style="flex:1">Back</button>
@@ -6224,7 +6227,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261105"></script>
+<script src="js/app.legacy.js?v=20261106"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -7159,7 +7162,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/i18n-app.js?v=3"></script>
 <script src="js/theme-pro.js?v=5"></script>
 <script src="js/avatar-pro.js?v=3"></script>
-<script src="js/withdraw-crypto.js?v=1"></script>
+<script src="js/withdraw-crypto.js?v=2"></script>
 <script src="js/admin-avatars.js?v=1"></script>
 </body>
 </html>
