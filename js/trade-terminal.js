@@ -1,5 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — TRADE TERMINAL v1.1
+   NORDIC CRYPTO — TRADE TERMINAL v2.0 (live)
    ============================================================
    Professional trading terminal (Binance Spot style).
    
@@ -42,6 +42,10 @@
   };
 
   var COINS = ['BTC', 'ETH', 'USDT', 'SOL', 'BNB'];
+  // v2.0 live market data (Binance public streams) + TradingView symbols
+  var BIN = { BTC: 'btcusdt', ETH: 'ethusdt', SOL: 'solusdt', BNB: 'bnbusdt' };
+  var TV_SYM = { BTC: 'BINANCE:BTCUSDT', ETH: 'BINANCE:ETHUSDT', SOL: 'BINANCE:SOLUSDT', BNB: 'BINANCE:BNBUSDT', USDT: 'KRAKEN:USDTUSD' };
+  var LV = { ws: null, coin: null, price: {}, priceAt: {}, tickerAt: 0, depthAt: 0, tradeAt: 0, stats: null, tradesLive: false, fail: 0, retryT: 0, pollT: 0 };
   var FEE_RATE = 0.001; // 0.1%
 
   // ============================================================
@@ -72,6 +76,8 @@
   }
 
   function getCoinPrice(symbol) {
+    var lp = LV.price[symbol];
+    if (lp > 0 && (Date.now() - (LV.priceAt[symbol] || 0)) < 20000) return lp;
     if (window._exPricesCache && window._exPricesCache.length) {
       var coin = window._exPricesCache.find(function (c) { return c.symbol === symbol; });
       if (coin) return Number(coin.usd) || 0;
@@ -120,6 +126,8 @@
     var term = $('tradeTerminal');
     if (term) term.classList.remove('on');
     TT.open = false;
+    liveStop();
+    tvDestroy();
 
     // Stop intervals
     TT.intervals.forEach(function (id) { clearInterval(id); });
@@ -193,6 +201,7 @@
     drawChart();
     updateHeader();
     updatePreview();
+    if (TT.open) { liveSwitch(coin); tvLoad(); }
   }
 
   function selectTimeframe(tf) {
@@ -233,6 +242,11 @@
         var form = this.closest('.tt-form');
         var limitWrap = form.querySelector('.tt-limit-price');
         if (limitWrap) limitWrap.classList.toggle('on', type === 'limit');
+        if (limitWrap && type === 'limit') {
+          var li = limitWrap.querySelector('input');
+          var cp = getCoinPrice(TT.coin);
+          if (li && !li.value && cp > 0) { li.value = cp >= 1 ? cp.toFixed(2) : cp.toFixed(6); updatePreview(); }
+        }
       };
     });
   }
@@ -350,6 +364,7 @@
       var convToBalEl = $('ttConvertToBalance');
       if (convToBalEl) convToBalEl.textContent = 'Balance: ' + fmtCrypto(getCoinBalance(toCoin), toCoin);
     }
+    ttValidate();
   }
 
   function updateFormLabels() {
@@ -365,6 +380,7 @@
   // ============================================================
 
   function updateHeader() {
+    if (liveHeader()) return;
     var price = getCoinPrice(TT.coin);
     var priceEl = document.querySelector('.tt-price');
     if (priceEl) priceEl.textContent = fmtPrice(price);
@@ -543,7 +559,9 @@
       ? (TT.asks[TT.asks.length - 1].price - TT.bids[0].price)
       : 0;
     var spreadEl = document.querySelector('.tt-ob-spread-price');
-    if (spreadEl) spreadEl.textContent = fmtPrice(spread);
+    if (spreadEl) spreadEl.textContent = '$' + spread.toFixed(spread >= 1 ? 2 : 4);
+    var spLbl = document.querySelector('.tt-ob-spread-label');
+    if (spLbl && TT.bids.length && spread > 0) spLbl.textContent = 'Spread ' + (spread / TT.bids[0].price * 100).toFixed(3) + '%';
 
     // Click on row → fill limit price
     document.querySelectorAll('.tt-ob-row').forEach(function (row) {
@@ -667,7 +685,7 @@
   }
 
   function drawChart() {
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas || TT.tvActive) return;
     var w = canvas.getBoundingClientRect().width;
     var h = canvas.getBoundingClientRect().height;
 
@@ -877,47 +895,58 @@
   async function submitBuy() {
     var amount = parseFloat(($('ttBuyAmount') || {}).value) || 0;
     var price = getCoinPrice(TT.coin);
-    if (amount < 10) { alert('Minimum purchase is $10'); return; }
-    if (amount > getUsdBalance()) { alert('Insufficient balance'); return; }
-    if (price <= 0) { alert('Price unavailable'); return; }
+    if (amount < 10) { ttErr('Minimum purchase is $10'); return; }
+    if (amount > getUsdBalance()) { ttErr('Insufficient balance'); return; }
+    if (price <= 0) { ttErr('Price unavailable'); return; }
 
     var limitWrap = document.querySelector('.tt-form[data-form="buy"] .tt-limit-price');
     var isLimit = limitWrap && limitWrap.classList.contains('on');
     var limitPrice = parseFloat(($('ttBuyLimitPrice') || {}).value) || price;
 
-    await executeTrade('buy', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market');
+    if (TT.busy) return;
+    if (!(await ttConfirm({ side: 'buy', coin: TT.coin, amount: amount, price: isLimit ? limitPrice : price, limit: isLimit }))) return;
+    TT.busy = true;
+    try { await executeTrade('buy', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market'); }
+    catch (e) {} finally { TT.busy = false; }
   }
 
   async function submitSell() {
     var amount = parseFloat(($('ttSellAmount') || {}).value) || 0;
     var price = getCoinPrice(TT.coin);
-    if (amount <= 0) { alert('Enter amount'); return; }
-    if (amount > getCoinBalance(TT.coin)) { alert('Insufficient ' + TT.coin); return; }
-    if (price <= 0) { alert('Price unavailable'); return; }
+    if (amount <= 0) { ttErr('Enter amount'); return; }
+    if (amount > getCoinBalance(TT.coin)) { ttErr('Insufficient ' + TT.coin); return; }
+    if (price <= 0) { ttErr('Price unavailable'); return; }
 
     var limitWrap = document.querySelector('.tt-form[data-form="sell"] .tt-limit-price');
     var isLimit = limitWrap && limitWrap.classList.contains('on');
     var limitPrice = parseFloat(($('ttSellLimitPrice') || {}).value) || price;
 
-    await executeTrade('sell', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market');
+    if (TT.busy) return;
+    if (!(await ttConfirm({ side: 'sell', coin: TT.coin, amount: amount, price: isLimit ? limitPrice : price, limit: isLimit }))) return;
+    TT.busy = true;
+    try { await executeTrade('sell', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market'); }
+    catch (e) {} finally { TT.busy = false; }
   }
 
   async function submitConvert() {
     var amount = parseFloat(($('ttConvertAmount') || {}).value) || 0;
     var fromCoin = ($('ttConvertFrom') || {}).value;
     var toCoin = ($('ttConvertTo') || {}).value;
-    if (fromCoin === toCoin) { alert('Choose different coins'); return; }
-    if (amount <= 0) { alert('Enter amount'); return; }
-    if (amount > getCoinBalance(fromCoin)) { alert('Insufficient ' + fromCoin); return; }
+    if (fromCoin === toCoin) { ttErr('Choose different coins'); return; }
+    if (amount <= 0) { ttErr('Enter amount'); return; }
+    if (amount > getCoinBalance(fromCoin)) { ttErr('Insufficient ' + fromCoin); return; }
 
     var fromPrice = getCoinPrice(fromCoin);
     var toPrice = getCoinPrice(toCoin);
-    if (fromPrice <= 0 || toPrice <= 0) { alert('Price unavailable'); return; }
+    if (fromPrice <= 0 || toPrice <= 0) { ttErr('Price unavailable'); return; }
     var rate = fromPrice / toPrice;
 
     var token = localStorage.getItem('session_token');
-    if (!token) { alert('Not authenticated'); return; }
+    if (!token) { ttErr('Not authenticated'); return; }
 
+    if (TT.busy) return;
+    if (!(await ttConfirm({ side: 'convert', from: fromCoin, to: toCoin, amount: amount, rate: rate }))) return;
+    TT.busy = true;
     try {
       var res = await fetch(window.WORKER_URL + '?action=trade', {
         method: 'POST',
@@ -961,8 +990,8 @@
         window.toast('✅ Converted ' + amount.toFixed(6) + ' ' + fromCoin + ' → ' + toCoin);
       }
     } catch (e) {
-      alert('Convert failed: ' + e.message);
-    }
+      ttErr('Convert failed: ' + e.message);
+    } finally { TT.busy = false; }
   }
 
     /**
@@ -971,7 +1000,7 @@
    */
   async function executeTrade(type, symbol, amount, price, orderType) {
     var token = localStorage.getItem('session_token');
-    if (!token) { alert('Not authenticated'); return; }
+    if (!token) { ttErr('Not authenticated'); return; }
 
     var clientTradeId = 'ct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
@@ -1069,7 +1098,7 @@
       return data;
 
     } catch (e) {
-      alert('Trade failed: ' + e.message);
+      ttErr('Trade failed: ' + e.message);
       throw e;
     }
   }
@@ -1081,9 +1110,9 @@
     // Order book + recent trades every 2 sec
     var id1 = setInterval(function () {
       if (!TT.open) return;
-      generateOrderBook();
-      renderOrderBook();
-      // Add fake trade to recent list
+      if (!liveFresh('depth')) { generateOrderBook(); renderOrderBook(); }
+      if (liveFresh('trade')) return;
+      // Add fake trade to recent list (only when there is no live feed)
       var mid = getCoinPrice(TT.coin);
       TT.recentTrades.unshift({
         price: mid * (1 + (Math.random() - 0.5) * 0.001),
@@ -1330,9 +1359,10 @@
     openOrders.forEach(function (o) {
       var typeLabel = o.type === 'buy' ? 'BUY' : 'SELL';
       var typeClass = o.type === 'buy' ? 'buy' : 'sell';
-      var amtStr = (Number(o.amount) / Number(o.price)).toFixed(6) + ' ' + o.symbol;
+      var amtStr = (o.type === 'buy' ? (Number(o.amount) / Number(o.price)) : Number(o.amount)).toFixed(6) + ' ' + o.symbol;
       var priceStr = '$' + Number(o.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      var totalStr = '$' + Number(o.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var oTotal = Number(o.total) || (o.type === 'buy' ? Number(o.amount) : Number(o.amount) * Number(o.price));
+      var totalStr = '$' + oTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       var timeStr = new Date(o.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
       html += '<div class="tt-oo-row" data-order-id="' + o.id + '">' +
@@ -1391,6 +1421,411 @@
 
   // Bind filters on load
   setTimeout(bindOrderHistoryFilters, 1000);
-  console.log('%c[NordicCrypto] 📊 Trade Terminal v1.0 loaded', 'color:#8b5cf6;font-weight:bold;font-size:13px');
+  // ============================================================
+  // SECTION 20 (v2.0): LIVE MARKET DATA + TRADINGVIEW + CONFIRM + UX
+  // ============================================================
+  //  • Prices / 24h stats / order book / trades — Binance public market data
+  //    (WebSocket, with automatic fallback to HTTPS polling).
+  //    If both are unreachable the old built-in simulated data keeps working.
+  //  • Chart — TradingView (falls back to the built-in canvas chart if it cannot load).
+  //  • Orders are still executed by the Worker at ITS price (unchanged).
+  // ============================================================
+
+  var TV = { n: 0, loading: false, cbs: [], watch: 0 };
+  var _liveTradesTimer = 0;
+
+  function noop() {}
+
+  function liveFresh(kind) {
+    var t = kind === 'depth' ? LV.depthAt : (kind === 'trade' ? LV.tradeAt : LV.tickerAt);
+    return LV.coin === TT.coin && !!t && (Date.now() - t) < (kind === 'trade' ? 20000 : 6000);
+  }
+
+  function liveStop() {
+    clearTimeout(LV.retryT);
+    clearInterval(LV.pollT);
+    LV.pollT = 0;
+    var ws = LV.ws;
+    LV.ws = null;
+    if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.close(); } catch (e) {} }
+  }
+
+  function liveSwitch(coin) {
+    liveStop();
+    LV.coin = coin;
+    LV.tickerAt = 0; LV.depthAt = 0; LV.tradeAt = 0; LV.stats = null; LV.tradesLive = false; LV.fail = 0;
+    var s = BIN[coin];
+    if (!s || !TT.open) return;            // USDT: stays at ~1.00 with the built-in data
+    liveRest(coin);                        // instant snapshot, the socket takes over right after
+    liveOpen(coin, s);
+  }
+
+  function liveOpen(coin, s) {
+    var url = 'wss://stream.binance.com:9443/stream?streams=' + s + '@ticker/' + s + '@depth20@1000ms/' + s + '@trade';
+    var ws;
+    try { ws = new WebSocket(url); } catch (e) { livePollStart(coin); return; }
+    LV.ws = ws;
+    var opened = false;
+    ws.onopen = function () { opened = true; LV.fail = 0; clearInterval(LV.pollT); LV.pollT = 0; };
+    ws.onmessage = function (ev) {
+      if (LV.ws !== ws || TT.coin !== coin) return;
+      try { onLive(JSON.parse(ev.data)); } catch (e) {}
+    };
+    ws.onerror = noop;
+    ws.onclose = function () {
+      if (LV.ws !== ws) return;
+      LV.ws = null;
+      if (!TT.open || TT.coin !== coin) return;
+      LV.fail = (LV.fail || 0) + 1;
+      if (LV.fail >= 2) livePollStart(coin);                 // blocked or flaky: poll over HTTPS meanwhile
+      clearTimeout(LV.retryT);
+      LV.retryT = setTimeout(function () { if (TT.open && TT.coin === coin && !LV.ws) liveOpen(coin, s); }, Math.min(15000, 1500 * LV.fail));
+    };
+    setTimeout(function () { if (LV.ws === ws && !opened) livePollStart(coin); }, 6000);
+  }
+
+  function livePollStart(coin) {
+    if (LV.pollT || !TT.open) return;
+    LV.pollT = setInterval(function () {
+      if (!TT.open || TT.coin !== coin) { clearInterval(LV.pollT); LV.pollT = 0; return; }
+      liveRest(coin);
+    }, 3000);
+  }
+
+  function liveRest(coin) {
+    var sym = (BIN[coin] || '').toUpperCase();
+    if (!sym) return;
+    var base = 'https://api.binance.com/api/v3/';
+    function get(path) { return fetch(base + path).then(function (r) { return r.json(); }); }
+    get('ticker/24hr?symbol=' + sym).then(function (d) {
+      if (TT.coin !== coin || !d || !d.lastPrice) return;
+      onLive({ stream: 'rest@ticker', data: { c: d.lastPrice, P: d.priceChangePercent, h: d.highPrice, l: d.lowPrice, v: d.volume } });
+    }).catch(noop);
+    get('depth?symbol=' + sym + '&limit=20').then(function (d) {
+      if (TT.coin !== coin || !d || !d.bids) return;
+      onLive({ stream: 'rest@depth20', data: { bids: d.bids, asks: d.asks } });
+    }).catch(noop);
+    get('trades?symbol=' + sym + '&limit=30').then(function (d) {
+      if (TT.coin !== coin || !Array.isArray(d)) return;
+      LV.tradesLive = true;
+      TT.recentTrades = d.slice().reverse().map(function (t) {
+        return { price: +t.price, amount: +t.qty, side: t.isBuyerMaker ? 'sell' : 'buy', time: t.time };
+      });
+      LV.tradeAt = Date.now();
+      scheduleTrades();
+    }).catch(noop);
+  }
+
+  function onLive(msg) {
+    var d = msg && msg.data, st = (msg && msg.stream) || '';
+    if (!d) return;
+    if (st.indexOf('@ticker') > 0) liveTicker(d);
+    else if (st.indexOf('@depth') > 0) liveDepth(d);
+    else if (st.indexOf('@trade') > 0) liveTrade(d);
+  }
+
+  function liveTicker(d) {
+    var p = parseFloat(d.c);
+    if (!(p > 0)) return;
+    var prev = LV.price[LV.coin];
+    LV.price[LV.coin] = p;
+    LV.priceAt[LV.coin] = Date.now();
+    LV.tickerAt = Date.now();
+    LV.stats = { pct: parseFloat(d.P) || 0, high: parseFloat(d.h) || p, low: parseFloat(d.l) || p, vol: parseFloat(d.v) || 0 };
+    TT.lastPrice = p;
+    paintHeader(prev);
+    updatePreview();
+  }
+
+  function paintHeader(prev) {
+    var p = LV.price[LV.coin], s = LV.stats;
+    if (!p || !s) return;
+    var priceEl = document.querySelector('.tt-price');
+    if (priceEl) {
+      var txt = fmtPrice(p);
+      if (priceEl.textContent !== txt) {
+        priceEl.textContent = txt;
+        if (prev && prev !== p) {
+          priceEl.classList.remove('ncx-up', 'ncx-dn');
+          void priceEl.offsetWidth;
+          priceEl.classList.add(p > prev ? 'ncx-up' : 'ncx-dn');
+        }
+      }
+    }
+    var changeEl = document.querySelector('.tt-change');
+    if (changeEl) {
+      var ct = (s.pct >= 0 ? '+' : '') + s.pct.toFixed(2) + '%';
+      if (changeEl.textContent !== ct) changeEl.textContent = ct;
+      changeEl.classList.toggle('up', s.pct >= 0);
+      changeEl.classList.toggle('down', s.pct < 0);
+    }
+    var statsEl = document.querySelector('.tt-stats');
+    if (statsEl) {
+      var html = '<div>24h High:<b>' + fmtPrice(s.high) + '</b></div>' +
+                 '<div>24h Low:<b>' + fmtPrice(s.low) + '</b></div>' +
+                 '<div>24h Vol:<b>' + fmtVolume(s.vol) + ' ' + TT.coin + '</b></div>';
+      if (statsEl.__ncx !== html) { statsEl.innerHTML = html; statsEl.__ncx = html; }
+    }
+  }
+
+  function liveHeader() {
+    if (liveFresh('ticker') && LV.stats) { paintHeader(); return true; }
+    return false;
+  }
+
+  function liveDepth(d) {
+    var b = d.bids || d.b, a = d.asks || d.a;
+    if (!b || !a || !b.length || !a.length) return;
+    function row(x) { var pr = parseFloat(x[0]), q = parseFloat(x[1]); return { price: pr, amount: q, total: pr * q }; }
+    TT.bids = b.slice(0, 20).map(row);
+    TT.asks = a.slice(0, 20).map(row).reverse();      // best ask last, like the built-in book
+    LV.depthAt = Date.now();
+    renderOrderBook();
+  }
+
+  function liveTrade(d) {
+    if (!LV.tradesLive) { TT.recentTrades = []; LV.tradesLive = true; }
+    TT.recentTrades.unshift({ price: parseFloat(d.p), amount: parseFloat(d.q), side: d.m ? 'sell' : 'buy', time: d.T || Date.now() });
+    if (TT.recentTrades.length > 30) TT.recentTrades.length = 30;
+    LV.tradeAt = Date.now();
+    scheduleTrades();
+  }
+
+  function scheduleTrades() {
+    if (_liveTradesTimer) return;
+    _liveTradesTimer = setTimeout(function () { _liveTradesTimer = 0; renderRecentTrades(); }, 400);
+  }
+
+  // ---------- TradingView ----------
+
+  function tvScript(cb) {
+    if (window.TradingView && window.TradingView.widget) { cb(true); return; }
+    TV.cbs.push(cb);
+    if (TV.loading) return;
+    TV.loading = true;
+    var done = false;
+    function fin(ok) {
+      if (done) return; done = true; TV.loading = false;
+      var l = TV.cbs.slice(); TV.cbs = [];
+      l.forEach(function (f) { try { f(ok && !!(window.TradingView && window.TradingView.widget)); } catch (e) {} });
+    }
+    var s = document.createElement('script');
+    s.src = 'https://s3.tradingview.com/tv.js';
+    s.async = true;
+    s.onload = function () { fin(true); };
+    s.onerror = function () { fin(false); };
+    document.head.appendChild(s);
+    setTimeout(function () { fin(false); }, 10000);
+  }
+
+  function tvLoad() {
+    var panel = document.querySelector('.tt-chart-panel');
+    if (!panel || !TT.open || TT.tvFailed) return;
+    var host = $('ncTv');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'ncTv';
+      panel.appendChild(host);
+    }
+    var coin = TT.coin;
+    host.innerHTML = '<div class="ncx-tv-load">Loading chart…</div>';
+    if (!(window.TradingView && window.TradingView.widget)) {
+      tvScript(function (ok) { if (!ok) tvFail(); else if (TT.open && TT.coin === coin) tvLoad(); });
+      TT.tvActive = true; panel.classList.add('ncx-tv-on');
+      return;
+    }
+    var id = 'ncTvInner' + (++TV.n);
+    var inner = document.createElement('div');
+    inner.id = id;
+    inner.style.cssText = 'position:absolute;left:0;right:0;top:0;bottom:0';
+    host.innerHTML = '';
+    host.appendChild(inner);
+    var ivMap = { '1h': '60', '4h': '240', '1d': 'D' };
+    try {
+      new window.TradingView.widget({
+        autosize: true,
+        symbol: TV_SYM[coin] || 'BINANCE:BTCUSDT',
+        interval: ivMap[TT.timeframe] || '60',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#0a0e15',
+        backgroundColor: '#0a0e15',
+        gridColor: 'rgba(255,255,255,0.04)',
+        enable_publishing: false,
+        allow_symbol_change: false,
+        save_image: false,
+        hide_side_toolbar: window.innerWidth < 700,
+        withdateranges: true,
+        studies: ['Volume@tv-basicstudies'],
+        overrides: {
+          'mainSeriesProperties.candleStyle.upColor': '#10b981',
+          'mainSeriesProperties.candleStyle.downColor': '#ef4444',
+          'mainSeriesProperties.candleStyle.borderUpColor': '#10b981',
+          'mainSeriesProperties.candleStyle.borderDownColor': '#ef4444',
+          'mainSeriesProperties.candleStyle.wickUpColor': '#10b981',
+          'mainSeriesProperties.candleStyle.wickDownColor': '#ef4444'
+        },
+        container_id: id
+      });
+    } catch (e) { tvFail(); return; }
+    TT.tvActive = true;
+    panel.classList.add('ncx-tv-on');
+    clearTimeout(TV.watch);
+    TV.watch = setTimeout(function () { if (TT.open && TT.tvActive && !host.querySelector('iframe')) tvFail(); }, 12000);
+  }
+
+  function tvFail() {
+    TT.tvFailed = true;
+    TT.tvActive = false;
+    var host = $('ncTv');
+    if (host && host.parentNode) host.parentNode.removeChild(host);
+    var panel = document.querySelector('.tt-chart-panel');
+    if (panel) panel.classList.remove('ncx-tv-on');
+    resizeCanvas();
+  }
+
+  function tvDestroy() {
+    clearTimeout(TV.watch);
+    var host = $('ncTv');
+    if (host) host.innerHTML = '';
+    TT.tvActive = false;
+  }
+
+  // ---------- notifications, order confirmation, hints ----------
+
+  function ttToast(msg, isErr) {
+    var el = $('ncxToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ncxToast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.className = 'ncx-toast ' + (isErr ? 'err' : 'ok') + ' show';
+    clearTimeout(el.__t);
+    el.__t = setTimeout(function () { el.classList.remove('show'); }, isErr ? 4200 : 2600);
+  }
+
+  function ttErr(msg) { ttToast(String(msg), true); }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function ttConfirm(o) {
+    return new Promise(function (resolve) {
+      var old = $('ncxConfirm');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var rows = [], title, cls;
+      if (o.side === 'buy') {
+        title = 'Confirm purchase'; cls = 'buy';
+        rows = [
+          ['Order', o.limit ? 'Limit buy' : 'Market buy'],
+          ['Pair', o.coin + '/USD'],
+          ['You pay', fmtMoney(o.amount)],
+          ['Price', (o.limit ? '' : '≈ ') + fmtPrice(o.price)],
+          ['You receive', '≈ ' + fmtCrypto(o.amount / o.price, o.coin) + ' ' + o.coin]
+        ];
+      } else if (o.side === 'sell') {
+        title = 'Confirm sale'; cls = 'sell';
+        rows = [
+          ['Order', o.limit ? 'Limit sell' : 'Market sell'],
+          ['Pair', o.coin + '/USD'],
+          ['You sell', fmtCrypto(o.amount, o.coin) + ' ' + o.coin],
+          ['Price', (o.limit ? '' : '≈ ') + fmtPrice(o.price)],
+          ['You receive', '≈ ' + fmtMoney(o.amount * o.price)]
+        ];
+      } else {
+        title = 'Confirm conversion'; cls = 'convert';
+        rows = [
+          ['You convert', fmtCrypto(o.amount, o.from) + ' ' + o.from],
+          ['Rate', '1 ' + o.from + ' = ' + Number(o.rate).toFixed(8) + ' ' + o.to],
+          ['You receive', '≈ ' + (o.amount * o.rate).toFixed(8) + ' ' + o.to],
+          ['Fee', 'Free']
+        ];
+      }
+      var ov = document.createElement('div');
+      ov.id = 'ncxConfirm';
+      ov.className = 'ncx-ov';
+      ov.innerHTML =
+        '<div class="ncx-box ' + cls + '" role="dialog" aria-modal="true">' +
+          '<div class="ncx-title">' + title + '</div>' +
+          rows.map(function (r) { return '<div class="ncx-row"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') +
+          (o.limit ? '' : '<div class="ncx-note">Market orders are filled at the live exchange price at the moment of execution.</div>') +
+          '<div class="ncx-actions"><button type="button" class="ncx-cancel">Cancel</button><button type="button" class="ncx-ok ' + cls + '">Confirm</button></div>' +
+        '</div>';
+      document.body.appendChild(ov);
+      var okBtn = ov.querySelector('.ncx-ok');
+      function close(v) {
+        document.removeEventListener('keydown', onKey, true);
+        if (ov.parentNode) ov.parentNode.removeChild(ov);
+        resolve(v);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(false); }
+        else if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); close(true); }
+      }
+      document.addEventListener('keydown', onKey, true);
+      ov.addEventListener('click', function (e) { if (e.target === ov) close(false); });
+      ov.querySelector('.ncx-cancel').onclick = function () { close(false); };
+      okBtn.onclick = function () { close(true); };
+      setTimeout(function () { try { okBtn.focus(); } catch (e) {} }, 30);
+    });
+  }
+
+  function ttValidate() {
+    var msgs = { buy: '', sell: '', convert: '' };
+    var buy = parseFloat(($('ttBuyAmount') || {}).value) || 0;
+    if (buy > 0 && buy < 10) msgs.buy = 'Minimum purchase is $10';
+    else if (buy > getUsdBalance() + 1e-9) msgs.buy = 'Insufficient USD balance';
+    var sell = parseFloat(($('ttSellAmount') || {}).value) || 0;
+    if (sell > getCoinBalance(TT.coin) + 1e-12) msgs.sell = 'Insufficient ' + TT.coin + ' balance';
+    var from = ($('ttConvertFrom') || {}).value, to = ($('ttConvertTo') || {}).value;
+    var conv = parseFloat(($('ttConvertAmount') || {}).value) || 0;
+    if (from && to && from === to) msgs.convert = 'Choose different coins';
+    else if (conv > 0 && from && conv > getCoinBalance(from) + 1e-12) msgs.convert = 'Insufficient ' + from + ' balance';
+    ['buy', 'sell', 'convert'].forEach(function (k) {
+      var btn = $(k === 'buy' ? 'ttBuySubmit' : (k === 'sell' ? 'ttSellSubmit' : 'ttConvertSubmit'));
+      if (!btn) return;
+      var h = btn.parentNode.querySelector('.ncx-hint[data-for="' + k + '"]');
+      if (!h) {
+        h = document.createElement('div');
+        h.className = 'ncx-hint';
+        h.setAttribute('data-for', k);
+        btn.parentNode.insertBefore(h, btn.nextSibling);
+      }
+      if (h.textContent !== msgs[k]) h.textContent = msgs[k];
+      btn.classList.toggle('ncx-dim', !!msgs[k]);
+    });
+  }
+
+  function ncxStyles() {
+    if ($('ncxStyles')) return;
+    var st = document.createElement('style');
+    st.id = 'ncxStyles';
+    st.textContent =
+      '.tt-chart-panel{position:relative}' +
+      '#ncTv{position:absolute;left:0;right:0;top:0;bottom:0;z-index:3;background:#0a0e15;border-radius:inherit;overflow:hidden}' +
+      '.tt-chart-panel.ncx-tv-on #ttChart{visibility:hidden}' +
+      '.tt-chart-panel.ncx-tv-on .tt-chart-toolbar{display:none!important}' +
+      '.ncx-tv-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7a8a9e;font:600 13px ui-monospace,monospace}' +
+      '@media(max-width:900px){.tt-chart-panel{min-height:380px}}' +
+      '.tt-price{transition:color .6s}.tt-price.ncx-up{color:#10b981;transition:none}.tt-price.ncx-dn{color:#ef4444;transition:none}' +
+      '.ncx-hint{min-height:0;margin-top:8px;font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;color:#f87171;text-align:center}.ncx-hint:empty{display:none}' +
+      '.tt-submit.ncx-dim{opacity:.55}' +
+      '.ncx-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(3,6,12,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}' +
+      '.ncx-box{width:100%;max-width:380px;background:#101722;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);color:#e8f4ff;font-family:-apple-system,Segoe UI,Roboto,sans-serif}' +
+      '.ncx-title{font-weight:800;font-size:18px;margin-bottom:14px}' +
+      '.ncx-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}.ncx-row span{color:#8b9bb0}.ncx-row b{font-family:ui-monospace,monospace;text-align:right}' +
+      '.ncx-note{margin-top:12px;font-size:12px;color:#7a8a9e;line-height:1.45}' +
+      '.ncx-actions{display:flex;gap:10px;margin-top:18px}.ncx-actions button{flex:1;height:46px;border-radius:12px;border:0;font-weight:800;font-size:15px;cursor:pointer}' +
+      '.ncx-cancel{background:rgba(255,255,255,.07);color:#e8f4ff}.ncx-ok{color:#06101f}.ncx-ok.buy{background:#10b981}.ncx-ok.sell{background:#ef4444;color:#fff}.ncx-ok.convert{background:#c8ff4d}' +
+      '.ncx-toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:2147483001;padding:11px 16px;border-radius:12px;font:700 13.5px -apple-system,Segoe UI,Roboto,sans-serif;max-width:92vw;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,.5)}' +
+      '.ncx-toast.show{opacity:1;transform:translate(-50%,0)}.ncx-toast.err{background:#3a1218;color:#ffb4b4;border:1px solid rgba(239,68,68,.5)}.ncx-toast.ok{background:#0f2a22;color:#9df2cf;border:1px solid rgba(16,185,129,.5)}';
+    document.head.appendChild(st);
+  }
+  ncxStyles();
+
+  console.log('%c[NordicCrypto] 📊 Trade Terminal v2.0 (live) loaded', 'color:#8b5cf6;font-weight:bold;font-size:13px');
 
 })();
