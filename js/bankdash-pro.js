@@ -259,15 +259,29 @@
     if (keep) { var qi = $('bdQ'); if (qi) { qi.focus(); try { qi.setSelectionRange(keep[0], keep[1]); } catch (e) {} } }
   }
 
+  function hasCard() {
+    var s = S(), real = $('cardDash'), n = real && $('cardNumDash') ? $('cardNumDash').textContent : '';
+    if (s.card) return true;
+    return /\d{4}/.test(n || '') && !/NO CARD/i.test((($('cardTypeDash') || {}).textContent) || '');
+  }
   function rCard() {
-    var s = S(), c = s.card, frozen = c && c.status === 'Frozen', box = $('bdCard'), real = $('cardDash');
+    var s = S(), c = hasCard(), frozen = s.card && s.card.status === 'Frozen', box = $('bdCard'), real = $('cardDash');
     if (!box.__init) { box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Card</div><h3>Your card</h3></div><button type="button" class="bd-link" data-a="nav" data-v="cards">Manage ' + ic(I.chev, 14) + '</button></div><div class="bd-slot" id="bdSlot"></div><div id="bdCardRest"></div>'; box.__init = true; }
     var slot = $('bdSlot');
     if (real && real.parentNode !== slot) slot.appendChild(real);        // the real card element: identical design to My Cards, always in sync
-    slot.hidden = !c;
-    var rest = $('bdCardRest');
-    if (!c) { rest.innerHTML = '<div class="bd-empty sm">' + ic(I.card, 26) + '<b>No card yet</b><span>Order a metal card and pay anywhere.</span><button type="button" class="bd-btn pri" data-a="nav" data-v="order">Order card</button></div>'; return; }
-    var h = '<div class="bd-cacts"><button type="button" data-a="proxy" data-t="btnFreezeCard"><span class="bd-ci c1">' + ic(I.snow, 18) + '</span>' + (frozen ? 'Unfreeze' : 'Freeze') + '</button><button type="button" data-a="proxy" data-t="btnLimitsCard"><span class="bd-ci c2">' + ic(I.sliders, 18) + '</span>Limits</button><button type="button" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-ci c3">' + ic(I.copy, 18) + '</span>Copy number</button><button type="button" data-a="proxy" data-t="btnSettingsCard"><span class="bd-ci c4">' + ic(I.gear, 18) + '</span>Settings</button></div>';
+    slot.hidden = false; slot.classList.toggle('nc', !c);
+    var ov = slot.querySelector('.bd-ncov');
+    if (!c && !ov) { ov = document.createElement('div'); ov.className = 'bd-ncov'; ov.innerHTML = '<span class="bd-ncv">' + ic(I.card, 22) + '</span><b>No card yet</b>'; slot.appendChild(ov); }
+    if (c && ov) ov.remove();
+    var rest = $('bdCardRest'), acts = [['btnFreezeCard', I.snow, 'c1', frozen ? 'Unfreeze' : 'Freeze'], ['btnLimitsCard', I.sliders, 'c2', 'Limits'], ['btnCopyCardV2', I.copy, 'c3', 'Copy number'], ['btnSettingsCard', I.gear || I.sliders, 'c4', 'Settings']];
+    var h;
+    if (!c) {
+      h = '<div class="bd-cacts off">' + acts.map(function (a) { return '<button type="button" disabled><span class="bd-ci ' + a[2] + '">' + ic(a[1], 18) + '</span>' + a[3] + '</button>'; }).join('') + '</div>' +
+        '<p class="bd-ncp">Order a card to pay anywhere. Freeze, limits and card details appear here once it is ready.</p>' +
+        '<button type="button" class="bd-btn pri full" data-a="nav" data-v="order">Get your card</button>';
+    } else {
+      h = '<div class="bd-cacts">' + acts.map(function (a) { return '<button type="button" data-a="proxy" data-t="' + a[0] + '"><span class="bd-ci ' + a[2] + '">' + ic(a[1], 18) + '</span>' + a[3] + '</button>'; }).join('') + '</div>';
+    }
     if (rest.__h !== h) { rest.innerHTML = h; rest.__h = h; }
   }
 
@@ -304,7 +318,7 @@
 
   /* ---------- render ---------- */
   function sig() {
-    var s = S(); return [s.usd, s.currency, s.eurR, s.btc, s.eth, s.btcP, s.ethP, (s.txs || []).length, (s.txs || []).map(function (t) { return t.status; }).join(''), (s.withdrawals || []).map(function (w) { return w.status; }).join(''), s.card && s.card.status, s.card && s.card.num, s.user && s.user.iban, s.verification && s.verification.status, B.rng, B.month, B.filter, B.q, B.more, B.hide, B.goalForm, JSON.stringify(goals()), (window.NCI18N && window.NCI18N.lang) || '', ($('myIban') || {}).textContent, (new Date()).getMinutes()].join('|');
+    var s = S(); return [s.usd, s.currency, s.eurR, s.btc, s.eth, s.btcP, s.ethP, (s.txs || []).length, (s.txs || []).map(function (t) { return t.status; }).join(''), (s.withdrawals || []).map(function (w) { return w.status; }).join(''), s.card && s.card.status, s.card && s.card.num, s.user && s.user.iban, s.verification && s.verification.status, B.rng, B.month, B.filter, B.q, B.more, B.hide, B.goalForm, JSON.stringify(goals()), (($('cardNumDash') || {}).textContent || '') + (($('cardTypeDash') || {}).textContent || ''), (window.NCI18N && window.NCI18N.lang) || '', ($('myIban') || {}).textContent, (new Date()).getMinutes()].join('|');
   }
   function visible() { var d = $('dash'); return !!(d && d.offsetParent !== null && $('bd')); }
   function render(force) {
