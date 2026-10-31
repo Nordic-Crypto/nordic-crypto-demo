@@ -34,6 +34,18 @@
 
   var B = { rng: '30', month: 0, filter: 'all', q: '', more: false, built: false, hide: lsGet('bd_hide') === '1', goalForm: false, sig: '', ro: null };
 
+  /* ---------- theme accent (follows brand colour of the live site) ---------- */
+  function accent() {
+    try {
+      var cands = ['.mi.on', '.side .mi.active', '#sideBar .mi.on'], col = null;
+      for (var i = 0; i < cands.length && !col; i++) { var e = document.querySelector(cands[i]); if (e) { var c = getComputedStyle(e).color, m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c); if (m) { var r = +m[1], g = +m[2], b = +m[3], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx > 110 && (mx - mn) / mx > 0.35) col = [r, g, b]; } } }
+      if (!col) { var v = getComputedStyle(document.documentElement).getPropertyValue('--pri').trim(); var h = /^#([0-9a-f]{6})$/i.exec(v); if (h) col = [parseInt(h[1].substr(0, 2), 16), parseInt(h[1].substr(2, 2), 16), parseInt(h[1].substr(4, 2), 16)]; }
+      if (!col) col = [200, 255, 77];
+      var lum = (0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2]) / 255, root = document.documentElement.style;
+      root.setProperty('--nc-acc', 'rgb(' + col.join(',') + ')'); root.setProperty('--nc-ink', lum > 0.5 ? '#0b1405' : '#ffffff');
+    } catch (e) {}
+  }
+
   /* ---------- data ---------- */
   function internal(t) { var d = String(t.desc || '').toLowerCase(); return t.internal === true || d.indexOf('refund') >= 0 || d.indexOf('adjustment') >= 0 || d.indexOf('bonus') >= 0; }
   function allTx() {
@@ -57,7 +69,7 @@
   }
   var CAT = {
     dep: { n: 'Deposits', c: '#10b981', i: I.down }, wd: { n: 'Withdrawals', c: '#f59e0b', i: I.up }, trade: { n: 'Exchange & trading', c: '#8b5cf6', i: I.swap },
-    card: { n: 'Card & payments', c: '#22d3ee', i: I.pay }, fee: { n: 'Fees', c: '#ec4899', i: I.fee }, bonus: { n: 'Bonuses', c: '#fbbf24', i: I.gift }
+    card: { n: 'Card & payments', c: '#c8ff4d', i: I.pay }, fee: { n: 'Fees', c: '#ec4899', i: I.fee }, bonus: { n: 'Bonuses', c: '#fbbf24', i: I.gift }
   };
   function okTx(t) { return t.status !== 'Rejected' && t.status !== 'Failed' && t.status !== 'Cancelled'; }
 
@@ -248,14 +260,15 @@
   }
 
   function rCard() {
-    var s = S(), c = s.card, frozen = c && c.status === 'Frozen', box = $('bdCard');
-    if (!c) { box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Card</div><h3>Your card</h3></div></div><div class="bd-empty sm">' + ic(I.card, 26) + '<b>No card yet</b><span>Order a metal card and pay anywhere.</span><button type="button" class="bd-btn pri" data-a="nav" data-v="order">Order card</button></div>'; return; }
-    var num = String(c.num || '').replace(/\D/g, ''), last4 = num.slice(-4) || '••••';
-    var net = c.type === 'Mastercard' ? '<svg viewBox="0 0 100 40" width="46" height="20"><circle cx="35" cy="20" r="14" fill="#EB001B"/><circle cx="65" cy="20" r="14" fill="#F79E1B"/><circle cx="50" cy="20" r="14" fill="#FF5F00" opacity=".9"/></svg>' : '<svg viewBox="0 0 100 40" width="46" height="20"><text x="50" y="30" text-anchor="middle" font-family="Arial Black,Arial" font-size="26" font-weight="900" font-style="italic" fill="currentColor">VISA</text></svg>';
-    box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Card</div><h3>Your card</h3></div><button type="button" class="bd-link" data-a="nav" data-v="cards">Manage ' + ic(I.chev, 14) + '</button></div>' +
-      '<div class="bd-plastic' + (frozen ? ' frozen' : '') + '"><div class="bd-pl-top"><b>NORDIC CRYPTO</b><span>' + esc(String((c.type || 'Visa') + ' ' + (c.cur || 'USD')).toUpperCase()) + '</span></div><div class="bd-chip"></div>' +
-      '<div class="bd-pn bd-sens">•••• •••• •••• ' + esc(last4) + '</div><div class="bd-pl-bot"><div><small>CARD HOLDER</small><b>' + esc(c.name || '—') + '</b></div><div><small>EXPIRES</small><b>' + esc(c.expiry || '—/—') + '</b></div><div class="bd-net">' + net + '</div></div>' + (frozen ? '<div class="bd-frz">' + ic(I.snow, 18) + ' Frozen</div>' : '') + '</div>' +
-      '<div class="bd-cacts"><button type="button" data-a="proxy" data-t="btnFreezeCard"><span class="bd-ci c1">' + ic(I.snow, 18) + '</span>' + (frozen ? 'Unfreeze' : 'Freeze') + '</button><button type="button" data-a="proxy" data-t="btnLimitsCard"><span class="bd-ci c2">' + ic(I.sliders, 18) + '</span>Limits</button><button type="button" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-ci c3">' + ic(I.copy, 18) + '</span>Copy number</button><button type="button" data-a="proxy" data-t="btnSettingsCard"><span class="bd-ci c4">' + ic(I.gear, 18) + '</span>Settings</button></div>';
+    var s = S(), c = s.card, frozen = c && c.status === 'Frozen', box = $('bdCard'), real = $('cardDash');
+    if (!box.__init) { box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Card</div><h3>Your card</h3></div><button type="button" class="bd-link" data-a="nav" data-v="cards">Manage ' + ic(I.chev, 14) + '</button></div><div class="bd-slot" id="bdSlot"></div><div id="bdCardRest"></div>'; box.__init = true; }
+    var slot = $('bdSlot');
+    if (real && real.parentNode !== slot) slot.appendChild(real);        // the real card element: identical design to My Cards, always in sync
+    slot.hidden = !c;
+    var rest = $('bdCardRest');
+    if (!c) { rest.innerHTML = '<div class="bd-empty sm">' + ic(I.card, 26) + '<b>No card yet</b><span>Order a metal card and pay anywhere.</span><button type="button" class="bd-btn pri" data-a="nav" data-v="order">Order card</button></div>'; return; }
+    var h = '<div class="bd-cacts"><button type="button" data-a="proxy" data-t="btnFreezeCard"><span class="bd-ci c1">' + ic(I.snow, 18) + '</span>' + (frozen ? 'Unfreeze' : 'Freeze') + '</button><button type="button" data-a="proxy" data-t="btnLimitsCard"><span class="bd-ci c2">' + ic(I.sliders, 18) + '</span>Limits</button><button type="button" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-ci c3">' + ic(I.copy, 18) + '</span>Copy number</button><button type="button" data-a="proxy" data-t="btnSettingsCard"><span class="bd-ci c4">' + ic(I.gear, 18) + '</span>Settings</button></div>';
+    if (rest.__h !== h) { rest.innerHTML = h; rest.__h = h; }
   }
 
   function rAcc() {
@@ -341,7 +354,7 @@
   function init() {
     hook();
     if (!build()) { setTimeout(init, 400); return; }
-    render(true); setInterval(function () { hook(); render(); }, 2000);
+    accent(); render(true); setInterval(function () { hook(); accent(); render(); }, 2000);
     window.addEventListener('nc-lang', function () { setTimeout(function () { render(true); }, 80); });
     try { if (window.ResizeObserver) { var lw = 0; B.ro = new ResizeObserver(function () { var c = $('bdChart'); if (!c || !c.clientWidth || Math.abs(c.clientWidth - lw) < 2) return; lw = c.clientWidth; if (visible()) rHero(); }); B.ro.observe($('bdChart')); } } catch (e) {}
     var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (visible()) rHero(); }, 150); });
