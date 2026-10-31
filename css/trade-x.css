@@ -339,3 +339,15 @@ html.tx-lock, html.tx-lock body { overflow: hidden !important; }
   .tx-pm-sh { top: 6vh; width: 100%; border-left: 0; border-top: 1px solid var(--bd2); border-radius: 22px 22px 0 0; animation: txup .22s ease-out; }
   @keyframes txup { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
 }
+
+/* mobile: chart must not trap page scroll */
+.tx-shield, .tx-ichart { display: none; }
+@media (max-width: 900px) {
+  .tx-chart { height: min(46vh, 380px) !important; min-height: 280px !important; }
+  .tx-shield { display: block; position: absolute; inset: 0; z-index: 3; background: transparent; touch-action: pan-y; }
+  .tx-chart.live .tx-shield { display: none; }
+  .tx-ichart { display: block; position: absolute; right: 10px; bottom: 10px; z-index: 4; border: 1px solid var(--bd); background: rgba(10,16,25,.88); color: var(--txt, #fff); font-size: 12px; font-weight: 800; padding: 8px 12px; border-radius: 999px; backdrop-filter: blur(6px); }
+  .tx-chart.live .tx-ichart { border-color: var(--acc); color: var(--acc); }
+  .tx-main { touch-action: pan-y; overscroll-behavior: contain; }
+  #tradeTerminal, .txr { touch-action: pan-y; }
+}
