@@ -355,7 +355,8 @@
     hook();
     if (!build()) { setTimeout(init, 400); return; }
     accent(); render(true); setInterval(function () { hook(); accent(); render(); }, 2000);
-    window.addEventListener('nc-lang', function () { setTimeout(function () { render(true); }, 80); });
+    var rt = 0; function reR() { clearTimeout(rt); rt = setTimeout(function () { render(true); }, 80); }
+    window.addEventListener('nc-lang', reR); window.addEventListener('nc-dict', reR);
     try { if (window.ResizeObserver) { var lw = 0; B.ro = new ResizeObserver(function () { var c = $('bdChart'); if (!c || !c.clientWidth || Math.abs(c.clientWidth - lw) < 2) return; lw = c.clientWidth; if (visible()) rHero(); }); B.ro.observe($('bdChart')); } } catch (e) {}
     var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (visible()) rHero(); }, 150); });
     document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('.mi[data-p="dash"]'); if (m) setTimeout(function () { render(true); }, 120); }, true);
