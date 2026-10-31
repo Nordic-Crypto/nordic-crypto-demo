@@ -143,7 +143,7 @@
       '<nav class="tx-views"><button type="button" data-a="view" data-v="chart" class="on">Chart</button><button type="button" data-a="view" data-v="book">Order book</button><button type="button" data-a="view" data-v="trades">Trades</button></nav>' +
       '<main class="tx-main">' +
         '<section class="tx-col tx-col-l">' +
-          '<div class="tx-card tx-chart" id="txChartCard"><div id="txTv" class="tx-tv"></div><canvas id="txFb" class="tx-fb" hidden></canvas><div class="tx-chart-note" id="txChartNote">Loading chart…</div></div>' +
+          '<div class="tx-card tx-chart" id="txChartCard"><div id="txTv" class="tx-tv"></div><canvas id="txFb" class="tx-fb" hidden></canvas><div class="tx-shield" id="txShield"></div><button type="button" class="tx-ichart" id="txIChart" data-a="ichart">Interact with chart</button><div class="tx-chart-note" id="txChartNote">Loading chart…</div></div>' +
           '<div class="tx-card tx-bottom">' +
             '<div class="tx-btabs" id="txTabs"><button type="button" data-a="tab" data-v="pos" class="on">Positions <em id="txCntPos">0</em></button><button type="button" data-a="tab" data-v="open">Open orders <em id="txCntOpen">0</em></button><button type="button" data-a="tab" data-v="hist">Order history</button><button type="button" data-a="tab" data-v="wallet">Wallet</button></div>' +
             '<div class="tx-bfilter" id="txFilter" hidden><button type="button" data-a="hist" data-v="all" class="on">All</button><button type="button" data-a="hist" data-v="filled">Filled</button><button type="button" data-a="hist" data-v="open">Open</button><button type="button" data-a="hist" data-v="cancelled">Cancelled</button></div>' +
@@ -225,6 +225,7 @@
       case 'go': submit(); break;
       case 'tab': setTab(v); break;
       case 'mode': setMode(v); break;
+      case 'ichart': { var cc = $('txChartCard'); var on = !cc.classList.contains('live'); cc.classList.toggle('live', on); $('txIChart').textContent = on ? 'Lock chart (scroll page)' : 'Interact with chart'; break; }
       case 'pos': openPos(el.getAttribute('data-s')); break;
       case 'pmclose': closePm(); break;
       case 'pmtrade': { var ps = T.pm; closePm(); if (ps) { setSide('buy'); pickCoin(ps); setView('chart'); } break; }
