@@ -832,7 +832,7 @@ $('#mForm').addEventListener('submit',function(e){
 /* ---------- v2 additions ---------- */
 function tickRender(){
  var L=[['BTC','bitcoin','#f7931a'],['ETH','ethereum','#627eea'],['SOL','solana','#9945ff'],['BNB','binancecoin','#d9a400'],['USDT','tether','#26a17b']];
- var one=L.map(function(x){var p=P[x[1]];return '<div class="mi"><em style="--c:'+x[2]+'">'+x[0][0]+'</em><b>'+x[0]+'</b><span class="num">$'+(p.usd>=10?Math.round(p.usd).toLocaleString('en-US'):p.usd.toFixed(2))+'</span><i class="'+(p.c>=0?'up':'dn')+'">'+(p.c>=0?'▲ +':'▼ ')+p.c.toFixed(1)+'%</i></div>'}).join('');
+ var one=L.map(function(x){var p=P[x[1]];return '<div class="mi"><em style="--c:'+x[2]+'">'+x[0][0]+'</em><b>'+x[0]+'</b><span class="num">$'+p.usd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span><i class="'+(p.c>=0?'up':'dn')+'">'+(p.c>=0?'▲ +':'▼ ')+p.c.toFixed(1)+'%</i></div>'}).join('');
  $('#tick').innerHTML=one+one+one+one;
  mqHalf=0;
  swapRate();
@@ -924,6 +924,9 @@ window.addEventListener('scroll',function(){var h=document.documentElement;$('#p
 
 /* ---------- boot ---------- */
 tickRender();setLang(detect(),false);chart();countUp();loadPrices();
+/* live prices: refresh every 30 s while the page is visible, and right when the user comes back */
+setInterval(function(){if(!document.hidden)loadPrices()},30000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)loadPrices()});
 if(location.hash==='#login')openAuth('login');else if(location.hash==='#signup')openAuth('signup');
 })();
 </script>
