@@ -118,7 +118,7 @@ h1 em{font-style:normal;background:var(--g);-webkit-background-clip:text;backgro
 .mq{border-block:1px solid var(--line);background:var(--s1);overflow:hidden;position:relative;margin-top:50px}
 .mq:before,.mq:after{content:"";position:absolute;top:0;bottom:0;width:90px;z-index:2;pointer-events:none}
 .mq:before{left:0;background:linear-gradient(90deg,var(--s1),transparent)}.mq:after{right:0;background:linear-gradient(-90deg,var(--s1),transparent)}
-.mt{display:flex;width:max-content;animation:mq 38s linear infinite}.mq:hover .mt{animation-play-state:paused}
+.mt{display:flex;width:max-content;will-change:transform}
 @keyframes mq{to{transform:translateX(-50%)}}
 .mi{display:flex;align-items:center;gap:12px;padding:18px 34px;border-right:1px solid var(--line);white-space:nowrap}
 .mi em{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:.72rem;color:#fff;background:var(--c)}
@@ -834,8 +834,40 @@ function tickRender(){
  var L=[['BTC','bitcoin','#f7931a'],['ETH','ethereum','#627eea'],['SOL','solana','#9945ff'],['BNB','binancecoin','#d9a400'],['USDT','tether','#26a17b']];
  var one=L.map(function(x){var p=P[x[1]];return '<div class="mi"><em style="--c:'+x[2]+'">'+x[0][0]+'</em><b>'+x[0]+'</b><span class="num">$'+(p.usd>=10?Math.round(p.usd).toLocaleString('en-US'):p.usd.toFixed(2))+'</span><i class="'+(p.c>=0?'up':'dn')+'">'+(p.c>=0?'▲ +':'▼ ')+p.c.toFixed(1)+'%</i></div>'}).join('');
  $('#tick').innerHTML=one+one+one+one;
+ mqHalf=0;
  swapRate();
 }
+/* endless ticker: JS-driven so it never stops (not affected by reduced-motion, content refresh or touch-hover) */
+var mqX=0,mqHalf=0,mqLast=0,mqHover=false;
+(function(){
+ var box=document.querySelector('.mq'),tr=document.getElementById('tick');if(!box||!tr)return;
+ if(window.matchMedia&&matchMedia('(hover:hover)').matches){box.addEventListener('mouseenter',function(){mqHover=true});box.addEventListener('mouseleave',function(){mqHover=false})}
+ window.addEventListener('resize',function(){mqHalf=0});
+ var run=0,beat=0;
+ function start(){
+  var id=++run;mqLast=0;beat=performance.now();
+  (function frame(t){
+   if(id!==run)return;
+   beat=performance.now();
+   try{
+    var dt=mqLast?Math.min(64,t-mqLast):16;mqLast=t;
+    if(!mqHalf)mqHalf=tr.scrollWidth/2;
+    if(mqHalf>0){
+     if(!mqHover)mqX-=dt*0.06;             /* 60 px per second */
+     if(mqX<=-mqHalf)mqX+=mqHalf;
+     tr.style.transform='translate3d('+mqX.toFixed(2)+'px,0,0)';
+    }
+   }catch(e){}
+   requestAnimationFrame(frame);
+  })(performance.now());
+ }
+ start();
+ /* watchdog: if the loop ever stalls (throttled tab, phone power saving, page restored from cache) it is restarted */
+ setInterval(function(){if(!document.hidden&&performance.now()-beat>1200)start()},1000);
+ document.addEventListener('visibilitychange',function(){if(!document.hidden)start()});
+ window.addEventListener('pageshow',start);
+ window.addEventListener('focus',start);
+})();
 function swapRate(){
  var a=parseFloat($('#sAmt').value)||0,p=P.bitcoin.eur,o=a/p;
  $('#sOut').textContent=a>0?o.toFixed(o>=1?4:6):'—';
