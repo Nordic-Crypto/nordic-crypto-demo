@@ -13,11 +13,12 @@
   function tag(el) {
     if (!el || el.nodeType !== 1 || el.classList.contains('tbp-x') || el.classList.contains('top-search')) return;
     var txt = (el.textContent || '').trim().toLowerCase(), k;
-    if (el.id === 'notifBell' || el.classList.contains('notif-bell')) k = 'tbp-bell';
+    if (el.id === 'ncLang' || el.classList.contains('nc-lang')) k = 'tbp-lang';
+    else if (el.id === 'notifBell' || el.classList.contains('notif-bell')) k = 'tbp-bell';
     else if (el.classList.contains('st')) k = 'tbp-st';
     else if ((/\bnc\b/.test(txt) && TIER.test(txt)) || /reward|loyal|tier/i.test(el.className + ' ' + el.id)) k = 'tbp-rw';
     else k = 'tbp-t';
-    ['tbp-bell', 'tbp-st', 'tbp-rw', 'tbp-t'].forEach(function (c) { if (c !== k) el.classList.remove(c); });
+    ['tbp-bell', 'tbp-st', 'tbp-rw', 'tbp-t', 'tbp-lang'].forEach(function (c) { if (c !== k) el.classList.remove(c); });
     el.classList.add(k);
   }
 
