@@ -255,3 +255,9 @@ html.tx-lock, html.tx-lock body { overflow: hidden !important; }
 .tx-att-in .tx-in { padding: 0 10px; }
 .tx-col-r, .tx-form, .tx-col-r .tx-card { overflow-x: hidden; max-width: 100%; }
 @media (max-width: 420px) { .tx-att-in { grid-template-columns: minmax(0, 1fr); } }
+
+/* quote switch */
+.tx-qsw { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; }
+.tx-qsw span { color: var(--mut); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-right: 4px; }
+.tx-qsw button { border: 1px solid var(--bd2); background: transparent; color: var(--mut); font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 9px; }
+.tx-qsw button.on { background: rgba(200,255,77,.12); border-color: var(--acc); color: var(--acc); }
