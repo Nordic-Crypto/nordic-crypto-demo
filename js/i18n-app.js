@@ -32,7 +32,7 @@
 
   var lang = detect();
   var EXACT = {}, TPL = {}, loaded = {}, cache = {}, missing = {};
-  var VER = '20261115';
+  var VER = '20261116';
 
   /* ---------- словарь ---------- */
   function esc(s) { return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&'); }
