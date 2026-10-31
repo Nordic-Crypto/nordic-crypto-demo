@@ -52,6 +52,7 @@
 <link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="icon" type="image/png" sizes="32x32" href="logo-32.png"><link rel="apple-touch-icon" href="logo-180.png">
 <title>NordicCrypto</title>
 <link rel="stylesheet" href="css/trade-terminal.css">
+<link rel="stylesheet" href="css/trade-x.css?v=20261105">
 <link rel="stylesheet" href="css/withdraw-flow.css">
 <style>
 :root{--pri:#00E5FF;--pri2:#8B5CF6;--acc:#10B981;--bg:#0B1220;--pan:#111827;--pan2:#1A1F2E;--txt:#F8FAFC;--mut:#94A3B8;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.14);--ok:#10B981;--bad:#EF4444;--warn:#F59E0B;--nc3-line:rgba(255,255,255,.075);--nc3-green:#36e2a3;--shadow-md:0 12px 30px rgba(0,0,0,.35);--shadow-lg:0 24px 60px rgba(0,0,0,.45)}
@@ -6232,7 +6233,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261107"></script>
+<script src="js/app.legacy.js?v=20261108"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -6245,7 +6246,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 /* auto-update: when a newer build of this page is deployed, open tabs pick it up (silently if the tab was in the background, otherwise via a small banner) */
 (function(){
-  var BUILD='20261103', hiddenAt=0, busy=false;
+  var BUILD='20261105', hiddenAt=0, busy=false;
   function banner(){
     if(document.getElementById('ncUpd'))return;
     var d=document.createElement('div');d.id='ncUpd';
@@ -6269,7 +6270,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setInterval(function(){if(!document.hidden)check(false);},600000);
 })();
 </script>
-<script src="js/trade-terminal.js?v=20261104"></script>
+<script src="js/trade-terminal.js?v=20261105"></script>
 <!-- <script src="js/polling-hub.js?v=20261017"></script> -->
 <script src="js/bonus-system.js?v=20261017"></script>
 <script src="js/bonus-ui.js?v=20261017"></script>
