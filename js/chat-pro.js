@@ -20,6 +20,15 @@
     lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>', bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>', up: '<path d="M7 11l5-5 5 5M12 6v13"/>', down: '<path d="M7 13l5 5 5-5M12 18V5"/>', headset: '<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="2" y="14" width="4" height="6" rx="1.5"/><rect x="18" y="14" width="4" height="6" rx="1.5"/><path d="M20 20a4 4 0 01-4 2h-3"/>'
   };
 
+  function accent() {
+    try {
+      var e = document.querySelector('.mi.on'), col = null;
+      if (e) { var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(e).color); if (m) { var r = +m[1], g = +m[2], b = +m[3], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx > 110 && (mx - mn) / mx > 0.35) col = [r, g, b]; } }
+      if (!col) { if (document.documentElement.style.getPropertyValue('--nc-acc')) return; col = [200, 255, 77]; }
+      var lum = (0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2]) / 255, rs = document.documentElement.style;
+      rs.setProperty('--nc-acc', 'rgb(' + col.join(',') + ')'); rs.setProperty('--nc-ink', lum > 0.5 ? '#0b1405' : '#ffffff');
+    } catch (x) {}
+  }
   /* ---------- content (edit freely) ---------- */
   var TOPICS = [['deposit', 'Deposit issue', I.d], ['withdrawal', 'Withdrawal issue', I.w], ['kyc', 'KYC / Verification', I.id], ['card', 'Card issue', I.card], ['account', 'Account & security', I.lock]];
   var CATS = ['Money', 'Card', 'Trading', 'Account'];
@@ -204,8 +213,10 @@
     return true;
   }
   function init() {
+    accent();
     if (!watch()) { setTimeout(init, 500); return; }
     build();
+    setInterval(accent, 3000);
     document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#chatToggle')) B.fab = true; }, true);
     setInterval(function () { if (isOpen() && $('cpHub') && $('cpHub').style.display !== 'none') { render(); backBtns(); } else dots(); }, 1500);
     window.addEventListener('nc-lang', function () { setTimeout(function () { render(true); }, 80); });
