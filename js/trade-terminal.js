@@ -434,7 +434,7 @@
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && T.pm && !$('txConfirm')) { closePm(); } }, true);
 
-  window.openTradeTerminalFull = function () {
+  window.openTradeTerminalFull = function (sym, opts) {
     if (!build()) { console.warn('[TX] #tradeTerminal not found'); return; }
     var root = $('tradeTerminal');
     root.classList.add('on');
@@ -442,11 +442,13 @@
     try { applyMode(); } catch (e) {}
     document.documentElement.classList.add('tx-lock');
     T.open = true; T.seen = 0;
+    if (typeof sym === 'string' && /^[A-Z0-9]{2,10}$/.test(sym)) T.coin = sym;
     if (!T.coins.length) setCoins(FALLBACK.map(function (f) { return { symbol: f[0], name: f[1], usd: 0, chg: 0, color: f[2] }; }));
     loadMarkets().then(function () { pickCoin(T.coin, true); });
     pickCoin(T.coin, true);
     startTimers();
     refreshOrders(true);
+    try { if (opts && opts.side && (opts.side === 'convert' || opts.side === 'buy' || opts.side === 'sell')) setSide(opts.side); } catch (e) {}
   };
   window.closeTradeTerminalFull = closeTerminal;
 
