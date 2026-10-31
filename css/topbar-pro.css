@@ -19,6 +19,12 @@
 .tbp-rw { order: 1; } .tbp-t { order: 2; } .tbp-bell { order: 3; } .tbp-st { order: 4; } .tbp-tg { order: 5; } .tbp-br { order: 6; }
 .top.tbp .tbp-tg, .top.tbp .tbp-br { display: none !important; }
 
+/* language switcher: never hidden, own compact look */
+.tbp-lang { order: 2; display: inline-block !important; position: relative; z-index: 60; }
+.tbp-lang .nc-lang-btn { height: 42px; border-radius: 13px !important; padding: 0 11px !important; background: rgba(255,255,255,.045) !important; border: 1px solid rgba(255,255,255,.09) !important; font-weight: 700; font-size: 13px; }
+.tbp-lang .nc-lang-btn:hover { border-color: rgba(200,255,77,.5) !important; }
+.tbp-lang .nc-lang-menu { z-index: 9999 !important; max-height: 70vh; overflow-y: auto; }
+
 /* unified controls */
 .tbp-t, .tbp-bell, .tbp-t .curr-btn-top, .tbp-tg {
   height: 42px !important; min-width: 42px; box-sizing: border-box; display: inline-flex !important; align-items: center; justify-content: center; gap: 7px;
@@ -57,6 +63,7 @@
   .top.tbp .tbp-tg { display: inline-flex !important; order: 3; }
   .top.tbp .tbp-br { display: block !important; order: 4; flex: 0 0 100%; height: 0; }
   .tbp-t { display: none !important; order: 5; }
+  .tbp-lang { order: 2; } .tbp-lang .nc-lang-btn { padding: 0 9px !important; } .tbp-lang #ncLangCode { display: none; } .tbp-lang .nc-lang-menu { right: -60px; }
   .tbp .top-search { order: 6; flex: 1 1 100%; max-width: none; height: 42px; }
   .tbp .top-search input { font-size: 14px; }
   .tbp-kbd { display: none; }
