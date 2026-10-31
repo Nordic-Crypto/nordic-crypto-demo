@@ -178,3 +178,22 @@
 .bd-slot #cardDash { margin: 0 auto !important; width: 100%; max-width: 380px; }
 .bd-slot[hidden] { display: none; }
 .bd-frzpill { display: none; }
+
+/* ---- mobile: never wider than the screen ---- */
+#dash.bd-on { min-width: 0 !important; max-width: 100% !important; width: 100% !important; }
+@media (max-width: 1100px) {
+  .bd { width: 100%; max-width: 100%; min-width: 0; overflow-x: clip; }
+  .bd > *, .bd-card, .bd-hero { min-width: 0 !important; max-width: 100% !important; box-sizing: border-box; }
+  .bd-chart, .bd-chart svg { max-width: 100%; }
+  .bd-sub { min-width: 0; } .bd-sub > * { min-width: 0; }
+  .bd-cur, .bd-chips { max-width: 100%; }
+}
+@media (max-width: 760px) {
+  .bd-hero-top { gap: 10px; } .bd-hi { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bd-chart-h { justify-content: center; } .bd-chart-h > * { max-width: 100%; }
+}
+.bd-slot #cardDash { container-type: inline-size; min-width: 0; box-sizing: border-box; }
+.bd-slot #cardDash .pn { font-size: clamp(13px, 6.4cqw, 22px) !important; letter-spacing: .06em !important; white-space: nowrap; max-width: 100%; overflow: hidden; }
+.bd-slot #cardDash .ptop .pb, .bd-slot #cardDash .ptop .pt { font-size: clamp(10px, 3.6cqw, 14px) !important; }
+.bd-search { min-width: 0; max-width: 100%; }
+@media (max-width: 760px) { .bd-search { flex-basis: 100%; } .bd-card > * { min-width: 0; max-width: 100%; } .bd-hero .bd-chart-h { padding: 0; } }
