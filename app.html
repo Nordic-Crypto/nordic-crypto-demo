@@ -52,7 +52,8 @@
 <link rel="icon" type="image/svg+xml" href="logo.svg"><link rel="icon" type="image/png" sizes="32x32" href="logo-32.png"><link rel="apple-touch-icon" href="logo-180.png">
 <title>NordicCrypto</title>
 <link rel="stylesheet" href="css/trade-terminal.css">
-<link rel="stylesheet" href="css/trade-x.css?v=20261109">
+<link rel="stylesheet" href="css/trade-x.css?v=20261110">
+<link rel="stylesheet" href="css/exdash-pro.css?v=20261110">
 <link rel="stylesheet" href="css/withdraw-flow.css">
 <style>
 :root{--pri:#00E5FF;--pri2:#8B5CF6;--acc:#10B981;--bg:#0B1220;--pan:#111827;--pan2:#1A1F2E;--txt:#F8FAFC;--mut:#94A3B8;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.14);--ok:#10B981;--bad:#EF4444;--warn:#F59E0B;--nc3-line:rgba(255,255,255,.075);--nc3-green:#36e2a3;--shadow-md:0 12px 30px rgba(0,0,0,.35);--shadow-lg:0 24px 60px rgba(0,0,0,.45)}
@@ -4561,95 +4562,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 
 <!-- EXCHANGE DASHBOARD -->
-<div id="exchangeDash" class="pg" style="display:none">
-  <div class="ex-dashboard">
-    <div class="ex-hero">
-      <div>
-        <div class="ex-eyebrow"><span class="ex-live-dot"></span> Spot Trading · Live</div>
-        <h1><span id="exGreeting">Welcome</span> <span id="exName"></span></h1>
-        <p>Trade crypto with instant settlement</p>
-      </div>
-      <div class="ex-hero-actions">
-        <button class="ex-btn ex-btn-deposit" id="exBtnDeposit">💰 Deposit</button>
-        <button class="ex-btn ex-btn-withdraw" id="exBtnWithdraw">💸 Withdraw</button>
-        <button class="ex-btn ex-btn-trade" id="exBtnTrade">⚡ Trade</button>
-      </div>
-    </div>
-
-    <div class="ex-main-grid">
-      <div class="ex-balance-card">
-        <div class="ex-bal-top">
-          <div>
-            <div class="ex-kicker">Portfolio value</div>
-            <div class="ex-balance" id="exBalance">$0.00</div>
-            <div class="ex-balance-sub" id="exBalanceBtc">≈ 0.00000000 BTC</div>
-          </div>
-          <div class="ex-bal-badge">SPOT</div>
-        </div>
-        <div class="ex-chart-wrap">
-          <div class="ex-chart-tabs">
-            <button class="ex-tab on" data-range="1">24H</button>
-            <button class="ex-tab" data-range="7">7D</button>
-            <button class="ex-tab" data-range="30">30D</button>
-          </div>
-          <div id="exPortfolioChart" class="ex-portfolio-chart"></div>
-          <div class="ex-chart-labels"><span id="exChartStart">—</span><span id="exChartEnd">—</span></div>
-        </div>
-        <div class="ex-bal-stats">
-          <div class="ex-stat-mini"><span>24h Change</span><strong id="exPnl24h">—</strong></div>
-          <div class="ex-stat-mini"><span>Total Deposits</span><strong id="exTotalDeposits">$0.00</strong></div>
-          <div class="ex-stat-mini"><span>Assets</span><strong id="exAssetsCount">0</strong></div>
-        </div>
-      </div>
-
-      <div class="ex-coins-card">
-        <div class="ex-coins-head">
-          <div><div class="ex-kicker">Markets</div><h3>Top movers</h3></div>
-          <span class="ex-live-badge">● LIVE</span>
-        </div>
-        <div id="exCoinsList" class="ex-coins-list"><div style="text-align:center;padding:40px;color:#7a8a9e">Loading markets...</div></div>
-      </div>
-    </div>
-
-    <div class="ex-assets-section">
-      <div class="ex-section-head"><div><div class="ex-kicker">Your holdings</div><h2>Assets</h2></div></div>
-      <div class="ex-assets-grid">
-        <div class="ex-asset-card btc">
-          <div class="ex-asset-icon-big"><svg viewBox="0 0 32 32" width="32" height="32" fill="#fff"><path d="M22.5 14.1c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2v0l-2.2-.6-.4 1.7s1.2.3 1.2.3c.6.2.8.6.7.9l-.7 2.9c0 .1.1.1.2.2l-.2-.1-.9 4.1c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.8 2.1.5c.4.1.8.2 1.1.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.7.5 4.7.3 5.6-2.1.7-2 0-3.1-1.5-3.8 1.1-.3 1.9-1 2.1-2.4zm-3.6 3.2c-.5 2-3.8.9-4.9.6l.9-3.5c1.1.3 4.5.8 4 2.9zm.5-3.2c-.4 1.8-3.2.9-4.1.7l.8-3.2c.9.2 3.8.6 3.3 2.5z"/></svg></div>
-          <div class="ex-asset-info"><div class="ex-asset-label">Bitcoin</div><div class="ex-asset-amount" id="exBtcAmt">0.00000000 BTC</div><div class="ex-asset-value" id="exBtcVal">$0.00</div></div>
-        </div>
-        <div class="ex-asset-card eth">
-          <div class="ex-asset-icon-big"><svg viewBox="0 0 24 24" width="32" height="32" fill="#fff"><path d="M12 1.75L5.75 12.25L12 16L18.25 12.25L12 1.75ZM5.75 13.75L12 22.25L18.25 13.75L12 17.5L5.75 13.75Z"/></svg></div>
-          <div class="ex-asset-info"><div class="ex-asset-label">Ethereum</div><div class="ex-asset-amount" id="exEthAmt">0.00000000 ETH</div><div class="ex-asset-value" id="exEthVal">$0.00</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ex-iban-card">
-      <div class="ex-iban-head">
-        <div class="ex-iban-icon">🏦</div>
-        <div><div class="ex-kicker">Bank details</div><h3>Deposit / Withdraw via IBAN</h3></div>
-      </div>
-      <div id="exIbanPending" class="ex-iban-pending">
-        <div class="ex-iban-spinner"></div>
-        <div>Your IBAN is being generated...</div>
-        <div style="font-size:11px;color:#7a8a9e;margin-top:6px">Our team is issuing it, this usually takes a few minutes</div>
-      </div>
-      <div id="exIbanReady" class="ex-iban-details" style="display:none">
-        <div class="ex-iban-row"><span>IBAN</span><b id="exMyIban">—</b></div>
-        <div class="ex-iban-row"><span>SWIFT / BIC</span><b id="exMySwift">—</b></div>
-        <div class="ex-iban-row"><span>Bank</span><b id="exMyBank">—</b></div>
-        <div class="ex-iban-row"><span>Country</span><b id="exMyCountry">—</b></div>
-        <button class="ex-copy-btn" id="exCopyIban">📋 Copy IBAN</button>
-      </div>
-    </div>
-
-    <div class="ex-tx-section">
-      <div class="ex-section-head"><div><div class="ex-kicker">Activity</div><h2>Recent transactions</h2></div></div>
-      <div id="exRecentTx" class="ex-tx-list"><div class="ex-empty">No transactions yet</div></div>
-    </div>
-  </div>
-</div>
+<div id="exchangeDash" class="pg" style="display:none"></div>
 
 <!-- MY CARDS -->
 <div id="cards" class="pg">
@@ -6233,7 +6146,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261108"></script>
+<script src="js/app.legacy.js?v=20261110"></script>
+<script src="js/exdash-pro.js?v=20261110"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -6246,7 +6160,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 /* auto-update: when a newer build of this page is deployed, open tabs pick it up (silently if the tab was in the background, otherwise via a small banner) */
 (function(){
-  var BUILD='20261109', hiddenAt=0, busy=false;
+  var BUILD='20261110', hiddenAt=0, busy=false;
   function banner(){
     if(document.getElementById('ncUpd'))return;
     var d=document.createElement('div');d.id='ncUpd';
@@ -6270,7 +6184,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setInterval(function(){if(!document.hidden)check(false);},600000);
 })();
 </script>
-<script src="js/trade-terminal.js?v=20261109"></script>
+<script src="js/trade-terminal.js?v=20261110"></script>
 <!-- <script src="js/polling-hub.js?v=20261017"></script> -->
 <script src="js/bonus-system.js?v=20261017"></script>
 <script src="js/bonus-ui.js?v=20261017"></script>
