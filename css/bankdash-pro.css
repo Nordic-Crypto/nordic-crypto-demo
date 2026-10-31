@@ -197,3 +197,12 @@
 .bd-slot #cardDash .ptop .pb, .bd-slot #cardDash .ptop .pt { font-size: clamp(10px, 3.6cqw, 14px) !important; }
 .bd-search { min-width: 0; max-width: 100%; }
 @media (max-width: 760px) { .bd-search { flex-basis: 100%; } .bd-card > * { min-width: 0; max-width: 100%; } .bd-hero .bd-chart-h { padding: 0; } }
+
+/* ---- no-card state: same layout, clearly "not active yet" ---- */
+.bd-slot { position: relative; }
+.bd-slot.nc #cardDash { filter: saturate(.35) brightness(.8); }
+.bd-ncov { position: absolute; inset: 0; margin: 0 auto; max-width: 380px; width: 100%; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; background: rgba(10,14,22,.88); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px dashed color-mix(in srgb, var(--bd-acc) 45%, transparent); color: var(--bd-tx); z-index: 3; pointer-events: none; }
+.bd-ncov b { font-size: 15px; font-weight: 800; letter-spacing: .01em; }
+.bd-ncv { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--bd-acc) 16%, transparent); color: var(--bd-acc); border: 1px solid color-mix(in srgb, var(--bd-acc) 35%, transparent); }
+.bd-cacts.off button { opacity: .42; cursor: not-allowed; pointer-events: none; }
+.bd-ncp { margin: 14px 4px 12px; text-align: center; font-size: 13px; line-height: 1.45; color: var(--bd-mut); }
