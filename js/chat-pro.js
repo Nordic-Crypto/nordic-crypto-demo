@@ -219,7 +219,8 @@
     setInterval(accent, 3000);
     document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#chatToggle')) B.fab = true; }, true);
     setInterval(function () { if (isOpen() && $('cpHub') && $('cpHub').style.display !== 'none') { render(); backBtns(); } else dots(); }, 1500);
-    window.addEventListener('nc-lang', function () { setTimeout(function () { render(true); }, 80); });
+    var rt = 0; function reR() { clearTimeout(rt); rt = setTimeout(function () { render(true); }, 80); }
+    window.addEventListener('nc-lang', reR); window.addEventListener('nc-dict', reR);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) closeAll(); });
   }
   window.SupportCenter = { show: function (v) { if (!isOpen() && typeof window.toggleChat === 'function') window.toggleChat(); setTimeout(function () { showHub(v || 'home'); }, 60); } };
