@@ -32,7 +32,7 @@
 
   var lang = detect();
   var EXACT = {}, TPL = {}, loaded = {}, cache = {}, missing = {};
-  var VER = '20261114';
+  var VER = '20261115';
 
   /* ---------- словарь ---------- */
   function esc(s) { return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&'); }
@@ -49,7 +49,7 @@
     tp.sort(function (a, b) { return b.len - a.len; });
     cache = {};
     loaded[l] = 2;
-    if (l === lang) refreshAll();
+    if (l === lang) { refreshAll(); try { window.dispatchEvent(new CustomEvent('nc-dict', { detail: l })); } catch (e) {} }
   }
 
   function loadLang(l) {
@@ -61,9 +61,9 @@
   function fetchDict(l, n) {
     var s = document.createElement('script'), done = false;
     s.src = 'js/i18n-' + l + '.js?v=' + VER + (n ? '&r=' + Date.now() : ''); s.async = true;
-    function retry() { if (done) return; done = true; if (loaded[l] === 2) return; if (n < 3) setTimeout(function () { fetchDict(l, n + 1); }, 900 * (n + 1)); else { loaded[l] = 0; try { console.warn('[i18n] dictionary "' + l + '" failed to load'); } catch (e) {} } }
+    function retry() { if (done) return; done = true; if (n < 3) setTimeout(function () { fetchDict(l, n + 1); }, 900 * (n + 1)); else { loaded[l] = 0; try { console.warn('[i18n] dictionary "' + l + '" failed to load'); } catch (e) {} } }
     s.onerror = retry;
-    s.onload = function () { done = true; setTimeout(function () { if (loaded[l] !== 2 && n < 3) { done = false; retry(); } }, 600); };
+    s.onload = function () { done = true; };
     document.head.appendChild(s);
   }
 
