@@ -246,3 +246,12 @@ html.tx-lock, html.tx-lock body { overflow: hidden !important; }
   .tx-go { height: 56px; font-size: 17px; }
 }
 @media (max-width: 380px) { .tx-price b { font-size: 24px; } .tx-att-in { grid-template-columns: 1fr; } }
+
+/* v3.1 — fix TP/SL overflow */
+.tx-att-in { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tx-att-in > *, .tx-fld, .tx-in { min-width: 0; }
+.tx-in input, .tx-in select { width: 100%; min-width: 0; }
+.tx-att { overflow: hidden; }
+.tx-att-in .tx-in { padding: 0 10px; }
+.tx-col-r, .tx-form, .tx-col-r .tx-card { overflow-x: hidden; max-width: 100%; }
+@media (max-width: 420px) { .tx-att-in { grid-template-columns: minmax(0, 1fr); } }
