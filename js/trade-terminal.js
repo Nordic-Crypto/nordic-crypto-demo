@@ -302,7 +302,27 @@
   function toggleMkts() { var m = $('txMkts'); if (!m) return; if (m.hidden) { m.hidden = false; $('txSearch').value = ''; renderMList(); setTimeout(function () { try { if (innerWidth > 900) $('txSearch').focus(); } catch (e) {} }, 30); } else closeMkts(); }
   function closeMkts() { var m = $('txMkts'); if (m) m.hidden = true; }
   function toggleFav(s) { var i = T.fav.indexOf(s); if (i >= 0) T.fav.splice(i, 1); else T.fav.push(s); lsSet('nc_tt_fav', JSON.stringify(T.fav)); renderMList(); }
-  function ico(c) { return '<i class="tx-ci" style="--c:' + esc(c.color) + '">' + esc(glyph(c.symbol)) + '</i>'; }
+  var ICO_SRC = [
+    function (l) { return 'https://assets.coincap.io/assets/icons/' + l + '@2x.png'; },
+    function (l) { return 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/svg/color/' + l + '.svg'; },
+    function (l) { return 'https://s2.coinmarketcap.com/static/img/coins/64x64/' + ({btc:1,eth:1027,usdt:825,sol:5426,bnb:1839,xrp:52,ada:2010,doge:74,trx:1958,avax:5805,link:1975,dot:6636,ltc:2,bch:1831,xlm:512,atom:3794,uni:7083,near:6535,etc:1321,shib:5994,sui:20947,aave:7278,ton:11419,apt:21794}[l] || 0) + '.png'; }
+  ];
+  function icoImg(sym) {
+    var l = String(sym || '').toLowerCase();
+    if (!/^[a-z0-9]{2,10}$/.test(l)) return '';
+    return '<img class="tx-cimg" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-l="' + l + '" data-i="0" src="' + ICO_SRC[0](l) + '">';
+  }
+  document.addEventListener('error', function (e) {
+    var im = e.target; if (!im || im.tagName !== 'IMG' || !/\btx-cimg\b/.test(im.className)) return;
+    var i = (+im.getAttribute('data-i') || 0) + 1, l = im.getAttribute('data-l');
+    if (i < ICO_SRC.length) { im.setAttribute('data-i', i); im.src = ICO_SRC[i](l); } else if (im.parentNode) im.parentNode.removeChild(im);
+  }, true);
+  document.addEventListener('load', function (e) {
+    var im = e.target; if (!im || im.tagName !== 'IMG' || !/\btx-cimg\b/.test(im.className)) return;
+    if (im.naturalWidth < 8) { im.dispatchEvent(new Event('error')); return; }
+    if (im.parentNode) im.parentNode.classList.add('ld');
+  }, true);
+  function ico(c) { return '<i class="tx-ci" style="--c:' + esc(c.color) + '">' + esc(glyph(c.symbol)) + icoImg(c.symbol) + '</i>'; }
   function renderMList() {
     var box = $('txMList'); if (!box) return;
     var term = String(($('txSearch') || {}).value || '').trim().toLowerCase();
@@ -328,7 +348,7 @@
     T.coin = sym; lsSet('nc_tt_coin', sym);
     if (!changed) return;
     var m = coinMeta(sym);
-    $('txIco').outerHTML = '<span id="txIco" class="tx-ci" style="--c:' + esc(m.color) + '">' + esc(glyph(sym)) + '</span>';
+    $('txIco').outerHTML = '<span id="txIco" class="tx-ci" style="--c:' + esc(m.color) + '">' + esc(glyph(sym)) + icoImg(sym) + '</span>';
     $('txPair').textContent = sym + '/USD'; $('txName').textContent = m.name;
     $('txBookSym').textContent = sym + '/USD';
     if (coinChanged || force) { LV.bids = []; LV.asks = []; LV.trades = []; paintBook(); paintTrades(); }
