@@ -13,6 +13,8 @@
     var map = {}; K.forEach(function (k, i) { map[k] = D[l][i]; });
     done[l] = 1; N.add(l, map);
   }
-  var tries = 0, iv = setInterval(function () { apply(); if (++tries > 60) clearInterval(iv); }, 400);
-  window.addEventListener('nc-lang', function () { tries = 0; clearInterval(iv); iv = setInterval(function () { apply(); if (++tries > 60) clearInterval(iv); }, 400); });
+  var tries = 0, iv = 0;
+  function kick() { tries = 0; clearInterval(iv); apply(); iv = setInterval(function () { apply(); var N = window.NCI18N; if (++tries > 150 || (N && (N.lang === 'en' || done[N.lang]))) clearInterval(iv); }, 120); }
+  kick();
+  window.addEventListener('nc-lang', kick);
 })();
