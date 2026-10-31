@@ -5379,7 +5379,14 @@ function renderExchangeDash() {
   }
 
   var balEl = document.getElementById('exBalance');
-  if (balEl) balEl.textContent = fmtCurrency(st.usd || 0);
+  var _exTot = st.usd || 0, _exCnt = (st.usd || 0) > 0 ? 1 : 0;
+  try {
+    (_exPricesCache || []).forEach(function (c) {
+      var q = +st[String(c.symbol).toLowerCase()] || 0;
+      if (q > 0 && c.symbol !== 'USD') { _exTot += q * (+c.usd || 0); _exCnt++; }
+    });
+  } catch (e) {}
+  if (balEl) balEl.textContent = fmtCurrency(_exTot);
 
   var balBtc = document.getElementById('exBalanceBtc');
   if (balBtc && st.btcP) balBtc.textContent = '≈ ' + ((st.usd || 0) / st.btcP).toFixed(8) + ' BTC';
@@ -5401,11 +5408,7 @@ function renderExchangeDash() {
 
   var cntEl = document.getElementById('exAssetsCount');
   if (cntEl) {
-    var c = 0;
-    if ((st.btc || 0) > 0) c++;
-    if ((st.eth || 0) > 0) c++;
-    if ((st.usd || 0) > 0) c++;
-    cntEl.textContent = c;
+    cntEl.textContent = _exCnt;
   }
 
   var btcEl = document.getElementById('exBtcAmt');
