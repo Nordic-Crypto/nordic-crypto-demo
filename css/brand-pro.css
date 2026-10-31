@@ -1,22 +1,67 @@
-/* BRAND PRO — luxury emblem (Didone N + north star) and wordmark. Loaded last. */
-.logo i,.vlogo i,.onb-logo i,.signup-logo i{
-  font-size:0!important;color:transparent!important;transform:none!important;
-  background:url("../logo.png") center/contain no-repeat!important;
-  border-radius:27%!important;box-shadow:0 6px 18px rgba(198,255,61,.22),0 0 0 1px rgba(198,255,61,.12)!important;
-  width:36px!important;height:36px!important;flex:none}
-.vlogo i,.onb-logo i,.signup-logo i{width:30px!important;height:30px!important;display:inline-block}
-.blogo{box-shadow:0 6px 18px rgba(198,255,61,.22)!important;border-radius:27%!important;background:transparent!important}
-.blogo img{object-fit:contain!important;border-radius:0!important}
-/* wordmark: spaced capitals, light + lime */
-.logo span,.vlogo,.onb-logo,.signup-logo,.brand .nm,.login-logo-text{
-  font-family:Sora,'Inter',-apple-system,'Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:.2em!important;font-weight:600!important;font-size:.86rem}
-.logo{gap:12px}
-.logo span{font-size:.9rem}
-.logo b{color:var(--a,
-#c6ff3d);font-weight:700}
-.brand .nm,.login-logo-text{background:none!important;-webkit-text-fill-color:currentColor!important;animation:none!important}
-.brand .nm span,.login-logo-text span{color:
-#c6ff3d!important;font-weight:700}
-html[data-theme="light"] .logo b,html[data-theme="light"] .brand .nm span,html[data-theme="light"] .login-logo-text span{color:
-#4f7d00!important}
-@media(max-width:520px){.logo span{letter-spacing:.14em;font-size:.8rem}}
+/* bank-pro.css v1 — banking dashboard polish + mobile fixes. Scoped to #dash; loaded AFTER all other site CSS. */
+#dash .nc3-dashboard { --bp-r: 22px; }
+/* 1. balance card: stats were absolutely positioned and overlapped content on narrow screens */
+#dash .nc3-balance-card { display: flex; flex-direction: column; min-height: 0; }
+#dash .nc3-balance-card > div[style*="position:absolute"], #dash .nc3-balance-card > div[style*="position: absolute"] { position: static !important; margin-top: auto; padding: 22px 0 0 !important; }
+#dash .nc3-balance-top { gap: 12px; }
+#dash .nc3-balance { font-size: clamp(2.1rem, 6.4vw, 3rem); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#dash .nc3-mini-stats { gap: 10px; padding: 0; }
+#dash .nc3-mini-stat { min-width: 0; padding: 11px 12px; }
+#dash .nc3-mini-value { font-size: clamp(.82rem, 2.6vw, 1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+#dash .nc3-mini-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .06em; }
+#dash .nc3-performance { margin-top: 12px; flex-wrap: wrap; row-gap: 2px; }
+/* 2. cards: consistent depth + hover lift */
+#dash .nc3-balance-card, #dash .nc3-card-wrap, #dash .nc3-chart-panel, #dash .nc3-transactions, #dash .nc3-iban { border-radius: var(--bp-r); transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+@media (hover: hover) {
+  #dash .nc3-asset:hover, #dash .nc3-action:hover, #dash .nc3-stat:hover { transform: translateY(-2px); border-color: rgba(71,220,255,.28); box-shadow: 0 14px 30px -16px rgba(0,0,0,.7); }
+}
+#dash .nc3-asset, #dash .nc3-action { transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease; }
+#dash .nc3-asset-value strong, #dash .nc3-stat strong { font-variant-numeric: tabular-nums; }
+#dash .nc3-asset-amount { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#dash .nc3-asset-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+#dash .nc3-asset-name span { font-size: .62rem; font-weight: 800; color: #6e7c92; background: rgba(255,255,255,.05); border-radius: 6px; padding: 1px 6px; }
+/* 3. IBAN / long strings */
+#dash .nc3-iban-details > div { gap: 14px; }
+#dash .nc3-iban-details b { text-align: right; overflow-wrap: anywhere; word-break: break-all; min-width: 0; }
+#dash .nc3-iban-details span { white-space: nowrap; }
+/* 4. focus + touch */
+#dash button:focus-visible, #dash a:focus-visible { outline: 2px solid #47dcff; outline-offset: 2px; }
+#dash .nc3-ghost, #dash .nc3-primary, #dash .nc3-card-action, #dash .nc3-copy-iban { min-height: 44px; }
+/* 5. responsive */
+@media (max-width: 900px) {
+  #dash .nc3-hero-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #dash .nc3-hero-actions .nc3-primary { grid-column: 1 / -1; order: -1; justify-content: center; }
+  #dash .nc3-hero-actions .nc3-ghost { justify-content: center; padding: 11px 10px; }
+  #dash .nc3-hero { padding-bottom: 18px; }
+}
+@media (max-width: 760px) {
+  #dash .nc3-balance-card, #dash .nc3-card-wrap { padding: 18px; }
+  #dash .nc3-bank-card { padding: 20px; min-height: 0; }
+  #dash .nc3-card-actions { gap: 8px; }
+  #dash .nc3-card-action { flex-direction: column; gap: 6px; padding: 10px 6px; }
+  #dash .nc3-card-action-label { font-size: 12px; }
+  #dash .nc3-chart-panel, #dash .nc3-transactions { padding: 16px; min-height: 0; }
+  #dash #balanceChartSecondary { height: 220px !important; }
+  #dash .nc3-asset { min-height: 0; padding: 14px; }
+  #dash .nc3-assets, #dash .nc3-actions-section, #dash .nc3-lower { margin-top: 20px; }
+  #dash .nc3-bottom-row { margin-bottom: 90px; }
+  #dash .nc3-asset-grid > div[style*="grid-column"] { grid-column: auto !important; }
+}
+@media (max-width: 420px) {
+  #dash .nc3-mini-stats { grid-template-columns: 1fr 1fr; }
+  #dash .nc3-mini-stat:last-child { grid-column: 1 / -1; }
+  #dash .nc3-action-grid { grid-template-columns: 1fr; }
+  #dash .nc3-action { grid-template-columns: 44px 1fr auto; }
+  #dash .nc3-stat-strip { grid-template-columns: 1fr 1fr; }
+  #dash .nc3-stat { min-height: 96px; padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { #dash * { transition: none !important; animation: none !important; } }
+/* grid children must be allowed to shrink (1fr alone lets long content widen the column) */
+#dash .nc3-overview, #dash .nc3-lower, #dash .nc3-bottom-row, #dash .nc3-asset-grid, #dash .nc3-action-grid { min-width: 0; }
+#dash .nc3-overview > *, #dash .nc3-lower > *, #dash .nc3-bottom-row > *, #dash .nc3-asset-grid > *, #dash .nc3-action-grid > * { min-width: 0; }
+@media (max-width: 1100px) {
+  #dash .nc3-overview, #dash .nc3-lower, #dash .nc3-bottom-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) { #dash .nc3-asset-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { #dash .nc3-overview, #dash .nc3-action-grid { grid-template-columns: minmax(0, 1fr); } #dash .nc3-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { #dash .nc3-action-grid { grid-template-columns: minmax(0, 1fr); } }
