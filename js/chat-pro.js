@@ -104,7 +104,7 @@
       '<div class="cp-cards">' +
       '<div class="cp-card"><label class="cp-search">' + ic(I.search, 17) + '<input id="cpQ" type="search" placeholder="Search for help" autocomplete="off" spellcheck="false" value="' + esc(B.q) + '"></label><div class="cp-list" id="cpList">' + faqRows(results(B.q)) + '</div></div>' +
       (un > 0 ? '<button type="button" class="cp-card cp-unread" data-a="chat"><span class="cp-ub">' + ic(I.msg, 18) + '</span><span class="cp-ut"><b>You have a new reply</b><small>Tap to read it</small></span>' + ic(I.chev, 16) + '</button>' : '') +
-      '<div class="cp-card"><div class="cp-ct">Create a ticket</div>' + TOPICS.slice(0, 4).map(function (t) { return '<button type="button" class="cp-row ic" data-a="topic" data-v="' + t[0] + '"><span class="cp-ri">' + ic(t[2], 16) + '</span><span>' + t[1] + '</span>' + ic(I.chev, 16) + '</button>'; }).join('') + '</div>' +
+      '<div class="cp-card"><div class="cp-ct">Create a ticket</div>' + TOPICS.slice(0, 4).map(function (t) { return '<button type="button" class="cp-row cp-rowi" data-a="topic" data-v="' + t[0] + '"><span class="cp-ri">' + ic(t[2], 16) + '</span><span>' + t[1] + '</span>' + ic(I.chev, 16) + '</button>'; }).join('') + '</div>' +
       '<button type="button" class="cp-card cp-ask" data-a="ask"><span class="cp-asl"><b>Ask a question</b><small>Our team replies within a few minutes</small></span><span class="cp-send">' + ic(I.send, 20) + '</span></button>' +
       '<div class="cp-status"><i></i><span>Team online</span><em>We usually reply within 2 minutes.</em></div></div>';
   }
