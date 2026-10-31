@@ -302,7 +302,7 @@
     if (!r || !r.pts || r.pts.length < 2) { box.innerHTML = '<div class="dp-empty-c">Chart unavailable right now</div>'; return; }
     var pts = r.pts, W = box.clientWidth || 640, H = box.clientHeight || 260, pl = 6, pr = 62, pt = 16, pb = 26;
     var mn = Infinity, mx = -Infinity; pts.forEach(function (p) { if (p.v < mn) mn = p.v; if (p.v > mx) mx = p.v; });
-    if (mx - mn < Math.max(1e-9, mx * 0.0005)) { var m = mx || 1; mn = m * 0.98; mx = m * 1.02; } else { var pad = (mx - mn) * 0.14; mn -= pad; mx += pad; }
+    if (mx - mn < Math.max(1e-9, mx * 0.0005)) { var m = mx || 1; mn = m * 0.98; mx = m * 1.02; } else { var pad = (mx - mn) * 0.14; var allPos = mn >= 0; mn -= pad; mx += pad; if (allPos && mn < 0) mn = 0; }
     var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
     function X(t) { return pl + (t - t0) / (t1 - t0) * (W - pl - pr); }
     function Y(v) { return pt + (1 - (v - mn) / (mx - mn)) * (H - pt - pb); }
