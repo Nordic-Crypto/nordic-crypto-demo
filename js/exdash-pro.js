@@ -104,14 +104,15 @@
     return fetch(u, ctl ? { signal: ctl.signal } : undefined).then(function (r) { clearTimeout(t); return r.ok ? r.json() : null; }).catch(function () { clearTimeout(t); return null; });
   }
   function ledger() {
-    var s = S(), cashEv = [], coinEv = [];
+    var s = S(), cashEv = [], coinEv = [], ext = [];
     (s.txs || []).forEach(function (t) {
       if (!t || !t.ts || t.status !== 'Completed') return;
       var a = Number(t.amt) || 0; if (a) cashEv.push({ ts: Number(t.ts), a: a });
+      if (a && !t.tradeId && !/\b(buy|sell|convert)\b.*@/i.test(t.desc || '')) ext.push({ ts: Number(t.ts), a: a });
       var m = /(buy|sell)\s+([0-9]*\.?[0-9]+)\s+([A-Z0-9]{2,10})\s+@/i.exec(t.desc || '');
       if (m) coinEv.push({ ts: Number(t.ts), sym: m[3].toUpperCase(), q: (m[1].toLowerCase() === 'buy' ? 1 : -1) * parseFloat(m[2]) });
     });
-    return { cashEv: cashEv, coinEv: coinEv };
+    return { cashEv: cashEv, coinEv: coinEv, ext: ext };
   }
   function buildSeries(rng) {
     var R = RNG[rng], now = Date.now(), s = S(), L = ledger(), cur = compute(), syms = {}, pxNow = {};
@@ -140,9 +141,11 @@
           L.coinEv.forEach(function (e) { if (e.sym === sy && e.ts > ts) q -= e.q; });
           if (q > 1e-12) v += q * pxAt(sy, ts);
         });
-        pts.push({ t: ts, v: v });
+        var f = 0, fp = 0; L.ext.forEach(function (e) { if (e.ts > t0 && e.ts <= ts) { f += e.a; if (e.a > 0) fp += e.a; } });
+        pts.push({ t: ts, v: v, f: f, fp: fp });
       }
-      pts[pts.length - 1] = { t: now, v: cur.total };
+      var lf = 0, lfp = 0; L.ext.forEach(function (e) { if (e.ts > t0) { lf += e.a; if (e.a > 0) lfp += e.a; } });
+      pts[pts.length - 1] = { t: now, v: cur.total, f: lf, fp: lfp };
       return { pts: pts, real: real };
     });
   }
@@ -265,7 +268,9 @@
     setText('dpBtc', bp > 0 ? '≈ ' + (cur.total / bp).toFixed(6) + ' BTC' : '');
     var d = new Date(); setText('dpUpd', 'Updated ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
   }
-  function seriesDelta(r) { if (!r || !r.pts || r.pts.length < 2) return null; var a = r.pts[0].v, b = r.pts[r.pts.length - 1].v; return { d: b - a, p: a > 0 ? (b / a - 1) * 100 : 0, a: a, b: b }; }
+  /* change excluding deposits / withdrawals (so a deposit is never shown as profit) */
+  function adj(a, b) { var d = b.v - a.v - (b.f || 0), base = a.v + (b.fp || 0); return { d: d, p: base > 1 ? d / base * 100 : 0 }; }
+  function seriesDelta(r) { if (!r || !r.pts || r.pts.length < 2) return null; var a = r.pts[0], b = r.pts[r.pts.length - 1], x = adj(a, b); return { d: x.d, p: x.p, a: a.v, b: b.v }; }
   function kpi(ico, label, val, sub, cls) { return '<div class="dp-kpi"><span class="dp-kico ' + (cls || '') + '">' + ic(ico, 17) + '</span><div><small>' + label + '</small><b class="dp-sens ' + (cls || '') + '">' + val + '</b>' + (sub ? '<em>' + sub + '</em>' : '') + '</div></div>'; }
   function renderKpis(cur) {
     var box = $('dpKpis'); if (!box) return;
@@ -301,7 +306,7 @@
     var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
     function X(t) { return pl + (t - t0) / (t1 - t0) * (W - pl - pr); }
     function Y(v) { return pt + (1 - (v - mn) / (mx - mn)) * (H - pt - pb); }
-    var up = pts[pts.length - 1].v >= pts[0].v, col = up ? '#24d68e' : '#ff5470';
+    var up = adj(pts[0], pts[pts.length - 1]).d >= 0, col = up ? '#24d68e' : '#ff5470';
     var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p.t).toFixed(1) + ',' + Y(p.v).toFixed(1); }).join('');
     var area = line + 'L' + X(t1).toFixed(1) + ',' + (H - pb) + 'L' + X(t0).toFixed(1) + ',' + (H - pb) + 'Z';
     var grid = '', lab = '';
@@ -320,8 +325,8 @@
       var tt = t0 + f * (t1 - t0), lo = 0, hi = pts.length - 1; while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (pts[mid].t <= tt) lo = mid; else hi = mid; }
       var p = (tt - pts[lo].t) < (pts[hi].t - tt) ? pts[lo] : pts[hi], px = X(p.t), py = Y(p.v);
       hv.style.display = ''; vl.setAttribute('x1', px); vl.setAttribute('x2', px); dot.setAttribute('cx', px); dot.setAttribute('cy', py);
-      var d0 = p.v - pts[0].v;
-      tip.style.display = ''; tip.innerHTML = '<b class="dp-sens">' + esc(money(p.v)) + '</b><small>' + esc(new Date(p.t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</small><em class="' + (d0 >= 0 ? 'up' : 'dn') + '"><span class="dp-sens">' + sgn(d0) + esc(money(Math.abs(d0))) + '</span> ' + pct(pts[0].v ? (p.v / pts[0].v - 1) * 100 : 0) + '</em>';
+      var ad = adj(pts[0], p), d0 = ad.d;
+      tip.style.display = ''; tip.innerHTML = '<b class="dp-sens">' + esc(money(p.v)) + '</b><small>' + esc(new Date(p.t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</small><em class="' + (d0 >= 0 ? 'up' : 'dn') + '"><span class="dp-sens">' + sgn(d0) + esc(money(Math.abs(d0))) + '</span> ' + pct(ad.p) + '</em>';
       var tw = tip.offsetWidth, left = px * (rc.width / W) - tw / 2; left = Math.max(4, Math.min(rc.width - tw - 4, left)); tip.style.left = left + 'px';
     }
     function leave() { hv.style.display = 'none'; tip.style.display = 'none'; }
