@@ -189,7 +189,7 @@
   .bd-cur, .bd-chips { max-width: 100%; }
 }
 @media (max-width: 760px) {
-  .bd-hero-top { gap: 10px; } .bd-hi { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bd-hero-top { gap: 10px; } .bd-hi { min-width: 0; flex: 0 1 auto; justify-content: flex-start; } #bdHi { min-width: 0; line-height: 1.25; text-align: left; }
   .bd-chart-h { justify-content: center; } .bd-chart-h > * { max-width: 100%; }
 }
 .bd-slot #cardDash { container-type: inline-size; min-width: 0; box-sizing: border-box; }
@@ -206,3 +206,4 @@
 .bd-ncv { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--bd-acc) 16%, transparent); color: var(--bd-acc); border: 1px solid color-mix(in srgb, var(--bd-acc) 35%, transparent); }
 .bd-cacts.off button { opacity: .42; cursor: not-allowed; pointer-events: none; }
 .bd-ncp { margin: 14px 4px 12px; text-align: center; font-size: 13px; line-height: 1.45; color: var(--bd-mut); }
+.bd-hi > .bd-live { flex: none !important; width: auto !important; } .bd-hi > #bdHi { flex: 0 1 auto !important; display: block !important; width: auto !important; }
