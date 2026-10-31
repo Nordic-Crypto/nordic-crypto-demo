@@ -24,6 +24,17 @@
   function num(id) { var e = $(id); var v = e ? parseFloat(String(e.value).replace(',', '.')) : 0; return isFinite(v) ? v : 0; }
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var Q = lsGet('nc_tt_q') === 'USDC' ? 'USDC' : 'USDT';
+  function qOf(sym) { return sym === 'USDT' ? (Q === 'USDC' ? 'USDC' : 'USD') : Q; }
+  function applyQuote() {
+    qa('.tx-qu').forEach(function (e) { e.textContent = Q; });
+    qa('.tx-qsw button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === Q); });
+    if ($('txPair')) { $('txPair').textContent = T.coin + '/' + qOf(T.coin); $('txBookSym').textContent = T.coin + '/' + qOf(T.coin); }
+    if ($('txAmtU') && T.side === 'buy') $('txAmtU').textContent = Q;
+    renderMList();
+    try { if (typeof calc === 'function') calc(); } catch (e) {}
+    try { if (typeof renderBottom === 'function') renderBottom(); } catch (e) {}
+  }
   function noop() {}
   function decOf(p) { p = Math.abs(p); return p >= 10 ? 2 : (p >= 1 ? 4 : (p >= 0.01 ? 5 : 8)); }
   function fP(n) { n = Number(n); if (!isFinite(n) || n <= 0) return '—'; var d = decOf(n); return '$' + n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
@@ -123,6 +134,7 @@
       '<div class="tx-mkts" id="txMkts" hidden>' +
         '<div class="tx-mkts-in">' +
           '<div class="tx-search"><input id="txSearch" type="text" placeholder="Search coin…" autocomplete="off" spellcheck="false"></div>' +
+          '<div class="tx-qsw"><span>Quote</span><button type="button" data-a="quote" data-v="USDT">USDT</button><button type="button" data-a="quote" data-v="USDC">USDC</button></div>' +
           '<div class="tx-mtabs"><button type="button" data-a="mtab" data-v="all" class="on">All</button><button type="button" data-a="mtab" data-v="fav">★ Favorites</button></div>' +
           '<div class="tx-mlist" id="txMList"></div>' +
         '</div>' +
@@ -147,10 +159,10 @@
             '<div id="txFormTrade">' +
               '<div class="tx-types" id="txTypes"></div>' +
               '<div class="tx-avail"><span>Available</span><b id="txAvail">—</b><button type="button" class="tx-dep" data-a="deposit" id="txDep">Deposit</button></div>' +
-              '<div class="tx-fld" data-g="pl"><label>Limit price</label><div class="tx-in"><input id="txPL" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPL">Last</button></div><div class="tx-chips" id="txChipL"></div></div>' +
-              '<div class="tx-fld" data-g="ps"><label id="txPSL">Stop price</label><div class="tx-in"><input id="txPS" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPS">Last</button></div><div class="tx-chips" id="txChipS"></div></div>' +
-              '<div class="tx-fld" data-g="pt"><label>Take-profit price</label><div class="tx-in"><input id="txPT" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPT">Last</button></div><div class="tx-chips" id="txChipT"></div></div>' +
-              '<div class="tx-fld" data-g="amt"><label id="txAmtL">Amount</label><div class="tx-in"><input id="txAmt" type="number" inputmode="decimal" step="any" placeholder="0.00"><em id="txAmtU">USD</em></div>' +
+              '<div class="tx-fld" data-g="pl"><label>Limit price</label><div class="tx-in"><input id="txPL" type="number" inputmode="decimal" step="any" placeholder="0.00"><em class="tx-qu">USDT</em><button type="button" class="tx-last" data-a="last" data-f="txPL">Last</button></div><div class="tx-chips" id="txChipL"></div></div>' +
+              '<div class="tx-fld" data-g="ps"><label id="txPSL">Stop price</label><div class="tx-in"><input id="txPS" type="number" inputmode="decimal" step="any" placeholder="0.00"><em class="tx-qu">USDT</em><button type="button" class="tx-last" data-a="last" data-f="txPS">Last</button></div><div class="tx-chips" id="txChipS"></div></div>' +
+              '<div class="tx-fld" data-g="pt"><label>Take-profit price</label><div class="tx-in"><input id="txPT" type="number" inputmode="decimal" step="any" placeholder="0.00"><em class="tx-qu">USDT</em><button type="button" class="tx-last" data-a="last" data-f="txPT">Last</button></div><div class="tx-chips" id="txChipT"></div></div>' +
+              '<div class="tx-fld" data-g="amt"><label id="txAmtL">Amount</label><div class="tx-in"><input id="txAmt" type="number" inputmode="decimal" step="any" placeholder="0.00"><em id="txAmtU">USDT</em></div>' +
                 '<input id="txRng" class="tx-rng" type="range" min="0" max="100" step="1" value="0"><div class="tx-chips pct"><button type="button" data-a="pct" data-v="25">25%</button><button type="button" data-a="pct" data-v="50">50%</button><button type="button" data-a="pct" data-v="75">75%</button><button type="button" data-a="pct" data-v="100">Max</button></div></div>' +
               '<div class="tx-att" data-g="att"><label class="tx-sw"><input type="checkbox" id="txAttOn"><span></span><b>Attach Take-profit / Stop-loss</b></label>' +
                 '<div class="tx-att-in" id="txAttIn" hidden><div><label>Take-profit %</label><div class="tx-in sm"><input id="txAttTp" type="number" inputmode="decimal" step="any" value="5"><em>%</em></div></div><div><label>Stop-loss %</label><div class="tx-in sm"><input id="txAttSl" type="number" inputmode="decimal" step="any" value="3"><em>%</em></div></div></div></div>' +
@@ -199,6 +211,7 @@
       case 'close': closeTerminal(); break;
       case 'mkt': toggleMkts(); break;
       case 'mtab': T.mtab = v; qa('.tx-mtabs button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); }); renderMList(); break;
+      case 'quote': if (v !== Q) { Q = v; lsSet('nc_tt_q', Q); applyQuote(); } break;
       case 'pick': pickCoin(el.getAttribute('data-s')); closeMkts(); break;
       case 'fav': ev.stopPropagation(); toggleFav(el.getAttribute('data-s')); break;
       case 'view': setView(v); break;
@@ -231,6 +244,7 @@
     if (!build()) { console.warn('[TX] #tradeTerminal not found'); return; }
     var root = $('tradeTerminal');
     root.classList.add('on');
+    try { applyQuote(); } catch (e) {}
     document.documentElement.classList.add('tx-lock');
     T.open = true; T.seen = 0;
     if (!T.coins.length) setCoins(FALLBACK.map(function (f) { return { symbol: f[0], name: f[1], usd: 0, chg: 0, color: f[2] }; }));
@@ -335,7 +349,7 @@
       var up = c.chg >= 0, fav = T.fav.indexOf(c.symbol) >= 0;
       return '<div class="tx-mrow' + (c.symbol === T.coin ? ' on' : '') + '" data-a="pick" data-s="' + c.symbol + '">' +
         '<button type="button" class="tx-star' + (fav ? ' on' : '') + '" data-a="fav" data-s="' + c.symbol + '" aria-label="Favorite">' + (fav ? '★' : '☆') + '</button>' + ico(c) +
-        '<span class="tx-mn"><b>' + c.symbol + '<small>/USD</small></b><em>' + esc(c.name) + '</em></span>' +
+        '<span class="tx-mn"><b>' + c.symbol + '<small>/' + qOf(c.symbol) + '</small></b><em>' + esc(c.name) + '</em></span>' +
         '<span class="tx-mp"><b>' + fP(c.usd) + '</b><em class="' + (up ? 'up' : 'dn') + '">' + (up ? '+' : '') + (Number(c.chg) || 0).toFixed(2) + '%</em></span></div>';
     }).join('');
   }
@@ -349,8 +363,8 @@
     if (!changed) return;
     var m = coinMeta(sym);
     $('txIco').outerHTML = '<span id="txIco" class="tx-ci" style="--c:' + esc(m.color) + '">' + esc(glyph(sym)) + icoImg(sym) + '</span>';
-    $('txPair').textContent = sym + '/USD'; $('txName').textContent = m.name;
-    $('txBookSym').textContent = sym + '/USD';
+    $('txPair').textContent = sym + '/' + qOf(sym); $('txName').textContent = m.name;
+    $('txBookSym').textContent = sym + '/' + qOf(sym);
     if (coinChanged || force) { LV.bids = []; LV.asks = []; LV.trades = []; paintBook(); paintTrades(); }
     paintHead();
     if (coinChanged) { $('txAmt').value = ''; $('txRng').value = 0; }
@@ -619,7 +633,7 @@
     qa('#txFormTrade [data-g]').forEach(function (g) { g.hidden = !show[g.getAttribute('data-g')]; });
     $('txPSL').textContent = T.side === 'buy' ? 'Stop price (buy when price rises to)' : 'Stop-loss price (trigger)';
     $('txAmtL').textContent = T.side === 'buy' ? 'Spend' : 'Amount';
-    $('txAmtU').textContent = T.side === 'buy' ? 'USD' : T.coin;
+    $('txAmtU').textContent = T.side === 'buy' ? Q : T.coin;
     var p = livePx(T.coin);
     var bs = T.side === 'buy';
     function chips(id, f, arr) { $(id).innerHTML = '<button type="button" data-a="chip" data-f="' + f + '" data-v="0">Last</button>' + arr.map(function (v) { return '<button type="button" data-a="chip" data-f="' + f + '" data-v="' + v + '">' + (v > 0 ? '+' : '') + v + '%</button>'; }).join(''); }
@@ -652,7 +666,7 @@
     if (!(px > 0)) { o.err = 'Price unavailable — please wait'; return o; }
     if (!(amt > 0)) { o.err = ''; o.empty = true; return o; }
     if (buy && amt < 10) o.err = 'Minimum purchase is $10';
-    else if (buy && amt > usdBal() + 1e-9) o.err = 'Insufficient USD balance';
+    else if (buy && amt > usdBal() + 1e-9) o.err = 'Insufficient ' + Q + ' balance';
     else if (!buy && amt > coinBal(sym) + 1e-12) o.err = 'Insufficient ' + sym + ' balance';
     if (!o.err) {
       if (t === 'limit') { if (!(o.pl > 0)) o.err = 'Enter a limit price'; else if (buy ? o.pl >= px : o.pl <= px) o.err = buy ? 'Limit buy must be below the market price' : 'Limit sell must be above the market price'; }
@@ -701,7 +715,7 @@
     if (o.empty) { toast('Enter an amount', 'err'); return; }
     if (o.err) { toast(o.err, 'err'); return; }
     var buy = o.side === 'buy', sym = o.sym, rows = [], title, kind = o.side;
-    rows.push(['Pair', sym + '/USD']);
+    rows.push(['Pair', sym + '/' + qOf(sym)]);
     var tl = { market: 'Market', limit: 'Limit', stop: buy ? 'Stop' : 'Stop-Loss', tp: 'Take-Profit', oco: 'OCO (TP + SL)' }[o.otype];
     rows.push(['Order type', tl + ' ' + (buy ? 'buy' : 'sell')]);
     if (buy) rows.push(['You spend', fUsd(o.amt)]); else rows.push(['You sell', fQty(o.amt, sym) + ' ' + sym]);
@@ -879,7 +893,7 @@
       var v = b * livePx(c.symbol); total += v;
       rows.push('<div class="tx-wr">' + ico(c) + '<span class="tx-wn"><b>' + c.symbol + '</b><em>' + esc(c.name) + '</em></span><span class="tx-wb"><b>' + fQty(b, c.symbol) + '</b><em>' + fUsd(v) + '</em></span><button type="button" class="tx-sell" data-a="sellcoin" data-s="' + c.symbol + '">Sell</button></div>');
     });
-    var head = '<div class="tx-wtot"><span>Total balance</span><b>' + fUsd(total) + '</b></div><div class="tx-wr usd"><i class="tx-ci" style="--c:#2a7de1">$</i><span class="tx-wn"><b>USD</b><em>Cash</em></span><span class="tx-wb"><b>' + fUsd(usdBal()) + '</b><em>Available</em></span></div>';
+    var head = '<div class="tx-wtot"><span>Total balance</span><b>' + fUsd(total) + '</b></div><div class="tx-wr usd"><i class="tx-ci" style="--c:#2a7de1">$</i><span class="tx-wn"><b>' + Q + '</b><em>Cash</em></span><span class="tx-wb"><b>' + fUsd(usdBal()) + '</b><em>Available</em></span></div>';
     return head + (rows.length ? rows.join('') : '<div class="tx-empty">No crypto yet — buy your first coin</div>');
   }
   function cancelOrder(id) {
