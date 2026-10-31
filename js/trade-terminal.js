@@ -1,1831 +1,879 @@
 /* ============================================================
-   NORDIC CRYPTO — TRADE TERMINAL v2.0 (live)
-   ============================================================
-   Professional trading terminal (Binance Spot style).
-   
-   All market data is realistic but synthetic:
-     • Prices    — from live CoinGecko feed (_exPricesCache)
-     • Candles   — generated from price + volatility
-     • Order book — generated around current price
-     • Trades    — generated stream
-   
-   Real operations:
-     • Buy / Sell / Convert — via Worker ?action=trade
-     • Limit orders — saved to state.openOrders
-     • Balance & P&L — tracked from server
+   NORDIC CRYPTO — TRADE TERMINAL v3.0
+   ------------------------------------------------------------
+   • 24 markets (tradable list comes from the Worker: ?action=multiPrices)
+   • Live prices / 24h stats / order book / trades: Binance public market data
+     (WebSocket, automatic fallback to HTTPS polling). No simulated data.
+   • TradingView chart (real-time), fallback: built-in candlestick chart from real klines
+   • Orders: Market · Limit · Stop / Stop-Loss · Take-Profit · OCO (TP + SL),
+     optional TP/SL attached to a market buy, Convert between any two coins
+   • Orders are executed by the Worker (limit/stop/TP/OCO are filled by the Worker
+     engine: while the terminal is open and by the minute cron when it is not)
+   • Responsive: desktop 3-column terminal, phone single-column with tabs
    ============================================================ */
-
 (function () {
   'use strict';
+  if (window.__txLoaded) return;
+  window.__txLoaded = true;
 
-  // ============================================================
-  // SECTION 1: STATE
-  // ============================================================
-
-  var TT = {
-    open: false,
-    coin: 'BTC',
-    timeframe: '4h',
-    candles: [],
-    bids: [],
-    asks: [],
-    recentTrades: [],
-    hoverX: -1,
-    hoverY: -1,
-    viewStart: 0,
-    viewCount: 60,
-    maxCandles: 200,
-    priceDirection: 'flat', // 'up' | 'down' | 'flat'
-    lastPrice: 0,
-    indicators: { ma: true, ema: true, vol: true },
-    intervals: []
-  };
-
-  var COINS = ['BTC', 'ETH', 'USDT', 'SOL', 'BNB'];
-  // v2.0 live market data (Binance public streams) + TradingView symbols
-  var BIN = { BTC: 'btcusdt', ETH: 'ethusdt', SOL: 'solusdt', BNB: 'bnbusdt' };
-  var TV_SYM = { BTC: 'BINANCE:BTCUSDT', ETH: 'BINANCE:ETHUSDT', SOL: 'BINANCE:SOLUSDT', BNB: 'BINANCE:BNBUSDT', USDT: 'KRAKEN:USDTUSD' };
-  var LV = { ws: null, coin: null, price: {}, priceAt: {}, tickerAt: 0, depthAt: 0, tradeAt: 0, stats: null, tradesLive: false, fail: 0, retryT: 0, pollT: 0 };
-  var FEE_RATE = 0.001; // 0.1%
-
-  // ============================================================
-  // SECTION 2: HELPERS
-  // ============================================================
-
+  /* ---------- helpers ---------- */
   function $(id) { return document.getElementById(id); }
+  function q(s, r) { return (r || document).querySelector(s); }
+  function qa(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(id) { var e = $(id); var v = e ? parseFloat(String(e.value).replace(',', '.')) : 0; return isFinite(v) ? v : 0; }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function noop() {}
+  function decOf(p) { p = Math.abs(p); return p >= 10 ? 2 : (p >= 1 ? 4 : (p >= 0.01 ? 5 : 8)); }
+  function fP(n) { n = Number(n); if (!isFinite(n) || n <= 0) return '—'; var d = decOf(n); return '$' + n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function fUsd(n) { n = Number(n) || 0; return (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fQty(n, sym) { n = Number(n) || 0; if (sym === 'USDT') return n.toFixed(2); var d = n >= 1000 ? 2 : (n >= 1 ? 4 : 6); return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: d }); }
+  function fVol(n) { n = Number(n) || 0; if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B'; if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M'; if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K'; return n.toFixed(2); }
+  function fTime(ts) { var d = new Date(ts), n = Date.now(); return (n - ts) < 86400000 ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); }
+  function floorTo(n, d) { var f = Math.pow(10, d); return Math.floor(n * f + 1e-9) / f; }
+  function S() { return window.st || {}; }
+  function usdBal() { return Number(S().usd) || 0; }
+  function coinBal(sym) { return Number(S()[String(sym).toLowerCase()]) || 0; }
+  function glyph(sym) { return { BTC: '₿', ETH: 'Ξ', USDT: '₮', DOGE: 'Ð', LTC: 'Ł', XRP: '✕' }[sym] || sym.slice(0, sym.length > 3 ? 2 : 1); }
 
-  function fmtMoney(n) {
-    return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  /* ---------- state ---------- */
+  var FALLBACK = [['BTC', 'Bitcoin', '#f7931a'], ['ETH', 'Ethereum', '#627eea'], ['USDT', 'Tether', '#26a17b'], ['SOL', 'Solana', '#9945ff'], ['BNB', 'BNB', '#f3ba2f']];
+  var T = {
+    open: false, built: false, coin: lsGet('nc_tt_coin') || 'BTC', coins: [], map: {},
+    side: 'buy', otype: 'market', view: 'chart', tab: 'open', hist: 'all', mtab: 'all',
+    openOrders: [], orders: [], busy: false, fav: [], tvFailed: false, tvActive: false, seen: 0
+  };
+  try { T.fav = JSON.parse(lsGet('nc_tt_fav') || '[]') || []; } catch (e) { T.fav = []; }
+  var LV = { ws: null, coin: null, price: {}, priceAt: {}, tickerAt: 0, depthAt: 0, tradeAt: 0, stats: null, trades: [], bids: [], asks: [], fail: 0, retryT: 0, pollT: 0, mode: '' };
+  var TMR = { orders: 0, markets: 0, book: 0, trades: 0, calc: 0 };
+  var TVN = 0, TV_CBS = [], TV_LOADING = false, TV_WATCH = 0;
 
-  function fmtPrice(n) {
-    if (n >= 1000) return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (n >= 1) return '$' + Number(n).toFixed(4);
-    return '$' + Number(n).toFixed(8);
-  }
+  window.TT = { get open() { return T.open; }, get coin() { return T.coin; } };
 
-  function fmtCrypto(n, symbol) {
-    var d = (symbol === 'USDT') ? 2 : 8;
-    return Number(n).toFixed(d);
-  }
-
-  function fmtVolume(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(2) + 'K';
-    return Number(n).toFixed(2);
-  }
-
-  function getCoinPrice(symbol) {
-    var lp = LV.price[symbol];
-    if (lp > 0 && (Date.now() - (LV.priceAt[symbol] || 0)) < 20000) return lp;
-    if (window._exPricesCache && window._exPricesCache.length) {
-      var coin = window._exPricesCache.find(function (c) { return c.symbol === symbol; });
-      if (coin) return Number(coin.usd) || 0;
-    }
-    if (!window.st) return 0;
-    if (symbol === 'BTC') return Number(window.st.btcP) || 80000;
-    if (symbol === 'ETH') return Number(window.st.ethP) || 2500;
-    if (symbol === 'USDT') return 1;
-    if (symbol === 'SOL') return 115;
-    if (symbol === 'BNB') return 767;
+  function coinMeta(sym) { return T.map[sym] || { symbol: sym, name: sym, usd: 0, chg: 0, color: '#5b6b82' }; }
+  function livePx(sym) {
+    var p = LV.price[sym];
+    if (p > 0 && (Date.now() - (LV.priceAt[sym] || 0)) < 20000) return p;
+    var m = T.map[sym]; if (m && m.usd > 0) return m.usd;
+    if (sym === 'USDT') return 1;
+    if (Array.isArray(window._exPricesCache)) { var c = window._exPricesCache.filter(function (x) { return x.symbol === sym; })[0]; if (c && c.usd > 0) return Number(c.usd); }
     return 0;
   }
-
-  function getCoinBalance(symbol) {
-    if (!window.st) return 0;
-    return Number(window.st[symbol.toLowerCase()]) || 0;
+  function workerUrl() { return window.WORKER_URL || ''; }
+  function token() { return lsGet('session_token') || (typeof window.getSessionToken === 'function' ? window.getSessionToken() : ''); }
+  function api(action, body) {
+    body = body || {}; body.token = token();
+    return fetch(workerUrl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+  }
+  function applyBalances(b) {
+    if (!b || !window.st) return;
+    Object.keys(b).forEach(function (k) { window.st[k] = b[k]; });
+  }
+  function refreshApp() {
+    ['render', 'renderExchangeDash'].forEach(function (f) { try { if (typeof window[f] === 'function') window[f](); } catch (e) {} });
   }
 
-  function getUsdBalance() {
-    if (!window.st) return 0;
-    return Number(window.st.usd) || 0;
+  /* ---------- toast + confirm ---------- */
+  function toast(msg, kind) {
+    var el = $('txToast');
+    if (!el) { el = document.createElement('div'); el.id = 'txToast'; document.body.appendChild(el); }
+    el.textContent = msg; el.className = 'tx-toast ' + (kind || 'ok') + ' show';
+    clearTimeout(el.__t); el.__t = setTimeout(function () { el.classList.remove('show'); }, kind === 'err' ? 4600 : 3000);
+  }
+  function confirmBox(title, rows, cls, note) {
+    return new Promise(function (resolve) {
+      var old = $('txConfirm'); if (old && old.parentNode) old.parentNode.removeChild(old);
+      var ov = document.createElement('div'); ov.id = 'txConfirm'; ov.className = 'tx-ov';
+      ov.innerHTML = '<div class="tx-box ' + cls + '" role="dialog" aria-modal="true"><div class="tx-box-t">' + esc(title) + '</div>' +
+        rows.map(function (r) { return '<div class="tx-box-r"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') +
+        (note ? '<div class="tx-box-n">' + esc(note) + '</div>' : '') +
+        '<div class="tx-box-a"><button type="button" class="tx-b-cancel">Cancel</button><button type="button" class="tx-b-ok ' + cls + '">Confirm</button></div></div>';
+      document.body.appendChild(ov);
+      function done(v) { document.removeEventListener('keydown', key, true); if (ov.parentNode) ov.parentNode.removeChild(ov); resolve(v); }
+      function key(e) { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); done(false); } else if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); done(true); } }
+      document.addEventListener('keydown', key, true);
+      ov.addEventListener('click', function (e) { if (e.target === ov) done(false); });
+      q('.tx-b-cancel', ov).onclick = function () { done(false); };
+      var ok = q('.tx-b-ok', ov); ok.onclick = function () { done(true); };
+      setTimeout(function () { try { ok.focus(); } catch (e) {} }, 30);
+    });
   }
 
-  // ============================================================
-  // SECTION 3: OPEN / CLOSE
-  // ============================================================
+  /* ============================================================
+     DOM
+     ============================================================ */
+  function build() {
+    var root = $('tradeTerminal');
+    if (!root) return false;
+    if (T.built) return true;
+    root.className = 'txr';
+    root.setAttribute('data-view', 'chart');
+    root.innerHTML =
+      '<div class="tx-shell">' +
+      '<header class="tx-top">' +
+        '<button class="tx-mkt" id="txMkt" data-a="mkt" type="button"><span id="txIco" class="tx-ci"></span><span class="tx-mkt-t"><b id="txPair">BTC/USD</b><small id="txName">Bitcoin</small></span><i>▾</i></button>' +
+        '<div class="tx-price"><b id="txPrice">—</b><span class="tx-chg" id="txChg">—</span></div>' +
+        '<div class="tx-stats" id="txStats">' +
+          '<div><small>24h Open</small><b id="txO">—</b></div><div><small>24h High</small><b id="txH">—</b></div><div><small>24h Low</small><b id="txL">—</b></div>' +
+          '<div><small>Close</small><b id="txC">—</b></div><div><small>24h Volume</small><b id="txV">—</b></div>' +
+        '</div>' +
+        '<div class="tx-top-r"><span class="tx-live" id="txLive" data-s="off"><i></i><em>CONNECTING</em></span><button class="tx-x" id="txClose" data-a="close" type="button" aria-label="Close">×</button></div>' +
+      '</header>' +
+      '<div class="tx-mkts" id="txMkts" hidden>' +
+        '<div class="tx-mkts-in">' +
+          '<div class="tx-search"><input id="txSearch" type="text" placeholder="Search coin…" autocomplete="off" spellcheck="false"></div>' +
+          '<div class="tx-mtabs"><button type="button" data-a="mtab" data-v="all" class="on">All</button><button type="button" data-a="mtab" data-v="fav">★ Favorites</button></div>' +
+          '<div class="tx-mlist" id="txMList"></div>' +
+        '</div>' +
+      '</div>' +
+      '<nav class="tx-views"><button type="button" data-a="view" data-v="chart" class="on">Chart</button><button type="button" data-a="view" data-v="book">Order book</button><button type="button" data-a="view" data-v="trades">Trades</button></nav>' +
+      '<main class="tx-main">' +
+        '<section class="tx-col tx-col-l">' +
+          '<div class="tx-card tx-chart" id="txChartCard"><div id="txTv" class="tx-tv"></div><canvas id="txFb" class="tx-fb" hidden></canvas><div class="tx-chart-note" id="txChartNote">Loading chart…</div></div>' +
+          '<div class="tx-card tx-bottom">' +
+            '<div class="tx-btabs" id="txTabs"><button type="button" data-a="tab" data-v="open" class="on">Open orders <em id="txCntOpen">0</em></button><button type="button" data-a="tab" data-v="hist">Order history</button><button type="button" data-a="tab" data-v="wallet">Wallet</button></div>' +
+            '<div class="tx-bfilter" id="txFilter" hidden><button type="button" data-a="hist" data-v="all" class="on">All</button><button type="button" data-a="hist" data-v="filled">Filled</button><button type="button" data-a="hist" data-v="open">Open</button><button type="button" data-a="hist" data-v="cancelled">Cancelled</button></div>' +
+            '<div class="tx-bbody" id="txBody"></div>' +
+          '</div>' +
+        '</section>' +
+        '<section class="tx-col tx-col-m">' +
+          '<div class="tx-card tx-book" id="txBookCard"><div class="tx-h">Order book <small id="txBookSym">BTC/USD</small></div><div class="tx-bh"><span>Price</span><span>Amount</span><span>Total</span></div><div class="tx-asks" id="txAsks"></div><div class="tx-mid" id="txMid"><b>—</b><small>Spread —</small></div><div class="tx-bids" id="txBids"></div></div>' +
+          '<div class="tx-card tx-trades" id="txTradesCard"><div class="tx-h">Recent trades</div><div class="tx-bh"><span>Price</span><span>Amount</span><span>Time</span></div><div class="tx-tl" id="txTL"></div></div>' +
+        '</section>' +
+        '<section class="tx-col tx-col-r">' +
+          '<div class="tx-card tx-form" id="txForm">' +
+            '<div class="tx-sides"><button type="button" data-a="side" data-v="buy" class="on buy">Buy</button><button type="button" data-a="side" data-v="sell" class="sell">Sell</button><button type="button" data-a="side" data-v="convert" class="conv">Convert</button></div>' +
+            '<div id="txFormTrade">' +
+              '<div class="tx-types" id="txTypes"></div>' +
+              '<div class="tx-avail"><span>Available</span><b id="txAvail">—</b><button type="button" class="tx-dep" data-a="deposit" id="txDep">Deposit</button></div>' +
+              '<div class="tx-fld" data-g="pl"><label>Limit price</label><div class="tx-in"><input id="txPL" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPL">Last</button></div><div class="tx-chips" id="txChipL"></div></div>' +
+              '<div class="tx-fld" data-g="ps"><label id="txPSL">Stop price</label><div class="tx-in"><input id="txPS" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPS">Last</button></div><div class="tx-chips" id="txChipS"></div></div>' +
+              '<div class="tx-fld" data-g="pt"><label>Take-profit price</label><div class="tx-in"><input id="txPT" type="number" inputmode="decimal" step="any" placeholder="0.00"><em>USD</em><button type="button" class="tx-last" data-a="last" data-f="txPT">Last</button></div><div class="tx-chips" id="txChipT"></div></div>' +
+              '<div class="tx-fld" data-g="amt"><label id="txAmtL">Amount</label><div class="tx-in"><input id="txAmt" type="number" inputmode="decimal" step="any" placeholder="0.00"><em id="txAmtU">USD</em></div>' +
+                '<input id="txRng" class="tx-rng" type="range" min="0" max="100" step="1" value="0"><div class="tx-chips pct"><button type="button" data-a="pct" data-v="25">25%</button><button type="button" data-a="pct" data-v="50">50%</button><button type="button" data-a="pct" data-v="75">75%</button><button type="button" data-a="pct" data-v="100">Max</button></div></div>' +
+              '<div class="tx-att" data-g="att"><label class="tx-sw"><input type="checkbox" id="txAttOn"><span></span><b>Attach Take-profit / Stop-loss</b></label>' +
+                '<div class="tx-att-in" id="txAttIn" hidden><div><label>Take-profit %</label><div class="tx-in sm"><input id="txAttTp" type="number" inputmode="decimal" step="any" value="5"><em>%</em></div></div><div><label>Stop-loss %</label><div class="tx-in sm"><input id="txAttSl" type="number" inputmode="decimal" step="any" value="3"><em>%</em></div></div></div></div>' +
+              '<div class="tx-sum" id="txSum"></div>' +
+              '<div class="tx-hint" id="txHint"></div>' +
+              '<button type="button" class="tx-go buy" id="txGo" data-a="go">Buy BTC</button>' +
+            '</div>' +
+            '<div id="txFormConv" hidden>' +
+              '<div class="tx-fld"><label>From</label><div class="tx-in"><select id="txCvFrom"></select></div><div class="tx-avail sm"><span>Balance</span><b id="txCvFromBal">—</b></div></div>' +
+              '<div class="tx-fld"><label>Amount</label><div class="tx-in"><input id="txCvAmt" type="number" inputmode="decimal" step="any" placeholder="0.00"><em id="txCvAmtU">BTC</em></div><div class="tx-chips pct"><button type="button" data-a="cvpct" data-v="25">25%</button><button type="button" data-a="cvpct" data-v="50">50%</button><button type="button" data-a="cvpct" data-v="75">75%</button><button type="button" data-a="cvpct" data-v="100">Max</button></div></div>' +
+              '<div class="tx-swap"><button type="button" data-a="swap" aria-label="Swap">⇅</button></div>' +
+              '<div class="tx-fld"><label>To</label><div class="tx-in"><select id="txCvTo"></select></div><div class="tx-avail sm"><span>Balance</span><b id="txCvToBal">—</b></div></div>' +
+              '<div class="tx-sum" id="txCvSum"></div><div class="tx-hint" id="txCvHint"></div>' +
+              '<button type="button" class="tx-go conv" id="txCvGo" data-a="cvgo">Convert</button>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+      '</main></div>';
+    bind(root);
+    T.built = true;
+    return true;
+  }
 
+  function bind(root) {
+    root.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('[data-a]') : null;
+      if (!t) { if (!e.target.closest('.tx-mkts-in') && !e.target.closest('#txMkt')) closeMkts(); return; }
+      act(t.getAttribute('data-a'), t, e);
+    });
+    root.addEventListener('input', function (e) {
+      var id = e.target && e.target.id;
+      if (id === 'txRng') { rngToAmt(); return; }
+      if (id === 'txSearch') { renderMList(); return; }
+      if (id === 'txAttOn') { $('txAttIn').hidden = !e.target.checked; }
+      if (id === 'txCvAmt' || id === 'txAmt' || id === 'txPL' || id === 'txPS' || id === 'txPT' || id === 'txAttOn' || id === 'txAttTp' || id === 'txAttSl') { if (id === 'txAmt') amtToRng(); calc(); if (id === 'txCvAmt') calcConv(); }
+    });
+    root.addEventListener('change', function (e) {
+      var id = e.target && e.target.id;
+      if (id === 'txCvFrom' || id === 'txCvTo') { fillConvSelects(true); calcConv(); }
+    });
+  }
+
+  function act(a, el, ev) {
+    var v = el.getAttribute('data-v');
+    switch (a) {
+      case 'close': closeTerminal(); break;
+      case 'mkt': toggleMkts(); break;
+      case 'mtab': T.mtab = v; qa('.tx-mtabs button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); }); renderMList(); break;
+      case 'pick': pickCoin(el.getAttribute('data-s')); closeMkts(); break;
+      case 'fav': ev.stopPropagation(); toggleFav(el.getAttribute('data-s')); break;
+      case 'view': setView(v); break;
+      case 'side': setSide(v); break;
+      case 'type': setType(v); break;
+      case 'pct': pctAmt(Number(v) / 100); break;
+      case 'last': { var f = $(el.getAttribute('data-f')); var p = livePx(T.coin); if (f && p > 0) { f.value = rnd(p); calc(); } break; }
+      case 'chip': { var f2 = $(el.getAttribute('data-f')); var p2 = livePx(T.coin); if (f2 && p2 > 0) { f2.value = rnd(p2 * (1 + Number(v) / 100)); calc(); } break; }
+      case 'go': submit(); break;
+      case 'tab': setTab(v); break;
+      case 'hist': T.hist = v; qa('#txFilter button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); }); renderBottom(true); break;
+      case 'cancel': cancelOrder(el.getAttribute('data-id')); break;
+      case 'sellcoin': setSide('sell'); pickCoin(el.getAttribute('data-s')); pctAmt(1); setView('chart'); try { $('txForm').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e2) {} break;
+      case 'bookpx': bookPick(Number(el.getAttribute('data-p'))); break;
+      case 'deposit': closeTerminal(); { var d = $('exBtnDeposit') || $('btnAdd'); if (d) d.click(); } break;
+      case 'cvpct': { var from = ($('txCvFrom') || {}).value; $('txCvAmt').value = pctVal(coinBal(from), Number(v) / 100, 8); calcConv(); break; }
+      case 'swap': { var a1 = $('txCvFrom').value; $('txCvFrom').value = $('txCvTo').value; $('txCvTo').value = a1; fillConvSelects(true); calcConv(); break; }
+      case 'cvgo': submitConvert(); break;
+      case 'retrytv': T.tvFailed = false; tvLoad(); break;
+    }
+  }
+
+  function rnd(p) { var d = decOf(p); return String(Number(p.toFixed(d))); }
+  function pctVal(bal, pct, dec) { var v = pct >= 1 ? bal : bal * pct; return String(floorTo(v, dec)); }
+
+  /* ============================================================
+     OPEN / CLOSE
+     ============================================================ */
   window.openTradeTerminalFull = function () {
-    var term = $('tradeTerminal');
-    if (!term) {
-      console.warn('[TT] #tradeTerminal not found in DOM');
-      return;
-    }
-
-    term.classList.add('on');
-    TT.open = true;
-
-    // Initialize everything
-    initTerminal();
-    selectCoin('BTC');
-    selectTimeframe('4h');
-    startLiveUpdates();
+    if (!build()) { console.warn('[TX] #tradeTerminal not found'); return; }
+    var root = $('tradeTerminal');
+    root.classList.add('on');
+    document.documentElement.classList.add('tx-lock');
+    T.open = true; T.seen = 0;
+    if (!T.coins.length) setCoins(FALLBACK.map(function (f) { return { symbol: f[0], name: f[1], usd: 0, chg: 0, color: f[2] }; }));
+    loadMarkets().then(function () { pickCoin(T.coin, true); });
+    pickCoin(T.coin, true);
+    startTimers();
+    refreshOrders(true);
   };
+  window.closeTradeTerminalFull = closeTerminal;
 
-  window.closeTradeTerminalFull = function () {
-    var term = $('tradeTerminal');
-    if (term) term.classList.remove('on');
-    TT.open = false;
-    liveStop();
-    tvDestroy();
+  function closeTerminal() {
+    var root = $('tradeTerminal');
+    if (root) root.classList.remove('on');
+    document.documentElement.classList.remove('tx-lock');
+    T.open = false;
+    closeMkts();
+    liveStop(); tvDestroy();
+    Object.keys(TMR).forEach(function (k) { clearInterval(TMR[k]); clearTimeout(TMR[k]); TMR[k] = 0; });
+    refreshApp();
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !T.open) return;
+    if ($('txConfirm')) return;
+    var m = $('txMkts');
+    if (m && !m.hidden) { closeMkts(); return; }
+    closeTerminal();
+  });
 
-    // Stop intervals
-    TT.intervals.forEach(function (id) { clearInterval(id); });
-    TT.intervals = [];
-  };
-
-  // ============================================================
-  // SECTION 4: INIT
-  // ============================================================
-
-  function initTerminal() {
-    bindHeader();
-    bindTabs();
-    bindFormInputs();
-    bindOrderType();
-    bindQuickPct();
-    bindChartMouse();
-    bindMaskClick();
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+  function startTimers() {
+    clearInterval(TMR.orders); clearInterval(TMR.markets);
+    TMR.orders = setInterval(function () { if (T.open && !document.hidden) refreshOrders(false); }, 4000);
+    TMR.markets = setInterval(function () { if (T.open && !document.hidden) refreshMarkets(); }, 8000);
   }
 
-  // ============================================================
-  // SECTION 5: HEADER BINDINGS
-  // ============================================================
-
-  function bindHeader() {
-    // Coin selector
-    document.querySelectorAll('.tt-coin-selector button').forEach(function (btn) {
-      btn.onclick = function () {
-        selectCoin(this.getAttribute('data-coin'));
-      };
-    });
-
-    // Close
-    var closeBtn = document.querySelector('.tt-close');
-    if (closeBtn) closeBtn.onclick = closeTradeTerminalFull;
-
-    // Timeframes
-    document.querySelectorAll('.tt-timeframes button').forEach(function (btn) {
-      btn.onclick = function () {
-        selectTimeframe(this.getAttribute('data-tf'));
-      };
-    });
-
-    // Indicators
-    document.querySelectorAll('.tt-indicators button').forEach(function (btn) {
-      btn.onclick = function () {
-        var ind = this.getAttribute('data-ind');
-        TT.indicators[ind] = !TT.indicators[ind];
-        this.classList.toggle('on', TT.indicators[ind]);
-        drawChart();
-      };
-    });
+  /* ============================================================
+     MARKETS
+     ============================================================ */
+  function setCoins(list) {
+    T.coins = list; T.map = {};
+    list.forEach(function (c) { T.map[c.symbol] = c; });
+    if (!T.map[T.coin]) T.coin = list[0] ? list[0].symbol : 'BTC';
+    renderMList(); fillConvSelects(false);
   }
-
-  function selectCoin(coin) {
-    TT.coin = coin;
-    document.querySelectorAll('.tt-coin-selector button').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-coin') === coin);
-    });
-
-    // Update labels
-    updateFormLabels();
-    // Generate fresh candles + order book
-    generateCandles();
-    generateOrderBook();
-    generateRecentTrades();
-    renderOrderBook();
-    renderRecentTrades();
-    drawChart();
-    updateHeader();
-    updatePreview();
-    if (TT.open) { liveSwitch(coin); tvLoad(); }
+  function loadMarkets() {
+    return fetch(workerUrl() + '?action=multiPrices').then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || !d.ok || !d.coins || !d.coins.length) throw new Error('no prices');
+      var prev = T.map;
+      setCoins(d.coins.filter(function (c) { return c && c.symbol && c.usd > 0; }).map(function (c) {
+        return { symbol: c.symbol, name: c.name || c.symbol, usd: Number(c.usd) || 0, chg: Number(c.change24h) || 0, color: c.icon || '#5b6b82', vol: Number(c.volume24h) || 0 };
+      }));
+      Object.keys(prev).forEach(function (k) { if (T.map[k] && prev[k].live) { T.map[k].usd = prev[k].usd; T.map[k].chg = prev[k].chg; T.map[k].live = true; } });
+      refreshMarkets();
+    }).catch(noop);
   }
-
-  function selectTimeframe(tf) {
-    TT.timeframe = tf;
-    document.querySelectorAll('.tt-timeframes button').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-tf') === tf);
-    });
-    generateCandles();
-    drawChart();
-  }
-
-  // ============================================================
-  // SECTION 6: TABS
-  // ============================================================
-
-  function bindTabs() {
-    document.querySelectorAll('.tt-form-tabs button').forEach(function (btn) {
-      btn.onclick = function () {
-        var tab = this.getAttribute('data-tab');
-        document.querySelectorAll('.tt-form-tabs button').forEach(function (b) { b.classList.remove('on'); });
-        this.classList.add('on');
-        document.querySelectorAll('.tt-form').forEach(function (f) {
-          f.classList.toggle('on', f.getAttribute('data-form') === tab);
-        });
-        updatePreview();
-      };
-    });
-  }
-
-  function bindOrderType() {
-    document.querySelectorAll('.tt-order-type button').forEach(function (btn) {
-      btn.onclick = function () {
-        var type = this.getAttribute('data-type');
-        var parent = this.closest('.tt-order-type');
-        parent.querySelectorAll('button').forEach(function (b) { b.classList.remove('on'); });
-        this.classList.add('on');
-
-        var form = this.closest('.tt-form');
-        var limitWrap = form.querySelector('.tt-limit-price');
-        if (limitWrap) limitWrap.classList.toggle('on', type === 'limit');
-        if (limitWrap && type === 'limit') {
-          var li = limitWrap.querySelector('input');
-          var cp = getCoinPrice(TT.coin);
-          if (li && !li.value && cp > 0) { li.value = cp >= 1 ? cp.toFixed(2) : cp.toFixed(6); updatePreview(); }
-        }
-      };
-    });
-  }
-
-  // ============================================================
-  // SECTION 7: QUICK % BUTTONS
-  // ============================================================
-
-  function bindQuickPct() {
-    document.querySelectorAll('.tt-quick button').forEach(function (btn) {
-      btn.onclick = function () {
-        var pct = parseInt(this.getAttribute('data-pct'), 10) / 100;
-        var form = this.closest('.tt-form');
-        if (!form) return;
-        var formType = form.getAttribute('data-form');
-
-        if (formType === 'buy') {
-          var amount = getUsdBalance() * pct;
-          var input = $('ttBuyAmount');
-          if (input) input.value = amount.toFixed(2);
-        } else if (formType === 'sell') {
-          var amount2 = getCoinBalance(TT.coin) * pct;
-          var input2 = $('ttSellAmount');
-          if (input2) input2.value = amount2.toFixed(8);
-        } else if (formType === 'convert') {
-          var from = $('ttConvertFrom').value;
-          var amount3 = getCoinBalance(from) * pct;
-          var input3 = $('ttConvertAmount');
-          if (input3) input3.value = amount3.toFixed(8);
-        }
-        updatePreview();
-      };
-    });
-  }
-
-  // ============================================================
-  // SECTION 8: FORM INPUTS
-  // ============================================================
-
-  function bindFormInputs() {
-    ['ttBuyAmount', 'ttBuyLimitPrice', 'ttSellAmount', 'ttSellLimitPrice', 'ttConvertAmount'].forEach(function (id) {
-      var el = $(id);
-      if (el) el.addEventListener('input', updatePreview);
-    });
-
-    var convFrom = $('ttConvertFrom');
-    var convTo = $('ttConvertTo');
-    if (convFrom) convFrom.addEventListener('change', updatePreview);
-    if (convTo) convTo.addEventListener('change', updatePreview);
-
-    // Submit buttons
-    var buySubmit = $('ttBuySubmit');
-    if (buySubmit) buySubmit.onclick = submitBuy;
-
-    var sellSubmit = $('ttSellSubmit');
-    if (sellSubmit) sellSubmit.onclick = submitSell;
-
-    var convertSubmit = $('ttConvertSubmit');
-    if (convertSubmit) convertSubmit.onclick = submitConvert;
-  }
-
-  // ============================================================
-  // SECTION 9: UPDATE PREVIEW
-  // ============================================================
-
-  function updatePreview() {
-    var price = getCoinPrice(TT.coin);
-
-    // BUY
-    var buyAmt = parseFloat(($('ttBuyAmount') || {}).value) || 0;
-    var buyReceived = price > 0 ? buyAmt / price : 0;
-    var buyFee = buyAmt * FEE_RATE;
-    var buyReceiveEl = $('ttBuyReceive');
-    if (buyReceiveEl) buyReceiveEl.textContent = fmtCrypto(buyReceived, TT.coin) + ' ' + TT.coin;
-    var buyRateEl = $('ttBuyRate');
-    if (buyRateEl) buyRateEl.textContent = '1 ' + TT.coin + ' = ' + fmtPrice(price);
-    var buyFeeEl = $('ttBuyFee');
-    if (buyFeeEl) buyFeeEl.textContent = fmtMoney(buyFee);
-    var buyBalEl = $('ttBuyBalance');
-    if (buyBalEl) buyBalEl.textContent = fmtMoney(getUsdBalance());
-    var buyBtnEl = $('ttBuySubmit');
-    if (buyBtnEl) buyBtnEl.textContent = 'Buy ' + TT.coin;
-
-    // SELL
-    var sellAmt = parseFloat(($('ttSellAmount') || {}).value) || 0;
-    var sellReceived = sellAmt * price;
-    var sellFee = sellReceived * FEE_RATE;
-    var sellReceiveEl = $('ttSellReceive');
-    if (sellReceiveEl) sellReceiveEl.textContent = fmtMoney(sellReceived - sellFee);
-    var sellRateEl = $('ttSellRate');
-    if (sellRateEl) sellRateEl.textContent = '1 ' + TT.coin + ' = ' + fmtPrice(price);
-    var sellBalEl = $('ttSellBalance');
-    if (sellBalEl) sellBalEl.textContent = fmtCrypto(getCoinBalance(TT.coin), TT.coin) + ' ' + TT.coin;
-    var sellBtnEl = $('ttSellSubmit');
-    if (sellBtnEl) sellBtnEl.textContent = 'Sell ' + TT.coin;
-
-    // CONVERT
-    var convFromEl = $('ttConvertFrom');
-    var convToEl = $('ttConvertTo');
-    var convAmtEl = $('ttConvertAmount');
-    if (convFromEl && convToEl && convAmtEl) {
-      var fromCoin = convFromEl.value;
-      var toCoin = convToEl.value;
-      var convAmt = parseFloat(convAmtEl.value) || 0;
-      var fromPrice = getCoinPrice(fromCoin);
-      var toPrice = getCoinPrice(toCoin);
-      var rate = toPrice > 0 ? fromPrice / toPrice : 0;
-      var result = convAmt * rate;
-      var convResultEl = $('ttConvertResult');
-      if (convResultEl) convResultEl.value = result > 0 ? result.toFixed(8) : '';
-      var convRateEl = $('ttConvertRate');
-      if (convRateEl) convRateEl.textContent = '1 ' + fromCoin + ' = ' + rate.toFixed(8) + ' ' + toCoin;
-      var convFromBalEl = $('ttConvertFromBalance');
-      if (convFromBalEl) convFromBalEl.textContent = 'Balance: ' + fmtCrypto(getCoinBalance(fromCoin), fromCoin);
-      var convToBalEl = $('ttConvertToBalance');
-      if (convToBalEl) convToBalEl.textContent = 'Balance: ' + fmtCrypto(getCoinBalance(toCoin), toCoin);
-    }
-    ttValidate();
-  }
-
-  function updateFormLabels() {
-    // Update all mentions of coin in labels
-    var buyLabel = $('ttBuyLabel');
-    if (buyLabel) buyLabel.textContent = 'Amount (USD)';
-    var sellLabel = $('ttSellLabel');
-    if (sellLabel) sellLabel.textContent = 'Amount (' + TT.coin + ')';
-  }
-
-  // ============================================================
-  // SECTION 10: UPDATE HEADER
-  // ============================================================
-
-  function updateHeader() {
-    if (liveHeader()) return;
-    var price = getCoinPrice(TT.coin);
-    var priceEl = document.querySelector('.tt-price');
-    if (priceEl) priceEl.textContent = fmtPrice(price);
-
-    // Change % (fake, based on volatility)
-    var change = TT.candles.length >= 2
-      ? ((TT.candles[TT.candles.length - 1].c - TT.candles[0].o) / TT.candles[0].o) * 100
-      : 0;
-    var changeEl = document.querySelector('.tt-change');
-    if (changeEl) {
-      changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
-      changeEl.classList.remove('up', 'down');
-      changeEl.classList.add(change >= 0 ? 'up' : 'down');
-    }
-
-    // Stats
-    var high = TT.candles.reduce(function (m, c) { return Math.max(m, c.h); }, 0);
-    var low = TT.candles.reduce(function (m, c) { return Math.min(m, c.l); }, Infinity);
-    var vol = TT.candles.reduce(function (s, c) { return s + c.v; }, 0);
-    var statsEl = document.querySelector('.tt-stats');
-    if (statsEl) {
-      statsEl.innerHTML =
-        '<div>24h High:<b>' + fmtPrice(high) + '</b></div>' +
-        '<div>24h Low:<b>' + fmtPrice(low) + '</b></div>' +
-        '<div>24h Vol:<b>' + fmtVolume(vol) + ' ' + TT.coin + '</b></div>';
-    }
-  }
-
-  // ============================================================
-  // SECTION 11: GENERATE CANDLES
-  // ============================================================
-
-      /**
-   * Generate realistic OHLC candles for the chart.
-   * 
-   * Strategy:
-   *   1. Start from the current live price (last candle close).
-   *   2. Walk backwards in time — each earlier candle is derived
-   *      from the next one with realistic volatility.
-   *   3. Use mean reversion: price gently gravitates toward a
-   *      long-term anchor (current price ± 3%) to avoid runaway.
-   *   4. Result: smooth, realistic chart with no end-of-chart jumps.
-   */
-  function generateCandles() {
-    var basePrice = getCoinPrice(TT.coin);
-    if (basePrice <= 0) basePrice = 100;
-
-    var tfMinutes = { '1h': 60, '4h': 240, '1d': 1440 };
-    var minutes = tfMinutes[TT.timeframe] || 240;
-    var now = Date.now();
-    var N = TT.maxCandles;
-
-    // Volatility per candle (scaled by timeframe)
-    // 4h → ~1.2% swing; 1h → ~0.6%; 1d → ~3%
-    var tfVolFactor = { '1h': 0.006, '4h': 0.012, '1d': 0.03 };
-    var sigma = basePrice * (tfVolFactor[TT.timeframe] || 0.012);
-
-    // Mean-reversion anchor: current price is the long-term center
-    var anchor = basePrice;
-
-    // Generate candles backwards: index 0 = oldest, N-1 = newest
-    // We start with newest candle close = current price, then walk back.
-    var closes = new Array(N);
-    closes[N - 1] = basePrice;
-
-    for (var i = N - 2; i >= 0; i--) {
-      var next = closes[i + 1];
-      // Random walk with mean reversion toward anchor
-      var reversion = (anchor - next) * 0.03; // pull toward anchor
-      var noise = (Math.random() - 0.5) * sigma * 2;
-      var c = next + reversion + noise;
-      // Clamp to ±15% from anchor (prevents runaway)
-      var maxDev = anchor * 0.15;
-      if (c < anchor - maxDev) c = anchor - maxDev;
-      if (c > anchor + maxDev) c = anchor + maxDev;
-      closes[i] = c;
-    }
-
-    // Build OHLC from closes
-    var candles = [];
-    for (var k = 0; k < N; k++) {
-      var closePrice = closes[k];
-      var openPrice = (k === 0) ? closePrice : closes[k - 1];
-
-      // Wick size — small relative to body
-      var wickSize = sigma * (0.3 + Math.random() * 0.7);
-      var high = Math.max(openPrice, closePrice) + wickSize * Math.random();
-      var low  = Math.min(openPrice, closePrice) - wickSize * Math.random();
-
-      // Volume — higher on larger moves
-      var movePct = Math.abs(closePrice - openPrice) / openPrice;
-      var baseVol = basePrice * 80;
-      var vol = baseVol * (0.5 + Math.random() * 1.0) * (1 + movePct * 20);
-
-      candles.push({
-        t: now - (N - 1 - k) * minutes * 60 * 1000,
-        o: openPrice,
-        h: high,
-        l: low,
-        c: closePrice,
-        v: vol
+  function refreshMarkets() {
+    var syms = T.coins.map(function (c) { return c.symbol; }).filter(function (s) { return s !== 'USDT'; });
+    if (!syms.length) return;
+    var list = encodeURIComponent(JSON.stringify(syms.map(function (s) { return s + 'USDT'; })));
+    fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=' + list).then(function (r) { return r.json(); }).then(function (d) {
+      if (!Array.isArray(d)) return;
+      d.forEach(function (t) {
+        var s = String(t.symbol).replace(/USDT$/, ''), c = T.map[s]; if (!c) return;
+        c.usd = parseFloat(t.lastPrice) || c.usd; c.chg = parseFloat(t.priceChangePercent) || 0; c.vol = parseFloat(t.quoteVolume) || 0; c.live = true;
       });
-    }
-
-    // Last candle close MUST equal live price exactly (no jump)
-    if (candles.length) {
-      var last = candles[candles.length - 1];
-      last.c = basePrice;
-      last.h = Math.max(last.h, basePrice);
-      last.l = Math.min(last.l, basePrice);
-      last.o = Math.max(0.001, Math.min(last.o, basePrice * 1.005));
-    }
-
-    TT.candles = candles;
-    TT.viewStart = Math.max(0, candles.length - TT.viewCount);
+      var m = $('txMkts'); if (m && !m.hidden) renderMList();
+      if (!liveFresh('ticker')) paintHead();
+    }).catch(noop);
   }
-   
-  // ============================================================
-  // SECTION 12: GENERATE ORDER BOOK
-  // ============================================================
-
-  function generateOrderBook() {
-    var midPrice = getCoinPrice(TT.coin);
-    if (midPrice <= 0) midPrice = 100;
-
-    var step = midPrice * 0.0002; // 0.02% step
-    var bids = [];
-    var asks = [];
-
-    for (var i = 0; i < 20; i++) {
-      var bidPrice = midPrice - step * (i + 1) * (0.9 + Math.random() * 0.2);
-      var askPrice = midPrice + step * (i + 1) * (0.9 + Math.random() * 0.2);
-      var bidAmt = (0.5 + Math.random() * 2) * (1 - i / 25);
-      var askAmt = (0.5 + Math.random() * 2) * (1 - i / 25);
-      bids.push({ price: bidPrice, amount: bidAmt, total: bidAmt * bidPrice });
-      asks.push({ price: askPrice, amount: askAmt, total: askAmt * askPrice });
-    }
-    TT.bids = bids;
-    TT.asks = asks.reverse(); // asks от высшей к низшей
-  }
-
-  function renderOrderBook() {
-    var asksEl = document.querySelector('.tt-ob-asks');
-    var bidsEl = document.querySelector('.tt-ob-bids');
-    if (!asksEl || !bidsEl) return;
-
-    var maxAskTotal = TT.asks.reduce(function (m, a) { return Math.max(m, a.total); }, 0);
-    var maxBidTotal = TT.bids.reduce(function (m, b) { return Math.max(m, b.total); }, 0);
-
-    var asksHtml = '';
-    TT.asks.forEach(function (a) {
-      var barW = (a.total / maxAskTotal) * 100;
-      asksHtml += '<div class="tt-ob-row ask" data-price="' + a.price + '">' +
-        '<span class="tt-ob-bar" style="width:' + barW + '%"></span>' +
-        '<span class="tt-ob-price">' + fmtPrice(a.price) + '</span>' +
-        '<span class="tt-ob-amount">' + a.amount.toFixed(4) + '</span>' +
-        '<span class="tt-ob-total">' + a.total.toFixed(0) + '</span>' +
-      '</div>';
+  function toggleMkts() { var m = $('txMkts'); if (!m) return; if (m.hidden) { m.hidden = false; $('txSearch').value = ''; renderMList(); setTimeout(function () { try { if (innerWidth > 900) $('txSearch').focus(); } catch (e) {} }, 30); } else closeMkts(); }
+  function closeMkts() { var m = $('txMkts'); if (m) m.hidden = true; }
+  function toggleFav(s) { var i = T.fav.indexOf(s); if (i >= 0) T.fav.splice(i, 1); else T.fav.push(s); lsSet('nc_tt_fav', JSON.stringify(T.fav)); renderMList(); }
+  function ico(c) { return '<i class="tx-ci" style="--c:' + esc(c.color) + '">' + esc(glyph(c.symbol)) + '</i>'; }
+  function renderMList() {
+    var box = $('txMList'); if (!box) return;
+    var term = String(($('txSearch') || {}).value || '').trim().toLowerCase();
+    var rows = T.coins.filter(function (c) {
+      if (T.mtab === 'fav' && T.fav.indexOf(c.symbol) < 0) return false;
+      return !term || c.symbol.toLowerCase().indexOf(term) >= 0 || String(c.name).toLowerCase().indexOf(term) >= 0;
     });
-    asksEl.innerHTML = asksHtml;
-
-    var bidsHtml = '';
-    TT.bids.forEach(function (b) {
-      var barW = (b.total / maxBidTotal) * 100;
-      bidsHtml += '<div class="tt-ob-row bid" data-price="' + b.price + '">' +
-        '<span class="tt-ob-bar" style="width:' + barW + '%"></span>' +
-        '<span class="tt-ob-price">' + fmtPrice(b.price) + '</span>' +
-        '<span class="tt-ob-amount">' + b.amount.toFixed(4) + '</span>' +
-        '<span class="tt-ob-total">' + b.total.toFixed(0) + '</span>' +
-      '</div>';
-    });
-    bidsEl.innerHTML = bidsHtml;
-
-    // Spread
-    var spread = TT.asks.length && TT.bids.length
-      ? (TT.asks[TT.asks.length - 1].price - TT.bids[0].price)
-      : 0;
-    var spreadEl = document.querySelector('.tt-ob-spread-price');
-    if (spreadEl) spreadEl.textContent = '$' + spread.toFixed(spread >= 1 ? 2 : 4);
-    var spLbl = document.querySelector('.tt-ob-spread-label');
-    if (spLbl && TT.bids.length && spread > 0) spLbl.textContent = 'Spread ' + (spread / TT.bids[0].price * 100).toFixed(3) + '%';
-
-    // Click on row → fill limit price
-    document.querySelectorAll('.tt-ob-row').forEach(function (row) {
-      row.onclick = function () {
-        var price = parseFloat(this.getAttribute('data-price'));
-        var limitBuy = $('ttBuyLimitPrice');
-        if (limitBuy && limitBuy.closest('.tt-limit-price').classList.contains('on')) {
-          limitBuy.value = price.toFixed(2);
-        }
-        var limitSell = $('ttSellLimitPrice');
-        if (limitSell && limitSell.closest('.tt-limit-price').classList.contains('on')) {
-          limitSell.value = price.toFixed(2);
-        }
-      };
-    });
+    if (!rows.length) { box.innerHTML = '<div class="tx-empty">' + (T.mtab === 'fav' ? 'No favorites yet — tap ☆ next to a coin' : 'No markets found') + '</div>'; return; }
+    box.innerHTML = rows.map(function (c) {
+      var up = c.chg >= 0, fav = T.fav.indexOf(c.symbol) >= 0;
+      return '<div class="tx-mrow' + (c.symbol === T.coin ? ' on' : '') + '" data-a="pick" data-s="' + c.symbol + '">' +
+        '<button type="button" class="tx-star' + (fav ? ' on' : '') + '" data-a="fav" data-s="' + c.symbol + '" aria-label="Favorite">' + (fav ? '★' : '☆') + '</button>' + ico(c) +
+        '<span class="tx-mn"><b>' + c.symbol + '<small>/USD</small></b><em>' + esc(c.name) + '</em></span>' +
+        '<span class="tx-mp"><b>' + fP(c.usd) + '</b><em class="' + (up ? 'up' : 'dn') + '">' + (up ? '+' : '') + (Number(c.chg) || 0).toFixed(2) + '%</em></span></div>';
+    }).join('');
   }
 
-  // ============================================================
-  // SECTION 13: GENERATE RECENT TRADES
-  // ============================================================
-
-  function generateRecentTrades() {
-    var midPrice = getCoinPrice(TT.coin);
-    if (midPrice <= 0) midPrice = 100;
-    var trades = [];
-    for (var i = 0; i < 30; i++) {
-      trades.push({
-        price: midPrice * (1 + (Math.random() - 0.5) * 0.001),
-        amount: Math.random() * 2 + 0.001,
-        side: Math.random() > 0.5 ? 'buy' : 'sell',
-        time: Date.now() - i * (500 + Math.random() * 2000)
-      });
-    }
-    TT.recentTrades = trades;
+  function pickCoin(sym, force) {
+    if (!sym) return;
+    if (!T.map[sym]) sym = T.coins[0] ? T.coins[0].symbol : 'BTC';
+    var changed = sym !== T.coin || force;
+    var coinChanged = sym !== T.coin;
+    T.coin = sym; lsSet('nc_tt_coin', sym);
+    if (!changed) return;
+    var m = coinMeta(sym);
+    $('txIco').outerHTML = '<span id="txIco" class="tx-ci" style="--c:' + esc(m.color) + '">' + esc(glyph(sym)) + '</span>';
+    $('txPair').textContent = sym + '/USD'; $('txName').textContent = m.name;
+    $('txBookSym').textContent = sym + '/USD';
+    if (coinChanged || force) { LV.bids = []; LV.asks = []; LV.trades = []; paintBook(); paintTrades(); }
+    paintHead();
+    if (coinChanged) { $('txAmt').value = ''; $('txRng').value = 0; }
+    setType(T.otype, !coinChanged);
+    renderMList();
+    if (T.open && (coinChanged || !LV.ws)) { liveSwitch(sym); tvLoad(); }
+    renderBottom(true);
   }
 
-    function renderRecentTrades() {
-    var el = document.querySelector('.tt-rt-list');
-    if (!el) return;
-    var html = '';
-    TT.recentTrades.slice(0, 30).forEach(function (t) {
-      var timeStr = new Date(t.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      var priceStr = fmtPrice(t.price);
-      var amountStr = t.amount.toFixed(4);
-      var totalStr = '$' + (t.price * t.amount).toFixed(2);
-
-      html += '<div class="tt-rt-row ' + t.side + '">' +
-        '<span class="tt-rt-price">' + priceStr + '</span>' +
-        '<span class="tt-rt-amount">' + amountStr + '</span>' +
-        '<span class="tt-rt-total">' + totalStr + '</span>' +
-        '<span class="tt-rt-time">' + timeStr + '</span>' +
-      '</div>';
-    });
-    el.innerHTML = html;
-  }
-
-  // ============================================================
-  // SECTION 14: CANVAS CHART
-  // ============================================================
-
-  var canvas, ctx;
-
-  function resizeCanvas() {
-    canvas = $('ttChart');
-    if (!canvas) return;
-    var rect = canvas.getBoundingClientRect();
-    var dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    drawChart();
-  }
-
-  function bindChartMouse() {
-    canvas = $('ttChart');
-    if (!canvas) return;
-
-    canvas.addEventListener('mousemove', function (e) {
-      var rect = canvas.getBoundingClientRect();
-      TT.hoverX = e.clientX - rect.left;
-      TT.hoverY = e.clientY - rect.top;
-      drawChart();
-    });
-
-    canvas.addEventListener('mouseleave', function () {
-      TT.hoverX = -1;
-      TT.hoverY = -1;
-      drawChart();
-    });
-
-    canvas.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      if (e.deltaY < 0) TT.viewCount = Math.max(20, TT.viewCount - 5);
-      else TT.viewCount = Math.min(TT.maxCandles, TT.viewCount + 5);
-      TT.viewStart = Math.max(0, TT.candles.length - TT.viewCount);
-      drawChart();
-    }, { passive: false });
-
-    var isDragging = false, dragStartX = 0, dragStartView = 0;
-    canvas.addEventListener('mousedown', function (e) {
-      isDragging = true;
-      dragStartX = e.clientX;
-      dragStartView = TT.viewStart;
-    });
-    window.addEventListener('mouseup', function () { isDragging = false; });
-    window.addEventListener('mousemove', function (e) {
-      if (!isDragging || !TT.open) return;
-      var dx = e.clientX - dragStartX;
-      var cw = canvas.getBoundingClientRect().width;
-      var perCandle = cw / TT.viewCount;
-      var shift = Math.round(-dx / perCandle);
-      var newStart = Math.max(0, Math.min(TT.candles.length - TT.viewCount, dragStartView + shift));
-      if (newStart !== TT.viewStart) {
-        TT.viewStart = newStart;
-        drawChart();
-      }
-    });
-  }
-
-  function drawChart() {
-    if (!ctx || !canvas || TT.tvActive) return;
-    var w = canvas.getBoundingClientRect().width;
-    var h = canvas.getBoundingClientRect().height;
-
-    // Clear
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#0a0e15';
-    ctx.fillRect(0, 0, w, h);
-
-    if (!TT.candles.length) return;
-
-    // Visible candles
-    var viewCandles = TT.candles.slice(TT.viewStart, TT.viewStart + TT.viewCount);
-    if (!viewCandles.length) return;
-
-    // Chart area
-    var padTop = 20;
-    var padBottom = TT.indicators.vol ? 70 : 30;
-    var padLeft = 60;
-    var padRight = 80;
-    var chartW = w - padLeft - padRight;
-    var chartH = h - padTop - padBottom;
-
-    // Price range
-    var minPrice = viewCandles.reduce(function (m, c) { return Math.min(m, c.l); }, Infinity);
-    var maxPrice = viewCandles.reduce(function (m, c) { return Math.max(m, c.h); }, -Infinity);
-    var priceRange = maxPrice - minPrice;
-    if (priceRange <= 0) priceRange = 1;
-    minPrice -= priceRange * 0.05;
-    maxPrice += priceRange * 0.05;
-    priceRange = maxPrice - minPrice;
-
-    function priceToY(p) {
-      return padTop + chartH * (1 - (p - minPrice) / priceRange);
-    }
-
-    function xToIndex(x) {
-      return Math.floor((x - padLeft) / (chartW / viewCandles.length));
-    }
-
-    // ---- Grid + Y axis ----
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-    ctx.fillStyle = '#7a8a9e';
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.textAlign = 'right';
-    ctx.lineWidth = 1;
-
-    for (var i = 0; i <= 5; i++) {
-      var y = padTop + (chartH / 5) * i;
-      var price = maxPrice - (priceRange / 5) * i;
-      ctx.beginPath();
-      ctx.moveTo(padLeft, y);
-      ctx.lineTo(w - padRight, y);
-      ctx.stroke();
-      ctx.fillText(fmtPrice(price), padLeft - 8, y + 3);
-    }
-
-    // ---- Volume area ----
-    var volAreaTop = padTop + chartH + 10;
-    var volAreaH = padBottom - 30;
-    var maxVol = viewCandles.reduce(function (m, c) { return Math.max(m, c.v); }, 0);
-
-    if (TT.indicators.vol && maxVol > 0) {
-      viewCandles.forEach(function (c, i) {
-        var x = padLeft + i * (chartW / viewCandles.length);
-        var cw = (chartW / viewCandles.length) * 0.7;
-        var vh = (c.v / maxVol) * volAreaH;
-        ctx.fillStyle = c.c >= c.o ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)';
-        ctx.fillRect(x + cw * 0.15, volAreaTop + volAreaH - vh, cw, vh);
-      });
-    }
-
-    // ---- Candles ----
-    var candleW = (chartW / viewCandles.length) * 0.7;
-    var candleGap = (chartW / viewCandles.length) * 0.3;
-
-    viewCandles.forEach(function (c, i) {
-      var x = padLeft + i * (chartW / viewCandles.length) + candleGap / 2;
-      var yO = priceToY(c.o);
-      var yC = priceToY(c.c);
-      var yH = priceToY(c.h);
-      var yL = priceToY(c.l);
-      var isUp = c.c >= c.o;
-      var color = isUp ? '#10b981' : '#ef4444';
-
-      // Wick
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x + candleW / 2, yH);
-      ctx.lineTo(x + candleW / 2, yL);
-      ctx.stroke();
-
-      // Body
-      ctx.fillStyle = color;
-      var bodyTop = Math.min(yO, yC);
-      var bodyH = Math.max(1, Math.abs(yC - yO));
-      ctx.fillRect(x, bodyTop, candleW, bodyH);
-    });
-
-    // ---- MA(7) ----
-    if (TT.indicators.ma) drawMA(viewCandles, 7, '#fbbf24', padLeft, chartW, priceToY);
-    if (TT.indicators.ma) drawMA(viewCandles, 25, '#47dcff', padLeft, chartW, priceToY);
-    if (TT.indicators.ema) drawEMA(viewCandles, 12, '#a78bfa', padLeft, chartW, priceToY);
-
-    // ---- Current price line ----
-    var lastCandle = viewCandles[viewCandles.length - 1];
-    var lastY = priceToY(lastCandle.c);
-    ctx.strokeStyle = 'rgba(200,255,77,0.45)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(padLeft, lastY);
-    ctx.lineTo(w - padRight, lastY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Current price badge
-    ctx.fillStyle = '#c8ff4d';
-    ctx.fillRect(w - padRight + 2, lastY - 9, padRight - 4, 18);
-    ctx.fillStyle = '#0a0f04';
-    ctx.font = 'bold 10px ui-monospace, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(fmtPrice(lastCandle.c), w - padRight / 2 - 2, lastY + 3);
-
-    // ---- Crosshair ----
-    if (TT.hoverX > padLeft && TT.hoverX < w - padRight && TT.hoverY > padTop && TT.hoverY < padTop + chartH) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath();
-      ctx.moveTo(TT.hoverX, padTop);
-      ctx.lineTo(TT.hoverX, padTop + chartH);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(padLeft, TT.hoverY);
-      ctx.lineTo(w - padRight, TT.hoverY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Price label at crosshair
-      var hoverPrice = maxPrice - (TT.hoverY - padTop) / chartH * priceRange;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.fillRect(w - padRight + 2, TT.hoverY - 9, padRight - 4, 18);
-      ctx.fillStyle = '#0a0e15';
-      ctx.font = 'bold 10px ui-monospace, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(fmtPrice(hoverPrice), w - padRight / 2 - 2, TT.hoverY + 3);
-    }
-
-    // ---- X axis time labels ----
-    ctx.fillStyle = '#7a8a9e';
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.textAlign = 'center';
-    var labelCount = 6;
-    for (var k = 0; k < labelCount; k++) {
-      var idx = Math.floor((viewCandles.length / (labelCount - 1)) * k);
-      if (idx >= viewCandles.length) idx = viewCandles.length - 1;
-      var c = viewCandles[idx];
-      var x = padLeft + idx * (chartW / viewCandles.length) + candleW / 2;
-      var d = new Date(c.t);
-      var label = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
-      if (TT.timeframe === '1d') {
-        label = d.getDate() + '/' + (d.getMonth() + 1);
-      }
-      ctx.fillText(label, x, padTop + chartH + padBottom - 8);
-    }
-  }
-
-  function drawMA(candles, period, color, padLeft, chartW, priceToY) {
-    if (candles.length < period) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    var started = false;
-    for (var i = period - 1; i < candles.length; i++) {
-      var sum = 0;
-      for (var j = i - period + 1; j <= i; j++) sum += candles[j].c;
-      var ma = sum / period;
-      var x = padLeft + i * (chartW / candles.length) + (chartW / candles.length) / 2;
-      var y = priceToY(ma);
-      if (!started) { ctx.moveTo(x, y); started = true; }
-      else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-
-  function drawEMA(candles, period, color, padLeft, chartW, priceToY) {
-    if (candles.length < period) return;
-    var k = 2 / (period + 1);
-    var ema = candles[0].c;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    var started = false;
-    for (var i = 0; i < candles.length; i++) {
-      ema = candles[i].c * k + ema * (1 - k);
-      var x = padLeft + i * (chartW / candles.length) + (chartW / candles.length) / 2;
-      var y = priceToY(ema);
-      if (!started) { ctx.moveTo(x, y); started = true; }
-      else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-
-  // ============================================================
-  // SECTION 15: SUBMIT TRADES
-  // ============================================================
-
-  async function submitBuy() {
-    var amount = parseFloat(($('ttBuyAmount') || {}).value) || 0;
-    var price = getCoinPrice(TT.coin);
-    if (amount < 10) { ttErr('Minimum purchase is $10'); return; }
-    if (amount > getUsdBalance()) { ttErr('Insufficient balance'); return; }
-    if (price <= 0) { ttErr('Price unavailable'); return; }
-
-    var limitWrap = document.querySelector('.tt-form[data-form="buy"] .tt-limit-price');
-    var isLimit = limitWrap && limitWrap.classList.contains('on');
-    var limitPrice = parseFloat(($('ttBuyLimitPrice') || {}).value) || price;
-
-    if (TT.busy) return;
-    if (!(await ttConfirm({ side: 'buy', coin: TT.coin, amount: amount, price: isLimit ? limitPrice : price, limit: isLimit }))) return;
-    TT.busy = true;
-    try { await executeTrade('buy', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market'); }
-    catch (e) {} finally { TT.busy = false; }
-  }
-
-  async function submitSell() {
-    var amount = parseFloat(($('ttSellAmount') || {}).value) || 0;
-    var price = getCoinPrice(TT.coin);
-    if (amount <= 0) { ttErr('Enter amount'); return; }
-    if (amount > getCoinBalance(TT.coin)) { ttErr('Insufficient ' + TT.coin); return; }
-    if (price <= 0) { ttErr('Price unavailable'); return; }
-
-    var limitWrap = document.querySelector('.tt-form[data-form="sell"] .tt-limit-price');
-    var isLimit = limitWrap && limitWrap.classList.contains('on');
-    var limitPrice = parseFloat(($('ttSellLimitPrice') || {}).value) || price;
-
-    if (TT.busy) return;
-    if (!(await ttConfirm({ side: 'sell', coin: TT.coin, amount: amount, price: isLimit ? limitPrice : price, limit: isLimit }))) return;
-    TT.busy = true;
-    try { await executeTrade('sell', TT.coin, amount, isLimit ? limitPrice : price, isLimit ? 'limit' : 'market'); }
-    catch (e) {} finally { TT.busy = false; }
-  }
-
-  async function submitConvert() {
-    var amount = parseFloat(($('ttConvertAmount') || {}).value) || 0;
-    var fromCoin = ($('ttConvertFrom') || {}).value;
-    var toCoin = ($('ttConvertTo') || {}).value;
-    if (fromCoin === toCoin) { ttErr('Choose different coins'); return; }
-    if (amount <= 0) { ttErr('Enter amount'); return; }
-    if (amount > getCoinBalance(fromCoin)) { ttErr('Insufficient ' + fromCoin); return; }
-
-    var fromPrice = getCoinPrice(fromCoin);
-    var toPrice = getCoinPrice(toCoin);
-    if (fromPrice <= 0 || toPrice <= 0) { ttErr('Price unavailable'); return; }
-    var rate = fromPrice / toPrice;
-
-    var token = localStorage.getItem('session_token');
-    if (!token) { ttErr('Not authenticated'); return; }
-
-    if (TT.busy) return;
-    if (!(await ttConfirm({ side: 'convert', from: fromCoin, to: toCoin, amount: amount, rate: rate }))) return;
-    TT.busy = true;
-    try {
-      var res = await fetch(window.WORKER_URL + '?action=trade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: token,
-          clientTradeId: 'ct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-          type: 'convert',
-          symbol: toCoin,
-          amount: amount,
-          price: rate,
-          orderType: 'market',
-          sourceSymbol: fromCoin,
-          targetSymbol: toCoin
-        })
-      });
-      var data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Convert failed');
-
-      // Update local state
-      if (window.st) {
-        window.st.usd = data.usd;
-        window.st.btc = data.btc;
-        window.st.eth = data.eth;
-        if (data.usdt !== undefined) window.st.usdt = data.usdt;
-        if (data.sol !== undefined) window.st.sol = data.sol;
-        if (data.bnb !== undefined) window.st.bnb = data.bnb;
-      }
-
-      if (typeof window.render === 'function') window.render();
-      if (typeof window.renderExchangeDash === 'function') window.renderExchangeDash();
-      if (typeof window.playChime === 'function') window.playChime();
-      if (typeof window.addNotification === 'function') {
-        window.addNotification('Converted ' + amount.toFixed(6) + ' ' + fromCoin + ' → ' + toCoin, '🔄');
-      }
-
-      selectCoin(TT.coin); // refresh
-      closeTradeTerminalFull();
-
-      if (typeof window.toast === 'function') {
-        window.toast('✅ Converted ' + amount.toFixed(6) + ' ' + fromCoin + ' → ' + toCoin);
-      }
-    } catch (e) {
-      ttErr('Convert failed: ' + e.message);
-    } finally { TT.busy = false; }
-  }
-
-    /**
-   * Execute a market/limit trade via Worker ?action=trade.
-   * This is the ONLY function that sends trades — no legacy overrides.
-   */
-  async function executeTrade(type, symbol, amount, price, orderType) {
-    var token = localStorage.getItem('session_token');
-    if (!token) { ttErr('Not authenticated'); return; }
-
-    var clientTradeId = 'ct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
-    try {
-      var res = await fetch(window.WORKER_URL + '?action=trade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: token,
-          clientTradeId: clientTradeId,
-          type: type,
-          symbol: symbol,
-          amount: amount,
-          price: price,
-          orderType: orderType || 'market',
-          limitPrice: orderType === 'limit' ? price : null
-        })
-      });
-      var data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Trade failed');
-
-      // Update local state
-      if (window.st) {
-        window.st.usd = data.usd;
-        window.st.btc = data.btc;
-        window.st.eth = data.eth;
-        if (data.usdt !== undefined) window.st.usdt = data.usdt;
-        if (data.sol !== undefined) window.st.sol = data.sol;
-        if (data.bnb !== undefined) window.st.bnb = data.bnb;
-      }
-
-      // Re-render
-      if (typeof window.render === 'function') window.render();
-      if (typeof window.renderExchangeDash === 'function') window.renderExchangeDash();
-      if (typeof window.playChime === 'function') window.playChime();
-
-      // v1.1: the server executes market orders at ITS price — show that one, not the client's guess
-      var execPrice = (data.trade && Number(data.trade.price) > 0) ? Number(data.trade.price) : price;
-      var action = type === 'buy' ? 'Bought' : 'Sold';
-      var amountStr = type === 'buy'
-        ? (amount / execPrice).toFixed(8) + ' ' + symbol
-        : amount.toFixed(8) + ' ' + symbol;
-      if (typeof window.addNotification === 'function') {
-        window.addNotification(action + ' ' + amountStr + ' @ $' + execPrice.toFixed(2), type === 'buy' ? '📈' : '📉');
-      }
-
-      // Record in history
-      if (typeof window.recordTradeInHistory === 'function') {
-               // 🛡️ SAFETY NET: Ensure trade lands in state.orders even if Worker
-      // hasn't been updated to do it. This guarantees Order History works.
-      if (window.st) {
-        if (!Array.isArray(window.st.orders)) window.st.orders = [];
-        var orderId = data.trade && data.trade.id ? data.trade.id : ('trade_' + Date.now());
-        var already = window.st.orders.some(function (o) { return o.id === orderId; });
-        if (!already) {
-          window.st.orders.unshift({
-            id: orderId,
-            ts: Date.now(),
-            type: type,
-            symbol: symbol,
-            amount: Number(amount),
-            price: execPrice,
-            total: type === 'buy' ? Number(amount) : Number(amount) * execPrice,
-            orderType: orderType || 'market',
-            status: 'filled',
-            filled: type === 'buy' ? Number(amount) / execPrice : Number(amount),
-            filledAt: Date.now()
-          });
-          if (window.st.orders.length > 500) window.st.orders.length = 500;
-        }
-
-        // Save to server (best-effort)
-        if (typeof window.saveToServer === 'function') {
-          try { window.saveToServer(); } catch (e) {}
-        }
-      }
-        window.recordTradeInHistory({
-          type: type,
-          symbol: symbol,
-          amount: amount,
-          price: price
-        });
-      }
-
-      // Refresh order history + open orders immediately
-      if (typeof window.loadOrderHistory === 'function') window.loadOrderHistory();
-      if (typeof window.refreshOpenOrders === 'function') window.refreshOpenOrders();
-
-      if (typeof window.toast === 'function') {
-        window.toast('✅ ' + action + ' ' + amountStr);
-      }
-
-      // For market orders: keep terminal OPEN (don't close)
-      // The user can see their trade appear in Order History instantly.
-      return data;
-
-    } catch (e) {
-      ttErr('Trade failed: ' + e.message);
-      throw e;
-    }
-  }
-  // ============================================================
-  // SECTION 16: LIVE UPDATES
-  // ============================================================
-
-  function startLiveUpdates() {
-    // Order book + recent trades every 2 sec
-    var id1 = setInterval(function () {
-      if (!TT.open) return;
-      if (!liveFresh('depth')) { generateOrderBook(); renderOrderBook(); }
-      if (liveFresh('trade')) return;
-      // Add fake trade to recent list (only when there is no live feed)
-      var mid = getCoinPrice(TT.coin);
-      TT.recentTrades.unshift({
-        price: mid * (1 + (Math.random() - 0.5) * 0.001),
-        amount: Math.random() * 0.5,
-        side: Math.random() > 0.5 ? 'buy' : 'sell',
-        time: Date.now()
-      });
-      if (TT.recentTrades.length > 30) TT.recentTrades.length = 30;
-      renderRecentTrades();
-    }, 2000);
-
-    // Full update every 5 sec
-    var id2 = setInterval(function () {
-      if (!TT.open) return;
-      updateHeader();
-      updatePreview();
-      drawChart();
-    }, 5000);
-
-    TT.intervals.push(id1, id2);
-  }
-
-  // ============================================================
-  // SECTION 17: MASK CLICK
-  // ============================================================
-
-  function bindMaskClick() {
-    var term = $('tradeTerminal');
-    if (term) {
-      term.addEventListener('click', function (e) {
-        // Click outside panels → close
-        if (e.target === term) closeTradeTerminalFull();
-      });
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && TT.open) closeTradeTerminalFull();
-    });
-  }
-
-  // ============================================================
-  // SECTION 18: PUBLIC API
-  // ============================================================
-
-  window.TT = TT;
-  // ============================================================
-  // SECTION 19: ORDER HISTORY
-  // ============================================================
-
-  var _ohCurrentFilter = 'all';
-
-  /**
-   * Fetch order history from Worker and render.
-   */
-  async function loadOrderHistory(filter) {
-  var token = localStorage.getItem('session_token');
-  if (!token) return;
-  _ohCurrentFilter = filter || _ohCurrentFilter;
-
-  var serverOrders = [];
-
-  // Try server first
-  try {
-    var res = await fetch(window.WORKER_URL + '?action=getOrders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token, filter: _ohCurrentFilter })
-    });
-    var data = await res.json();
-    if (data.ok) serverOrders = data.orders || [];
-  } catch (e) {
-    console.warn('[TT] Order history fetch failed:', e);
-  }
-
-  // Merge with local state.orders (in case Worker hasn't been updated)
-  var localOrders = (window.st && window.st.orders) || [];
-  var byId = {};
-  serverOrders.forEach(function (o) { byId[o.id] = o; });
-  localOrders.forEach(function (o) { if (!byId[o.id]) byId[o.id] = o; });
-
-  var merged = Object.values(byId);
-
-  // Apply filter
-  if (_ohCurrentFilter && _ohCurrentFilter !== 'all') {
-    merged = merged.filter(function (o) { return o.status === _ohCurrentFilter; });
-  }
-
-  // Sort by timestamp desc
-  merged.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-
-  renderOrderHistory(merged.slice(0, 100));
-}
-  /**
-   * Render the order history list.
-   */
-    function renderOrderHistory(orders) {
-    var el = document.querySelector('.tt-oh-list');
-    if (!el) return;
-
-    var countEl = document.getElementById('ttCountHistory');
-    if (countEl) {
-      countEl.textContent = orders.length;
-      countEl.dataset.empty = orders.length === 0 ? '1' : '0';
-    }
-
-    if (!orders.length) {
-      el.innerHTML = '<div class="tt-empty">No orders yet</div>';
-      return;
-    }
-
-    var html = '';
-    orders.forEach(function (o) {
-      var statusIcon, statusClass;
-      if (o.status === 'filled') { statusIcon = '✓'; statusClass = 'filled'; }
-      else if (o.status === 'open') { statusIcon = '⏳'; statusClass = 'open'; }
-      else if (o.status === 'cancelled') { statusIcon = '✗'; statusClass = 'cancelled'; }
-      else { statusIcon = '•'; statusClass = 'cancelled'; }
-
-      var typeLabel = o.type === 'buy' ? 'BUY' : (o.type === 'sell' ? 'SELL' : 'CONV');
-      var typeClass = o.type === 'buy' ? 'buy' : 'sell';
-
-      var amtStr = (o.type === 'buy')
-        ? (Number(o.amount) / Number(o.price)).toFixed(6) + ' ' + o.symbol
-        : Number(o.amount).toFixed(6) + ' ' + o.symbol;
-
-      var priceStr = '$' + Number(o.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      var totalStr = '$' + Number(o.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-      var t = new Date(o.ts);
-      var now = Date.now();
-      var diff = now - o.ts;
-      var timeStr;
-      if (diff < 60000) timeStr = 'Just now';
-      else if (diff < 3600000) timeStr = Math.floor(diff / 60000) + 'm';
-      else if (diff < 86400000) timeStr = t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      else timeStr = t.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-
-      html += '<div class="tt-oh-row" data-order-id="' + o.id + '">' +
-        '<span class="tt-oh-status-icon ' + statusClass + '">' + statusIcon + '</span>' +
-        '<span class="tt-oh-type ' + typeClass + '">' + typeLabel + '</span>' +
-        '<span class="tt-oh-symbol">' + o.symbol + '</span>' +
-        '<span class="tt-oh-amount">' + amtStr + '</span>' +
-        '<span class="tt-oh-price">' + priceStr + '</span>' +
-        '<span class="tt-oh-total">' + totalStr + '</span>' +
-        '<span class="tt-oh-time">' + timeStr + '</span>' +
-        '<span></span>' +
-      '</div>';
-    });
-    el.innerHTML = html;
-  }
-
-  /**
-   * Cancel an open order.
-   */
-  async function cancelOrder(orderId) {
-    var token = localStorage.getItem('session_token');
-    if (!token) return;
-
-    try {
-      var res = await fetch(window.WORKER_URL + '?action=cancelOrder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, orderId: orderId })
-      });
-      var data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Cancel failed');
-
-      if (typeof window.toast === 'function') window.toast('✅ Order cancelled');
-      loadOrderHistory();
-      if (typeof window.refreshOpenOrders === 'function') window.refreshOpenOrders();
-    } catch (e) {
-      if (typeof window.toast === 'function') window.toast('❌ ' + e.message);
-    }
-  }
-
-  /**
-   * Bind filter buttons.
-   */
-   function bindOrderHistoryFilters() {
-    // Bottom tabs: Order History / Open Orders / Recent Trades
-    document.querySelectorAll('.tt-bottom-tabs button').forEach(function (btn) {
-      if (btn._bound) return;
-      btn._bound = true;
-      btn.onclick = function () {
-        var tab = this.getAttribute('data-tab');
-        document.querySelectorAll('.tt-bottom-tabs button').forEach(function (b) { b.classList.remove('on'); });
-        this.classList.add('on');
-        document.querySelectorAll('.tt-tab-content').forEach(function (c) {
-          c.classList.toggle('on', c.getAttribute('data-tab-content') === tab);
-        });
-
-        // Show/hide filters (only on history tab)
-        var filters = document.getElementById('ttOhFilters');
-        if (filters) filters.classList.toggle('hidden', tab !== 'history');
-
-        // Load data for this tab
-        if (tab === 'history') {
-          loadOrderHistory();
-        } else if (tab === 'open') {
-          if (typeof window.refreshOpenOrders === 'function') window.refreshOpenOrders();
-          renderOpenOrders();
-        } else if (tab === 'trades') {
-          renderRecentTrades();
-        }
-      };
-    });
-
-    // Filters: All / Filled / Open / Cancelled
-    document.querySelectorAll('.tt-bottom-filters button').forEach(function (btn) {
-      if (btn._bound) return;
-      btn._bound = true;
-      btn.onclick = function () {
-        document.querySelectorAll('.tt-bottom-filters button').forEach(function (b) { b.classList.remove('on'); });
-        this.classList.add('on');
-        var filter = this.getAttribute('data-filter');
-        loadOrderHistory(filter);
-      };
-    });
-  }
-
-  /**
-   * Render Open Orders list from window.st.openOrders.
-   */
-  function renderOpenOrders() {
-    var el = document.querySelector('.tt-oo-list');
-    if (!el) return;
-
-    var orders = (window.st && window.st.openOrders) || [];
-    var openOrders = orders.filter(function (o) { return o.status === 'open'; });
-
-    // Update tab count
-    var countEl = document.getElementById('ttCountOpen');
-    if (countEl) {
-      countEl.textContent = openOrders.length;
-      countEl.dataset.empty = openOrders.length === 0 ? '1' : '0';
-    }
-
-    if (!openOrders.length) {
-      el.innerHTML = '<div class="tt-empty">No open orders</div>';
-      return;
-    }
-
-    var html = '';
-    openOrders.forEach(function (o) {
-      var typeLabel = o.type === 'buy' ? 'BUY' : 'SELL';
-      var typeClass = o.type === 'buy' ? 'buy' : 'sell';
-      var amtStr = (o.type === 'buy' ? (Number(o.amount) / Number(o.price)) : Number(o.amount)).toFixed(6) + ' ' + o.symbol;
-      var priceStr = '$' + Number(o.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      var oTotal = Number(o.total) || (o.type === 'buy' ? Number(o.amount) : Number(o.amount) * Number(o.price));
-      var totalStr = '$' + oTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      var timeStr = new Date(o.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-      html += '<div class="tt-oo-row" data-order-id="' + o.id + '">' +
-        '<span class="tt-oh-status-icon open">⏳</span>' +
-        '<span class="tt-oh-type ' + typeClass + '">' + typeLabel + '</span>' +
-        '<span class="tt-oh-symbol">' + o.symbol + '</span>' +
-        '<span class="tt-oh-amount">' + amtStr + '</span>' +
-        '<span class="tt-oh-price">' + priceStr + '</span>' +
-        '<span class="tt-oh-total">' + totalStr + '</span>' +
-        '<span class="tt-oh-time">' + timeStr + '</span>' +
-        '<span><button class="tt-oo-cancel" data-order-id="' + o.id + '">Cancel</button></span>' +
-      '</div>';
-    });
-    el.innerHTML = html;
-
-    el.querySelectorAll('.tt-oo-cancel').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.stopPropagation();
-        var orderId = this.getAttribute('data-order-id');
-        if (typeof cancelOrder === 'function') cancelOrder(orderId);
-      };
-    });
-  }
-
-  /**
-   * Refresh order history while terminal is open.
-   */
-  function startOrderHistoryRefresh() {
-    setInterval(function () {
-      if (window.TT && window.TT.open) {
-        loadOrderHistory();
-      }
-    }, 5000);
-  }
-
-  // Expose for external use
-  window.loadOrderHistory = loadOrderHistory;
-  window.renderOrderHistory = renderOrderHistory;
-  window.renderOpenOrders = renderOpenOrders;
-  window.cancelOrder = cancelOrder;
-
-  // Hook into terminal open
-  var _origOpenTTFull = window.openTradeTerminalFull;
-  if (typeof _origOpenTTFull === 'function') {
-    window.openTradeTerminalFull = function () {
-      _origOpenTTFull.apply(this, arguments);
-      setTimeout(function () {
-        bindOrderHistoryFilters();
-        loadOrderHistory('all');
-      }, 300);
-    };
-  }
-
-  // Start periodic refresh
-  startOrderHistoryRefresh();
-
-  // Bind filters on load
-  setTimeout(bindOrderHistoryFilters, 1000);
-  // ============================================================
-  // SECTION 20 (v2.0): LIVE MARKET DATA + TRADINGVIEW + CONFIRM + UX
-  // ============================================================
-  //  • Prices / 24h stats / order book / trades — Binance public market data
-  //    (WebSocket, with automatic fallback to HTTPS polling).
-  //    If both are unreachable the old built-in simulated data keeps working.
-  //  • Chart — TradingView (falls back to the built-in canvas chart if it cannot load).
-  //  • Orders are still executed by the Worker at ITS price (unchanged).
-  // ============================================================
-
-  var TV = { n: 0, loading: false, cbs: [], watch: 0 };
-  var _liveTradesTimer = 0;
-
-  function noop() {}
-
+  /* ============================================================
+     LIVE DATA (Binance public market data)
+     ============================================================ */
   function liveFresh(kind) {
     var t = kind === 'depth' ? LV.depthAt : (kind === 'trade' ? LV.tradeAt : LV.tickerAt);
-    return LV.coin === TT.coin && !!t && (Date.now() - t) < (kind === 'trade' ? 20000 : 6000);
+    return LV.coin === T.coin && !!t && (Date.now() - t) < (kind === 'trade' ? 30000 : 7000);
   }
-
   function liveStop() {
-    clearTimeout(LV.retryT);
-    clearInterval(LV.pollT);
-    LV.pollT = 0;
-    var ws = LV.ws;
-    LV.ws = null;
+    clearTimeout(LV.retryT); clearInterval(LV.pollT); LV.pollT = 0; LV.mode = '';
+    var ws = LV.ws; LV.ws = null;
     if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.close(); } catch (e) {} }
+    setLive();
   }
-
   function liveSwitch(coin) {
     liveStop();
-    LV.coin = coin;
-    LV.tickerAt = 0; LV.depthAt = 0; LV.tradeAt = 0; LV.stats = null; LV.tradesLive = false; LV.fail = 0;
-    var s = BIN[coin];
-    if (!s || !TT.open) return;            // USDT: stays at ~1.00 with the built-in data
-    liveRest(coin);                        // instant snapshot, the socket takes over right after
-    liveOpen(coin, s);
+    LV.coin = coin; LV.tickerAt = 0; LV.depthAt = 0; LV.tradeAt = 0; LV.stats = null; LV.fail = 0; LV.trades = []; LV.bids = []; LV.asks = [];
+    if (coin === 'USDT') { LV.price.USDT = 1; LV.priceAt.USDT = Date.now() + 86400000; LV.stats = { open: 1, high: 1, low: 1, vol: 0, pct: 0 }; LV.tickerAt = Date.now() + 86400000; paintHead(); setLive(); return; }
+    if (!T.open) return;
+    liveRest(coin);
+    liveOpen(coin);
   }
-
-  function liveOpen(coin, s) {
-    var url = 'wss://stream.binance.com:9443/stream?streams=' + s + '@ticker/' + s + '@depth20@1000ms/' + s + '@trade';
-    var ws;
-    try { ws = new WebSocket(url); } catch (e) { livePollStart(coin); return; }
-    LV.ws = ws;
-    var opened = false;
-    ws.onopen = function () { opened = true; LV.fail = 0; clearInterval(LV.pollT); LV.pollT = 0; };
-    ws.onmessage = function (ev) {
-      if (LV.ws !== ws || TT.coin !== coin) return;
-      try { onLive(JSON.parse(ev.data)); } catch (e) {}
-    };
+  function bsym(coin) { return coin.toLowerCase() + 'usdt'; }
+  function liveOpen(coin) {
+    var s = bsym(coin), ws;
+    try { ws = new WebSocket('wss://stream.binance.com:9443/stream?streams=' + s + '@ticker/' + s + '@depth20@1000ms/' + s + '@trade'); } catch (e) { livePollStart(coin); return; }
+    LV.ws = ws; var opened = false;
+    ws.onopen = function () { opened = true; LV.fail = 0; clearInterval(LV.pollT); LV.pollT = 0; LV.mode = 'ws'; setLive(); };
+    ws.onmessage = function (ev) { if (LV.ws !== ws || T.coin !== coin) return; try { onLive(JSON.parse(ev.data)); } catch (e) {} };
     ws.onerror = noop;
     ws.onclose = function () {
-      if (LV.ws !== ws) return;
-      LV.ws = null;
-      if (!TT.open || TT.coin !== coin) return;
-      LV.fail = (LV.fail || 0) + 1;
-      if (LV.fail >= 2) livePollStart(coin);                 // blocked or flaky: poll over HTTPS meanwhile
+      if (LV.ws !== ws) return; LV.ws = null;
+      if (!T.open || T.coin !== coin) return;
+      LV.fail++; if (LV.fail >= 2) livePollStart(coin);
       clearTimeout(LV.retryT);
-      LV.retryT = setTimeout(function () { if (TT.open && TT.coin === coin && !LV.ws) liveOpen(coin, s); }, Math.min(15000, 1500 * LV.fail));
+      LV.retryT = setTimeout(function () { if (T.open && T.coin === coin && !LV.ws) liveOpen(coin); }, Math.min(15000, 1500 * LV.fail));
     };
     setTimeout(function () { if (LV.ws === ws && !opened) livePollStart(coin); }, 6000);
   }
-
   function livePollStart(coin) {
-    if (LV.pollT || !TT.open) return;
-    LV.pollT = setInterval(function () {
-      if (!TT.open || TT.coin !== coin) { clearInterval(LV.pollT); LV.pollT = 0; return; }
-      liveRest(coin);
-    }, 3000);
+    if (LV.pollT || !T.open) return; LV.mode = 'poll'; setLive();
+    LV.pollT = setInterval(function () { if (!T.open || T.coin !== coin) { clearInterval(LV.pollT); LV.pollT = 0; return; } liveRest(coin); }, 3000);
   }
-
   function liveRest(coin) {
-    var sym = (BIN[coin] || '').toUpperCase();
-    if (!sym) return;
-    var base = 'https://api.binance.com/api/v3/';
-    function get(path) { return fetch(base + path).then(function (r) { return r.json(); }); }
-    get('ticker/24hr?symbol=' + sym).then(function (d) {
-      if (TT.coin !== coin || !d || !d.lastPrice) return;
-      onLive({ stream: 'rest@ticker', data: { c: d.lastPrice, P: d.priceChangePercent, h: d.highPrice, l: d.lowPrice, v: d.volume } });
-    }).catch(noop);
-    get('depth?symbol=' + sym + '&limit=20').then(function (d) {
-      if (TT.coin !== coin || !d || !d.bids) return;
-      onLive({ stream: 'rest@depth20', data: { bids: d.bids, asks: d.asks } });
-    }).catch(noop);
+    var sym = bsym(coin).toUpperCase(), base = 'https://api.binance.com/api/v3/';
+    function get(p) { return fetch(base + p).then(function (r) { return r.json(); }); }
+    get('ticker/24hr?symbol=' + sym).then(function (d) { if (T.coin === coin && d && d.lastPrice) onLive({ stream: 'rest@ticker', data: { c: d.lastPrice, o: d.openPrice, P: d.priceChangePercent, h: d.highPrice, l: d.lowPrice, v: d.volume } }); }).catch(noop);
+    get('depth?symbol=' + sym + '&limit=20').then(function (d) { if (T.coin === coin && d && d.bids) onLive({ stream: 'rest@depth20', data: { bids: d.bids, asks: d.asks } }); }).catch(noop);
     get('trades?symbol=' + sym + '&limit=30').then(function (d) {
-      if (TT.coin !== coin || !Array.isArray(d)) return;
-      LV.tradesLive = true;
-      TT.recentTrades = d.slice().reverse().map(function (t) {
-        return { price: +t.price, amount: +t.qty, side: t.isBuyerMaker ? 'sell' : 'buy', time: t.time };
-      });
-      LV.tradeAt = Date.now();
-      scheduleTrades();
+      if (T.coin !== coin || !Array.isArray(d)) return;
+      LV.trades = d.slice().reverse().map(function (t) { return { p: +t.price, q: +t.qty, s: t.isBuyerMaker ? 'sell' : 'buy', t: t.time }; });
+      LV.tradeAt = Date.now(); schedTrades();
     }).catch(noop);
   }
-
-  function onLive(msg) {
-    var d = msg && msg.data, st = (msg && msg.stream) || '';
-    if (!d) return;
-    if (st.indexOf('@ticker') > 0) liveTicker(d);
-    else if (st.indexOf('@depth') > 0) liveDepth(d);
-    else if (st.indexOf('@trade') > 0) liveTrade(d);
+  function onLive(m) {
+    var d = m && m.data, st = (m && m.stream) || ''; if (!d) return;
+    if (st.indexOf('@ticker') > 0) liveTicker(d); else if (st.indexOf('@depth') > 0) liveDepth(d); else if (st.indexOf('@trade') > 0) liveTrade(d);
   }
-
   function liveTicker(d) {
-    var p = parseFloat(d.c);
-    if (!(p > 0)) return;
+    var p = parseFloat(d.c); if (!(p > 0)) return;
     var prev = LV.price[LV.coin];
-    LV.price[LV.coin] = p;
-    LV.priceAt[LV.coin] = Date.now();
-    LV.tickerAt = Date.now();
-    LV.stats = { pct: parseFloat(d.P) || 0, high: parseFloat(d.h) || p, low: parseFloat(d.l) || p, vol: parseFloat(d.v) || 0 };
-    TT.lastPrice = p;
-    paintHeader(prev);
-    updatePreview();
+    LV.price[LV.coin] = p; LV.priceAt[LV.coin] = Date.now(); LV.tickerAt = Date.now();
+    LV.stats = { open: parseFloat(d.o) || p, high: parseFloat(d.h) || p, low: parseFloat(d.l) || p, vol: parseFloat(d.v) || 0, pct: parseFloat(d.P) || 0 };
+    var c = T.map[LV.coin]; if (c) { c.usd = p; c.chg = LV.stats.pct; c.live = true; }
+    paintHead(prev); setLive(); schedCalc();
   }
-
-  function paintHeader(prev) {
-    var p = LV.price[LV.coin], s = LV.stats;
-    if (!p || !s) return;
-    var priceEl = document.querySelector('.tt-price');
-    if (priceEl) {
-      var txt = fmtPrice(p);
-      if (priceEl.textContent !== txt) {
-        priceEl.textContent = txt;
-        if (prev && prev !== p) {
-          priceEl.classList.remove('ncx-up', 'ncx-dn');
-          void priceEl.offsetWidth;
-          priceEl.classList.add(p > prev ? 'ncx-up' : 'ncx-dn');
-        }
-      }
-    }
-    var changeEl = document.querySelector('.tt-change');
-    if (changeEl) {
-      var ct = (s.pct >= 0 ? '+' : '') + s.pct.toFixed(2) + '%';
-      if (changeEl.textContent !== ct) changeEl.textContent = ct;
-      changeEl.classList.toggle('up', s.pct >= 0);
-      changeEl.classList.toggle('down', s.pct < 0);
-    }
-    var statsEl = document.querySelector('.tt-stats');
-    if (statsEl) {
-      var html = '<div>24h High:<b>' + fmtPrice(s.high) + '</b></div>' +
-                 '<div>24h Low:<b>' + fmtPrice(s.low) + '</b></div>' +
-                 '<div>24h Vol:<b>' + fmtVolume(s.vol) + ' ' + TT.coin + '</b></div>';
-      if (statsEl.__ncx !== html) { statsEl.innerHTML = html; statsEl.__ncx = html; }
-    }
-  }
-
-  function liveHeader() {
-    if (liveFresh('ticker') && LV.stats) { paintHeader(); return true; }
-    return false;
-  }
-
   function liveDepth(d) {
-    var b = d.bids || d.b, a = d.asks || d.a;
-    if (!b || !a || !b.length || !a.length) return;
-    function row(x) { var pr = parseFloat(x[0]), q = parseFloat(x[1]); return { price: pr, amount: q, total: pr * q }; }
-    TT.bids = b.slice(0, 20).map(row);
-    TT.asks = a.slice(0, 20).map(row).reverse();      // best ask last, like the built-in book
-    LV.depthAt = Date.now();
-    renderOrderBook();
+    var b = d.bids || d.b, a = d.asks || d.a; if (!b || !a || !b.length || !a.length) return;
+    function row(x) { var p = parseFloat(x[0]), qq = parseFloat(x[1]); return { p: p, q: qq, t: p * qq }; }
+    LV.bids = b.slice(0, 16).map(row); LV.asks = a.slice(0, 16).map(row);
+    LV.depthAt = Date.now(); schedBook();
   }
-
   function liveTrade(d) {
-    if (!LV.tradesLive) { TT.recentTrades = []; LV.tradesLive = true; }
-    TT.recentTrades.unshift({ price: parseFloat(d.p), amount: parseFloat(d.q), side: d.m ? 'sell' : 'buy', time: d.T || Date.now() });
-    if (TT.recentTrades.length > 30) TT.recentTrades.length = 30;
-    LV.tradeAt = Date.now();
-    scheduleTrades();
+    LV.trades.unshift({ p: parseFloat(d.p), q: parseFloat(d.q), s: d.m ? 'sell' : 'buy', t: d.T || Date.now() });
+    if (LV.trades.length > 40) LV.trades.length = 40;
+    LV.tradeAt = Date.now(); schedTrades();
+  }
+  function schedBook() { if (TMR.book) return; TMR.book = setTimeout(function () { TMR.book = 0; paintBook(); }, 250); }
+  function schedTrades() { if (TMR.trades) return; TMR.trades = setTimeout(function () { TMR.trades = 0; paintTrades(); }, 350); }
+  function schedCalc() { if (TMR.calc) return; TMR.calc = setTimeout(function () { TMR.calc = 0; calc(); calcConv(); }, 400); }
+
+  function setLive() {
+    var el = $('txLive'); if (!el) return;
+    var ok = liveFresh('ticker') && LV.coin !== 'USDT' ? (LV.mode === 'ws' ? 'live' : 'delayed') : (LV.coin === 'USDT' ? 'live' : 'off');
+    el.setAttribute('data-s', ok);
+    q('em', el).textContent = ok === 'live' ? 'LIVE' : (ok === 'delayed' ? 'DELAYED' : 'CONNECTING');
+  }
+  setInterval(function () { if (T.open) setLive(); }, 3000);
+
+  function paintHead(prev) {
+    if (!$('txPrice')) return;
+    var sym = T.coin, p = livePx(sym), s = (LV.coin === sym && LV.stats) ? LV.stats : null, m = coinMeta(sym);
+    var pe = $('txPrice'), txt = fP(p);
+    if (pe.textContent !== txt) {
+      pe.textContent = txt;
+      if (prev && prev !== p) { pe.classList.remove('up', 'dn'); void pe.offsetWidth; pe.classList.add(p > prev ? 'up' : 'dn'); }
+    }
+    var pct = s ? s.pct : (Number(m.chg) || 0), ce = $('txChg');
+    var ct = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+    if (ce.textContent !== ct) ce.textContent = ct;
+    ce.className = 'tx-chg ' + (pct >= 0 ? 'up' : 'dn');
+    set('txO', s ? fP(s.open) : '—'); set('txH', s ? fP(s.high) : '—'); set('txL', s ? fP(s.low) : '—'); set('txC', p > 0 ? fP(p) : '—');
+    set('txV', s ? fVol(s.vol) + ' ' + sym : '—');
+  }
+  function set(id, v) { var e = $(id); if (e && e.textContent !== v) e.textContent = v; }
+
+  function paintBook() {
+    var A = $('txAsks'), B = $('txBids'); if (!A || !B) return;
+    if (!LV.bids.length || !LV.asks.length || LV.coin !== T.coin) {
+      var msg = LV.coin === 'USDT' ? 'Order book is not available for USDT' : 'Waiting for live order book…';
+      A.innerHTML = '<div class="tx-empty">' + msg + '</div>'; B.innerHTML = ''; q('#txMid').innerHTML = '<b>' + fP(livePx(T.coin)) + '</b><small>Spread —</small>'; return;
+    }
+    var asks = LV.asks.slice(0, 14), bids = LV.bids.slice(0, 14);
+    var ca = 0, asksC = asks.map(function (r) { ca += r.q; return ca; }), cb = 0, bidsC = bids.map(function (r) { cb += r.q; return cb; });
+    var maxA = asksC[asksC.length - 1] || 1, maxB = bidsC[bidsC.length - 1] || 1;
+    var ah = '';
+    for (var i = asks.length - 1; i >= 0; i--) ah += bookRow(asks[i], 'ask', asksC[i] / maxA);
+    var bh = '';
+    for (var j = 0; j < bids.length; j++) bh += bookRow(bids[j], 'bid', bidsC[j] / maxB);
+    A.innerHTML = ah; B.innerHTML = bh;
+    var spread = asks[0].p - bids[0].p, mid = $('txMid'), last = livePx(T.coin);
+    mid.innerHTML = '<b class="' + (last >= (mid.__l || 0) ? 'up' : 'dn') + '">' + fP(last) + '</b><small>Spread ' + (spread / bids[0].p * 100).toFixed(3) + '%</small>';
+    mid.__l = last;
+  }
+  function bookRow(r, cls, w) {
+    return '<div class="tx-br ' + cls + '" data-a="bookpx" data-p="' + r.p + '"><i style="width:' + (Math.max(2, w * 100)).toFixed(1) + '%"></i><span>' + fP(r.p).slice(1) + '</span><span>' + fQty(r.q, T.coin) + '</span><span>' + fVol(r.t) + '</span></div>';
+  }
+  function bookPick(p) {
+    if (!(p > 0)) return;
+    if (T.side === 'convert') return;
+    if (T.otype === 'market') setType('limit');
+    var f = T.otype === 'limit' ? 'txPL' : (T.otype === 'stop' ? 'txPS' : (T.otype === 'tp' ? 'txPT' : 'txPL'));
+    var e = $(f); if (e && !e.closest('[hidden]')) { e.value = rnd(p); calc(); }
+    setView('chart');
+  }
+  function paintTrades() {
+    var el = $('txTL'); if (!el) return;
+    if (!LV.trades.length || LV.coin !== T.coin) { el.innerHTML = '<div class="tx-empty">' + (LV.coin === 'USDT' ? 'Not available for USDT' : 'Waiting for live trades…') + '</div>'; return; }
+    el.innerHTML = LV.trades.slice(0, 30).map(function (t) {
+      return '<div class="tx-tr ' + t.s + '"><span>' + fP(t.p).slice(1) + '</span><span>' + fQty(t.q, T.coin) + '</span><span>' + new Date(t.t).toLocaleTimeString('en-GB') + '</span></div>';
+    }).join('');
+  }
+  function setView(v) {
+    T.view = v; var root = $('tradeTerminal'); root.setAttribute('data-view', v);
+    qa('.tx-views button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
+    if (v === 'chart') setTimeout(function () { if (T.tvActive === false) fbDraw(); }, 30);
   }
 
-  function scheduleTrades() {
-    if (_liveTradesTimer) return;
-    _liveTradesTimer = setTimeout(function () { _liveTradesTimer = 0; renderRecentTrades(); }, 400);
-  }
-
-  // ---------- TradingView ----------
-
+  /* ============================================================
+     CHART: TradingView + fallback (real klines)
+     ============================================================ */
   function tvScript(cb) {
     if (window.TradingView && window.TradingView.widget) { cb(true); return; }
-    TV.cbs.push(cb);
-    if (TV.loading) return;
-    TV.loading = true;
+    TV_CBS.push(cb); if (TV_LOADING) return; TV_LOADING = true;
     var done = false;
-    function fin(ok) {
-      if (done) return; done = true; TV.loading = false;
-      var l = TV.cbs.slice(); TV.cbs = [];
-      l.forEach(function (f) { try { f(ok && !!(window.TradingView && window.TradingView.widget)); } catch (e) {} });
-    }
-    var s = document.createElement('script');
-    s.src = 'https://s3.tradingview.com/tv.js';
-    s.async = true;
-    s.onload = function () { fin(true); };
-    s.onerror = function () { fin(false); };
-    document.head.appendChild(s);
-    setTimeout(function () { fin(false); }, 10000);
+    function fin(ok) { if (done) return; done = true; TV_LOADING = false; var l = TV_CBS.slice(); TV_CBS = []; l.forEach(function (f) { try { f(ok && !!(window.TradingView && window.TradingView.widget)); } catch (e) {} }); }
+    var s = document.createElement('script'); s.src = 'https://s3.tradingview.com/tv.js'; s.async = true;
+    s.onload = function () { fin(true); }; s.onerror = function () { fin(false); };
+    document.head.appendChild(s); setTimeout(function () { fin(false); }, 10000);
   }
-
+  function tvSym(c) { return c === 'USDT' ? 'KRAKEN:USDTUSD' : 'BINANCE:' + c + 'USDT'; }
   function tvLoad() {
-    var panel = document.querySelector('.tt-chart-panel');
-    if (!panel || !TT.open || TT.tvFailed) return;
-    var host = $('ncTv');
-    if (!host) {
-      host = document.createElement('div');
-      host.id = 'ncTv';
-      panel.appendChild(host);
-    }
-    var coin = TT.coin;
-    host.innerHTML = '<div class="ncx-tv-load">Loading chart…</div>';
+    var host = $('txTv'); if (!host || !T.open) return;
+    if (T.tvFailed) { fbShow(); return; }
+    var coin = T.coin, note = $('txChartNote');
+    host.hidden = false; $('txFb').hidden = true;
+    note.hidden = false; note.textContent = 'Loading chart…';
     if (!(window.TradingView && window.TradingView.widget)) {
-      tvScript(function (ok) { if (!ok) tvFail(); else if (TT.open && TT.coin === coin) tvLoad(); });
-      TT.tvActive = true; panel.classList.add('ncx-tv-on');
+      tvScript(function (ok) { if (!ok) { tvFail(); } else if (T.open && T.coin === coin) tvLoad(); });
       return;
     }
-    var id = 'ncTvInner' + (++TV.n);
-    var inner = document.createElement('div');
-    inner.id = id;
-    inner.style.cssText = 'position:absolute;left:0;right:0;top:0;bottom:0';
-    host.innerHTML = '';
-    host.appendChild(inner);
-    var ivMap = { '1h': '60', '4h': '240', '1d': 'D' };
+    var id = 'txTvIn' + (++TVN), inner = document.createElement('div');
+    inner.id = id; inner.className = 'tx-tv-in'; host.innerHTML = ''; host.appendChild(inner);
     try {
       new window.TradingView.widget({
-        autosize: true,
-        symbol: TV_SYM[coin] || 'BINANCE:BTCUSDT',
-        interval: ivMap[TT.timeframe] || '60',
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#0a0e15',
-        backgroundColor: '#0a0e15',
-        gridColor: 'rgba(255,255,255,0.04)',
-        enable_publishing: false,
-        allow_symbol_change: false,
-        save_image: false,
-        hide_side_toolbar: window.innerWidth < 700,
-        withdateranges: true,
-        studies: ['Volume@tv-basicstudies'],
+        autosize: true, symbol: tvSym(coin), interval: '60', timezone: 'Etc/UTC', theme: 'dark', style: '1', locale: 'en',
+        toolbar_bg: '#0a1019', backgroundColor: '#0a1019', gridColor: 'rgba(255,255,255,0.04)',
+        enable_publishing: false, allow_symbol_change: false, save_image: false, withdateranges: true,
+        hide_side_toolbar: window.innerWidth < 700, studies: ['Volume@tv-basicstudies'],
         overrides: {
-          'mainSeriesProperties.candleStyle.upColor': '#10b981',
-          'mainSeriesProperties.candleStyle.downColor': '#ef4444',
-          'mainSeriesProperties.candleStyle.borderUpColor': '#10b981',
-          'mainSeriesProperties.candleStyle.borderDownColor': '#ef4444',
-          'mainSeriesProperties.candleStyle.wickUpColor': '#10b981',
-          'mainSeriesProperties.candleStyle.wickDownColor': '#ef4444'
+          'mainSeriesProperties.candleStyle.upColor': '#12d18e', 'mainSeriesProperties.candleStyle.downColor': '#ff5470',
+          'mainSeriesProperties.candleStyle.borderUpColor': '#12d18e', 'mainSeriesProperties.candleStyle.borderDownColor': '#ff5470',
+          'mainSeriesProperties.candleStyle.wickUpColor': '#12d18e', 'mainSeriesProperties.candleStyle.wickDownColor': '#ff5470'
         },
         container_id: id
       });
     } catch (e) { tvFail(); return; }
-    TT.tvActive = true;
-    panel.classList.add('ncx-tv-on');
-    clearTimeout(TV.watch);
-    TV.watch = setTimeout(function () { if (TT.open && TT.tvActive && !host.querySelector('iframe')) tvFail(); }, 12000);
+    T.tvActive = true; $('txFb').hidden = true; host.hidden = false;
+    clearTimeout(TV_WATCH);
+    TV_WATCH = setTimeout(function () { if (T.open && T.tvActive && !host.querySelector('iframe')) tvFail(); else note.hidden = true; }, 12000);
+    var chk = setInterval(function () { if (!T.open || host.querySelector('iframe')) { clearInterval(chk); if (host.querySelector('iframe')) note.hidden = true; } }, 400);
   }
+  function tvFail() { T.tvFailed = true; T.tvActive = false; fbShow(); }
+  function tvDestroy() { clearTimeout(TV_WATCH); var h = $('txTv'); if (h) h.innerHTML = ''; T.tvActive = false; }
 
-  function tvFail() {
-    TT.tvFailed = true;
-    TT.tvActive = false;
-    var host = $('ncTv');
-    if (host && host.parentNode) host.parentNode.removeChild(host);
-    var panel = document.querySelector('.tt-chart-panel');
-    if (panel) panel.classList.remove('ncx-tv-on');
-    resizeCanvas();
+  var FB = { coin: '', candles: [], at: 0 };
+  function fbShow() {
+    $('txTv').hidden = true; var cv = $('txFb'); cv.hidden = false; T.tvActive = false;
+    var note = $('txChartNote'); note.hidden = false; note.innerHTML = 'TradingView unavailable — showing built-in chart · <a href="#" data-a="retrytv">retry</a>';
+    fbLoad();
   }
-
-  function tvDestroy() {
-    clearTimeout(TV.watch);
-    var host = $('ncTv');
-    if (host) host.innerHTML = '';
-    TT.tvActive = false;
+  function fbLoad() {
+    var coin = T.coin; if (coin === 'USDT') { FB.candles = []; fbDraw(); return; }
+    fetch('https://api.binance.com/api/v3/klines?symbol=' + coin + 'USDT&interval=1h&limit=120').then(function (r) { return r.json(); }).then(function (d) {
+      if (!Array.isArray(d) || T.coin !== coin) return;
+      FB.coin = coin; FB.candles = d.map(function (k) { return { t: k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }; }); fbDraw();
+    }).catch(noop);
   }
+  function fbDraw() {
+    var cv = $('txFb'); if (!cv || cv.hidden || !T.open) return;
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    if (r.width < 10) return;
+    cv.width = r.width * dpr; cv.height = r.height * dpr;
+    var x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var w = r.width, h = r.height; x.fillStyle = '#0a1019'; x.fillRect(0, 0, w, h);
+    var cs = FB.candles; if (!cs.length) return;
+    var padR = 70, padB = 22, padT = 12, cw = (w - padR) / cs.length;
+    var lo = Math.min.apply(null, cs.map(function (c) { return c.l; })), hi = Math.max.apply(null, cs.map(function (c) { return c.h; }));
+    var pad = (hi - lo) * .06 || 1; lo -= pad; hi += pad;
+    function Y(p) { return padT + (h - padT - padB) * (1 - (p - lo) / (hi - lo)); }
+    x.font = '10px ui-monospace,monospace'; x.fillStyle = '#7f8da3'; x.strokeStyle = 'rgba(255,255,255,.05)'; x.textAlign = 'left';
+    for (var i = 0; i <= 5; i++) { var pv = lo + (hi - lo) * i / 5, yy = Y(pv); x.beginPath(); x.moveTo(0, yy); x.lineTo(w - padR, yy); x.stroke(); x.fillText(fP(pv).slice(1), w - padR + 6, yy + 3); }
+    cs.forEach(function (c, k) {
+      var up = c.c >= c.o, col = up ? '#12d18e' : '#ff5470', cx = k * cw + cw / 2;
+      x.strokeStyle = col; x.fillStyle = col; x.beginPath(); x.moveTo(cx, Y(c.h)); x.lineTo(cx, Y(c.l)); x.stroke();
+      var top = Y(Math.max(c.o, c.c)), bh = Math.max(1, Math.abs(Y(c.o) - Y(c.c))); x.fillRect(k * cw + cw * .15, top, cw * .7, bh);
+    });
+    var last = livePx(T.coin), ly = Y(last);
+    x.strokeStyle = 'rgba(200,255,77,.6)'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(0, ly); x.lineTo(w - padR, ly); x.stroke(); x.setLineDash([]);
+    x.fillStyle = '#c8ff4d'; x.fillRect(w - padR + 2, ly - 9, padR - 4, 18); x.fillStyle = '#071002'; x.font = 'bold 10px ui-monospace,monospace'; x.fillText(fP(last).slice(1), w - padR + 6, ly + 3);
+  }
+  window.addEventListener('resize', function () { if (T.open && !T.tvActive) fbDraw(); });
+  setInterval(function () { if (T.open && !T.tvActive && !($('txFb') || {}).hidden) fbDraw(); }, 2500);
 
-  // ---------- notifications, order confirmation, hints ----------
-
-  function ttToast(msg, isErr) {
-    var el = $('ncxToast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'ncxToast';
-      document.body.appendChild(el);
+  /* ============================================================
+     ORDER FORM
+     ============================================================ */
+  var TYPES = {
+    buy: [['market', 'Market'], ['limit', 'Limit'], ['stop', 'Stop']],
+    sell: [['market', 'Market'], ['limit', 'Limit'], ['stop', 'Stop-Loss'], ['tp', 'Take-Profit'], ['oco', 'OCO']]
+  };
+  function setSide(s) {
+    T.side = s;
+    qa('.tx-sides button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === s); });
+    $('txFormTrade').hidden = s === 'convert'; $('txFormConv').hidden = s !== 'convert';
+    if (s === 'convert') { fillConvSelects(false); calcConv(); return; }
+    if (!TYPES[s].some(function (t) { return t[0] === T.otype; })) T.otype = 'market';
+    var go = $('txGo'); go.className = 'tx-go ' + s;
+    $('txAmt').value = ''; $('txRng').value = 0;
+    setType(T.otype, true);
+  }
+  function setType(t, keep) {
+    if (T.side === 'convert') return;
+    if (!TYPES[T.side].some(function (x) { return x[0] === t; })) t = 'market';
+    var changed = t !== T.otype; T.otype = t;
+    $('txTypes').innerHTML = TYPES[T.side].map(function (x) { return '<button type="button" data-a="type" data-v="' + x[0] + '" class="' + (x[0] === t ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+    var show = { pl: t === 'limit', ps: t === 'stop' || t === 'oco', pt: t === 'tp' || t === 'oco', att: T.side === 'buy' && t === 'market', amt: true };
+    qa('#txFormTrade [data-g]').forEach(function (g) { g.hidden = !show[g.getAttribute('data-g')]; });
+    $('txPSL').textContent = T.side === 'buy' ? 'Stop price (buy when price rises to)' : 'Stop-loss price (trigger)';
+    $('txAmtL').textContent = T.side === 'buy' ? 'Spend' : 'Amount';
+    $('txAmtU').textContent = T.side === 'buy' ? 'USD' : T.coin;
+    var p = livePx(T.coin);
+    var bs = T.side === 'buy';
+    function chips(id, f, arr) { $(id).innerHTML = '<button type="button" data-a="chip" data-f="' + f + '" data-v="0">Last</button>' + arr.map(function (v) { return '<button type="button" data-a="chip" data-f="' + f + '" data-v="' + v + '">' + (v > 0 ? '+' : '') + v + '%</button>'; }).join(''); }
+    chips('txChipL', 'txPL', bs ? [-1, -3, -5, -10] : [1, 3, 5, 10]);
+    chips('txChipS', 'txPS', bs ? [1, 3, 5, 10] : [-1, -3, -5, -10]);
+    chips('txChipT', 'txPT', [2, 5, 10, 20]);
+    if (p > 0 && (changed || !keep || !$('txPL').value)) {
+      $('txPL').value = rnd(p * (bs ? 0.99 : 1.01));
+      $('txPS').value = rnd(p * (bs ? 1.03 : 0.97));
+      $('txPT').value = rnd(p * 1.05);
     }
-    el.textContent = msg;
-    el.className = 'ncx-toast ' + (isErr ? 'err' : 'ok') + ' show';
-    clearTimeout(el.__t);
-    el.__t = setTimeout(function () { el.classList.remove('show'); }, isErr ? 4200 : 2600);
+    $('txGo').className = 'tx-go ' + T.side;
+    calc();
+  }
+  function pctAmt(pct) {
+    if (T.side === 'buy') $('txAmt').value = pct >= 1 ? String(floorTo(usdBal(), 2)) : String(floorTo(usdBal() * pct, 2));
+    else $('txAmt').value = pctVal(coinBal(T.coin), pct, 8);
+    $('txRng').value = Math.round(pct * 100); calc();
+  }
+  function rngToAmt() { pctAmt(Number($('txRng').value) / 100); }
+  function amtToRng() {
+    var bal = T.side === 'buy' ? usdBal() : coinBal(T.coin), v = num('txAmt');
+    $('txRng').value = bal > 0 ? Math.min(100, Math.round(v / bal * 100)) : 0;
   }
 
-  function ttErr(msg) { ttToast(String(msg), true); }
+  // validation shared by calc() and submit(): returns {err, order}
+  function readOrder() {
+    var side = T.side, sym = T.coin, px = livePx(sym), t = T.otype, amt = num('txAmt'), buy = side === 'buy';
+    var o = { side: side, sym: sym, otype: t, amt: amt, px: px, pl: num('txPL'), ps: num('txPS'), pt: num('txPT'), err: '' };
+    if (!(px > 0)) { o.err = 'Price unavailable — please wait'; return o; }
+    if (!(amt > 0)) { o.err = ''; o.empty = true; return o; }
+    if (buy && amt < 10) o.err = 'Minimum purchase is $10';
+    else if (buy && amt > usdBal() + 1e-9) o.err = 'Insufficient USD balance';
+    else if (!buy && amt > coinBal(sym) + 1e-12) o.err = 'Insufficient ' + sym + ' balance';
+    if (!o.err) {
+      if (t === 'limit') { if (!(o.pl > 0)) o.err = 'Enter a limit price'; else if (buy ? o.pl >= px : o.pl <= px) o.err = buy ? 'Limit buy must be below the market price' : 'Limit sell must be above the market price'; }
+      else if (t === 'stop') { if (!(o.ps > 0)) o.err = 'Enter a stop price'; else if (buy ? o.ps <= px : o.ps >= px) o.err = buy ? 'Stop buy must be above the market price' : 'Stop-loss must be below the market price'; }
+      else if (t === 'tp') { if (!(o.pt > 0)) o.err = 'Enter a take-profit price'; else if (o.pt <= px) o.err = 'Take-profit must be above the market price'; }
+      else if (t === 'oco') { if (!(o.pt > 0) || !(o.ps > 0)) o.err = 'Enter take-profit and stop-loss prices'; else if (!(o.pt > px && o.ps < px)) o.err = 'OCO: take-profit above and stop-loss below the market price'; }
+      else if (t === 'market' && buy && $('txAttOn').checked) { if (!(num('txAttTp') > 0) && !(num('txAttSl') > 0)) o.err = 'Enter a take-profit and/or stop-loss %'; else if (num('txAttSl') >= 100) o.err = 'Stop-loss % must be below 100'; }
+    }
+    return o;
+  }
+  function calc() {
+    if (!$('txSum') || T.side === 'convert') return;
+    var o = readOrder(), buy = T.side === 'buy', sym = T.coin, px = o.px;
+    $('txAvail').textContent = buy ? fUsd(usdBal()) : fQty(coinBal(sym), sym) + ' ' + sym;
+    $('txDep').hidden = !(buy && usdBal() < 10);
+    var rows = [], ref = px;
+    if (o.otype === 'limit') ref = o.pl; else if (o.otype === 'stop') ref = o.ps; else if (o.otype === 'tp') ref = o.pt; else if (o.otype === 'oco') ref = o.pt;
+    if (!(ref > 0)) ref = px;
+    if (o.amt > 0 && px > 0) {
+      if (buy) rows.push(['You receive', '≈ ' + fQty(o.amt / ref, sym) + ' ' + sym]);
+      else rows.push(['You receive', '≈ ' + fUsd(o.amt * ref)]);
+      rows.push([o.otype === 'market' ? 'Market price' : 'Trigger price', o.otype === 'oco' ? 'TP ' + fP(o.pt) + ' · SL ' + fP(o.ps) : fP(ref)]);
+      if (o.otype === 'oco') {
+        rows.push(['If take-profit', '+' + fUsd(o.amt * (o.pt - px))]);
+        rows.push(['If stop-loss', fUsd(o.amt * (o.ps - px))]);
+      } else if (o.otype === 'tp') rows.push(['Profit at trigger', '+' + fUsd(o.amt * (o.pt - px))]);
+      else if (o.otype === 'stop' && !buy) rows.push(['Loss at trigger', fUsd(o.amt * (o.ps - px))]);
+      if (o.otype === 'market' && buy && $('txAttOn').checked) {
+        var tp = num('txAttTp'), sl = num('txAttSl'), qty = o.amt / px;
+        if (tp > 0) rows.push(['Take-profit ' + tp + '%', fP(px * (1 + tp / 100)) + '  (+' + fUsd(o.amt * tp / 100) + ')']);
+        if (sl > 0 && sl < 100) rows.push(['Stop-loss ' + sl + '%', fP(px * (1 - sl / 100)) + '  (−' + fUsd(o.amt * sl / 100) + ')']);
+      }
+    }
+    $('txSum').innerHTML = rows.map(function (r) { return '<div><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('');
+    $('txHint').textContent = o.err || '';
+    var label = { market: '', limit: 'Limit ', stop: buy ? 'Stop ' : 'Stop-Loss ', tp: 'Take-Profit ', oco: 'OCO ' }[o.otype] || '';
+    var go = $('txGo'); go.textContent = (o.otype === 'market' ? (buy ? 'Buy ' : 'Sell ') : (label + (buy ? 'Buy ' : 'Sell '))) + sym;
+    go.classList.toggle('dim', !!o.err || !!o.empty);
+  }
 
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function clientId() { return 'ct_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
 
-  function ttConfirm(o) {
-    return new Promise(function (resolve) {
-      var old = $('ncxConfirm');
-      if (old && old.parentNode) old.parentNode.removeChild(old);
-      var rows = [], title, cls;
-      if (o.side === 'buy') {
-        title = 'Confirm purchase'; cls = 'buy';
-        rows = [
-          ['Order', o.limit ? 'Limit buy' : 'Market buy'],
-          ['Pair', o.coin + '/USD'],
-          ['You pay', fmtMoney(o.amount)],
-          ['Price', (o.limit ? '' : '≈ ') + fmtPrice(o.price)],
-          ['You receive', '≈ ' + fmtCrypto(o.amount / o.price, o.coin) + ' ' + o.coin]
-        ];
-      } else if (o.side === 'sell') {
-        title = 'Confirm sale'; cls = 'sell';
-        rows = [
-          ['Order', o.limit ? 'Limit sell' : 'Market sell'],
-          ['Pair', o.coin + '/USD'],
-          ['You sell', fmtCrypto(o.amount, o.coin) + ' ' + o.coin],
-          ['Price', (o.limit ? '' : '≈ ') + fmtPrice(o.price)],
-          ['You receive', '≈ ' + fmtMoney(o.amount * o.price)]
-        ];
+  function submit() {
+    if (T.busy) return;
+    var o = readOrder();
+    if (o.empty) { toast('Enter an amount', 'err'); return; }
+    if (o.err) { toast(o.err, 'err'); return; }
+    var buy = o.side === 'buy', sym = o.sym, rows = [], title, kind = o.side;
+    rows.push(['Pair', sym + '/USD']);
+    var tl = { market: 'Market', limit: 'Limit', stop: buy ? 'Stop' : 'Stop-Loss', tp: 'Take-Profit', oco: 'OCO (TP + SL)' }[o.otype];
+    rows.push(['Order type', tl + ' ' + (buy ? 'buy' : 'sell')]);
+    if (buy) rows.push(['You spend', fUsd(o.amt)]); else rows.push(['You sell', fQty(o.amt, sym) + ' ' + sym]);
+    if (o.otype === 'market') rows.push(['Price', '≈ ' + fP(o.px)]);
+    if (o.otype === 'limit') rows.push([buy ? 'Buy at or below' : 'Sell at or above', fP(o.pl)]);
+    if (o.otype === 'stop') rows.push([buy ? 'Buy when price ≥' : 'Sell when price ≤', fP(o.ps)]);
+    if (o.otype === 'tp') rows.push(['Sell when price ≥', fP(o.pt)]);
+    if (o.otype === 'oco') { rows.push(['Take-profit (≥)', fP(o.pt)]); rows.push(['Stop-loss (≤)', fP(o.ps)]); }
+    var ref = o.otype === 'limit' ? o.pl : (o.otype === 'stop' ? o.ps : (o.otype === 'tp' || o.otype === 'oco' ? o.pt : o.px));
+    rows.push(['You receive', buy ? '≈ ' + fQty(o.amt / ref, sym) + ' ' + sym : '≈ ' + fUsd(o.amt * ref)]);
+    var att = o.otype === 'market' && buy && $('txAttOn').checked, tp = num('txAttTp'), sl = num('txAttSl');
+    if (att) { if (tp > 0) rows.push(['Then take-profit', '+' + tp + '%']); if (sl > 0) rows.push(['Then stop-loss', '-' + sl + '%']); }
+    title = (buy ? 'Confirm buy ' : 'Confirm sell ') + sym;
+    var note = o.otype === 'market' ? 'Market orders are filled at the live exchange price at the moment of execution.' : 'The order stays open until its price is reached. You can cancel it any time.';
+    confirmBox(title, rows, kind, note).then(function (ok) {
+      if (!ok) return;
+      T.busy = true; setBusy(true);
+      placeOrder(o, att ? { tp: tp, sl: sl } : null).catch(function (e) { toast(e && e.message ? e.message : 'Order failed', 'err'); }).then(function () { T.busy = false; setBusy(false); });
+    });
+  }
+  function setBusy(b) { var g = $('txGo'); if (g) { g.disabled = b; g.classList.toggle('busy', b); } }
+
+  function placeOrder(o, attach) {
+    var buy = o.side === 'buy', body = { clientTradeId: clientId(), type: o.side, symbol: o.sym, amount: o.amt, orderType: o.otype };
+    if (o.otype === 'market') body.price = o.px;
+    else if (o.otype === 'limit') { body.price = o.pl; body.limitPrice = o.pl; }
+    else if (o.otype === 'stop') { body.price = o.ps; body.stopPrice = o.ps; }
+    else if (o.otype === 'tp') { body.price = o.pt; body.tpPrice = o.pt; }
+    else if (o.otype === 'oco') { body.price = o.pt; body.tpPrice = o.pt; body.stopPrice = o.ps; }
+    return api('trade', body).then(function (d) {
+      if (!d || !d.ok) throw new Error((d && d.error) || 'Order failed');
+      applyBalances(d.balances || { usd: d.usd, btc: d.btc, eth: d.eth });
+      refreshApp();
+      if (o.otype === 'market') {
+        var ex = (d.trade && Number(d.trade.price) > 0) ? Number(d.trade.price) : o.px;
+        var qty = buy ? o.amt / ex : o.amt;
+        toast((buy ? 'Bought ' : 'Sold ') + fQty(qty, o.sym) + ' ' + o.sym + ' @ ' + fP(ex), 'ok');
+        try { if (typeof window.playChime === 'function') window.playChime(); } catch (e) {}
+        try { if (typeof window.addNotification === 'function') window.addNotification((buy ? 'Bought ' : 'Sold ') + fQty(qty, o.sym) + ' ' + o.sym + ' @ ' + fP(ex), buy ? '📈' : '📉'); } catch (e) {}
+        if (attach && buy) return attachExit(o.sym, floorTo(qty, 8), ex, attach);
       } else {
-        title = 'Confirm conversion'; cls = 'convert';
-        rows = [
-          ['You convert', fmtCrypto(o.amount, o.from) + ' ' + o.from],
-          ['Rate', '1 ' + o.from + ' = ' + Number(o.rate).toFixed(8) + ' ' + o.to],
-          ['You receive', '≈ ' + (o.amount * o.rate).toFixed(8) + ' ' + o.to],
-          ['Fee', 'Free']
-        ];
+        toast('Order placed — ' + ({ limit: 'Limit', stop: buy ? 'Stop' : 'Stop-Loss', tp: 'Take-Profit', oco: 'OCO' }[o.otype]) + ' ' + (buy ? 'buy ' : 'sell ') + o.sym, 'ok');
       }
-      var ov = document.createElement('div');
-      ov.id = 'ncxConfirm';
-      ov.className = 'ncx-ov';
-      ov.innerHTML =
-        '<div class="ncx-box ' + cls + '" role="dialog" aria-modal="true">' +
-          '<div class="ncx-title">' + title + '</div>' +
-          rows.map(function (r) { return '<div class="ncx-row"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') +
-          (o.limit ? '' : '<div class="ncx-note">Market orders are filled at the live exchange price at the moment of execution.</div>') +
-          '<div class="ncx-actions"><button type="button" class="ncx-cancel">Cancel</button><button type="button" class="ncx-ok ' + cls + '">Confirm</button></div>' +
-        '</div>';
-      document.body.appendChild(ov);
-      var okBtn = ov.querySelector('.ncx-ok');
-      function close(v) {
-        document.removeEventListener('keydown', onKey, true);
-        if (ov.parentNode) ov.parentNode.removeChild(ov);
-        resolve(v);
-      }
-      function onKey(e) {
-        if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(false); }
-        else if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); close(true); }
-      }
-      document.addEventListener('keydown', onKey, true);
-      ov.addEventListener('click', function (e) { if (e.target === ov) close(false); });
-      ov.querySelector('.ncx-cancel').onclick = function () { close(false); };
-      okBtn.onclick = function () { close(true); };
-      setTimeout(function () { try { okBtn.focus(); } catch (e) {} }, 30);
+    }).then(function () { clearForm(); return refreshOrders(true); });
+  }
+  function attachExit(sym, qty, ex, a) {
+    var tp = a.tp > 0 ? ex * (1 + a.tp / 100) : 0, sl = a.sl > 0 && a.sl < 100 ? ex * (1 - a.sl / 100) : 0;
+    var body = { clientTradeId: clientId(), type: 'sell', symbol: sym, amount: qty };
+    if (tp && sl) { body.orderType = 'oco'; body.tpPrice = tp; body.stopPrice = sl; body.price = tp; }
+    else if (tp) { body.orderType = 'tp'; body.tpPrice = tp; body.price = tp; }
+    else if (sl) { body.orderType = 'stop'; body.stopPrice = sl; body.price = sl; }
+    else return null;
+    return api('trade', body).then(function (d) {
+      if (!d || !d.ok) { toast('Bought, but TP/SL not set: ' + ((d && d.error) || 'error'), 'err'); return; }
+      toast('Take-profit / stop-loss set', 'ok');
+    }).catch(function () { toast('Bought, but TP/SL could not be set', 'err'); });
+  }
+  function clearForm() { $('txAmt').value = ''; $('txRng').value = 0; calc(); }
+
+  /* ---------- convert ---------- */
+  function fillConvSelects(keep) {
+    var f = $('txCvFrom'), t = $('txCvTo'); if (!f || !t) return;
+    var fv = keep ? f.value : (f.value || T.coin), tv = keep ? t.value : t.value;
+    var opts = T.coins.map(function (c) { return '<option value="' + c.symbol + '">' + c.symbol + ' — ' + esc(c.name) + '</option>'; }).join('');
+    if (f.__o !== opts) { f.innerHTML = opts; t.innerHTML = opts; f.__o = opts; }
+    f.value = T.map[fv] ? fv : T.coin;
+    if (!T.map[tv] || tv === f.value) tv = f.value === 'USDT' ? 'BTC' : 'USDT';
+    t.value = tv;
+  }
+  function calcConv() {
+    var f = $('txCvFrom'), t = $('txCvTo'); if (!f || T.side !== 'convert') return;
+    var from = f.value, to = t.value, amt = num('txCvAmt'), pf = livePx(from), pt = livePx(to);
+    $('txCvAmtU').textContent = from; $('txCvFromBal').textContent = fQty(coinBal(from), from) + ' ' + from; $('txCvToBal').textContent = fQty(coinBal(to), to) + ' ' + to;
+    var rate = pt > 0 ? pf / pt : 0, err = '';
+    if (from === to) err = 'Choose different coins'; else if (amt > coinBal(from) + 1e-12) err = 'Insufficient ' + from + ' balance'; else if (!(rate > 0)) err = 'Price unavailable';
+    $('txCvSum').innerHTML = (rate > 0 ? '<div><span>Rate</span><b>1 ' + from + ' = ' + (rate >= 1 ? rate.toFixed(4) : rate.toFixed(8)) + ' ' + to + '</b></div>' : '') +
+      (amt > 0 && rate > 0 ? '<div><span>You receive</span><b>≈ ' + fQty(amt * rate, to) + ' ' + to + '</b></div>' : '') + '<div><span>Fee</span><b class="up">Free</b></div>';
+    $('txCvHint').textContent = err; $('txCvGo').classList.toggle('dim', !!err || !(amt > 0));
+  }
+  function submitConvert() {
+    if (T.busy) return;
+    var from = $('txCvFrom').value, to = $('txCvTo').value, amt = num('txCvAmt'), pf = livePx(from), pt = livePx(to);
+    if (from === to) { toast('Choose different coins', 'err'); return; }
+    if (!(amt > 0)) { toast('Enter an amount', 'err'); return; }
+    if (amt > coinBal(from) + 1e-12) { toast('Insufficient ' + from + ' balance', 'err'); return; }
+    if (!(pf > 0 && pt > 0)) { toast('Price unavailable', 'err'); return; }
+    var rate = pf / pt;
+    confirmBox('Confirm conversion', [['You convert', fQty(amt, from) + ' ' + from], ['Rate', '1 ' + from + ' = ' + (rate >= 1 ? rate.toFixed(4) : rate.toFixed(8)) + ' ' + to], ['You receive', '≈ ' + fQty(amt * rate, to) + ' ' + to], ['Fee', 'Free']], 'conv', 'Converted at the live exchange rate.').then(function (ok) {
+      if (!ok) return; T.busy = true;
+      api('trade', { clientTradeId: clientId(), type: 'convert', symbol: to, amount: amt, price: rate, orderType: 'market', sourceSymbol: from, targetSymbol: to }).then(function (d) {
+        if (!d || !d.ok) throw new Error((d && d.error) || 'Convert failed');
+        applyBalances(d.balances || { usd: d.usd, btc: d.btc, eth: d.eth }); refreshApp();
+        toast('Converted ' + fQty(amt, from) + ' ' + from + ' → ' + to, 'ok');
+        try { if (typeof window.playChime === 'function') window.playChime(); } catch (e) {}
+        $('txCvAmt').value = ''; calcConv(); renderBottom(true); refreshOrders(true);
+      }).catch(function (e) { toast(e.message || 'Convert failed', 'err'); }).then(function () { T.busy = false; });
     });
   }
 
-  function ttValidate() {
-    var msgs = { buy: '', sell: '', convert: '' };
-    var buy = parseFloat(($('ttBuyAmount') || {}).value) || 0;
-    if (buy > 0 && buy < 10) msgs.buy = 'Minimum purchase is $10';
-    else if (buy > getUsdBalance() + 1e-9) msgs.buy = 'Insufficient USD balance';
-    var sell = parseFloat(($('ttSellAmount') || {}).value) || 0;
-    if (sell > getCoinBalance(TT.coin) + 1e-12) msgs.sell = 'Insufficient ' + TT.coin + ' balance';
-    var from = ($('ttConvertFrom') || {}).value, to = ($('ttConvertTo') || {}).value;
-    var conv = parseFloat(($('ttConvertAmount') || {}).value) || 0;
-    if (from && to && from === to) msgs.convert = 'Choose different coins';
-    else if (conv > 0 && from && conv > getCoinBalance(from) + 1e-12) msgs.convert = 'Insufficient ' + from + ' balance';
-    ['buy', 'sell', 'convert'].forEach(function (k) {
-      var btn = $(k === 'buy' ? 'ttBuySubmit' : (k === 'sell' ? 'ttSellSubmit' : 'ttConvertSubmit'));
-      if (!btn) return;
-      var h = btn.parentNode.querySelector('.ncx-hint[data-for="' + k + '"]');
-      if (!h) {
-        h = document.createElement('div');
-        h.className = 'ncx-hint';
-        h.setAttribute('data-for', k);
-        btn.parentNode.insertBefore(h, btn.nextSibling);
-      }
-      if (h.textContent !== msgs[k]) h.textContent = msgs[k];
-      btn.classList.toggle('ncx-dim', !!msgs[k]);
+  /* ============================================================
+     ORDERS (open / history / wallet)
+     ============================================================ */
+  var _sig = {};
+  function refreshOrders(force) {
+    if (!token()) return Promise.resolve();
+    return api('getOrders', { filter: 'all', limit: 200 }).then(function (d) {
+      if (!d || !d.ok) return;
+      T.orders = d.orders || []; T.openOrders = d.openOrders || T.orders.filter(function (o) { return o.status === 'open'; });
+      if (window.st) window.st.openOrders = T.openOrders;
+      if (d.balances) { var before = JSON.stringify(d.balances) !== _sig.bal; _sig.bal = JSON.stringify(d.balances); applyBalances(d.balances); if (before) { refreshApp(); calc(); calcConv(); } }
+      (d.fills || []).forEach(function (f) {
+        var lbl = f.trigger === 'stop' ? 'Stop-loss' : (f.trigger === 'tp' ? 'Take-profit' : 'Limit order');
+        toast(lbl + ' filled: ' + (f.type === 'buy' ? 'bought ' : 'sold ') + fQty(f.qty, f.symbol) + ' ' + f.symbol + ' @ ' + fP(f.price), 'ok');
+        try { if (typeof window.playChime === 'function') window.playChime(); } catch (e) {}
+      });
+      announceOffline();
+      renderBottom(force);
+    }).catch(noop);
+  }
+  function announceOffline() {
+    if (T.seen) return;
+    var last = Number(lsGet('nc_tt_seen')) || 0, now = Date.now(); T.seen = now; lsSet('nc_tt_seen', String(now));
+    if (!last) return;
+    var n = T.orders.filter(function (o) { return o.status === 'filled' && o.filledAt > last; }).length;
+    if (n) toast(n + ' order' + (n > 1 ? 's were' : ' was') + ' filled while you were away — see Order history', 'ok');
+  }
+  function setTab(v) {
+    T.tab = v; qa('#txTabs button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); });
+    $('txFilter').hidden = v !== 'hist'; renderBottom(true);
+  }
+  function typeLabel(o) { return { market: 'Market', limit: 'Limit', stop: o.type === 'buy' ? 'Stop' : 'Stop-Loss', tp: 'Take-Profit', oco: 'OCO' }[o.orderType] || 'Market'; }
+  function trigText(o) {
+    var b = o.type === 'buy', t = o.orderType;
+    if (t === 'limit') return (b ? '≤ ' : '≥ ') + fP(o.limitPrice || o.price);
+    if (t === 'stop') return (b ? '≥ ' : '≤ ') + fP(o.stopPrice || o.price);
+    if (t === 'tp') return '≥ ' + fP(o.tpPrice || o.price);
+    if (t === 'oco') return 'TP ' + fP(o.tpPrice) + ' · SL ' + fP(o.stopPrice);
+    return fP(o.price);
+  }
+  function qtyOf(o) {
+    if (o.status === 'filled' && o.filled > 0) return o.filled;
+    var p = Number(o.price) || livePx(o.symbol);
+    return o.type === 'buy' ? (p > 0 ? Number(o.amount) / p : 0) : Number(o.amount);
+  }
+  function orderRow(o, open) {
+    var pxNow = livePx(o.symbol), tgt = o.orderType === 'oco' ? Number(o.tpPrice) : (o.orderType === 'stop' ? Number(o.stopPrice || o.price) : Number(o.price));
+    var dist = (open && pxNow > 0 && tgt > 0) ? ((tgt - pxNow) / pxNow * 100) : null;
+    var st = o.status === 'filled' ? '<span class="tx-st ok">Filled</span>' : (o.status === 'open' ? '<span class="tx-st wait">Open</span>' : '<span class="tx-st off">' + (o.reason === 'insufficient_funds' ? 'Cancelled · no funds' : (o.reason === 'expired' ? 'Expired' : 'Cancelled')) + '</span>');
+    var priceCell = o.status === 'filled' ? fP(o.execPrice || o.price) : trigText(o);
+    return '<div class="tx-or"><div class="tx-or-a"><span class="tx-side ' + o.type + '">' + (o.type === 'buy' ? 'BUY' : 'SELL') + '</span><b>' + esc(o.symbol) + '</b><i class="tx-ty">' + typeLabel(o) + '</i></div>' +
+      '<div><small>Amount</small><b>' + fQty(qtyOf(o), o.symbol) + ' ' + esc(o.symbol) + '</b></div>' +
+      '<div><small>' + (o.status === 'filled' ? 'Filled at' : 'Trigger') + '</small><b>' + priceCell + '</b>' + (dist !== null ? '<em class="' + (dist >= 0 ? 'up' : 'dn') + '">' + (dist >= 0 ? '+' : '') + dist.toFixed(2) + '% from market</em>' : '') + '</div>' +
+      '<div><small>Time</small><b>' + fTime(o.filledAt || o.ts) + '</b></div>' +
+      '<div class="tx-or-e">' + (open ? '<button type="button" class="tx-cancel" data-a="cancel" data-id="' + esc(o.id) + '">Cancel</button>' : st) + '</div></div>';
+  }
+  function renderBottom(force) {
+    var body = $('txBody'); if (!body) return;
+    var open = (T.openOrders || []).filter(function (o) { return o.status === 'open'; });
+    set('txCntOpen', String(open.length));
+    var html = '';
+    if (T.tab === 'open') {
+      html = open.length ? open.map(function (o) { return orderRow(o, true); }).join('') : '<div class="tx-empty">No open orders<br><small>Limit, Stop-Loss, Take-Profit and OCO orders appear here</small></div>';
+    } else if (T.tab === 'hist') {
+      var list = (T.orders || []).filter(function (o) { return T.hist === 'all' || o.status === T.hist; }).slice(0, 100);
+      html = list.length ? list.map(function (o) { return orderRow(o, false); }).join('') : '<div class="tx-empty">No orders yet</div>';
+    } else html = walletHtml();
+    if (!force && body.__html === html) return;
+    body.__html = html;
+    var st = body.scrollTop; body.innerHTML = html; body.scrollTop = st;
+  }
+  function walletHtml() {
+    var rows = [], total = usdBal();
+    T.coins.forEach(function (c) {
+      var b = coinBal(c.symbol); if (!(b > 0)) return;
+      var v = b * livePx(c.symbol); total += v;
+      rows.push('<div class="tx-wr">' + ico(c) + '<span class="tx-wn"><b>' + c.symbol + '</b><em>' + esc(c.name) + '</em></span><span class="tx-wb"><b>' + fQty(b, c.symbol) + '</b><em>' + fUsd(v) + '</em></span><button type="button" class="tx-sell" data-a="sellcoin" data-s="' + c.symbol + '">Sell</button></div>');
     });
+    var head = '<div class="tx-wtot"><span>Total balance</span><b>' + fUsd(total) + '</b></div><div class="tx-wr usd"><i class="tx-ci" style="--c:#2a7de1">$</i><span class="tx-wn"><b>USD</b><em>Cash</em></span><span class="tx-wb"><b>' + fUsd(usdBal()) + '</b><em>Available</em></span></div>';
+    return head + (rows.length ? rows.join('') : '<div class="tx-empty">No crypto yet — buy your first coin</div>');
+  }
+  function cancelOrder(id) {
+    if (!id) return;
+    api('cancelOrder', { orderId: id }).then(function (d) {
+      if (!d || !d.ok) throw new Error((d && d.error) || 'Cancel failed');
+      toast('Order cancelled', 'ok'); refreshOrders(true);
+    }).catch(function (e) { toast(e.message || 'Cancel failed', 'err'); });
   }
 
-  function ncxStyles() {
-    if ($('ncxStyles')) return;
-    var st = document.createElement('style');
-    st.id = 'ncxStyles';
-    st.textContent =
-      '.tt-chart-panel{position:relative}' +
-      '#ncTv{position:absolute;left:0;right:0;top:0;bottom:0;z-index:3;background:#0a0e15;border-radius:inherit;overflow:hidden}' +
-      '.tt-chart-panel.ncx-tv-on #ttChart{visibility:hidden}' +
-      '.tt-chart-panel.ncx-tv-on .tt-chart-toolbar{display:none!important}' +
-      '.ncx-tv-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7a8a9e;font:600 13px ui-monospace,monospace}' +
-      '@media(max-width:900px){.tt-chart-panel{min-height:380px}}' +
-      '.tt-price{transition:color .6s}.tt-price.ncx-up{color:#10b981;transition:none}.tt-price.ncx-dn{color:#ef4444;transition:none}' +
-      '.ncx-hint{min-height:0;margin-top:8px;font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;color:#f87171;text-align:center}.ncx-hint:empty{display:none}' +
-      '.tt-submit.ncx-dim{opacity:.55}' +
-      '.ncx-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(3,6,12,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}' +
-      '.ncx-box{width:100%;max-width:380px;background:#101722;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);color:#e8f4ff;font-family:-apple-system,Segoe UI,Roboto,sans-serif}' +
-      '.ncx-title{font-weight:800;font-size:18px;margin-bottom:14px}' +
-      '.ncx-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}.ncx-row span{color:#8b9bb0}.ncx-row b{font-family:ui-monospace,monospace;text-align:right}' +
-      '.ncx-note{margin-top:12px;font-size:12px;color:#7a8a9e;line-height:1.45}' +
-      '.ncx-actions{display:flex;gap:10px;margin-top:18px}.ncx-actions button{flex:1;height:46px;border-radius:12px;border:0;font-weight:800;font-size:15px;cursor:pointer}' +
-      '.ncx-cancel{background:rgba(255,255,255,.07);color:#e8f4ff}.ncx-ok{color:#06101f}.ncx-ok.buy{background:#10b981}.ncx-ok.sell{background:#ef4444;color:#fff}.ncx-ok.convert{background:#c8ff4d}' +
-      '.ncx-toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:2147483001;padding:11px 16px;border-radius:12px;font:700 13.5px -apple-system,Segoe UI,Roboto,sans-serif;max-width:92vw;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,.5)}' +
-      '.ncx-toast.show{opacity:1;transform:translate(-50%,0)}.ncx-toast.err{background:#3a1218;color:#ffb4b4;border:1px solid rgba(239,68,68,.5)}.ncx-toast.ok{background:#0f2a22;color:#9df2cf;border:1px solid rgba(16,185,129,.5)}';
-    document.head.appendChild(st);
-  }
-  ncxStyles();
-
-  console.log('%c[NordicCrypto] 📊 Trade Terminal v2.0 (live) loaded', 'color:#8b5cf6;font-weight:bold;font-size:13px');
-
+  /* ---------- public API (kept for older code) ---------- */
+  window.loadOrderHistory = function () { return refreshOrders(true); };
+  window.renderOpenOrders = function () { renderBottom(true); };
+  window.cancelOrder = cancelOrder;
+  window.refreshOpenOrders = function () { return refreshOrders(true); };
+  try { console.log('%c[NordicCrypto] 📊 Trade Terminal v3.0 loaded', 'color:#c8ff4d;font-weight:bold;font-size:13px'); } catch (e) {}
 })();
