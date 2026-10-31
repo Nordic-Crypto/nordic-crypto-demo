@@ -6241,7 +6241,34 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="js/chat-extra.js?v=1"></script>
 <script src="js/rewards-pro.js?v=4"></script>
 <script src="js/push-pro.js?v=1"></script>
-<script src="js/chat-fix.js?v=20261102"></script>
+<script src="js/chat-fix.js?v=20261103"></script>
+<script>
+/* auto-update: when a newer build of this page is deployed, open tabs pick it up (silently if the tab was in the background, otherwise via a small banner) */
+(function(){
+  var BUILD='20261103', hiddenAt=0, busy=false;
+  function banner(){
+    if(document.getElementById('ncUpd'))return;
+    var d=document.createElement('div');d.id='ncUpd';
+    d.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2147483000;background:#141a2a;color:#e8f4ff;border:1px solid rgba(71,220,255,.35);border-radius:12px;padding:10px 14px;font:600 13px -apple-system,Segoe UI,Roboto,sans-serif;display:flex;gap:12px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.5)';
+    d.innerHTML='<span>A new version is available</span><button style="background:#c8ff4a;color:#0b0f14;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer">Update</button>';
+    d.querySelector('button').onclick=function(){location.reload();};
+    document.body.appendChild(d);
+  }
+  function check(silent){
+    if(busy)return;busy=true;
+    fetch(location.pathname+(location.search||'')+(location.search?'&':'?')+'_b='+Date.now(),{cache:'no-store'})
+      .then(function(r){return r.text();})
+      .then(function(t){var m=t.match(/var BUILD='(\d+)'/);busy=false;if(m&&m[1]!==BUILD){if(silent)location.reload();else banner();}})
+      .catch(function(){busy=false;});
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){hiddenAt=Date.now();return;}
+    if(hiddenAt&&Date.now()-hiddenAt>120000)check(true); else check(false);
+  });
+  setTimeout(function(){check(false);},20000);
+  setInterval(function(){if(!document.hidden)check(false);},600000);
+})();
+</script>
 <script src="js/trade-terminal.js?v=20261017"></script>
 <!-- <script src="js/polling-hub.js?v=20261017"></script> -->
 <script src="js/bonus-system.js?v=20261017"></script>
