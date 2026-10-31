@@ -52,7 +52,7 @@
   var FALLBACK = [['BTC', 'Bitcoin', '#f7931a'], ['ETH', 'Ethereum', '#627eea'], ['USDT', 'Tether', '#26a17b'], ['SOL', 'Solana', '#9945ff'], ['BNB', 'BNB', '#f3ba2f']];
   var T = {
     open: false, built: false, coin: lsGet('nc_tt_coin') || 'BTC', coins: [], map: {},
-    side: 'buy', otype: 'market', view: 'chart', tab: 'open', hist: 'all', mtab: 'all',
+    side: 'buy', otype: 'market', view: 'chart', tab: 'pos', hist: 'all', mtab: 'all',
     openOrders: [], orders: [], busy: false, fav: [], tvFailed: false, tvActive: false, seen: 0
   };
   try { T.fav = JSON.parse(lsGet('nc_tt_fav') || '[]') || []; } catch (e) { T.fav = []; }
@@ -129,7 +129,7 @@
           '<div><small>24h Open</small><b id="txO">—</b></div><div><small>24h High</small><b id="txH">—</b></div><div><small>24h Low</small><b id="txL">—</b></div>' +
           '<div><small>Close</small><b id="txC">—</b></div><div><small>24h Volume</small><b id="txV">—</b></div>' +
         '</div>' +
-        '<div class="tx-top-r"><span class="tx-live" id="txLive" data-s="off"><i></i><em>CONNECTING</em></span><button class="tx-x" id="txClose" data-a="close" type="button" aria-label="Close">×</button></div>' +
+        '<div class="tx-top-r"><div class="tx-mode" title="Lite = simple view for beginners. Pro = full trading tools."><button type="button" data-a="mode" data-v="lite">Lite</button><button type="button" data-a="mode" data-v="pro">Pro</button></div><span class="tx-live" id="txLive" data-s="off"><i></i><em>CONNECTING</em></span><button class="tx-x" id="txClose" data-a="close" type="button" aria-label="Close">×</button></div>' +
       '</header>' +
       '<div class="tx-mkts" id="txMkts" hidden>' +
         '<div class="tx-mkts-in">' +
@@ -139,12 +139,13 @@
           '<div class="tx-mlist" id="txMList"></div>' +
         '</div>' +
       '</div>' +
+      '<div class="tx-pm" id="txPm" hidden></div>' +
       '<nav class="tx-views"><button type="button" data-a="view" data-v="chart" class="on">Chart</button><button type="button" data-a="view" data-v="book">Order book</button><button type="button" data-a="view" data-v="trades">Trades</button></nav>' +
       '<main class="tx-main">' +
         '<section class="tx-col tx-col-l">' +
           '<div class="tx-card tx-chart" id="txChartCard"><div id="txTv" class="tx-tv"></div><canvas id="txFb" class="tx-fb" hidden></canvas><div class="tx-chart-note" id="txChartNote">Loading chart…</div></div>' +
           '<div class="tx-card tx-bottom">' +
-            '<div class="tx-btabs" id="txTabs"><button type="button" data-a="tab" data-v="open" class="on">Open orders <em id="txCntOpen">0</em></button><button type="button" data-a="tab" data-v="hist">Order history</button><button type="button" data-a="tab" data-v="wallet">Wallet</button></div>' +
+            '<div class="tx-btabs" id="txTabs"><button type="button" data-a="tab" data-v="pos" class="on">Positions <em id="txCntPos">0</em></button><button type="button" data-a="tab" data-v="open">Open orders <em id="txCntOpen">0</em></button><button type="button" data-a="tab" data-v="hist">Order history</button><button type="button" data-a="tab" data-v="wallet">Wallet</button></div>' +
             '<div class="tx-bfilter" id="txFilter" hidden><button type="button" data-a="hist" data-v="all" class="on">All</button><button type="button" data-a="hist" data-v="filled">Filled</button><button type="button" data-a="hist" data-v="open">Open</button><button type="button" data-a="hist" data-v="cancelled">Cancelled</button></div>' +
             '<div class="tx-bbody" id="txBody"></div>' +
           '</div>' +
@@ -156,6 +157,7 @@
         '<section class="tx-col tx-col-r">' +
           '<div class="tx-card tx-form" id="txForm">' +
             '<div class="tx-sides"><button type="button" data-a="side" data-v="buy" class="on buy">Buy</button><button type="button" data-a="side" data-v="sell" class="sell">Sell</button><button type="button" data-a="side" data-v="convert" class="conv">Convert</button></div>' +
+            '<div class="tx-guide" id="txGuide" hidden></div>' +
             '<div id="txFormTrade">' +
               '<div class="tx-types" id="txTypes"></div>' +
               '<div class="tx-avail"><span>Available</span><b id="txAvail">—</b><button type="button" class="tx-dep" data-a="deposit" id="txDep">Deposit</button></div>' +
@@ -222,6 +224,14 @@
       case 'chip': { var f2 = $(el.getAttribute('data-f')); var p2 = livePx(T.coin); if (f2 && p2 > 0) { f2.value = rnd(p2 * (1 + Number(v) / 100)); calc(); } break; }
       case 'go': submit(); break;
       case 'tab': setTab(v); break;
+      case 'mode': setMode(v); break;
+      case 'pos': openPos(el.getAttribute('data-s')); break;
+      case 'pmclose': closePm(); break;
+      case 'pmtrade': { var ps = T.pm; closePm(); if (ps) { setSide('buy'); pickCoin(ps); setView('chart'); } break; }
+      case 'pmsell': pmSell(Number(v)); break;
+      case 'pmset': pmSet(); break;
+      case 'pmchip': { var inp = $(el.getAttribute('data-f')), pp = getPos(T.pm); if (inp && pp) inp.value = rnd(pp.mark * (1 + Number(v) / 100)); break; }
+      case 'pmcancel': cancelOrder(el.getAttribute('data-id')); break;
       case 'hist': T.hist = v; qa('#txFilter button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === v); }); renderBottom(true); break;
       case 'cancel': cancelOrder(el.getAttribute('data-id')); break;
       case 'sellcoin': setSide('sell'); pickCoin(el.getAttribute('data-s')); pctAmt(1); setView('chart'); try { $('txForm').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e2) {} break;
@@ -240,11 +250,196 @@
   /* ============================================================
      OPEN / CLOSE
      ============================================================ */
+
+  /* ============================================================
+     LITE / PRO MODE, POSITIONS, POSITION DETAILS
+     ============================================================ */
+  var MODE = lsGet('nc_tt_mode') === 'pro' ? 'pro' : 'lite';
+  function isLite() { return MODE === 'lite'; }
+  function typesFor(side) { var a = TYPES[side]; return isLite() ? a.filter(function (x) { return x[0] === 'market' || x[0] === 'limit'; }) : a; }
+  function setMode(m) {
+    if (m !== 'lite' && m !== 'pro') return;
+    MODE = m; lsSet('nc_tt_mode', m); applyMode();
+    toast(m === 'lite' ? 'Lite mode — simple view with hints' : 'Pro mode — full trading tools', 'ok');
+  }
+  function applyMode() {
+    var root = $('tradeTerminal'); if (!root) return;
+    root.classList.toggle('tx-lite', isLite());
+    qa('.tx-mode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === MODE); });
+    if (isLite() && root.getAttribute('data-view') !== 'chart') setView('chart');
+    if (T.side !== 'convert') setType(T.otype, true);
+    guide(); renderBottom(true); if (T.pm) { var pm = $('txPm'); pm.__sym = null; renderPm(); }
+  }
+  function guide() {
+    var g = $('txGuide'); if (!g) return;
+    if (!isLite()) { g.hidden = true; return; }
+    var c = T.coin, t = T.otype, txt, ttl;
+    if (T.side === 'convert') { ttl = '🔁 Convert'; txt = 'Swap one coin for another instantly at the current rate. No waiting and no order book.'; }
+    else if (T.side === 'buy') { ttl = '🟢 Buying ' + c; txt = t === 'limit' ? 'Limit order: you choose the price. The order waits and buys only when the price falls to your level. You can cancel it any time.' : 'Market order: buys ' + c + ' right now at the current price. Type how much ' + Q + ' you want to spend. Tip: tick "Attach" to add an automatic safety stop.'; }
+    else { ttl = '🔴 Selling ' + c; txt = t === 'limit' ? 'Limit order: sells your ' + c + ' only when the price rises to the level you set.' : 'Market order: sells your ' + c + ' right now at the current price and you get ' + Q + ' back.'; }
+    var k = ttl + txt; if (g.__k === k && !g.hidden) return; g.__k = k;
+    g.innerHTML = '<b>' + esc(ttl) + '</b><span>' + esc(txt) + '</span>'; g.hidden = false;
+  }
+
+  function pnlCls(v) { return v == null ? '' : (v >= 0 ? 'up' : 'dn'); }
+  function fPnl(v) { return v == null ? '—' : (v >= 0 ? '+' : '−') + fUsd(Math.abs(v)); }
+  function fPct(v) { return v == null ? '' : (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%'; }
+  function posList() {
+    var map = {}, fl = (T.orders || []).filter(function (o) { return o.status === 'filled'; }).sort(function (a, b) { return (a.filledAt || a.ts || 0) - (b.filledAt || b.ts || 0); });
+    fl.forEach(function (o) {
+      var sy = o.symbol; if (!sy) return;
+      var x = map[sy] || (map[sy] = { q: 0, cost: 0, real: 0, fills: [] });
+      var ex = Number(o.execPrice || o.price) || 0, q = qtyOf(o); if (!(q > 0) || !(ex > 0)) return;
+      x.fills.push(o);
+      if (o.type === 'buy') { x.q += q; x.cost += q * ex; }
+      else { var avg = x.q > 1e-12 ? x.cost / x.q : 0, sq = Math.min(q, x.q); if (sq > 0) { x.real += (ex - avg) * sq; x.cost -= avg * sq; x.q -= sq; } }
+    });
+    var open = (T.openOrders || []).filter(function (o) { return o.status === 'open' && o.type === 'sell'; }), out = [];
+    T.coins.forEach(function (c) {
+      var sym = c.symbol; if (sym === 'USDT') return;
+      var bal = coinBal(sym), mark = livePx(sym); if (!(bal > 0) || !(mark > 0) || bal * mark < 0.01) return;
+      var x = map[sym] || { q: 0, cost: 0, real: 0, fills: [] };
+      var entry = x.q > 1e-12 ? x.cost / x.q : 0, approx = entry > 0 && Math.abs(bal - x.q) / bal > 0.02;
+      var cost = entry > 0 ? entry * bal : 0, value = bal * mark, pnl = entry > 0 ? value - cost : null;
+      var sl = 0, tp = 0, ords = [];
+      open.forEach(function (o) {
+        if (o.symbol !== sym) return; ords.push(o);
+        var a = Number(o.stopPrice) || (o.orderType === 'stop' ? Number(o.price) : 0), b = Number(o.tpPrice) || (o.orderType === 'tp' ? Number(o.price) : 0);
+        if (a > 0 && (!sl || a > sl)) sl = a; if (b > 0 && (!tp || b < tp)) tp = b;
+      });
+      out.push({ sym: sym, c: c, bal: bal, mark: mark, entry: entry, approx: approx, cost: cost, value: value, pnl: pnl, pct: entry > 0 ? (mark / entry - 1) * 100 : null, real: x.real, sl: sl, tp: tp, ords: ords, fills: x.fills.slice(-6).reverse(), chg: Number(c.chg) || 0 });
+    });
+    out.sort(function (a, b) { return b.value - a.value; });
+    T.posCache = out; set('txCntPos', String(out.length));
+    return out;
+  }
+  function getPos(sym) { var l = posList(); for (var i = 0; i < l.length; i++) if (l[i].sym === sym) return l[i]; return null; }
+  function posHtml() {
+    var L = posList();
+    if (!L.length) return '<div class="tx-empty">No open positions<br><small>Buy a coin — it appears here with entry price, profit/loss and protection</small></div>';
+    var tv = 0, tp = 0, any = false;
+    L.forEach(function (p) { tv += p.value; if (p.pnl != null) { tp += p.pnl; any = true; } });
+    var h = '<div class="tx-psum"><div><small>Positions value</small><b>' + fUsd(tv) + '</b></div><div><small>Unrealized PnL</small><b class="' + (any ? pnlCls(tp) : '') + '">' + (any ? fPnl(tp) : '—') + '</b></div><div><small>Open positions</small><b>' + L.length + '</b></div></div>';
+    return h + L.map(function (p) {
+      return '<div class="tx-pos' + (T.flash === p.sym ? ' new' : '') + '" data-a="pos" data-s="' + p.sym + '">' +
+        '<div class="tx-pos-c">' + ico(p.c) + '<span><b>' + p.sym + '</b><em>' + fQty(p.bal, p.sym) + '</em></span></div>' +
+        '<div class="tx-pc"><small>Entry price</small><b>' + (p.entry > 0 ? fP(p.entry) + (p.approx ? '~' : '') : '—') + '</b></div>' +
+        '<div class="tx-pc pro"><small>Mark price</small><b>' + fP(p.mark) + '</b></div>' +
+        '<div class="tx-pc"><small>Value</small><b>' + fUsd(p.value) + '</b></div>' +
+        '<div class="tx-pc tx-pp ' + pnlCls(p.pnl) + '"><small>PnL</small><b>' + fPnl(p.pnl) + '</b><em>' + fPct(p.pct) + '</em></div>' +
+        '<div class="tx-pc tx-pr"><small>Protection</small><span>' + (p.sl ? '<i class="dn">SL ' + fP(p.sl) + '</i>' : '<i class="no">No stop-loss</i>') + (p.tp ? '<i class="up">TP ' + fP(p.tp) + '</i>' : '') + '</span></div>' +
+        '<div class="tx-pc tx-pa"><button type="button" data-a="pos" data-s="' + p.sym + '">Details ›</button></div></div>';
+    }).join('');
+  }
+  var _pt = 0;
+  function posTick() { var n = Date.now(); if (n - _pt < 1000) return; _pt = n; if (T.tab === 'pos') renderBottom(); if (T.pm) renderPm(); }
+  function revealBottom() { try { var b = document.querySelector('.tx-bottom'); if (b && innerWidth <= 900) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+  function afterTrade(o) {
+    if (o.otype === 'market') {
+      T.flash = o.sym; setTab('pos');
+      setTimeout(function () { if (T.flash === o.sym) { T.flash = null; renderBottom(true); } }, 4500);
+    } else setTab('open');
+    revealBottom();
+  }
+
+  function kv(l, v, cls) { return '<div class="tx-kv"><small>' + l + '</small><b class="' + (cls || '') + '">' + v + '</b></div>'; }
+  function ladder(p) {
+    var pts = [];
+    if (p.sl > 0) pts.push({ k: 'Stop-loss', v: p.sl, c: 'dn' });
+    if (p.entry > 0) pts.push({ k: 'Entry', v: p.entry, c: 'ent' });
+    pts.push({ k: 'Now', v: p.mark, c: 'now' });
+    if (p.tp > 0) pts.push({ k: 'Take-profit', v: p.tp, c: 'up' });
+    var lo = Math.min.apply(null, pts.map(function (x) { return x.v; })), hi = Math.max.apply(null, pts.map(function (x) { return x.v; }));
+    var pad = (hi - lo) * 0.12 || hi * 0.02; lo -= pad; hi += pad;
+    var dots = pts.map(function (x) { return '<i class="tx-ld ' + x.c + '" style="left:' + ((x.v - lo) / (hi - lo) * 100).toFixed(2) + '%" title="' + x.k + ' ' + fP(x.v) + '"></i>'; }).join('');
+    var leg = pts.slice().sort(function (a, b) { return a.v - b.v; }).map(function (x) { return '<span class="' + x.c + '"><i></i>' + x.k + ' <b>' + fP(x.v) + '</b></span>'; }).join('');
+    return '<div class="tx-lad"><div class="tx-lad-bar">' + dots + '</div><div class="tx-lad-leg">' + leg + '</div></div>';
+  }
+  function openPos(sym) {
+    if (!sym || !getPos(sym)) return;
+    T.pm = sym; var pm = $('txPm'); pm.hidden = false; pm.__sym = null; renderPm();
+  }
+  function closePm() { T.pm = null; var pm = $('txPm'); if (pm) { pm.hidden = true; pm.innerHTML = ''; pm.__sym = null; } }
+  function renderPm() {
+    var pm = $('txPm'); if (!pm || !T.pm) return;
+    var p = getPos(T.pm);
+    if (!p) { closePm(); toast('Position closed', 'ok'); return; }
+    if (pm.__sym !== p.sym) {
+      pm.__sym = p.sym;
+      pm.innerHTML = '<div class="tx-pm-bd" data-a="pmclose"></div><div class="tx-pm-sh" role="dialog" aria-modal="true">' +
+        '<div class="tx-pm-h">' + ico(p.c) + '<span class="tx-pm-t"><b>' + p.sym + '/' + qOf(p.sym) + '</b><small>' + esc(p.c.name) + ' · Position</small></span><button type="button" class="tx-x" data-a="pmclose" aria-label="Close">×</button></div>' +
+        '<div class="tx-pm-body"><div id="txPmLive"></div>' +
+          '<div class="tx-pm-sec"><h4>Protect this position</h4><p class="tx-pm-n lite">Set a price where it sells automatically: a stop-loss limits a loss, a take-profit locks in a gain.</p>' +
+            '<div class="tx-pm-g"><div><label>Stop-loss price</label><div class="tx-in sm"><input id="txPmSl" type="number" inputmode="decimal" step="any" placeholder="0.00"><em class="tx-qu">' + Q + '</em></div><div class="tx-chips">' + [-3, -5, -10].map(function (v) { return '<button type="button" data-a="pmchip" data-f="txPmSl" data-v="' + v + '">' + v + '%</button>'; }).join('') + '</div></div>' +
+            '<div><label>Take-profit price</label><div class="tx-in sm"><input id="txPmTp" type="number" inputmode="decimal" step="any" placeholder="0.00"><em class="tx-qu">' + Q + '</em></div><div class="tx-chips">' + [3, 5, 10, 20].map(function (v) { return '<button type="button" data-a="pmchip" data-f="txPmTp" data-v="' + v + '">+' + v + '%</button>'; }).join('') + '</div></div></div>' +
+            '<button type="button" class="tx-go conv" id="txPmSet" data-a="pmset">Set stop-loss / take-profit</button></div>' +
+          '<div class="tx-pm-sec"><h4>Close position</h4><div class="tx-chips pct"><button type="button" data-a="pmsell" data-v="25">25%</button><button type="button" data-a="pmsell" data-v="50">50%</button><button type="button" data-a="pmsell" data-v="75">75%</button><button type="button" data-a="pmsell" data-v="100">Close all</button></div></div>' +
+          '<div id="txPmOrd"></div><div id="txPmFills"></div></div>' +
+        '<div class="tx-pm-ft"><button type="button" class="tx-go buy" data-a="pmtrade">Trade ' + p.sym + '</button></div></div>';
+      var ps = pm.querySelector('#txPmSl'), pt = pm.querySelector('#txPmTp');
+      if (p.sl > 0) ps.value = rnd(p.sl); if (p.tp > 0) pt.value = rnd(p.tp);
+    }
+    var lite = isLite(), s = (LV.coin === p.sym && LV.stats) ? LV.stats : null, c = pnlCls(p.pnl);
+    var say = '';
+    if (lite) {
+      say = '<p class="tx-pm-say">You hold <b>' + fQty(p.bal, p.sym) + ' ' + p.sym + '</b>' + (p.entry > 0 ? ', bought at about <b>' + fP(p.entry) + '</b>' : '') + '. Right now it is worth <b>' + fUsd(p.value) + '</b>' +
+        (p.pnl != null ? ' — that is a <b class="' + c + '">' + (p.pnl >= 0 ? 'profit' : 'loss') + ' of ' + fPnl(p.pnl) + ' (' + fPct(p.pct) + ')</b>' : '') + '. If you sell now you receive about <b>' + fUsd(p.value) + '</b>.</p>';
+    }
+    var slInfo = p.sl > 0 ? fP(p.sl) + ' <em class="dn">' + fPct((p.sl / p.mark - 1) * 100) + (p.entry > 0 ? ' · ' + fPnl((p.sl - p.entry) * p.bal) + ' vs entry' : '') + '</em>' : '<em class="warn">Not set</em>';
+    var tpInfo = p.tp > 0 ? fP(p.tp) + ' <em class="up">' + fPct((p.tp / p.mark - 1) * 100) + (p.entry > 0 ? ' · ' + fPnl((p.tp - p.entry) * p.bal) + ' vs entry' : '') + '</em>' : '<em class="mut">Not set</em>';
+    var grid = kv('Size', fQty(p.bal, p.sym) + ' ' + p.sym) + kv('Position value', fUsd(p.value)) + kv('Avg entry price', p.entry > 0 ? fP(p.entry) + (p.approx ? ' ~' : '') : '—') + kv('Mark price', fP(p.mark));
+    if (!lite) grid += kv('Break-even', p.entry > 0 ? fP(p.entry) : '—') + kv('Cost basis', p.entry > 0 ? fUsd(p.cost) : '—') + kv('Realized PnL', fPnl(p.real), pnlCls(p.real)) + kv('24h change', (p.chg >= 0 ? '+' : '') + p.chg.toFixed(2) + '%', p.chg >= 0 ? 'up' : 'dn') +
+      (s ? kv('24h High', fP(s.high)) + kv('24h Low', fP(s.low)) : '');
+    var risk = '<div class="tx-pm-sec tx-risk"><h4>Risk &amp; liquidation</h4>' +
+      '<div class="tx-rr"><span>Liquidation price</span><b class="ok">None <small>· spot, no leverage</small></b></div>' +
+      '<div class="tx-rr"><span>Max possible loss</span><b>' + fUsd(p.entry > 0 ? p.cost : p.value) + ' <small>(what you paid)</small></b></div>' +
+      '<div class="tx-rr"><span>Stop-loss</span><b>' + slInfo + '</b></div><div class="tx-rr"><span>Take-profit</span><b>' + tpInfo + '</b></div>' +
+      ladder(p) + (lite ? '<p class="tx-pm-n">Spot trading has no liquidation: you own the real coins, so nobody can close your position by force. The most you can lose is what you paid. A stop-loss is your safety net — it sells for you if the price falls to your level.</p>' : '<p class="tx-pm-n">Spot position: no leverage and no margin calls. Risk is limited to cost basis; use a stop-loss to cap it.</p>') + '</div>';
+    var live = '<div class="tx-pm-pnl ' + c + '"><small>Unrealized PnL</small><b>' + fPnl(p.pnl) + '</b><em>' + fPct(p.pct) + '</em></div>' + say + '<div class="tx-kvs">' + grid + '</div>' + risk;
+    var L = $('txPmLive'); if (L && L.__h !== live) { L.__h = live; L.innerHTML = live; }
+    var ord = p.ords.length ? '<div class="tx-pm-sec"><h4>Active orders</h4>' + p.ords.map(function (o) { return '<div class="tx-pm-o"><span><b>' + typeLabel(o) + '</b> ' + fQty(qtyOf(o), p.sym) + ' ' + p.sym + '</span><span>' + trigText(o) + '</span><button type="button" class="tx-cancel" data-a="pmcancel" data-id="' + esc(o.id) + '">Cancel</button></div>'; }).join('') + '</div>' : '';
+    var O = $('txPmOrd'); if (O && O.__h !== ord) { O.__h = ord; O.innerHTML = ord; }
+    var fl = p.fills.length ? '<div class="tx-pm-sec"><h4>Recent fills</h4>' + p.fills.map(function (o) { return '<div class="tx-pm-o"><span><span class="tx-side ' + o.type + '">' + (o.type === 'buy' ? 'BUY' : 'SELL') + '</span> ' + fQty(qtyOf(o), p.sym) + ' ' + p.sym + '</span><span>@ ' + fP(o.execPrice || o.price) + '</span><span class="mut">' + fTime(o.filledAt || o.ts) + '</span></div>'; }).join('') + '</div>' : '';
+    var F = $('txPmFills'); if (F && F.__h !== fl) { F.__h = fl; F.innerHTML = fl; }
+  }
+  function pmSell(pct) {
+    var p = getPos(T.pm); if (!p || !(pct > 0)) return;
+    var qty = pct >= 100 ? floorTo(p.bal, 8) : floorTo(p.bal * pct / 100, 8); if (!(qty > 0)) return;
+    var rows = [['Pair', p.sym + '/' + qOf(p.sym)], ['You sell', fQty(qty, p.sym) + ' ' + p.sym + (pct < 100 ? ' (' + pct + '%)' : ' (all)')], ['Price', '≈ ' + fP(p.mark)], ['You receive', '≈ ' + fUsd(qty * p.mark)]];
+    if (p.entry > 0) rows.push(['Result vs entry', fPnl((p.mark - p.entry) * qty)]);
+    confirmBox('Close ' + (pct < 100 ? pct + '% of ' : '') + p.sym + ' position', rows, 'sell', 'Market order: filled at the live price. Open stop-loss / take-profit orders for this coin stay active and sell whatever is left.').then(function (ok) {
+      if (!ok) return;
+      placeOrder({ side: 'sell', sym: p.sym, amt: qty, otype: 'market', px: p.mark, quiet: true }).catch(function (e) { toast(e && e.message ? e.message : 'Order failed', 'err'); });
+    });
+  }
+  function pmSet() {
+    var p = getPos(T.pm); if (!p) return;
+    var sl = num('txPmSl'), tp = num('txPmTp'), mark = p.mark;
+    if (!(sl > 0) && !(tp > 0)) { toast('Enter a stop-loss and/or take-profit price', 'err'); return; }
+    if (sl > 0 && sl >= mark) { toast('Stop-loss must be below the current price (' + fP(mark) + ')', 'err'); return; }
+    if (tp > 0 && tp <= mark) { toast('Take-profit must be above the current price (' + fP(mark) + ')', 'err'); return; }
+    var o = { side: 'sell', sym: p.sym, amt: floorTo(p.bal, 8), px: mark, quiet: true };
+    if (sl > 0 && tp > 0) { o.otype = 'oco'; o.pt = tp; o.ps = sl; } else if (sl > 0) { o.otype = 'stop'; o.ps = sl; } else { o.otype = 'tp'; o.pt = tp; }
+    var old = p.ords.filter(function (x) { return x.orderType === 'stop' || x.orderType === 'tp' || x.orderType === 'oco'; });
+    var rows = [['Position', fQty(p.bal, p.sym) + ' ' + p.sym]];
+    if (sl > 0) rows.push(['Stop-loss (sell at ≤)', fP(sl) + ' (' + fPct((sl / mark - 1) * 100) + ')']);
+    if (tp > 0) rows.push(['Take-profit (sell at ≥)', fP(tp) + ' (' + fPct((tp / mark - 1) * 100) + ')']);
+    confirmBox('Protect ' + p.sym, rows, 'sell', old.length ? 'Your existing stop-loss / take-profit orders for ' + p.sym + ' will be replaced.' : 'The position is sold automatically when the price reaches your level.').then(function (ok) {
+      if (!ok) return;
+      var b = $('txPmSet'); if (b) b.disabled = true;
+      var chain = Promise.resolve();
+      old.forEach(function (x) { chain = chain.then(function () { return api('cancelOrder', { orderId: x.id }); }); });
+      chain.then(function () { return placeOrder(o); }).catch(function (e) { toast(e && e.message ? e.message : 'Could not set protection', 'err'); }).then(function () { var bb = $('txPmSet'); if (bb) bb.disabled = false; });
+    });
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && T.pm && !$('txConfirm')) { closePm(); } }, true);
+
   window.openTradeTerminalFull = function () {
     if (!build()) { console.warn('[TX] #tradeTerminal not found'); return; }
     var root = $('tradeTerminal');
     root.classList.add('on');
     try { applyQuote(); } catch (e) {}
+    try { applyMode(); } catch (e) {}
     document.documentElement.classList.add('tx-lock');
     T.open = true; T.seen = 0;
     if (!T.coins.length) setCoins(FALLBACK.map(function (f) { return { symbol: f[0], name: f[1], usd: 0, chg: 0, color: f[2] }; }));
@@ -256,6 +451,7 @@
   window.closeTradeTerminalFull = closeTerminal;
 
   function closeTerminal() {
+    try { closePm(); } catch (e) {}
     var root = $('tradeTerminal');
     if (root) root.classList.remove('on');
     document.documentElement.classList.remove('tx-lock');
@@ -476,6 +672,7 @@
     ce.className = 'tx-chg ' + (pct >= 0 ? 'up' : 'dn');
     set('txO', s ? fP(s.open) : '—'); set('txH', s ? fP(s.high) : '—'); set('txL', s ? fP(s.low) : '—'); set('txC', p > 0 ? fP(p) : '—');
     set('txV', s ? fVol(s.vol) + ' ' + sym : '—');
+    try { posTick(); } catch (e) {}
   }
   function set(id, v) { var e = $(id); if (e && e.textContent !== v) e.textContent = v; }
 
@@ -619,16 +816,16 @@
     qa('.tx-sides button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === s); });
     $('txFormTrade').hidden = s === 'convert'; $('txFormConv').hidden = s !== 'convert';
     if (s === 'convert') { fillConvSelects(false); calcConv(); return; }
-    if (!TYPES[s].some(function (t) { return t[0] === T.otype; })) T.otype = 'market';
+    if (!typesFor(s).some(function (t) { return t[0] === T.otype; })) T.otype = 'market';
     var go = $('txGo'); go.className = 'tx-go ' + s;
     $('txAmt').value = ''; $('txRng').value = 0;
     setType(T.otype, true);
   }
   function setType(t, keep) {
     if (T.side === 'convert') return;
-    if (!TYPES[T.side].some(function (x) { return x[0] === t; })) t = 'market';
+    if (!typesFor(T.side).some(function (x) { return x[0] === t; })) t = 'market';
     var changed = t !== T.otype; T.otype = t;
-    $('txTypes').innerHTML = TYPES[T.side].map(function (x) { return '<button type="button" data-a="type" data-v="' + x[0] + '" class="' + (x[0] === t ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+    $('txTypes').innerHTML = typesFor(T.side).map(function (x) { return '<button type="button" data-a="type" data-v="' + x[0] + '" class="' + (x[0] === t ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
     var show = { pl: t === 'limit', ps: t === 'stop' || t === 'oco', pt: t === 'tp' || t === 'oco', att: T.side === 'buy' && t === 'market', amt: true };
     qa('#txFormTrade [data-g]').forEach(function (g) { g.hidden = !show[g.getAttribute('data-g')]; });
     $('txPSL').textContent = T.side === 'buy' ? 'Stop price (buy when price rises to)' : 'Stop-loss price (trigger)';
@@ -678,6 +875,7 @@
     return o;
   }
   function calc() {
+    try { guide(); } catch (e) {}
     if (!$('txSum') || T.side === 'convert') return;
     var o = readOrder(), buy = T.side === 'buy', sym = T.coin, px = o.px;
     $('txAvail').textContent = buy ? fUsd(usdBal()) : fQty(coinBal(sym), sym) + ' ' + sym;
@@ -759,7 +957,7 @@
       } else {
         toast('Order placed — ' + ({ limit: 'Limit', stop: buy ? 'Stop' : 'Stop-Loss', tp: 'Take-Profit', oco: 'OCO' }[o.otype]) + ' ' + (buy ? 'buy ' : 'sell ') + o.sym, 'ok');
       }
-    }).then(function () { clearForm(); return refreshOrders(true); });
+    }).then(function () { clearForm(); return refreshOrders(true); }).then(function () { if (!o.quiet) afterTrade(o); });
   }
   function attachExit(sym, qty, ex, a) {
     var tp = a.tp > 0 ? ex * (1 + a.tp / 100) : 0, sl = a.sl > 0 && a.sl < 100 ? ex * (1 - a.sl / 100) : 0;
@@ -786,6 +984,7 @@
     t.value = tv;
   }
   function calcConv() {
+    try { guide(); } catch (e) {}
     var f = $('txCvFrom'), t = $('txCvTo'); if (!f || T.side !== 'convert') return;
     var from = f.value, to = t.value, amt = num('txCvAmt'), pf = livePx(from), pt = livePx(to);
     $('txCvAmtU').textContent = from; $('txCvFromBal').textContent = fQty(coinBal(from), from) + ' ' + from; $('txCvToBal').textContent = fQty(coinBal(to), to) + ' ' + to;
@@ -833,6 +1032,7 @@
       });
       announceOffline();
       renderBottom(force);
+      if (T.pm) { try { renderPm(); } catch (e) {} }
     }).catch(noop);
   }
   function announceOffline() {
@@ -876,7 +1076,10 @@
     var open = (T.openOrders || []).filter(function (o) { return o.status === 'open'; });
     set('txCntOpen', String(open.length));
     var html = '';
-    if (T.tab === 'open') {
+    try { posList(); } catch (e) {}
+    if (T.tab === 'pos') {
+      html = posHtml();
+    } else if (T.tab === 'open') {
       html = open.length ? open.map(function (o) { return orderRow(o, true); }).join('') : '<div class="tx-empty">No open orders<br><small>Limit, Stop-Loss, Take-Profit and OCO orders appear here</small></div>';
     } else if (T.tab === 'hist') {
       var list = (T.orders || []).filter(function (o) { return T.hist === 'all' || o.status === T.hist; }).slice(0, 100);
