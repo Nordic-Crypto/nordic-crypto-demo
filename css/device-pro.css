@@ -1,0 +1,45 @@
+/* NordicCrypto — Device Pro v1.0
+   One layer that makes the whole app behave on every phone: iPhone SE → 17 Pro Max / Air, Galaxy S / A / Z Fold & Flip, Pixel, any Android.
+   Safe areas (notch, Dynamic Island, home bar), dynamic viewport, keyboard, input zoom, touch targets, landscape, tiny / foldable screens. */
+:root { --dp-sat: env(safe-area-inset-top, 0px); --dp-sab: env(safe-area-inset-bottom, 0px); --dp-sal: env(safe-area-inset-left, 0px); --dp-sar: env(safe-area-inset-right, 0px); --dp-vh: 1vh; --dp-kb: 0px; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; overflow-x: clip; }
+body { overflow-x: clip; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+img, svg, video, canvas { max-width: 100%; }
+button, [role="button"], a, label, summary, select, .mi, .bd-act, .bd-tx, .cp-row { touch-action: manipulation; }
+button { -webkit-appearance: none; appearance: none; }
+
+/* iOS zooms into inputs under 16px — never let it */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]), select, textarea { font-size: max(16px, 1em) !important; }
+  .bd-act:hover, .bd-card:hover, .bd-btn:hover, .cp-row:hover, .cp-ask:hover, .tbp-t:hover, .tbp-bell:hover { transform: none !important; }
+}
+
+/* notch / Dynamic Island / home bar */
+@media (orientation: landscape) { body { padding-left: var(--dp-sal); padding-right: var(--dp-sar); } }
+@media (display-mode: standalone) { .top { padding-top: var(--dp-sat) !important; } }
+#chatToggle { translate: calc(-1 * var(--dp-sar)) calc(-1 * var(--dp-sab)); }
+#toast, .toast { max-width: calc(100vw - 24px); }
+
+/* bottom bars & floating buttons get lifted by JS (class dp-bbar / dp-lift); keyboard hides them */
+.dp-bbar { padding-bottom: calc(var(--dp-pb, 0px) + var(--dp-sab)) !important; box-sizing: border-box; }
+html.dp-kb .dp-bbar, html.dp-kb #chatToggle { display: none !important; }
+
+@media (max-width: 760px) {
+  #chatPanel { padding-top: var(--dp-sat); padding-bottom: var(--dp-sab); box-sizing: border-box; height: 100vh; height: 100dvh; }
+  [id$="Mask"] > div, .modal { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+}
+
+/* small phones: iPhone SE / 12 mini / Galaxy Z Fold cover (≈ 280-360 px) */
+html.dp-xs .bd-bal { font-size: 32px; } html.dp-xs .bd-hero { padding: 16px 12px 8px; } html.dp-xs .bd-card { padding: 14px; border-radius: 20px; }
+html.dp-xs .bd-acts { gap: 6px; } html.dp-xs .bd-act-l { font-size: 11px; } html.dp-xs .tbp-wm { display: none; }
+html.dp-xxs .bd-bal { font-size: 28px; } html.dp-xxs .bd-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.dp-xxs .bd-cacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* landscape phones (short viewport) */
+@media (max-height: 480px) and (orientation: landscape) {
+  .bd-hero { padding: 12px 16px 6px; } .bd-bal { font-size: 34px !important; margin: 2px 0 6px; } .bd-chart { height: 120px !important; }
+  .bd-acts { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; } .bd-act { padding: 8px 2px; }
+  .tbp-logo .tbp-wm { display: none; }
+}
+
+/* big phones & unfolded foldables (600-1100 px): keep content centred and readable */
+@media (min-width: 600px) and (max-width: 1100px) { .bd { max-width: 760px; } #bdCard .bd-plastic, #bdCard .bd-cacts { max-width: 420px; } }
