@@ -32,7 +32,7 @@
 
   var lang = detect();
   var EXACT = {}, TPL = {}, loaded = {}, cache = {}, missing = {};
-  var VER = '1';
+  var VER = '20261114';
 
   /* ---------- словарь ---------- */
   function esc(s) { return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&'); }
@@ -55,9 +55,15 @@
   function loadLang(l) {
     if (l === 'en' || loaded[l]) return;
     loaded[l] = 1;
-    var s = document.createElement('script');
-    s.src = 'js/i18n-' + l + '.js?v=' + VER; s.async = true;
-    s.onerror = function () { loaded[l] = 0; };
+    fetchDict(l, 0);
+  }
+  /* загрузка словаря с повторами: сеть, 404, кэш или ошибка внутри файла не должны оставлять язык «мёртвым» */
+  function fetchDict(l, n) {
+    var s = document.createElement('script'), done = false;
+    s.src = 'js/i18n-' + l + '.js?v=' + VER + (n ? '&r=' + Date.now() : ''); s.async = true;
+    function retry() { if (done) return; done = true; if (loaded[l] === 2) return; if (n < 3) setTimeout(function () { fetchDict(l, n + 1); }, 900 * (n + 1)); else { loaded[l] = 0; try { console.warn('[i18n] dictionary "' + l + '" failed to load'); } catch (e) {} } }
+    s.onerror = retry;
+    s.onload = function () { done = true; setTimeout(function () { if (loaded[l] !== 2 && n < 3) { done = false; retry(); } }, 600); };
     document.head.appendChild(s);
   }
 
@@ -155,7 +161,7 @@
     if (root.nodeType !== 1 && root.nodeType !== 11) return;
     if (root.nodeType === 1) { if (skipped(root)) return; doAttrs(root); }
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null), n;
-    while ((n = w.nextNode())) { if (n.nodeType === 3) doText(n); else doAttrs(n); }
+    while ((n = w.nextNode())) { try { if (n.nodeType === 3) doText(n); else doAttrs(n); } catch (e) {} }
   }
 
   function refreshAll() { try { walk(document.body); } catch (e) {} updateUi(); }
@@ -240,6 +246,8 @@
     if (l !== 'en' && !loaded[l]) loadLang(l);
     refreshAll();
     try { window.dispatchEvent(new CustomEvent('nc-lang', { detail: l })); } catch (e) {}
+    // страховка: догоняем всё, что отрисовалось позже (словарь, ленивые экраны)
+    [350, 1400, 3500].forEach(function (ms) { setTimeout(function () { if (lang === l) refreshAll(); }, ms); });
     // сообщаем серверу не нужно: язык хранится в браузере
   }
 
@@ -251,7 +259,8 @@
     add: add,
     t: function (s) { var r = translate(s); return r == null ? s : r; },
     missing: function () { return Object.keys(missing); },
-    refresh: refreshAll
+    refresh: refreshAll,
+    status: function () { return { lang: lang, loaded: loaded[lang] || 0, ready: loaded[lang] === 2 }; }
   };
 
   var css = document.createElement('style');
