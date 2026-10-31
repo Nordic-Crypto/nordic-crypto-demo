@@ -29,6 +29,12 @@
     // everything that is not search / cluster but sits directly in .top
     Array.prototype.forEach.call(t.children, function (el) { if (el !== c) tag(el); });
     if (c) Array.prototype.forEach.call(c.children, tag);
+    if (!t.querySelector('.tbp-logo')) {
+      var lg = document.createElement('a'); lg.className = 'tbp-x tbp-logo'; lg.href = '#'; lg.setAttribute('aria-label', 'NordicCrypto');
+      lg.innerHTML = '<span class="tbp-lm"><img src="logo.png" alt="" onerror="this.style.display=\'none\'"></span><span class="tbp-wm">Nordic<b>Crypto</b></span>';
+      lg.addEventListener('click', function (e) { e.preventDefault(); var d = document.querySelector('.mi[data-p="dash"]'); if (d) d.click(); window.scrollTo(0, 0); });
+      t.insertBefore(lg, t.firstChild);
+    }
     var host = c || t;
     if (!tg || !host.contains(tg)) {
       tg = document.createElement('button'); tg.type = 'button'; tg.className = 'tbp-x tbp-tg'; tg.setAttribute('aria-label', 'More'); tg.setAttribute('aria-expanded', 'false');
