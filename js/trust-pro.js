@@ -1,0 +1,85 @@
+/* NordicCrypto — renders partners / reviews / waitlist from window.NC_TRUST. No dependencies, no polling. */
+(function () {
+  'use strict';
+  var T = window.NC_TRUST; if (!T) return;
+  var mount = document.getElementById('trustMount'); if (!mount) return;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function safeUrl(u) { u = String(u || ''); return /^https?:\/\//i.test(u) || u === '#' ? u : '#'; }
+  function safeLogo(u) { u = String(u || ''); return /^(logos\/|\/logos\/|https:\/\/)[\w\-./%]+\.(svg|png|webp)$/i.test(u) ? u : ''; }
+
+  var L = {
+    en: { ck: 'Compatible', ch: 'Send to and from the wallets you already use.', cp: 'Crypto transfers work with major exchanges and wallets. Names are trademarks of their owners; no affiliation or endorsement implied.', pk: 'Partners', ph: 'Works with the names you trust.', pp: 'Exchanges and platforms we are connected to.', rk: 'Reviews', rh: 'What our clients say.', rp: 'Words from people who use it.', sk: 'Coming soon', sh: 'Be first in line.', sp: 'Join the waiting list and we will tell you when your country goes live.', em: 'Your email', ag: 'I agree to the privacy policy', bt: 'Join the waitlist', ok: 'Thanks! You’re on the list.', e1: 'Please enter your email.', e2: 'Please enter a valid email address.', e3: 'Please accept the privacy policy.', e4: 'No connection. Please try again.', w: ' people are already waiting', x: ' people expect to use NordicCrypto', sm: 'SAMPLE', rb: 'Mockup preview — sample content, not real clients.' },
+    da: { ck: 'Kompatibel', ch: 'Send til og fra de wallets, du allerede bruger.', cp: 'Krypto-overførsler fungerer med store børser og wallets. Navne er varemærker tilhørende deres ejere; ingen tilknytning eller godkendelse er underforstået.', pk: 'Partnere', ph: 'Samarbejder med navne, du kender.', pp: 'Børser og platforme, vi er forbundet til.', rk: 'Anmeldelser', rh: 'Det siger vores kunder.', rp: 'Ord fra folk, der bruger det.', sk: 'Kommer snart', sh: 'Vær først i køen.', sp: 'Skriv dig på ventelisten, så giver vi besked, når dit land åbner.', em: 'Din e-mail', ag: 'Jeg accepterer privatlivspolitikken', bt: 'Skriv mig på listen', ok: 'Tak! Du er på listen.', e1: 'Indtast din e-mail.', e2: 'Indtast en gyldig e-mailadresse.', e3: 'Accepter privatlivspolitikken.', e4: 'Ingen forbindelse. Prøv igen.', w: ' venter allerede', x: ' forventer at bruge NordicCrypto', sm: 'EKSEMPEL', rb: 'Mockup-visning — eksempelindhold, ikke rigtige kunder.' },
+    fi: { ck: 'Yhteensopiva', ch: 'Lähetä ja vastaanota jo käyttämiesi lompakoiden kanssa.', cp: 'Kryptosiirrot toimivat suurten pörssien ja lompakoiden kanssa. Nimet ovat omistajiensa tavaramerkkejä; yhteistyötä tai suositusta ei tarkoiteta.', pk: 'Kumppanit', ph: 'Yhteistyössä tutuilla nimillä.', pp: 'Pörssit ja alustat, joihin olemme yhteydessä.', rk: 'Arvostelut', rh: 'Mitä asiakkaamme sanovat.', rp: 'Sanoja palvelun käyttäjiltä.', sk: 'Tulossa pian', sh: 'Ole ensimmäisten joukossa.', sp: 'Liity jonotuslistalle, niin kerromme kun maasi avataan.', em: 'Sähköpostisi', ag: 'Hyväksyn tietosuojakäytännön', bt: 'Liity jonotuslistalle', ok: 'Kiitos! Olet listalla.', e1: 'Kirjoita sähköpostisi.', e2: 'Kirjoita kelvollinen sähköpostiosoite.', e3: 'Hyväksy tietosuojakäytäntö.', e4: 'Ei yhteyttä. Yritä uudelleen.', w: ' odottaa jo', x: ' odottaa NordicCryptoa', sm: 'ESIMERKKI', rb: 'Mallinäkymä — esimerkkisisältöä, ei oikeita asiakkaita.' },
+    es: { ck: 'Compatible', ch: 'Envía y recibe con las carteras que ya usas.', cp: 'Las transferencias cripto funcionan con los principales exchanges y carteras. Los nombres son marcas de sus propietarios; no implican afiliación ni respaldo.', pk: 'Socios', ph: 'Trabajamos con nombres de confianza.', pp: 'Exchanges y plataformas con las que estamos conectados.', rk: 'Opiniones', rh: 'Lo que dicen nuestros clientes.', rp: 'Palabras de quienes lo usan.', sk: 'Próximamente', sh: 'Sé de los primeros.', sp: 'Únete a la lista de espera y te avisaremos cuando abramos en tu país.', em: 'Tu correo', ag: 'Acepto la política de privacidad', bt: 'Unirme a la lista', ok: '¡Gracias! Ya estás en la lista.', e1: 'Introduce tu correo.', e2: 'Introduce un correo válido.', e3: 'Acepta la política de privacidad.', e4: 'Sin conexión. Inténtalo de nuevo.', w: ' personas ya esperan', x: ' personas esperan usar NordicCrypto', sm: 'EJEMPLO', rb: 'Vista de maqueta — contenido de ejemplo, no clientes reales.' },
+    no: { ck: 'Kompatibel', ch: 'Send til og fra lommebøkene du allerede bruker.', cp: 'Kryptooverføringer fungerer med store børser og lommebøker. Navn er varemerker tilhørende eierne; ingen tilknytning eller anbefaling er underforstått.', pk: 'Partnere', ph: 'Samarbeider med navn du kjenner.', pp: 'Børser og plattformer vi er koblet til.', rk: 'Omtaler', rh: 'Dette sier kundene våre.', rp: 'Ord fra folk som bruker det.', sk: 'Kommer snart', sh: 'Vær først i køen.', sp: 'Meld deg på ventelisten, så sier vi fra når landet ditt åpner.', em: 'Din e-post', ag: 'Jeg godtar personvernerklæringen', bt: 'Meld meg på', ok: 'Takk! Du er på listen.', e1: 'Skriv inn e-posten din.', e2: 'Skriv inn en gyldig e-postadresse.', e3: 'Godta personvernerklæringen.', e4: 'Ingen tilkobling. Prøv igjen.', w: ' venter allerede', x: ' forventer å bruke NordicCrypto', sm: 'EKSEMPEL', rb: 'Mockup-visning — eksempelinnhold, ikke ekte kunder.' },
+    sv: { ck: 'Kompatibel', ch: 'Skicka till och från plånböcker du redan använder.', cp: 'Kryptoöverföringar fungerar med stora börser och plånböcker. Namn är varumärken som tillhör sina ägare; ingen koppling eller rekommendation avses.', pk: 'Partners', ph: 'Samarbetar med namn du känner igen.', pp: 'Börser och plattformar vi är kopplade till.', rk: 'Omdömen', rh: 'Det här säger våra kunder.', rp: 'Ord från dem som använder det.', sk: 'Kommer snart', sh: 'Var först i kön.', sp: 'Gå med i väntelistan så meddelar vi när ditt land öppnar.', em: 'Din e-post', ag: 'Jag godkänner integritetspolicyn', bt: 'Gå med i listan', ok: 'Tack! Du står på listan.', e1: 'Ange din e-post.', e2: 'Ange en giltig e-postadress.', e3: 'Godkänn integritetspolicyn.', e4: 'Ingen anslutning. Försök igen.', w: ' väntar redan', x: ' väntar sig att använda NordicCrypto', sm: 'EXEMPEL', rb: 'Mockup-vy — exempelinnehåll, inte riktiga kunder.' },
+    fr: { ck: 'Compatible', ch: 'Envoyez et recevez avec les portefeuilles que vous utilisez déjà.', cp: 'Les transferts crypto fonctionnent avec les principales plateformes et portefeuilles. Les noms sont des marques de leurs propriétaires ; aucune affiliation ni approbation n’est sous-entendue.', pk: 'Partenaires', ph: 'Des noms en qui vous avez confiance.', pp: 'Bourses et plateformes auxquelles nous sommes connectés.', rk: 'Avis', rh: 'Ce que disent nos clients.', rp: 'Des mots de ceux qui l’utilisent.', sk: 'Bientôt', sh: 'Soyez parmi les premiers.', sp: 'Rejoignez la liste d’attente, nous vous prévenons à l’ouverture dans votre pays.', em: 'Votre e-mail', ag: 'J’accepte la politique de confidentialité', bt: 'Rejoindre la liste', ok: 'Merci ! Vous êtes sur la liste.', e1: 'Saisissez votre e-mail.', e2: 'Saisissez une adresse e-mail valide.', e3: 'Acceptez la politique de confidentialité.', e4: 'Pas de connexion. Réessayez.', w: ' personnes attendent déjà', x: ' personnes comptent utiliser NordicCrypto', sm: 'EXEMPLE', rb: 'Aperçu maquette — contenu d’exemple, pas de vrais clients.' },
+    de: { ck: 'Kompatibel', ch: 'Sende an und von den Wallets, die du schon nutzt.', cp: 'Krypto-Überweisungen funktionieren mit großen Börsen und Wallets. Namen sind Marken ihrer Inhaber; keine Verbindung oder Empfehlung impliziert.', pk: 'Partner', ph: 'Zusammenarbeit mit bekannten Namen.', pp: 'Börsen und Plattformen, mit denen wir verbunden sind.', rk: 'Bewertungen', rh: 'Das sagen unsere Kunden.', rp: 'Stimmen von Menschen, die es nutzen.', sk: 'Demnächst', sh: 'Sei unter den Ersten.', sp: 'Trag dich in die Warteliste ein, wir melden uns, sobald dein Land startet.', em: 'Deine E-Mail', ag: 'Ich akzeptiere die Datenschutzerklärung', bt: 'Auf die Warteliste', ok: 'Danke! Du stehst auf der Liste.', e1: 'Bitte E-Mail eingeben.', e2: 'Bitte eine gültige E-Mail-Adresse eingeben.', e3: 'Bitte die Datenschutzerklärung akzeptieren.', e4: 'Keine Verbindung. Bitte erneut versuchen.', w: ' Menschen warten bereits', x: ' Menschen wollen NordicCrypto nutzen', sm: 'BEISPIEL', rb: 'Mockup-Vorschau — Beispielinhalt, keine echten Kunden.' }
+  };
+  function t() { var l = (document.documentElement.lang || 'en').slice(0, 2); return L[l] || L.en; }
+  function fmtN(n) { try { return Number(n).toLocaleString(document.documentElement.lang || 'en'); } catch (e) { return String(n); } }
+
+  var hasP, hasR, hasS;
+  function flags() { hasP = T.partners && T.partners.length; hasR = T.reviews && T.reviews.length; hasS = !!T.waitlist; }
+  flags();
+  var live = !!T.liveReviews && !T.mockup;
+  if (!hasP && !hasR && !hasS && !live) return;       // nothing to show and nothing to fetch: no markup, no cost
+
+  function star(on) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 18l-6.4 3.6L7 14.5 1.7 9.5l7.2-.9z" class="' + (on ? 'on' : 'off') + '"/></svg>'; }
+  function badge(x) { return T.mockup ? '<span class="tp-badge">' + esc(x.sm) + '</span>' : ''; }
+
+  function render() {
+    var x = t(), h = '', cmp = T.partnersKind === 'compatible';
+    if (hasP) {
+      h += '<section class="alt tp"><div class="wrap"><div class="sh2 reveal in"><small>' + esc(cmp ? x.ck : x.pk) + '</small><h2>' + esc(cmp ? x.ch : x.ph) + '</h2><p>' + esc(cmp ? x.cp : x.pp) + '</p></div><div class="tp-logos">' +
+        T.partners.slice(0, 8).map(function (p) {
+          var lg = safeLogo(p.logo);
+          var inner = badge(x) + (lg ? '<img src="' + esc(lg) + '" alt="' + esc(p.name) + '" loading="lazy" style="height:' + Math.max(20, Math.min(48, Number(p.h) || 28)) + 'px">' : '<span class="tp-mark"></span><b>' + esc(p.name) + '</b>');
+          return p.url ? '<a class="tp-logo" href="' + esc(safeUrl(p.url)) + '" target="_blank" rel="noopener noreferrer" title="' + esc(p.name) + '">' + inner + '</a>' : '<div class="tp-logo">' + inner + '</div>';
+        }).join('') + '</div></div></section>';
+    }
+    if (hasR) {
+      h += '<section class="tp"><div class="wrap"><div class="sh2 reveal in"><small>' + esc(x.rk) + '</small><h2>' + esc(x.rh) + '</h2><p>' + esc(x.rp) + '</p></div><div class="tp-rev">' +
+        T.reviews.slice(0, 6).map(function (r) {
+          var n = Math.max(0, Math.min(5, Number(r.rating) || 0)), s = '';
+          for (var i = 1; i <= 5; i++) s += star(i <= n);
+          return '<article class="tp-card">' + badge(x) + '<div class="tp-stars" role="img" aria-label="' + n + '/5">' + s + '</div><p>' + esc(r.text) + '</p><div class="tp-who"><span class="tp-av">' + esc(String(r.name || '?').trim().charAt(0).toUpperCase()) + '</span><span><b>' + esc(r.name) + '</b><small>' + esc(r.location || '') + '</small></span></div></article>';
+        }).join('') + '</div></div></section>';
+    }
+    if (hasS) {
+      var f = T.founder || {}, st = T.stat || {};
+      h += '<section class="alt tp"><div class="wrap"><div class="tp-soon"><div class="tp-box">' + badge(x) + '<div class="sh2" style="margin-bottom:22px"><small>' + esc(x.sk) + '</small><h2>' + esc(x.sh) + '</h2><p>' + esc(x.sp) + '</p></div>' +
+        '<form id="tpForm" novalidate><input id="tpEmail" type="email" placeholder="' + esc(x.em) + '" autocomplete="email" required><label class="tp-chk"><input id="tpAgree" type="checkbox" required><span>' + esc(x.ag) + '</span></label><button class="btn p" type="submit">' + esc(x.bt) + '</button><div id="tpMsg" class="tp-msg" role="status" aria-live="polite"></div></form>' +
+        (st.value > 0 ? '<div class="tp-stat"><b class="num">' + esc(fmtN(st.value)) + '</b>' + esc(st.kind === 'expected' ? x.x : x.w) + '</div>' : '') + '</div>' +
+        (f.quote ? '<blockquote class="tp-q">' + badge(x) + '<p>“' + esc(f.quote) + '”</p>' + (f.name ? '<footer><b>' + esc(f.name) + '</b>' + (f.role ? ' · ' + esc(f.role) : '') + '</footer>' : '') + '</blockquote>' : '') + '</div></div></section>';
+    }
+    if (T.mockup) h += '<div class="tp-ribbon">' + esc(x.rb) + '</div>';
+    mount.innerHTML = h;
+    var form = document.getElementById('tpForm');
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var em = document.getElementById('tpEmail'), ag = document.getElementById('tpAgree'), msg = document.getElementById('tpMsg'), tt = t(), v = em.value.trim(), b = form.querySelector('button');
+      function say(m, ok) { msg.textContent = m; msg.className = 'tp-msg ' + (ok ? 'ok' : 'err'); }
+      if (!v) return say(tt.e1); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return say(tt.e2); if (!ag.checked) return say(tt.e3);
+      b.disabled = true;
+      if (T.mockup) { form.reset(); b.disabled = false; return say(tt.ok + ' (mockup: not saved)', true); }
+      fetch(T.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { b.disabled = false; if (d && d.ok) { form.reset(); say(tt.ok, true); } else say((d && d.error) || tt.e4); })
+        .catch(function () { b.disabled = false; say(tt.e4); });
+    });
+  }
+  if (hasP || hasR || hasS) render();
+  if (live) {   // approved client reviews: one small cached request, only when something might be there
+    var done = false;
+    function fetchLive() {
+      if (done) return; done = true;
+      fetch(T.reviewsUrl, { cache: 'default' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.ok && d.reviews && d.reviews.length) { T.reviews = d.reviews; flags(); render(); }
+      }).catch(function () {});
+    }
+    if ('IntersectionObserver' in window) { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); fetchLive(); } }, { rootMargin: '1200px 0px' }); io.observe(mount); } else setTimeout(fetchLive, 1500);
+  }
+  new MutationObserver(function () { if (hasP || hasR || hasS) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+})();
