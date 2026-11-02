@@ -627,8 +627,14 @@ function initSettings() {
     .then(r => r.json())
     .then(d => {
       if (d.ok) alert('✅ Request sent to admin for approval.');
+      else if (/not authenticated/i.test(d.error || '')) {
+        alert('Your session has expired. Please sign in again.');
+        try { clearSessionToken(); } catch (e) {}
+        location.href = '/';
+      }
       else alert('Error: ' + d.error);
-    });
+    })
+    .catch(() => alert('Connection error. Please try again.'));
   };
   if (cpSave) cpSave.onclick = async function () {
     var oldP = document.getElementById('cpOld').value;
