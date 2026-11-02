@@ -58,7 +58,7 @@
     var rv = state.review, rs = rv ? rv.status : '';
     h += '<div class="cs-hr"></div><div class="cs-row"><div><div class="cs-t">Your review</div><div class="cs-s">' +
       (rv === undefined ? 'Loading…' : !rv ? 'Share your experience. With your permission we show it on our website after a quick check.' : rs === 'pending' ? 'Thank you! Your review is waiting for approval.' : rs === 'approved' ? 'Published on our website. Thank you!' : 'Not published' + (rv.note ? ': ' + esc(rv.note) : '') + '.') + '</div></div>' +
-      (rv === undefined ? '<span class="cs-skel"></span>' : (!rv || rs === 'rejected') ? '<button class="cs-btn" id="csRev" style="margin:0">' + (rs === 'rejected' ? 'Write again' : 'Write a review') + '</button>' : '<button class="cs-x" id="csRevDel">Remove</button>') + '</div>';
+      (rv === undefined ? '<span class="cs-skel"></span>' : (!rv || rs === 'rejected') ? '<button class="cs-btn" id="csRev" style="margin:0">' + (rs === 'rejected' ? 'Write again' : 'Write a review') + '</button>' : '') + '</div>';
     c.innerHTML = h; bind(c);
     if (state.setup && !window.QRious) { var q = $('csQr'); if (q) q.style.display = 'none'; }
     if (state.setup && window.QRious) { try { new QRious({ element: $('csQr'), value: state.setup.uri, size: 168, background: '#fff', foreground: '#07080c', padding: 8 }); } catch (e) {} }
