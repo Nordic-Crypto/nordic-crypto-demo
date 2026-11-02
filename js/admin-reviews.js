@@ -45,7 +45,7 @@
       var pending = x.status === 'pending';
       return '<div class="rv-c" data-id="' + esc(x.id) + '"><div class="rv-h"><div>' + stars(x.rating) + ' <span class="rv-pill ' + esc(x.status) + '">' + esc(x.status) + '</span></div><div class="rv-m">' + esc(dt(x.at)) + '</div></div>' +
         '<div class="rv-t">“' + esc(x.text) + '”</div><div class="rv-m"><b style="color:#e8ecf4">' + esc(x.name) + '</b>' + (x.location ? ' · ' + esc(x.location) : '') + '<br>Account: ' + esc(x.email) + (x.realName ? ' (' + esc(x.realName) + ')' : '') + ' · consent given ' + esc(dt(x.consentAt)) + '</div>' +
-        (pending ? '<input class="rv-in" data-note placeholder="Note to the client if you reject (optional)"><div style="display:flex;gap:8px"><button class="rv-b p" data-act="ok">Publish</button><button class="rv-b d" data-act="no">Reject</button></div>' : (x.status === 'approved' ? '<div style="margin-top:10px"><button class="rv-b d" data-act="no">Unpublish</button></div>' : '')) + '</div>';
+        (pending ? '<input class="rv-in" data-note placeholder="Note to the client if you reject (optional)"><div style="display:flex;gap:8px"><button class="rv-b p" data-act="ok">Publish</button><button class="rv-b d" data-act="no">Reject</button></div>' : (x.status === 'approved' ? '<div style="margin-top:10px"><button class="rv-b d" data-act="no">Unpublish</button></div>' : '<div style="margin-top:10px"><button class="rv-b p" data-act="ok">Publish again</button></div>')) + '</div>';
     }).join('');
     r.innerHTML = h;
   }
