@@ -1,0 +1,94 @@
+/* NordicCrypto — lime polish layer (loaded last; additive only) */
+:root{--lime:#c8ff4d;--lime-soft:rgba(200,255,77,.12);--lime-line:rgba(200,255,77,.32);--ease:cubic-bezier(.22,.8,.24,1)}
+html{scroll-behavior:smooth}
+::selection{background:rgba(200,255,77,.28);color:#fff}
+*{scrollbar-width:thin;scrollbar-color:rgba(200,255,77,.28) transparent}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:rgba(200,255,77,.22);border-radius:9px}::-webkit-scrollbar-thumb:hover{background:rgba(200,255,77,.4)}
+
+/* focus: a clear, soft lime ring everywhere */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:10px}
+:where(input,select,textarea):focus{border-color:var(--lime-line)!important;box-shadow:0 0 0 4px var(--lime-soft)!important;transition:box-shadow .25s var(--ease),border-color .25s var(--ease)}
+
+/* buttons: tactile */
+.btn,.wd-btn,.nc3-card-action,.settings-btn-row,.cs-btn{transition:transform .18s var(--ease),box-shadow .25s var(--ease),background .2s,border-color .2s,filter .2s}
+.btn:hover,.wd-btn:hover,.nc3-card-action:hover{transform:translateY(-1px)}
+.btn:active,.wd-btn:active,.nc3-card-action:active{transform:translateY(0) scale(.98)}
+.btn.b1,.wd-btn-submit{box-shadow:0 8px 24px -10px rgba(200,255,77,.55)}
+.btn.b1:hover,.wd-btn-submit:hover{box-shadow:0 12px 30px -10px rgba(200,255,77,.75);filter:brightness(1.04)}
+
+/* cards: more air, gentle lift, thin lime edge on hover */
+.nc3-balance-card,.nc3-card-wrap,.nc3-chart-panel,.nc3-transactions,.nc3-iban{border-radius:20px;transition:transform .35s var(--ease),border-color .3s,box-shadow .35s var(--ease)}
+.nc3-balance-card:hover,.nc3-card-wrap:hover,.nc3-chart-panel:hover,.nc3-iban:hover{border-color:var(--lime-line);box-shadow:0 22px 50px -26px rgba(0,0,0,.8),0 0 0 1px rgba(200,255,77,.06)}
+.nc3-transactions{padding-block:6px}
+.nc3-transactions>*{transition:background .2s}
+.nc3-transactions>*:hover{background:rgba(200,255,77,.035)}
+
+/* modals: soft blur + spring in */
+.mask,.wd-modal-bg{backdrop-filter:blur(8px) saturate(120%);-webkit-backdrop-filter:blur(8px) saturate(120%)}
+.mask.on .box,.wd-modal-card{animation:pxPop .38s var(--ease) both}
+.box,.wd-modal-card{border-radius:22px;padding-inline:max(22px,2.2vw)}
+.box h2{letter-spacing:-.01em}
+@keyframes pxPop{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
+
+/* page content fades in section by section */
+.admin-section.on,.view.on,.page.on,main>section{animation:pxIn .5s var(--ease) both}
+@keyframes pxIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* toasts */
+#toast,.toast{border-radius:14px;backdrop-filter:blur(10px);box-shadow:0 18px 40px -18px rgba(0,0,0,.8);border:1px solid var(--lime-line)}
+
+/* skeleton + empty states (usable by any script via class) */
+.px-skel,.cs-skel{display:inline-block;height:14px;width:48px;border-radius:8px;background:linear-gradient(100deg,rgba(255,255,255,.05) 30%,rgba(200,255,77,.14) 50%,rgba(255,255,255,.05) 70%);background-size:220% 100%;animation:pxShimmer 1.3s linear infinite}
+.cs-skel.wide{display:block;width:100%;height:46px;border-radius:12px;margin:8px 0}
+@keyframes pxShimmer{to{background-position:-220% 0}}
+.px-empty{text-align:center;padding:42px 18px;color:var(--mut,#98a0b3)}
+.px-empty:before{content:"";display:block;width:64px;height:64px;margin:0 auto 14px;border-radius:20px;background:radial-gradient(circle at 30% 30%,rgba(200,255,77,.28),rgba(200,255,77,.04) 70%);border:1px solid var(--lime-line);box-shadow:0 0 40px -8px rgba(200,255,77,.35)}
+.empty,.no-data,.nc3-empty{padding:42px 18px!important;text-align:center;color:var(--mut,#98a0b3);animation:pxIn .5s var(--ease) both}
+
+/* tables / admin lists: calmer rows */
+.admin-content table tr{transition:background .2s}
+.admin-content table tbody tr:hover{background:rgba(200,255,77,.04)}
+.admin-nav-item{transition:background .2s,transform .2s var(--ease),color .2s}
+.admin-nav-item:hover{transform:translateX(2px)}
+.admin-nav-item.on,.admin-nav-item.active{box-shadow:inset 3px 0 0 var(--lime)}
+
+/* live dot: breathing */
+.nc3-live-dot{animation:pxBreath 2.4s ease-in-out infinite}
+@keyframes pxBreath{50%{box-shadow:0 0 18px rgba(54,226,163,.95);transform:scale(1.15)}}
+
+/* security centre + saved recipients */
+.cs-card{margin-top:12px;padding:16px;border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.09)}
+.cs-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cs-t{font-weight:700;font-size:14px;color:#f4f5f8}.cs-s{font-size:12.5px;line-height:1.5;color:#98a0b3;margin:3px 0}
+.cs-pill{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.cs-pill.on{background:rgba(61,220,151,.14);color:#3ddc97;border:1px solid rgba(61,220,151,.35)}
+.cs-pill.off{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.cs-box{margin:12px 0;padding:14px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid rgba(200,255,77,.18);animation:pxIn .4s var(--ease) both}
+.cs-btn{border:0;border-radius:10px;padding:10px 16px;margin:8px 8px 0 0;font-weight:700;font-size:13px;cursor:pointer;background:var(--lime);color:#0a0f04;font-family:inherit}
+.cs-btn.ghost{background:rgba(255,255,255,.07);color:#e7edf5;border:1px solid rgba(255,255,255,.12)}
+.cs-btn.danger{background:rgba(255,107,107,.14);color:#ff8f8f;border:1px solid rgba(255,107,107,.35)}
+.cs-in{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:inherit;font-size:14px;margin:8px 8px 0 0;width:100%;box-sizing:border-box;font-family:inherit}
+.cs-in.sm{width:46%}
+.cs-qr{display:block;margin:12px auto;border-radius:12px}
+.cs-codes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.cs-codes code,.cs-box code{background:rgba(200,255,77,.08);border:1px solid rgba(200,255,77,.2);border-radius:8px;padding:5px 8px;font-size:13px;text-align:center;word-break:break-all}
+.cs-hr{height:1px;background:rgba(255,255,255,.08);margin:16px 0 12px}
+.cs-sess{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.cs-ic{font-size:22px;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.05)}
+.cs-sm{flex:1;min-width:0}.cs-sm .cs-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-x{border:1px solid rgba(255,107,107,.35);background:transparent;color:#ff8f8f;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.cs-x:hover{background:rgba(255,107,107,.12)}
+.cs-payees{margin:0 0 14px;padding:12px;border-radius:14px;background:rgba(200,255,77,.04);border:1px dashed var(--lime-line)}
+.cs-chips{display:flex;flex-wrap:wrap;gap:8px}
+.cs-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:13px;cursor:pointer;transition:all .2s var(--ease)}
+.cs-chip:hover{border-color:var(--lime);background:var(--lime-soft);transform:translateY(-1px)}
+.cs-chip i{font-style:normal;opacity:.5;padding:0 2px}.cs-chip i:hover{opacity:1;color:#ff8f8f}
+
+/* mobile: bigger tap targets, fuller sheets, safe areas */
+@media(max-width:640px){
+  .box,.wd-modal-card{width:100%!important;max-width:100vw!important;border-radius:22px 22px 0 0;max-height:92vh;overflow:auto;margin-top:auto;padding-bottom:max(22px,env(safe-area-inset-bottom))}
+  .mask.on{align-items:flex-end}
+  .btn,.wd-btn,.cs-btn{min-height:46px}
+  .nc3-balance-card,.nc3-card-wrap,.nc3-chart-panel,.nc3-transactions,.nc3-iban{border-radius:18px}
+  .cs-in.sm{width:100%}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
