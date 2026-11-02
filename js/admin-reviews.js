@@ -56,9 +56,13 @@
     if (act === 'refresh') return load();
     var card = t.closest('[data-id]'); if (!card) return;
     var note = card.querySelector('[data-note]');
-    if (act === 'ok' && !confirm('Publish this review on the website?')) return;
-    t.disabled = true;
-    api('reviewDecide', { id: card.getAttribute('data-id'), approve: act === 'ok', note: note ? note.value : '' }).then(function (r) { if (!r || !r.ok) alert((r && r.error) || 'Failed'); load(); });
+    var msg = card.querySelector('.rv-msg');
+    if (!msg) { msg = document.createElement('div'); msg.className = 'rv-msg rv-m'; msg.style.marginTop = '8px'; card.appendChild(msg); }
+    t.disabled = true; msg.style.color = ''; msg.textContent = 'Saving…';
+    api('reviewDecide', { id: card.getAttribute('data-id'), approve: act === 'ok', note: note ? note.value : '' }).then(function (r) {
+      if (!r || !r.ok) { t.disabled = false; msg.style.color = '#ff8f8f'; msg.textContent = 'Error: ' + ((r && r.error) || 'no response from server'); return; }
+      msg.textContent = 'Done'; load();
+    }).catch(function (er) { t.disabled = false; msg.style.color = '#ff8f8f'; msg.textContent = 'Error: ' + (er && er.message || 'network'); });
   }
   var tries = 0;
   (function wait() { if (mount()) { load(); return; } if (++tries < 120) setTimeout(wait, 500); })();
