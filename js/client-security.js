@@ -224,5 +224,27 @@
     if (sm) { new MutationObserver(function () { if (sm.classList.contains('on')) opened(); }).observe(sm, { attributes: true, attributeFilter: ['class'] }); }
     if (typeof window.openWithdraw === 'function') { var o = window.openWithdraw; window.openWithdraw = function () { var r = o.apply(this, arguments); addSaveBtn(); paintPayees(); loadPayees(); return r; }; }
   }
+
+  /* ───────── gentle invitation to review (after 7 days and the first transaction; once a month at most) ───────── */
+  function invite() {
+    try {
+      var role = localStorage.getItem('user_role'); if (!tok() || role === 'admin') return;
+      if (+localStorage.getItem('nc_rv_inv') > Date.now() || sessionStorage.getItem('nc_rv_chk')) return;
+    } catch (e) { return; }
+    setTimeout(function () {
+      try { if (sessionStorage.getItem('nc_rv_chk')) return; sessionStorage.setItem('nc_rv_chk', '1'); } catch (e) {}
+      api('myReview').then(function (r) {
+        if (!r || !r.ok || !r.invite || $('csInv')) return;
+        var d = document.createElement('div'); d.id = 'csInv'; d.className = 'cs-inv'; d.setAttribute('role', 'dialog');
+        d.innerHTML = '<button class="cs-inv-x" aria-label="Close">\u00d7</button><div class="cs-inv-t">Enjoying NordicCrypto?</div><div class="cs-inv-s">A short, honest review helps other people decide. It only appears on our website after you approve the text and we publish it.</div><div class="cs-inv-b"><button class="cs-btn" id="csInvGo" style="margin:0">Write a review</button><button class="cs-inv-n" id="csInvNo">Not now</button></div>';
+        document.body.appendChild(d);
+        function hide(days) { try { localStorage.setItem('nc_rv_inv', String(Date.now() + days * 864e5)); } catch (e) {} d.remove(); }
+        d.querySelector('.cs-inv-x').onclick = function () { hide(30); };
+        $('csInvNo').onclick = function () { hide(30); };
+        $('csInvGo').onclick = function () { hide(90); openReview(); };
+      });
+    }, 9000);
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  invite();
 })();
