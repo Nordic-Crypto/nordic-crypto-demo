@@ -119,10 +119,68 @@
     var label = prompt('Name for this recipient (e.g. “My Swedbank”):', method === 'iban' ? (details.name || '') : (details.coin || 'Wallet')); if (!label) return;
     api('payeeSave', { label: label, method: method, details: details }).then(function (r) { if (r.ok) { payees = r.payees; paintPayees(); say('Recipient saved'); } else say(r.error, true); });
   }
+  /* ───────── recurring transfers (loaded only when opened: no background polling) ───────── */
+  var sov = null;
+  function sclose() { if (sov) { sov.remove(); sov = null; } }
+  function cur() { var method = ($('wdMethod') || {}).value; if (!MAP[method]) return null; var details = {}; Object.keys(MAP[method]).forEach(function (k) { var el = $(k); if (el && el.value) details[MAP[method][k]] = el.value.trim(); }); return { method: method, details: details }; }
+  function money2(v) { try { return typeof window.fmtCurrency === 'function' ? window.fmtCurrency(v) : '$' + Number(v).toFixed(2); } catch (e) { return '$' + v; } }
+  function fdate(t) { try { return new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
+  var EV = { weekly: 'Every week', biweekly: 'Every 2 weeks', monthly: 'Every month' };
+  function openSched(prefill) {
+    sclose();
+    sov = document.createElement('div'); sov.className = 'cs-ov';
+    sov.innerHTML = '<div class="cs-sbox"><div class="cs-row"><div class="cs-t" style="font-size:18px">Recurring transfers</div><button class="cs-x" id="csSx" style="border-color:rgba(255,255,255,.2);color:#fff">\u00d7</button></div>' +
+      '<div class="cs-s" style="margin:6px 0 12px">We create the withdrawal request for you on schedule. It is reviewed and approved like any other, so you stay in control.</div><div id="csSBody"><div class="cs-skel wide"></div><div class="cs-skel wide"></div></div></div>';
+    document.body.appendChild(sov);
+    sov.addEventListener('click', function (e) { if (e.target === sov) sclose(); });
+    $('csSx').onclick = sclose;
+    api('schedList').then(function (r) { if (!r.ok) { $('csSBody').textContent = r.error; return; } sview(r.schedules, prefill); });
+  }
+  function sview(list, prefill) {
+    var b = $('csSBody'); if (!b) return;
+    var h = list.length ? list.map(function (x) {
+      var dst = x.details.iban || x.details.address || '';
+      return '<div class="cs-sess"><div class="cs-ic">\ud83d\udd01</div><div class="cs-sm"><div class="cs-t">' + esc(x.label) + ' \u00b7 ' + esc(money2(x.amount)) + (x.active ? '' : ' <span class="cs-pill off">PAUSED</span>') + '</div>' +
+        '<div class="cs-s">' + esc(EV[x.every] || x.every) + ' \u00b7 next ' + esc(fdate(x.nextAt)) + (x.fails ? ' \u00b7 ' + x.fails + ' skipped' : '') + '</div><div class="cs-s">' + esc(String(dst).slice(0, 8)) + '\u2026' + esc(String(dst).slice(-4)) + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px"><button class="cs-x" data-p="' + esc(x.id) + '" data-on="' + (x.active ? '1' : '0') + '">' + (x.active ? 'Pause' : 'Resume') + '</button><button class="cs-x" data-d="' + esc(x.id) + '">Delete</button></div></div>';
+    }).join('') : '<div class="px-empty">No recurring transfers yet.</div>';
+    var c = prefill && prefill.method;
+    h += '<div class="cs-hr"></div><div class="cs-t">New schedule</div>';
+    if (!c) h += '<div class="cs-s">Fill in a bank or crypto recipient in the withdraw form (or pick a saved one), then tap \u201cRecurring\u201d again.</div>';
+    else {
+      var d = new Date(Date.now() + 86400000 * 7); var iso = d.toISOString().slice(0, 10);
+      h += '<div class="cs-s">To: <b>' + esc(String(prefill.details.iban || prefill.details.address || '').slice(0, 12)) + '\u2026</b> (' + esc(prefill.method.toUpperCase()) + ')</div>' +
+        '<input id="csSN" class="cs-in" maxlength="40" placeholder="Name, e.g. Rent" value="' + esc(prefill.label || '') + '"><div style="display:flex;gap:8px"><input id="csSA" class="cs-in" type="number" min="1" inputmode="decimal" placeholder="Amount (USD)" value="' + esc(prefill.amount || '') + '">' +
+        '<select id="csSE" class="cs-in"><option value="monthly">Every month</option><option value="biweekly">Every 2 weeks</option><option value="weekly">Every week</option></select></div>' +
+        '<label class="cs-s" style="display:block;margin-top:8px">First transfer on</label><input id="csSD" class="cs-in" type="date" value="' + iso + '" min="' + new Date(Date.now() + 86400000).toISOString().slice(0, 10) + '">' +
+        '<div class="cs-s" style="margin-top:8px">\u2139\ufe0f A first payout to new details can wait up to 24 h for confirmation.</div><div id="csSM" class="cs-s" style="min-height:18px"></div><button class="cs-btn" id="csSGo">Start schedule</button>';
+    }
+    b.innerHTML = h;
+    [].forEach.call(b.querySelectorAll('[data-d]'), function (e) { e.onclick = function () { api('schedDelete', { id: e.getAttribute('data-d') }).then(function (r) { if (r.ok) sview(r.schedules, prefill); else say(r.error, true); }); }; });
+    [].forEach.call(b.querySelectorAll('[data-p]'), function (e) { e.onclick = function () { api('schedPause', { id: e.getAttribute('data-p'), paused: e.getAttribute('data-on') === '1' }).then(function (r) { if (r.ok) sview(r.schedules, prefill); else say(r.error, true); }); }; });
+    var go = $('csSGo');
+    if (go) go.onclick = function () {
+      go.disabled = true;
+      api('schedSave', { label: $('csSN').value, amount: $('csSA').value, every: $('csSE').value, firstAt: new Date($('csSD').value + 'T09:00:00').getTime(), method: prefill.method, details: prefill.details }).then(function (r) {
+        if (r.ok) { say('Recurring transfer created'); sview(r.schedules, null); } else { go.disabled = false; var m = $('csSM'); m.style.color = '#ff8f8f'; m.textContent = r.error || 'Could not save'; }
+      });
+    };
+  }
+  function startSched() {
+    var c = cur();
+    if (!c) { openSched(null); return; }
+    var a = $('wdAmount'); c.amount = a && a.value ? a.value : '';
+    var hit = payees.filter(function (p) { return p.method === c.method && JSON.stringify(p.details) === JSON.stringify(c.details); })[0];
+    c.label = hit ? hit.label : '';
+    var has = Object.keys(c.details).length >= (c.method === 'iban' ? 2 : 2);
+    openSched(has ? c : null);
+  }
   function addSaveBtn() {
     var acts = document.querySelector('#withdrawModal .wd-actions'); if (!acts || $('csSaveP')) return;
     var bt = document.createElement('button'); bt.id = 'csSaveP'; bt.type = 'button'; bt.className = 'wd-btn wd-btn-cancel'; bt.textContent = '💾 Save recipient'; bt.onclick = saveCurrent;
     acts.insertBefore(bt, acts.firstChild);
+    var rb = document.createElement('button'); rb.id = 'csSchedBtn'; rb.type = 'button'; rb.className = 'wd-btn wd-btn-cancel'; rb.textContent = '\ud83d\udd01 Recurring'; rb.onclick = startSched;
+    acts.insertBefore(rb, bt.nextSibling);
     var note = document.createElement('p'); note.className = 'cs-s'; note.style.margin = '8px 0 0'; note.textContent = 'ℹ️ For your protection, a first payout to new details may take up to 24 hours to confirm.';
     acts.parentNode.insertBefore(note, acts);
   }
