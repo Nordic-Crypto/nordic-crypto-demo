@@ -11,11 +11,11 @@
        and add logos from each company's official brand kit, but only with a signed agreement that allows it. */
     partnersKind: 'compatible',
     partners: [
-      { name: 'Binance', logo: 'logos/binance.png', h: 46 },
-      { name: 'Bybit', logo: 'logos/bybit.png', h: 34 },
-      { name: 'BingX', logo: 'logos/bingx.png', h: 34 },
-      { name: 'Trust Wallet', logo: 'logos/trust.png', h: 48 },
-      { name: 'Exodus', logo: 'logos/exodus.png', h: 44 }
+      { name: 'Binance', logo: 'binance.png', h: 46 },
+      { name: 'Bybit', logo: 'bybit.png', h: 34 },
+      { name: 'BingX', logo: 'bingx.png', h: 34 },
+      { name: 'Trust Wallet', logo: 'trust.png', h: 48 },
+      { name: 'Exodus', logo: 'exodus.png', h: 44 }
     ],
 
     /* { text: "1-2 sentences", name: "Anna K.", location: "Berlin, DE", rating: 5 } */
