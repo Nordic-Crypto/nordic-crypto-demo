@@ -5,7 +5,7 @@
   var mount = document.getElementById('trustMount'); if (!mount) return;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function safeUrl(u) { u = String(u || ''); return /^https?:\/\//i.test(u) || u === '#' ? u : '#'; }
-  function safeLogo(u) { u = String(u || ''); return /^(logos\/|\/logos\/|https:\/\/)[\w\-./%]+\.(svg|png|webp)$/i.test(u) ? u : ''; }
+  function safeLogo(u) { u = String(u || ''); return /^(logos\/|\/logos\/|\/|https:\/\/)?[\w\-./%]+\.(svg|png|webp)$/i.test(u) ? u : ''; }
 
   var L = {
     en: { ck: 'Compatible', ch: 'Send to and from the wallets you already use.', cp: 'Crypto transfers work with major exchanges and wallets. Names are trademarks of their owners; no affiliation or endorsement implied.', pk: 'Partners', ph: 'Works with the names you trust.', pp: 'Exchanges and platforms we are connected to.', rk: 'Reviews', rh: 'What our clients say.', rp: 'Words from people who use it.', sk: 'Coming soon', sh: 'Be first in line.', sp: 'Join the waiting list and we will tell you when your country goes live.', em: 'Your email', ag: 'I agree to the privacy policy', bt: 'Join the waitlist', ok: 'Thanks! You’re on the list.', e1: 'Please enter your email.', e2: 'Please enter a valid email address.', e3: 'Please accept the privacy policy.', e4: 'No connection. Please try again.', w: ' people are already waiting', x: ' people expect to use NordicCrypto', sm: 'SAMPLE', rb: 'Mockup preview — sample content, not real clients.' },
