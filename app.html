@@ -4320,6 +4320,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <link rel="stylesheet" href="css/card-pro2.css?v=3">
 <link rel="stylesheet" href="css/mobile-pro.css?v=2">
 <link rel="stylesheet" href="css/kyc-pro.css?v=1">
+<link rel="stylesheet" href="css/polish-pro.css?v=20261121">
 <link rel="stylesheet" href="css/admin-team.css?v=1">
 <link rel="stylesheet" href="css/statement-pro.css?v=1">
 <link rel="stylesheet" href="css/theme-pro.css?v=3">
@@ -6172,6 +6173,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="js/admin-security.js?v=20261118"></script>
 <script src="js/admin-backup.js?v=20261119"></script>
 <script src="js/admin-metrics.js?v=20261120"></script>
+<script src="js/client-security.js?v=20261121"></script>
 <script>
 /* auto-update: when a newer build of this page is deployed, open tabs pick it up (silently if the tab was in the background, otherwise via a small banner) */
 (function(){
@@ -6610,6 +6612,7 @@ document.addEventListener('click', function(e) {
               '</div>' +
               '<span class="awd-badge ' + badgeClass + '">' + statusText + '</span>' +
               (w.newDest ? '<span class="awd-badge fail" title="First time this destination is used">NEW DESTINATION</span>' : '') +
+              (w.holdUntil && w.holdUntil > Date.now() && w.status === 'pending' ? '<span class="awd-badge pending" title="Safety hold until ' + new Date(w.holdUntil).toLocaleString() + '">⏳ HOLD ' + Math.ceil((w.holdUntil - Date.now()) / 3600000) + 'h</span>' : '') +
             '</div>' +
             '<div class="awd-amount">$' + Number(w.amount).toFixed(2) + ' <span style="font-size:12px;color:#7c9cbb">via ' + (w.method || 'iban').toUpperCase() + '</span></div>' +
             '<div class="awd-details">' +
@@ -6641,7 +6644,7 @@ document.addEventListener('click', function(e) {
     }
   };
 
-  function sendWithdrawalUpdate(id, email, status, reason) {
+  function sendWithdrawalUpdate(id, email, status, reason, force) {
     fetch(WORKER_URL + '?action=updateWithdrawal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6650,11 +6653,18 @@ document.addEventListener('click', function(e) {
         userEmail: email,
         withdrawalId: id,
         status: status,
-        reason: reason
+        reason: reason,
+        force: force === true
       })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      if (data && data.hold) {
+        var canOv = /override as the owner/.test(data.error || '');
+        if (canOv && confirm(data.error + '\n\nOverride the hold and approve now?')) { return sendWithdrawalUpdate(id, email, status, reason, true); }
+        if (!canOv) alert(data.error);
+        return;
+      }
       if (!data.ok) throw new Error(data.error || 'Failed');
       window.loadAdminWithdrawals(); 
     })
