@@ -45,7 +45,9 @@
       var pending = x.status === 'pending';
       return '<div class="rv-c" data-id="' + esc(x.id) + '"><div class="rv-h"><div>' + stars(x.rating) + ' <span class="rv-pill ' + esc(x.status) + '">' + esc(x.status) + '</span></div><div class="rv-m">' + esc(dt(x.at)) + '</div></div>' +
         '<div class="rv-t">“' + esc(x.text) + '”</div><div class="rv-m"><b style="color:#e8ecf4">' + esc(x.name) + '</b>' + (x.location ? ' · ' + esc(x.location) : '') + '<br>Account: ' + esc(x.email) + (x.realName ? ' (' + esc(x.realName) + ')' : '') + ' · consent given ' + esc(dt(x.consentAt)) + '</div>' +
-        (pending ? '<input class="rv-in" data-note placeholder="Note to the client if you reject (optional)"><div style="display:flex;gap:8px"><button class="rv-b p" data-act="ok">Publish</button><button class="rv-b d" data-act="no">Reject</button></div>' : (x.status === 'approved' ? '<div style="margin-top:10px"><button class="rv-b d" data-act="no">Unpublish</button></div>' : '<div style="margin-top:10px"><button class="rv-b p" data-act="ok">Publish again</button></div>')) + '</div>';
+        (pending ? '<input class="rv-in" data-note placeholder="Note to the client if you reject (optional)"><input class="rv-in" data-reply maxlength="300" placeholder="Public reply from NordicCrypto (optional, shown under the review)"><div style="display:flex;gap:8px"><button class="rv-b p" data-act="ok">Publish</button><button class="rv-b d" data-act="no">Reject</button></div>' :
+        x.status === 'approved' ? '<input class="rv-in" data-reply maxlength="300" value="' + esc(x.reply || '') + '" placeholder="Public reply from NordicCrypto (optional, shown under the review)"><div style="display:flex;gap:8px"><button class="rv-b p" data-act="ok">Save reply</button><button class="rv-b d" data-act="no">Unpublish</button></div>' :
+        '<input class="rv-in" data-reply maxlength="300" placeholder="Public reply (optional)"><div style="margin-top:2px"><button class="rv-b p" data-act="ok">Publish again</button></div>') + '</div>';
     }).join('');
     r.innerHTML = h;
   }
@@ -59,7 +61,7 @@
     var msg = card.querySelector('.rv-msg');
     if (!msg) { msg = document.createElement('div'); msg.className = 'rv-msg rv-m'; msg.style.marginTop = '8px'; card.appendChild(msg); }
     t.disabled = true; msg.style.color = ''; msg.textContent = 'Saving…';
-    api('reviewDecide', { id: card.getAttribute('data-id'), approve: act === 'ok', note: note ? note.value : '' }).then(function (r) {
+    api('reviewDecide', { id: card.getAttribute('data-id'), approve: act === 'ok', note: note ? note.value : '', reply: (card.querySelector('[data-reply]') || {}).value || '' }).then(function (r) {
       if (!r || !r.ok) { t.disabled = false; msg.style.color = '#ff8f8f'; msg.textContent = 'Error: ' + ((r && r.error) || 'no response from server'); return; }
       msg.textContent = 'Done'; load();
     }).catch(function (er) { t.disabled = false; msg.style.color = '#ff8f8f'; msg.textContent = 'Error: ' + (er && er.message || 'network'); });
