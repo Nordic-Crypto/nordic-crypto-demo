@@ -102,3 +102,7 @@ html{scroll-behavior:smooth}
 .wd-modal-card .wd-actions{position:sticky;bottom:-1px;z-index:3;padding:14px 0 4px;background:linear-gradient(to top,#0f151e 78%,rgba(15,21,30,0))}
 @media(max-width:640px){.mask{padding:0}.mask>.box,.mask .box{max-height:92dvh;max-width:100vw}.wd-modal-card{max-height:94dvh}}
 @media(max-height:560px){.mask{padding:8px}.mask>.box,.mask .box,.wd-modal-card{max-height:calc(100dvh - 16px)}}
+
+/* admin withdrawal cards: badges wrap instead of overflowing */
+.awd-badge{white-space:nowrap}
+div:has(>.awd-badge){flex-wrap:wrap;row-gap:6px}
