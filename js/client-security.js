@@ -26,7 +26,7 @@
     anchor.parentNode.parentNode.insertBefore(c, anchor.parentNode.nextSibling);
     return c;
   }
-  var state = { totp: null, sessions: null, setup: null, codes: null };
+  var state = { totp: null, sessions: null, setup: null, codes: null, review: undefined };
   function paint() {
     var c = card(); if (!c) return;
     var t = state.totp, h = '';
@@ -55,6 +55,10 @@
         (s.current ? '' : '<button class="cs-x" data-sid="' + esc(s.id) + '" title="Sign out">Sign out</button>') + '</div>';
     }).join('') + '<button class="cs-btn ghost" id="csOthers">Sign out all other devices</button>';
     h += '</div>';
+    var rv = state.review, rs = rv ? rv.status : '';
+    h += '<div class="cs-hr"></div><div class="cs-row"><div><div class="cs-t">Your review</div><div class="cs-s">' +
+      (rv === undefined ? 'Loading…' : !rv ? 'Share your experience. With your permission we show it on our website after a quick check.' : rs === 'pending' ? 'Thank you! Your review is waiting for approval.' : rs === 'approved' ? 'Published on our website. Thank you!' : 'Not published' + (rv.note ? ': ' + esc(rv.note) : '') + '.') + '</div></div>' +
+      (rv === undefined ? '<span class="cs-skel"></span>' : (!rv || rs === 'rejected') ? '<button class="cs-btn" id="csRev" style="margin:0">' + (rs === 'rejected' ? 'Write again' : 'Write a review') + '</button>' : '<button class="cs-x" id="csRevDel">Remove</button>') + '</div>';
     c.innerHTML = h; bind(c);
     if (state.setup && !window.QRious) { var q = $('csQr'); if (q) q.style.display = 'none'; }
     if (state.setup && window.QRious) { try { new QRious({ element: $('csQr'), value: state.setup.uri, size: 168, background: '#fff', foreground: '#07080c', padding: 8 }); } catch (e) {} }
@@ -68,14 +72,44 @@
     on(c, 'csCopy', function () { try { navigator.clipboard.writeText(state.codes.join('\n')); say('Copied'); } catch (e) {} });
     on(c, 'csOff', function () { api('totpDisable', { password: $('csPw').value, code: ($('csCode').value || '').replace(/\s/g, '') }).then(function (r) { if (!r.ok) return say(r.error, true); state.totp = { enabled: false }; say('Two-factor is off'); paint(); }); });
     on(c, 'csNew', function () { api('totpBackup', { password: $('csPw').value, code: ($('csCode').value || '').replace(/\s/g, '') }).then(function (r) { if (!r.ok) return say(r.error, true); state.codes = r.backupCodes; paint(); }); });
+    on(c, 'csRev', function () { openReview(); });
+    on(c, 'csRevDel', function () { if (!confirm('Remove your review from our website?')) return; api('reviewWithdraw').then(function (r) { if (r.ok) { state.review = null; say('Review removed'); paint(); } else say(r.error, true); }); });
     on(c, 'csOthers', function () { api('logoutOthers').then(function (r) { say(r.ok ? 'Signed out ' + r.revoked + ' device(s)' : r.error, !r.ok); load(); }); });
     [].forEach.call(c.querySelectorAll('[data-sid]'), function (b) { b.onclick = function () { api('revokeSession', { id: b.getAttribute('data-sid') }).then(function (r) { say(r.ok ? 'Device signed out' : r.error, !r.ok); load(); }); }; });
   }
   function load() {
     api('totpStatus').then(function (r) { if (r.ok) { state.totp = r; paint(); } });
+    api('myReview').then(function (r) { if (r.ok) { state.review = r.review; paint(); } });
     api('mySessions').then(function (r) { if (r.ok) { state.sessions = r.sessions; paint(); } });
   }
-  function opened() { state.setup = null; state.codes = null; state.sessions = null; paint(); load(); }
+  function opened() { state.review = undefined; state.setup = null; state.codes = null; state.sessions = null; paint(); load(); }
+
+  /* ───────── review form ───────── */
+  function openReview() {
+    sclose();
+    var nm = ($('settingsName') || {}).textContent || ''; nm = nm.trim(); var pr = nm.split(/\s+/); var def = pr.length > 1 ? pr[0] + ' ' + pr[pr.length - 1].charAt(0).toUpperCase() + '.' : nm;
+    sov = document.createElement('div'); sov.className = 'cs-ov';
+    sov.innerHTML = '<div class="cs-sbox"><div class="cs-row"><div class="cs-t" style="font-size:18px">Write a review</div><button class="cs-x" id="csRx" style="border-color:rgba(255,255,255,.2);color:#fff">\u00d7</button></div>' +
+      '<div class="cs-s" style="margin:6px 0 10px">Honest and specific is best. Your review is shown on our website only after we approve it, and you can remove it any time.</div>' +
+      '<div class="cs-stars" id="csRS" role="radiogroup" aria-label="Rating"></div>' +
+      '<textarea id="csRT" class="cs-in" rows="4" maxlength="400" placeholder="What do you like? What could be better?" style="font-weight:500;resize:vertical"></textarea><div class="cs-s" id="csRC" style="text-align:right">0 / 400</div>' +
+      '<div style="display:flex;gap:8px"><input id="csRN" class="cs-in" maxlength="30" placeholder="Name to show" value="' + esc(def) + '"><input id="csRL" class="cs-in" maxlength="40" placeholder="City, Country (optional)"></div>' +
+      '<label class="cs-s" style="display:flex;gap:10px;align-items:flex-start;margin-top:10px"><input id="csRK" type="checkbox" style="margin-top:3px;accent-color:#c8ff4d"><span>I agree that NordicCrypto may publish this review with the name and city shown above.</span></label>' +
+      '<div id="csRM" class="cs-s" style="min-height:18px;margin-top:6px"></div><button class="cs-btn" id="csRG">Send review</button></div>';
+    document.body.appendChild(sov);
+    sov.addEventListener('click', function (e) { if (e.target === sov) sclose(); }); $('csRx').onclick = sclose;
+    var rating = 0, box = $('csRS');
+    function stars() { box.innerHTML = [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" class="cs-star' + (n <= rating ? ' on' : '') + '" data-n="' + n + '" aria-label="' + n + '">\u2605</button>'; }).join(''); [].forEach.call(box.children, function (b) { b.onclick = function () { rating = +b.getAttribute('data-n'); stars(); }; }); }
+    stars();
+    $('csRT').oninput = function () { $('csRC').textContent = this.value.length + ' / 400'; };
+    $('csRG').onclick = function () {
+      var g = $('csRG'), m = $('csRM'); g.disabled = true; m.textContent = '';
+      api('reviewSubmit', { rating: rating, text: $('csRT').value, name: $('csRN').value, location: $('csRL').value, consent: $('csRK').checked }).then(function (r) {
+        g.disabled = false;
+        if (r.ok) { state.review = r.review; sclose(); say('Thank you! Your review was sent for approval.'); paint(); } else { m.style.color = '#ff8f8f'; m.textContent = r.error || 'Could not send'; }
+      });
+    };
+  }
 
   /* ───────── saved recipients in the withdraw modal ───────── */
   var payees = [];
