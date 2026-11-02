@@ -28,7 +28,7 @@
     var sys = side.querySelector('[data-tab="system"]'); side.insertBefore(nav, sys || null);
     var sec = document.createElement('div'); sec.className = 'admin-section'; sec.setAttribute('data-section', 'reviews');
     sec.innerHTML = '<div class="rv" id="rvRoot"><div class="rv-m">Loading…</div></div>';
-    main.appendChild(sec); sec.addEventListener('click', onClick); return true;
+    main.appendChild(sec); return true;
   }
   function load() { api('reviewsList').then(function (r) { if (r && r.ok) { S.list = r.reviews; S.err = ''; } else S.err = (r && r.error) || 'Could not load'; render(); }).catch(function () { S.err = 'Connection error'; render(); }); }
   function stars(n) { var h = ''; for (var i = 1; i <= 5; i++) h += i <= n ? '★' : '<i>★</i>'; return '<span class="rv-st">' + h + '</span>'; }
@@ -64,6 +64,7 @@
       msg.textContent = 'Done'; load();
     }).catch(function (er) { t.disabled = false; msg.style.color = '#ff8f8f'; msg.textContent = 'Error: ' + (er && er.message || 'network'); });
   }
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-section="reviews"]')) onClick(e); }, true);
   var tries = 0;
   (function wait() { if (mount()) { load(); return; } if (++tries < 120) setTimeout(wait, 500); })();
   var mo = new MutationObserver(function () { if (!$('[data-section="reviews"]')) mount(); });
