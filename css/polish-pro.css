@@ -108,8 +108,11 @@ html{scroll-behavior:smooth}
 div:has(>.awd-badge){flex-wrap:wrap;row-gap:6px}
 
 /* recurring transfers overlay */
-.cs-ov{position:fixed;inset:0;z-index:100001;background:rgba(3,6,12,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;animation:pxIn .25s var(--ease) both}
+.cs-ov{position:fixed;inset:0;z-index:100200;background:rgba(3,6,12,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;animation:pxIn .25s var(--ease) both}
 .cs-sbox{width:100%;max-width:460px;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;background:#12161d;color:#f4f5f8;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:22px;box-sizing:border-box;animation:pxPop .35s var(--ease) both}
 .cs-sbox .cs-in{margin-right:0;width:100%}
 .wd-actions{flex-wrap:wrap;gap:8px}
 @media(max-width:640px){.cs-ov{padding:0;align-items:flex-end}.cs-sbox{border-radius:22px 22px 0 0;max-height:92dvh}}
+
+/* review form */
+.cs-stars{display:flex;gap:4px;margin:4px 0 10px}.cs-star{border:0;background:none;color:rgba(255,255,255,.2);font-size:30px;line-height:1;cursor:pointer;padding:2px;transition:transform .15s,color .15s}.cs-star.on{color:#c8ff4d}.cs-star:hover{transform:scale(1.15)}
