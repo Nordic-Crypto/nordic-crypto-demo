@@ -6171,6 +6171,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="js/device-pro.js?v=20261117"></script>
 <script src="js/admin-security.js?v=20261118"></script>
 <script src="js/admin-backup.js?v=20261119"></script>
+<script src="js/admin-metrics.js?v=20261120"></script>
 <script>
 /* auto-update: when a newer build of this page is deployed, open tabs pick it up (silently if the tab was in the background, otherwise via a small banner) */
 (function(){
@@ -6608,6 +6609,7 @@ document.addEventListener('click', function(e) {
                 '<div class="admin-client-email">' + w._userEmail + '</div></div>' +
               '</div>' +
               '<span class="awd-badge ' + badgeClass + '">' + statusText + '</span>' +
+              (w.newDest ? '<span class="awd-badge fail" title="First time this destination is used">NEW DESTINATION</span>' : '') +
             '</div>' +
             '<div class="awd-amount">$' + Number(w.amount).toFixed(2) + ' <span style="font-size:12px;color:#7c9cbb">via ' + (w.method || 'iban').toUpperCase() + '</span></div>' +
             '<div class="awd-details">' +
