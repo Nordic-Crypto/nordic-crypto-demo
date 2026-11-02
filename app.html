@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><script>try{if(/\/app\.html$/.test(location.pathname))history.replaceState(null,"",location.pathname.replace(/app\.html$/,"app")+location.search+location.hash)}catch(e){}</script>
+<head>
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>/* anti-clickjacking */if(window.top!==window.self){try{window.top.location=window.location.href}catch(e){document.documentElement.style.display='none'}}</script>
+<script>try{if(/\/app\.html$/.test(location.pathname))history.replaceState(null,"",location.pathname.replace(/app\.html$/,"app")+location.search+location.hash)}catch(e){}</script>
 
 <meta charset="UTF-8">
 <script>
@@ -6386,8 +6389,8 @@ document.addEventListener('DOMContentLoaded', function(){
       html += '<tr><td><div class="crm-user"><span class="crm-av">' + esc(initials(v.name, v.email)) + '</span>' +
         '<div><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.docType || 'Document') + '</small></div></div></td>' +
         '<td><div class="crm-act">' +
-        '<button type="button" class="crm-ib ok" title="Approve" onclick="approveKyc(\'' + e + '\')">✓</button>' +
-        '<button type="button" class="crm-ib bad" title="Reject" onclick="rejectKyc(\'' + e + '\')">✕</button>' +
+        '<button type="button" class="crm-ib ok" title="Approve" onclick="approveKyc(' + ncArg(v.email) + ')">✓</button>' +
+        '<button type="button" class="crm-ib bad" title="Reject" onclick="rejectKyc(' + ncArg(v.email) + ')">✕</button>' +
         '</div></td></tr>';
     }
     body.innerHTML = html;
@@ -6622,7 +6625,7 @@ document.addEventListener('click', function(e) {
     })
     .catch(function(err) {
       if (list.dataset.ncLoaded) return;
-      list.innerHTML = '<div class="admin-empty" style="color:#ff5470">Error: ' + err.message + '</div>';
+      list.innerHTML = '<div class="admin-empty" style="color:#ff5470">Error: ' + escapeHtml(err.message) + '</div>';
     });
   };
 
@@ -6787,14 +6790,14 @@ async function loadAdminEmailChanges() {
       html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
         '<div class="admin-client-top">' +
           '<div class="admin-client-info">' +
-            '<div class="admin-client-name">' + req.name + '</div>' +
-            '<div class="admin-client-email">From: ' + req.oldEmail + '</div>' +
-            '<div class="admin-client-email" style="color:#34d399">To: ' + req.newEmail + '</div>' +
+            '<div class="admin-client-name">' + escapeHtml(req.name) + '</div>' +
+            '<div class="admin-client-email">From: ' + escapeHtml(req.oldEmail) + '</div>' +
+            '<div class="admin-client-email" style="color:#34d399">To: ' + escapeHtml(req.newEmail) + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="admin-client-actions">' +
-          '<button class="btn b1" onclick="approveEmailChange(\'' + req.oldEmail + '\',\'' + req.newEmail + '\',\'' + req.id + '\')">✅ Approve</button>' +
-          '<button class="btn b3" onclick="rejectEmailChange(\'' + req.oldEmail + '\',\'' + req.id + '\')">❌ Reject</button>' +
+          '<button class="btn b1" onclick="approveEmailChange(' + ncArg(req.oldEmail) + ',' + ncArg(req.newEmail) + ',' + ncArg(req.id) + ')">✅ Approve</button>' +
+          '<button class="btn b3" onclick="rejectEmailChange(' + ncArg(req.oldEmail) + ',' + ncArg(req.id) + ')">❌ Reject</button>' +
         '</div>' +
       '</div>';
     });
@@ -6851,19 +6854,19 @@ async function loadAdminKycIncomplete() {
       var badge = status === 'pending' ? '⏳ Pending' : status === 'rejected' ? '❌ Rejected' : '⚪ Not Started';
       var actions = '';
       if (status === 'pending') {
-         actions = '<button class="btn b2" onclick="adminViewClient(\'' + u.email + '\')">👁 View / Approve KYC</button>';
+         actions = '<button class="btn b2" onclick="adminViewClient(' + ncArg(u.email) + ')">👁 View / Approve KYC</button>';
       }
       
       html += '<div class="admin-client-card" style="margin-bottom:14px;">' +
         '<div class="admin-client-top">' +
           '<div class="admin-client-info">' +
-            '<div class="admin-client-name">' + u.name + '</div>' +
-            '<div class="admin-client-email">' + u.email + '</div>' +
+            '<div class="admin-client-name">' + escapeHtml(u.name) + '</div>' +
+            '<div class="admin-client-email">' + escapeHtml(u.email) + '</div>' +
           '</div>' +
           '<div class="admin-client-badge">' + badge + '</div>' +
         '</div>' +
         '<div style="font-size:12px;color:#8b95a5;margin-top:10px;">' +
-          (u.verification && u.verification.personalInfo ? 'Address: ' + JSON.stringify(u.verification.personalInfo) : 'No address provided') +
+          (u.verification && u.verification.personalInfo ? 'Address: ' + escapeHtml(JSON.stringify(u.verification.personalInfo)) : 'No address provided') +
         '</div>' +
         '<div class="admin-client-actions" style="margin-top:10px;">' + actions + '</div>' +
       '</div>';
