@@ -31,7 +31,7 @@
     '.ncl-dots{display:flex;gap:6px;margin:2px 0 6px}.ncl-dots i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.1)}.ncl-dots i.on{background:linear-gradient(90deg,#8b5cf6,#38bdf8)}.ncl-dots i.full{background:#ff5470}' +
     '.ncl-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 6px}.ncl-bar span{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#38bdf8);border-radius:3px}' +
     '.ncl-note{font-size:12px;color:#8b95a5;line-height:1.5;margin:6px 2px 14px}' +
-    '.ncl-btn{display:block;width:100%;padding:13px;border:0;border-radius:12px;font:700 14px system-ui;cursor:pointer;background:linear-gradient(135deg,#8b5cf6,#38bdf8);color:#05070a}' +
+    '.ncl-btn{display:block;width:100%;padding:13px;border:0;border-radius:12px;font:700 14px system-ui;cursor:pointer;background:linear-gradient(135deg,#c8ff4d,#5cffb1);color:#0a0f04}' +
     '.ncl-in{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font:600 13px system-ui}' +
     '.ncl-adm{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:16px;padding:16px;margin-bottom:18px}.ncl-adm h3{margin:0 0 4px;font-size:15px}' +
     '.ncl-grid{display:grid;grid-template-columns:90px 1fr 1fr 1fr;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:#8b95a5}@media(max-width:560px){.ncl-grid{grid-template-columns:70px 1fr 1fr 1fr;font-size:10.5px}}';
@@ -95,10 +95,44 @@
           '<div class="ncl-row"><span>Daily total</span><b>' + esc(money(u.usedAmount)) + ' / ' + esc(money(u.maxDay)) + '</b></div><div class="ncl-bar"><span style="width:' + pct.toFixed(0) + '%"></span></div>' +
           (u.resetAt ? '<div class="ncl-row"><span>Available again in</span><b>' + wait(u.resetAt - (d.now || Date.now())) + '</b></div>' : '') + '</div>';
       });
-      html += '<p class="ncl-note">Limits renew on a rolling ' + d.windowHours + '-hour basis: each withdrawal frees up its slot ' + d.windowHours + ' hours after it was made. Need higher limits? Contact support.</p><button class="ncl-btn" id="nclSup">Contact support</button>';
+      html += '<p class="ncl-note">Limits renew on a rolling ' + d.windowHours + '-hour basis: each withdrawal frees up its slot ' + d.windowHours + ' hours after it was made. Need higher limits? Send us a request.</p><div id="nclReqs"></div><button class="ncl-btn" id="nclReq">Request higher limits</button><button class="ncl-btn" id="nclSup" style="margin-top:8px;background:rgba(255,255,255,.08);color:#fff">Contact support</button>';
       $('nclBody').style.cssText = ''; $('nclBody').innerHTML = html;
       $('nclSup').onclick = function () { close(); var c = $('chatToggle'); if (c) c.click(); };
+      $('nclReq').onclick = function () { reqForm(d); };
+      myReqs();
     }).catch(function () { var b = $('nclBody'); if (b) b.textContent = 'Connection error'; });
+  }
+  var STX = { pending: ['Under review', '#fbbf24'], approved: ['Approved', '#34d399'], rejected: ['Not approved', '#ff6b86'] };
+  function myReqs() {
+    api('myLimitRequests').then(function (r) {
+      var h = $('nclReqs'); if (!h || !r || !r.ok || !r.requests.length) return;
+      h.innerHTML = '<div class="ncl-sub" style="margin:4px 0 8px">Your requests</div>' + r.requests.slice(0, 4).map(function (q) {
+        var st = STX[q.status] || STX.pending, w = q.want || {};
+        var txt = [w.count ? w.count + ' withdrawals' : '', w.maxTx ? money(w.maxTx) + ' / transaction' : '', w.maxDay ? money(w.maxDay) + ' / day' : ''].filter(Boolean).join(' · ');
+        return '<div class="ncl-card" style="padding:10px 14px"><div class="ncl-row" style="padding:0"><span>' + esc((NAMES[q.method] || [q.method])[0]) + '</span><b style="color:' + st[1] + '">' + st[0] + '</b></div><div class="ncl-row" style="padding:2px 0 0;font-size:12px"><span>' + esc(txt) + '</span></div></div>';
+      }).join('');
+    }).catch(function () {});
+  }
+  function reqForm(d) {
+    var box = ov && ov.querySelector('.ncl-box'); if (!box) return;
+    var sel = ['bank', 'crypto', 'card'].map(function (k) { return '<option value="' + k + '">' + NAMES[k][0] + '</option>'; }).join('');
+    box.innerHTML = '<div class="ncl-h"><h2>Request higher limits</h2><button class="ncl-x" id="nclX2">\u00d7</button></div><p class="ncl-sub">Tell us what you need. Our team reviews requests and you will get a notification with the decision.</p>' +
+      '<label class="ncl-sub" style="display:block;margin:0 0 4px">Withdrawal type</label><select class="ncl-in" id="nrM" style="margin-bottom:12px">' + sel + '</select>' +
+      '<div class="ncl-grid" style="grid-template-columns:1fr 1fr;margin:0 0 12px"><div>Max per transaction</div><div>Max per day</div><input class="ncl-in" id="nrT" type="number" min="0" inputmode="decimal"><input class="ncl-in" id="nrD" type="number" min="0" inputmode="decimal"></div>' +
+      '<label class="ncl-sub" style="display:block;margin:0 0 4px">Withdrawals per ' + d.windowHours + 'h (optional)</label><input class="ncl-in" id="nrC" type="number" min="0" style="margin-bottom:12px">' +
+      '<label class="ncl-sub" style="display:block;margin:0 0 4px">Why do you need it? (helps us decide faster)</label><textarea class="ncl-in" id="nrR" rows="3" maxlength="400" style="resize:vertical;font-weight:500"></textarea>' +
+      '<div id="nrMsg" style="font-size:12.5px;min-height:18px;margin:10px 0"></div>' +
+      '<div style="display:flex;gap:10px"><button class="ncl-btn" id="nrBack" style="background:rgba(255,255,255,.08);color:#fff">Back</button><button class="ncl-btn" id="nrGo">Send request</button></div>';
+    function ph() { var u = d.limits[$('nrM').value]; $('nrT').placeholder = 'now ' + u.maxTx; $('nrD').placeholder = 'now ' + u.maxDay; $('nrC').placeholder = 'now ' + u.count; }
+    $('nrM').onchange = ph; ph();
+    $('nclX2').onclick = close; $('nrBack').onclick = openLimits;
+    $('nrGo').onclick = function () {
+      var b = $('nrGo'); b.disabled = true; var m = $('nrMsg'); m.textContent = ''; 
+      api('limitRequest', { method: $('nrM').value, want: { maxTx: $('nrT').value, maxDay: $('nrD').value, count: $('nrC').value }, reason: $('nrR').value }).then(function (r) {
+        if (r && r.ok) { m.style.color = '#34d399'; m.textContent = '\u2705 Request sent. We will notify you with the decision.'; setTimeout(openLimits, 1400); }
+        else { b.disabled = false; m.style.color = '#ff6b86'; m.textContent = (r && r.error) || 'Could not send'; }
+      }).catch(function () { b.disabled = false; m.style.color = '#ff6b86'; m.textContent = 'No connection. Please try again.'; });
+    };
   }
   window.openLimits = openLimits;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
@@ -159,7 +193,41 @@
     api('getUserLimits', { email: email }).then(function (d) { if (d && d.ok) show(d); else $('nclBody').textContent = (d && d.error) || 'Could not load'; }).catch(function () { $('nclBody').textContent = 'Connection error'; });
   }
 
-  function tickAll() { buildActs(); adminPanel(); drawerBtn(); }
+  function reqAdmin() {
+    var sec = document.querySelector('.admin-section[data-section="withdrawals"]'); if (!sec || $('nclReqAdm')) return;
+    var role = ''; try { role = localStorage.getItem('user_role'); } catch (e) {} if (role !== 'admin') return;
+    var box = document.createElement('div'); box.className = 'ncl-adm'; box.id = 'nclReqAdm';
+    box.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;flex:1">Limit increase requests</h3><button class="ncl-btn" id="nlrRef" style="width:auto;padding:7px 14px;font-size:12px;background:rgba(255,255,255,.08);color:#fff">Refresh</button></div><div id="nlrList" style="margin-top:12px;color:#8b95a5;font-size:13px">Loading\u2026</div>';
+    var a = $('nclAdm'); if (a && a.nextSibling) sec.insertBefore(box, a.nextSibling); else sec.insertBefore(box, sec.firstChild);
+    function load() {
+      api('limitRequestsList').then(function (r) {
+        var L = $('nlrList'); if (!L) return;
+        if (!r || !r.ok) { L.textContent = (r && r.error) || 'Could not load'; return; }
+        if (!r.requests.length) { L.textContent = 'No requests yet.'; return; }
+        L.innerHTML = r.requests.map(function (q) {
+          var w = q.want || {}, c = q.current || {}, st = STX[q.status] || STX.pending;
+          var head = '<div class="ncl-row" style="padding:0"><span><b>' + esc(q.name || q.email) + '</b><br>' + esc(q.email) + ' \u00b7 ' + esc((NAMES[q.method] || [q.method])[0]) + '</span><b style="color:' + st[1] + '">' + st[0] + '</b></div>';
+          var cmp = '<div class="ncl-row" style="font-size:12px"><span>Now: ' + [c.count + ' wd', money(c.maxTx) + '/tx', money(c.maxDay) + '/day'].join(' \u00b7 ') + '</span></div>';
+          if (q.status !== 'pending') return '<div class="ncl-card">' + head + cmp + '<div class="ncl-row" style="font-size:12px"><span>' + (q.applied ? 'Applied: ' + esc(JSON.stringify(q.applied)) : esc(q.note || '')) + '</span></div></div>';
+          var f = function (k, ph, v) { return '<input class="ncl-in" data-k="' + k + '" type="number" min="0" placeholder="' + ph + '" value="' + (v == null ? '' : v) + '">'; };
+          return '<div class="ncl-card" data-id="' + esc(q.id) + '">' + head + cmp + (q.reason ? '<div class="ncl-note" style="margin:6px 0">\u201c' + esc(q.reason) + '\u201d</div>' : '') +
+            '<div class="ncl-grid" style="grid-template-columns:1fr 1fr 1fr;margin:8px 0"><div>Withdrawals</div><div>Per tx $</div><div>Per day $</div>' + f('count', 'keep', w.count) + f('maxTx', 'keep', w.maxTx) + f('maxDay', 'keep', w.maxDay) + '</div>' +
+            '<input class="ncl-in" data-k="note" placeholder="Note to client (optional)" style="margin-bottom:8px"><div style="display:flex;gap:8px"><button class="ncl-btn" data-ok="1" style="padding:9px">Approve</button><button class="ncl-btn" data-ok="0" style="padding:9px;background:rgba(255,84,112,.15);color:#ff6b86">Reject</button></div></div>';
+        }).join('');
+        [].forEach.call(L.querySelectorAll('[data-ok]'), function (b) {
+          b.onclick = function () {
+            var card = b.closest('[data-id]'), v = {}, ok = b.getAttribute('data-ok') === '1';
+            [].forEach.call(card.querySelectorAll('[data-k]'), function (i) { v[i.getAttribute('data-k')] = i.value; });
+            if (ok && !confirm('Approve and apply these limits to the client now?')) return;
+            b.disabled = true;
+            api('limitRequestDecide', { id: card.getAttribute('data-id'), approve: ok, values: { count: v.count, maxTx: v.maxTx, maxDay: v.maxDay }, note: v.note }).then(function (r) { if (!r || !r.ok) alert((r && r.error) || 'Failed'); load(); });
+          };
+        });
+      }).catch(function () { var L = $('nlrList'); if (L) L.textContent = 'Connection error'; });
+    }
+    $('nlrRef').onclick = load; load();
+  }
+  function tickAll() { buildActs(); adminPanel(); reqAdmin(); drawerBtn(); }
   // MutationObserver -> requestAnimationFrame: runs before the next paint (no flicker) but never loops inside one task (no freeze)
   var rafL = 0;
   new MutationObserver(function (list) {
