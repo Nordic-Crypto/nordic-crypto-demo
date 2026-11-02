@@ -75,7 +75,7 @@
     var done = false;
     function fetchLive() {
       if (done) return; done = true;
-      fetch(T.reviewsUrl, { cache: 'default' }).then(function (r) { return r.json(); }).then(function (d) {
+      fetch(T.reviewsUrl + (T.reviewsUrl.indexOf('?') > -1 ? '&' : '?') + 'v=' + Math.floor(Date.now() / 60000), { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.ok && d.reviews && d.reviews.length) { T.reviews = d.reviews; flags(); render(); }
       }).catch(function () {});
     }
