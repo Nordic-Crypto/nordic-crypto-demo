@@ -116,3 +116,25 @@ div:has(>.awd-badge){flex-wrap:wrap;row-gap:6px}
 
 /* review form */
 .cs-stars{display:flex;gap:4px;margin:4px 0 10px}.cs-star{border:0;background:none;color:rgba(255,255,255,.2);font-size:30px;line-height:1;cursor:pointer;padding:2px;transition:transform .15s,color .15s}.cs-star.on{color:#c8ff4d}.cs-star:hover{transform:scale(1.15)}
+
+/* review invitation */
+.cs-inv{position:fixed;right:18px;bottom:18px;z-index:99000;width:min(340px,calc(100vw - 36px));padding:18px 18px 16px;border-radius:20px;background:#12141b;border:1px solid rgba(200,255,77,.35);box-shadow:0 24px 60px -20px rgba(0,0,0,.7);color:#eef1f7;animation:csInvIn .5s cubic-bezier(.2,.8,.2,1)}
+.cs-inv-t{font-weight:800;margin-bottom:4px;padding-right:22px}.cs-inv-s{font-size:13px;line-height:1.5;color:#9aa4b8;margin-bottom:12px}
+.cs-inv-b{display:flex;gap:8px;align-items:center}.cs-inv-n{background:none;border:0;color:#9aa4b8;font:inherit;font-size:13px;cursor:pointer;padding:8px}.cs-inv-n:hover{color:#fff}
+.cs-inv-x{position:absolute;top:8px;right:10px;background:none;border:0;color:#9aa4b8;font-size:22px;line-height:1;cursor:pointer}
+@keyframes csInvIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.cs-inv{animation:none}}
+@media(max-width:520px){.cs-inv{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto}}
+
+/* cabinet polish: calmer transitions, friendlier empty states, clearer focus */
+.admin-section.active{animation:ncFadeUp .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes ncFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.recent-tx-empty,.notif-empty,.tt-empty,.admin-empty{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+.recent-tx-empty:before,.notif-empty:before,.tt-empty:before{content:"";width:46px;height:46px;border-radius:16px;background:rgba(200,255,77,.08) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c8ff4d' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M4 12h10M4 17h7'/%3E%3C/svg%3E") center/22px no-repeat;border:1px solid rgba(200,255,77,.18)}
+.notif-empty:before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c8ff4d' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7z'/%3E%3Cpath d='M10 20a2 2 0 0 0 4 0'/%3E%3C/svg%3E")}
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:2px solid rgba(200,255,77,.75);outline-offset:2px}
+:where(.admin-client-card,.admin-card,.card,.tx-row,.settings-section){transition:border-color .25s,background-color .25s,box-shadow .25s}
+.cs-skel{display:inline-block;min-width:90px;height:14px;border-radius:7px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.12),rgba(255,255,255,.05));background-size:200% 100%;animation:ncShim 1.3s linear infinite}
+@keyframes ncShim{to{background-position:-200% 0}}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.admin-section.active{animation:none}.cs-skel{animation:none}}
