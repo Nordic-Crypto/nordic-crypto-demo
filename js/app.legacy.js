@@ -1704,7 +1704,7 @@ function renderRecentTx() {
     html += '<div class="recent-tx-item" data-tx-i="' + i + '" style="cursor:pointer" title="Click for details">' +
       '<div class="recent-tx-icon ' + iconClass + '">' + icon + '</div>' +
       '<div class="recent-tx-info">' +
-      '<div class="recent-tx-desc">' + (t.desc || 'Transaction') + '</div>' +
+      '<div class="recent-tx-desc">' + escapeHtml(t.desc || 'Transaction') + '</div>' +
       '<div class="recent-tx-time">' + timeStr + '</div>' +
       badge +
       '</div>' +
