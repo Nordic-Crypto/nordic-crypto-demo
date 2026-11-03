@@ -37,6 +37,8 @@
       '<div class="stat"><div><b id="nnClients">–</b>clients</div><div><b id="nnOff">–</b>unsubscribed</div></div>' +
       '<div class="chips"><span style="font-size:12px;color:#8b95a5;align-self:center">Start from:</span><button class="chip" data-t="feature">New feature</button><button class="chip" data-t="mobile">Mobile update</button><button class="chip" data-t="security">Security</button><button class="chip" data-t="maint">Maintenance done</button></div>' +
       '<div class="grid"><div class="box"><label>Subject (what they see in the inbox)</label><input id="nnSubject" maxlength="120">' +
+      '<label>Label above the heading (optional)</label><select id="nnLabel"><option value="">None</option><option>NEW</option><option>UPDATE</option><option>SECURITY</option><option>TRAVEL</option><option>IMPROVED</option><option>COMING SOON</option></select>' +
+      '<label>Picture or animation (optional): link to a .png / .jpg / .gif on nordiccrypto.net</label><input id="nnImg" placeholder="https://www.nordiccrypto.net/img/mail/update.png">' +
       '<label>Heading inside the e-mail</label><input id="nnTitle" maxlength="120">' +
       '<label>Text (blank line = new paragraph)</label><textarea id="nnBody" maxlength="4000"></textarea>' +
       '<label>Highlights (one per line, optional, up to 8)</label><textarea id="nnBullets" style="min-height:80px"></textarea>' +
@@ -51,7 +53,7 @@
     $('nnPrev').onclick = preview; $('nnTest').onclick = test; $('nnSend').onclick = send;
   }
   function data(mode) {
-    return { mode: mode, subject: $('nnSubject').value, title: $('nnTitle').value, body: $('nnBody').value, bullets: $('nnBullets').value.split('\n'), ctaText: $('nnCta').value, ctaUrl: $('nnUrl').value.trim(), lang: 'en' };
+    return { mode: mode, subject: $('nnSubject').value, title: $('nnTitle').value, body: $('nnBody').value, bullets: $('nnBullets').value.split('\n'), ctaText: $('nnCta').value, ctaUrl: $('nnUrl').value.trim(), image: $('nnImg').value.trim(), label: $('nnLabel').value, lang: 'en' };
   }
   function msg(t, ok) { $('nnMsg').innerHTML = t ? '<div class="msg ' + (ok ? 'ok' : 'er') + '">' + esc(t) + '</div>' : ''; }
   function preview() { msg(''); post('sendAnnouncement', data('preview')).then(function (r) { if (r && r.ok && r.html) $('nnFrame').srcdoc = r.html; else if (r && r.ok) msg(OLD); else msg((r && r.error) || 'Error'); }); }
