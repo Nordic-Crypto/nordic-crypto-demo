@@ -652,6 +652,17 @@ select option:checked{background-color:#1d2a44;color:#fff}
 .awd-card{background:rgba(13,19,30,.72);border:1px solid rgba(71,220,255,.15);border-radius:12px;padding:16px;margin-bottom:12px}
 .awd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .awd-badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+
+.awd-risk{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.awd-risk.high{background:rgba(255,84,112,.16);color:#ff6b83}.awd-risk.med{background:rgba(245,158,11,.15);color:#fbbf24}.awd-risk.low{background:rgba(52,211,153,.13);color:#34d399}
+.awd-why{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
+.awd-why span{font-size:12px;padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.06);color:#d6dde6}
+.awd-why.high span{background:rgba(255,84,112,.12);color:#ffb3c0}
+.awd-fbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.awd-fbar button{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.awd-fbar button.on{background:#beff3c;border-color:#beff3c;color:#0a0b08}
+#adminWithdrawalsList[data-f="pending"] .admin-client-card:not([data-st="pending"]),
+#adminWithdrawalsList[data-f="high"] .admin-client-card:not([data-risk="high"]){display:none}
 .awd-badge.pend{background:rgba(245,158,11,.15);color:#fbbf24}
 .awd-badge.ok{background:rgba(16,185,129,.15);color:#34d399}
 .awd-badge.fail{background:rgba(239,68,68,.15);color:#f87171}
@@ -6555,6 +6566,12 @@ document.addEventListener('click', function(e) {
   window.loadAdminWithdrawals = function() {
     var list = document.getElementById('adminWithdrawalsList');
     if (!list) return;
+    if (!document.getElementById('awdFbar')) {
+      var fb = document.createElement('div'); fb.id = 'awdFbar'; fb.className = 'awd-fbar';
+      fb.innerHTML = '<button type="button" data-f="" class="on">All</button><button type="button" data-f="pending">Pending</button><button type="button" data-f="high">High risk</button>';
+      fb.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; fb.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); if (b.dataset.f) list.setAttribute('data-f', b.dataset.f); else list.removeAttribute('data-f'); });
+      list.parentNode.insertBefore(fb, list);
+    }
     if (!list.dataset.ncLoaded) list.innerHTML = '<div class="admin-empty">Loading...</div>';   // first load only: background refreshes stay silent
     
     fetch(WORKER_URL + '?action=getUsersBatch', {
@@ -6570,11 +6587,31 @@ document.addEventListener('click', function(e) {
         (u.withdrawals || []).forEach(function(w) {
           w._userEmail = u.email;
           w._userName = u.name || u.email;
+          w._u = u;
           withdrawals.push(w);
         });
       });
-      withdrawals.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      function ncRisk(w){
+        var u=w._u||{}, why=[], sc=0, amt=Number(w.amount)||0, t=w.createdAt||Date.now(), H=36e5, D=864e5;
+        function add(p,t){sc+=p;why.push(t)}
+        if(w.newDest) add(2,'New destination');
+        if(amt>=5000) add(3,'Large amount (≥ $5,000)'); else if(amt>=1000) add(1,'Amount ≥ $1,000');
+        var bal=Number(u.balance)||0; if(bal>0&&amt/bal>=0.8&&amt>=200) add(2,'Takes '+Math.round(amt/bal*100)+'% of the balance');
+        if(u.createdAt){var age=(t-u.createdAt)/D; if(age<7) add(2,'New account ('+Math.max(0,Math.floor(age))+' d old)');}
+        var ph=(u.passwordHistory||[])[0]; if(ph&&ph.changedAt&&t-ph.changedAt>=0&&t-ph.changedAt<24*H) add(3,'Password changed '+Math.max(1,Math.round((t-ph.changedAt)/H))+' h before this request');
+        var ec=(u.emailChangeRequests||[]).some(function(r){var ts=r.reviewedAt||r.requestedAt||0;return ts&&t-ts>=0&&t-ts<7*D&&r.status!=='rejected'}); if(ec) add(2,'E-mail change in the last 7 days');
+        var all=(u.withdrawals||[]); var rej=all.filter(function(x){return x.status==='rejected'}).length; if(rej) add(1,rej+' earlier withdrawal'+(rej>1?'s':'')+' rejected');
+        var n24=all.filter(function(x){return x.id!==w.id&&Math.abs((x.createdAt||0)-t)<24*H}).length+1; if(n24>=3) add(2,n24+' requests within 24 h');
+        return {score:sc,level:sc>=5?'high':sc>=2?'med':'low',why:why};
+      }
+      withdrawals.forEach(function(w){w._risk=ncRisk(w)});
+      (function(){var c=document.getElementById('adminWithdrawalsCount');if(!c)return;var p=withdrawals.filter(function(w){return w.status==='pending'}),h=p.filter(function(w){return w._risk.level==='high'}).length;c.textContent=p.length+' pending · '+withdrawals.length+' total'+(h?' · '+h+' high risk':'');})();
+      withdrawals.sort(function(a, b) {
+        var pa=a.status==='pending'?1:0, pb=b.status==='pending'?1:0; if(pa!==pb) return pb-pa;
+        if(pa&&pb&&a._risk.score!==b._risk.score) return b._risk.score-a._risk.score;
+        return (b.createdAt || 0) - (a.createdAt || 0); });
       if (withdrawals.length === 0) {
+        (function(){var c=document.getElementById('adminWithdrawalsCount');if(c)c.textContent='No withdrawals yet';})();
         list.dataset.ncLoaded = '1';
         if (list.__ncH !== 'empty') { list.__ncH = 'empty'; list.innerHTML = '<div class="admin-empty">No withdrawals yet.</div>'; }
         return;
@@ -6605,7 +6642,7 @@ document.addEventListener('click', function(e) {
         var statusText = isPending ? 'Pending' : (w.status === 'approved' ? 'Approved' : 'Rejected');
         var initials = w._userName.substring(0, 2).toUpperCase();
         html += 
-          '<div class="admin-client-card" style="margin-bottom:12px;">' +
+          '<div class="admin-client-card" data-risk="' + w._risk.level + '" data-st="' + w.status + '" style="margin-bottom:12px;">' +
             '<div class="admin-client-top" style="justify-content:space-between;">' +
               '<div style="display:flex; align-items:center; gap:12px;">' +
                 '<div class="admin-client-avatar">' + initials + '</div>' +
@@ -6613,9 +6650,11 @@ document.addEventListener('click', function(e) {
                 '<div class="admin-client-email">' + w._userEmail + '</div></div>' +
               '</div>' +
               '<span class="awd-badge ' + badgeClass + '">' + statusText + '</span>' +
+              '<span class="awd-risk ' + w._risk.level + '" title="Risk score ' + w._risk.score + '">' + (w._risk.level==='high'?'● HIGH RISK':w._risk.level==='med'?'● MEDIUM':'● LOW') + '</span>' +
               (w.newDest ? '<span class="awd-badge fail" title="First time this destination is used">NEW DESTINATION</span>' : '') +
               (w.holdUntil && w.holdUntil > Date.now() && w.status === 'pending' ? '<span class="awd-badge pending" title="Safety hold until ' + new Date(w.holdUntil).toLocaleString() + '">⏳ HOLD ' + Math.ceil((w.holdUntil - Date.now()) / 3600000) + 'h</span>' : '') +
             '</div>' +
+            (w._risk.why.length && w.status==='pending' ? '<div class="awd-why ' + w._risk.level + '">' + w._risk.why.map(function(x){return '<span>' + ncEsc(x) + '</span>'}).join('') + '</div>' : '') +
             '<div class="awd-amount">$' + Number(w.amount).toFixed(2) + ' <span style="font-size:12px;color:#7c9cbb">via ' + (w.method || 'iban').toUpperCase() + '</span></div>' +
             '<div class="awd-details">' +
               ncWdRows(w) +
