@@ -67,6 +67,32 @@
     if (t.amt > 0) return 'dep';
     return 'card';
   }
+  var CG = {
+    BTC: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h6a3 3 0 010 6H8m0 0h7a3 3 0 010 6H8M8 5v12M10 3v2m4-2v2m-4 12v2m4-2v2"/></svg>',
+    ETH: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 2l-6.5 10.2L12 16l6.5-3.800z" opacity=".95"/><path d="M12 17.200l-6.500-3.800L12 22l6.500-8.600z" opacity=".75"/></svg>'
+  };
+  var COINC = { BTC: ['#f7931a', '#ffb84d'], ETH: ['#627eea', '#9db0ff'] };
+  /* clear, human labels: what kind of money movement is this */
+  function kind(t) {
+    var d = String(t.desc || ''), l = d.toLowerCase(), a = t.amt || 0, m;
+    var coin = (d.match(/\b(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)\b/i) || [])[1]; coin = coin ? coin.toUpperCase() : '';
+    var amtTxt = (d.match(/([\d]+\.[\d]+)\s*(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)/i) || [])[0] || '';
+    if (/withdraw/.test(l) || t.isWithdrawal) {
+      var meth = /card/.test(l) ? 'card' : /swift/.test(l) ? 'swift' : /iban|sepa|bank/.test(l) ? 'iban' : (coin || /wallet|crypto|address/.test(l)) ? 'crypto' : 'other';
+      if (meth === 'card') return { t: 'Withdrawal to your card', k: 'TO CARD', c: '#f59e0b', i: I.pay };
+      if (meth === 'iban') return { t: 'Withdrawal to your bank account', k: 'TO BANK', c: '#f59e0b', i: I.bank };
+      if (meth === 'swift') return { t: 'International bank transfer (SWIFT)', k: 'TO BANK', c: '#f59e0b', i: I.bank };
+      if (meth === 'crypto') return { t: 'Crypto sent to external wallet' + (coin ? ' · ' + coin : ''), k: 'CRYPTO OUT', c: '#fb923c', i: I.up, coin: coin, dir: 'out' };
+      return { t: 'Withdrawal', k: 'WITHDRAWAL', c: '#f59e0b', i: I.up };
+    }
+    if (/crypto deposit|received.*(btc|eth|usdt)|deposit.*(btc|eth|usdt)/.test(l) || (a > 0 && coin && /deposit|received/.test(l))) return { t: 'Crypto received' + (amtTxt ? ' · ' + amtTxt : coin ? ' · ' + coin : ''), k: 'CRYPTO IN', c: '#10b981', i: I.down, coin: coin, dir: 'in' };
+    if (/bank deposit|sepa|bank transfer|top up|topup|wire/.test(l) && a >= 0) return { t: 'Bank transfer received', k: 'BANK IN', c: '#22d3ee', i: I.bank };
+    if (/deposit/.test(l)) return { t: d, k: 'DEPOSIT', c: '#10b981', i: I.down };
+    if (/bonus|reward|cashback|refund/.test(l)) return { t: d, k: 'BONUS', c: '#fbbf24', i: I.gift };
+    if (/\b(buy|bought|sell|sold|swap|convert|exchange)\b/.test(l)) return { t: d, k: 'EXCHANGE', c: '#8b5cf6', i: I.swap };
+    if (/fee|commission/.test(l)) return { t: d, k: 'FEE', c: '#ec4899', i: I.fee };
+    return null;
+  }
   var CAT = {
     dep: { n: 'Deposits', c: '#10b981', i: I.down }, wd: { n: 'Withdrawals', c: '#f59e0b', i: I.up }, trade: { n: 'Exchange & trading', c: '#8b5cf6', i: I.swap },
     card: { n: 'Card & payments', c: '#c8ff4d', i: I.pay }, fee: { n: 'Fees', c: '#ec4899', i: I.fee }, bonus: { n: 'Bonuses', c: '#fbbf24', i: I.gift }
@@ -247,8 +273,11 @@
     var h = '', last = '';
     show.forEach(function (t, i) {
       var k = t.ts ? dayKey(t.ts) : 'Earlier'; if (k !== last) { h += '<div class="bd-day">' + esc(T(k)) + '</div>'; last = k; }
-      var c = cat(t), a = t.amt || 0, tm = t.ts ? new Date(t.ts).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '';
-      h += '<button type="button" class="bd-tx" data-a="tx" data-i="' + i + '"><span class="bd-ti" style="--c:' + CAT[c].c + '">' + ic(CAT[c].i, 18) + '</span><span class="bd-tt"><b>' + esc(t.desc || '—') + '</b><small>' + esc(T(CAT[c].n)) + (tm ? ' · ' + tm : '') + '</small></span><span class="bd-ta">' + (a ? '<b class="bd-sens ' + (a > 0 ? 'up' : '') + '">' + (a > 0 ? '+' : '−') + esc(U(Math.abs(a))) + '</b>' : '<b>—</b>') + stBadge(t) + '</span></button>';
+      var c = cat(t), a = t.amt || 0, tm = t.ts ? new Date(t.ts).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '', kd = kind(t);
+      var col = kd ? kd.c : CAT[c].c, icn = kd ? kd.i : CAT[c].i, ttl = kd ? kd.t : (t.desc || '—');
+      var sub = kd ? '<i class="bd-kd" style="--c:' + kd.c + '">' + esc(kd.k) + '</i>' + (tm ? ' ' + tm : '') : esc(T(CAT[c].n)) + (tm ? ' · ' + tm : '');
+      var cc = kd && kd.coin && CG[kd.coin] ? COINC[kd.coin] : null;
+      h += '<button type="button" class="bd-tx" data-a="tx" data-i="' + i + '"><span class="bd-ti' + (cc ? ' coin' : '') + '" style="--c:' + col + (cc ? ';--c1:' + cc[0] + ';--c2:' + cc[1] : '') + '">' + (cc ? CG[kd.coin] + '<em class="bd-dir ' + kd.dir + '">' + (kd.dir === 'in' ? '↓' : '↑') + '</em>' : ic(icn, 18)) + '</span><span class="bd-tt"><b>' + esc(ttl) + '</b><small>' + sub + '</small></span><span class="bd-ta">' + (a ? '<b class="bd-sens ' + (a > 0 ? 'up' : '') + '">' + (a > 0 ? '+' : '−') + esc(U(Math.abs(a))) + '</b>' : '<b>—</b>') + stBadge(t) + '</span></button>';
     });
     if (!h) h = '<div class="bd-empty">' + ic(I.clock, 28) + '<b>' + (all.length ? 'Nothing found' : 'No transactions yet') + '</b><span>' + (all.length ? 'Try another filter or search.' : 'Add money to get started — your activity will show up here.') + '</span>' + (all.length ? '' : '<button type="button" class="bd-btn pri" data-a="proxy" data-t="btnAdd">' + ic(I.add, 16) + ' Add money</button>') + '</div>';
     var chips = [['all', 'All'], ['in', 'Money in'], ['out', 'Money out'], ['pend', 'Pending']].map(function (x) { return '<button type="button" class="' + (B.filter === x[0] ? 'on' : '') + '" data-a="flt" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
@@ -301,11 +330,16 @@
     box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Savings</div><h3>Goals</h3></div><button type="button" class="bd-link" data-a="gnew">' + ic(I.plus, 14) + ' New goal</button></div>' + (list || (!B.goalForm ? '<div class="bd-empty sm">' + ic(I.target, 26) + '<b>Set a savings goal</b><span>Track your balance against something you are saving for.</span></div>' : '')) + form;
   }
   function rCrypto() {
-    var s = S(), rows = [['BTC', 'Bitcoin', s.btc || 0, s.btcP || 0, 'btcChange', '#f7931a'], ['ETH', 'Ethereum', s.eth || 0, s.ethP || 0, 'ethChange', '#7c8cff']], tot = 0;
-    rows.forEach(function (r) { tot += r[2] * r[3]; });
-    $('bdCrypto').innerHTML = '<div class="bd-ch"><div><div class="bd-k">Portfolio</div><h3>Crypto</h3></div><button type="button" class="bd-link" data-a="nav" data-v="assets">View ' + ic(I.chev, 14) + '</button></div><div class="bd-ct bd-sens">' + esc(U(tot)) + '</div>' +
-      rows.map(function (r) { var ch = $(r[4]), t = ch ? ch.textContent.trim() : '', dn = /^[-−]/.test(t); return '<div class="bd-coin"><span class="bd-cg" style="background:' + r[5] + '22;color:' + r[5] + '">' + r[0].charAt(0) + '</span><span class="bd-cn"><b>' + r[1] + '</b><small class="bd-sens">' + (+r[2]).toFixed(6).replace(/\.?0+$/, '') + ' ' + r[0] + '</small></span><span class="bd-cv"><b class="bd-sens">' + esc(U(r[2] * r[3])) + '</b><small class="' + (t && t !== '—' ? (dn ? 'dn' : 'up') : '') + '">' + esc(t && t !== '—' ? t : (r[3] ? U(r[3]) : '—')) + '</small></span></div>'; }).join('') +
-      '<button type="button" class="bd-btn ghost full" data-a="proxy" data-t="btnExchangeV2">' + ic(I.swap, 16) + ' Buy / sell crypto</button>';
+    var s = S(), rows = [['BTC', 'Bitcoin', s.btc || 0, s.btcP || 0, 'btcChange', '#f7931a', '#ffb84d'], ['ETH', 'Ethereum', s.eth || 0, s.ethP || 0, 'ethChange', '#627eea', '#9db0ff']], tot = 0;
+    rows.forEach(function (r) { r.v = r[2] * r[3]; tot += r.v; });
+    var bar = tot > 0 ? '<div class="bd-xbar">' + rows.map(function (r) { return '<i style="width:' + (r.v / tot * 100).toFixed(1) + '%;background:' + r[5] + '"></i>'; }).join('') + '</div>' : '';
+    $('bdCrypto').innerHTML = '<div class="bd-ch"><div><div class="bd-k">Portfolio</div><h3>Crypto</h3></div><button type="button" class="bd-link" data-a="nav" data-v="assets">View ' + ic(I.chev, 14) + '</button></div>' +
+      '<div class="bd-xtot"><small>Total value</small><div class="bd-ct bd-sens">' + esc(U(tot)) + '</div>' + bar + '</div>' +
+      rows.map(function (r) {
+        var ch = $(r[4]), t = ch ? ch.textContent.trim() : '', dn = /^[-−]/.test(t), pc = tot > 0 ? Math.round(r.v / tot * 100) : 0;
+        return '<div class="bd-xc" style="--c1:' + r[5] + ';--c2:' + r[6] + '"><span class="bd-xi">' + CG[r[0]] + '</span><span class="bd-cn"><b>' + r[1] + '</b><small class="bd-sens">' + (+r[2]).toFixed(6).replace(/\.?0+$/, '') + ' ' + r[0] + '</small></span><span class="bd-cv"><b class="bd-sens">' + esc(U(r.v)) + '</b><small>' + (t && t !== '—' ? '<i class="bd-xp ' + (dn ? 'dn' : 'up') + '">' + esc(t) + '</i>' : '') + '<i class="bd-xs">' + pc + '%</i></small></span></div>';
+      }).join('') +
+      '<div class="bd-xa"><button type="button" data-a="proxy" data-t="btnExchangeV2">' + ic(I.swap, 16) + '<span>Buy / sell</span></button><button type="button" data-a="proxy" data-t="btnAdd">' + ic(I.down, 16) + '<span>Receive</span></button><button type="button" data-a="proxy" data-t="btnWithdrawV2">' + ic(I.up, 16) + '<span>Send</span></button></div>';
   }
   function rHealth() {
     var s = S(), v = s.verification && s.verification.status, deps = allTx().some(function (t) { return t.amt > 0 && cat(t) === 'dep' && okTx(t); });
