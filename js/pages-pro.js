@@ -138,7 +138,7 @@
     var tbl = p.querySelector('.tbl'); if (!tbl) return;
     if (!$('ppTools')) {
       var w = document.createElement('div'); w.id = 'ppTools';
-      w.innerHTML = '<div class="pp-sum" id="ppSum"></div><div class="pp-tools"><div class="pp-chips">' + [['all', 'All'], ['in', 'Income'], ['out', 'Spending'], ['crypto', 'Crypto'], ['wd', 'Withdrawals']].map(function (c) { return '<button class="pp-chip' + (c[0] === 'all' ? ' on' : '') + '" data-c="' + c[0] + '">' + c[1] + '</button>'; }).join('') + '</div><input class="pp-q" id="ppQ" type="search" placeholder="Search transactions" aria-label="Search transactions"></div>';
+      w.innerHTML = '<div class="pp-sum" id="ppSum"></div><div class="pp-tools"><div class="pp-chips">' + [['all', 'All'], ['in', 'Income'], ['out', 'Spending'], ['crypto', 'Crypto'], ['wd', 'Withdrawals']].map(function (c) { return '<button class="pp-chip' + (c[0] === 'all' ? ' on' : '') + '" data-c="' + c[0] + '">' + c[1] + '</button>'; }).join('') + '</div><input class="pp-q" id="ppQ" type="search" placeholder="Search transactions" aria-label="Search transactions"><button type="button" class="pp-chip" id="ppCsv" title="Download the shown transactions as a spreadsheet">⤓ CSV</button></div>';
       tbl.parentNode.insertBefore(w, tbl);
       var none = document.createElement('div'); none.id = 'ppNone'; none.className = 'pp-none'; none.textContent = 'Nothing found. Try another filter or search.'; tbl.parentNode.insertBefore(none, tbl.nextSibling);
       w.addEventListener('click', function (e) { var b = e.target.closest('.pp-chip'); if (!b) return; F.chip = b.getAttribute('data-c'); [].forEach.call(w.querySelectorAll('.pp-chip'), function (x) { x.classList.toggle('on', x === b); }); applyTx(); });
@@ -177,6 +177,22 @@
       var nn = $('ppNone'); if (nn) nn.classList.toggle('on', rows.length > 0 && !shown);
     } finally { applying = false; if (mo && b) mo.observe(b, { childList: true }); }
   }
+
+  function exportCsv() {
+    var b = $('txB'); if (!b) return;
+    var q = function (v) { v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); if (/^[=+@\t]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+    var lines = [['Date', 'Type', 'Description', 'Amount', 'Status'].map(q).join(',')];
+    [].forEach.call(b.querySelectorAll('tr'), function (tr) {
+      if (tr.classList.contains('pp-day') || tr.classList.contains('pp-hide') || tr.children.length < 5) return;
+      var td = tr.children;
+      lines.push([td[0].textContent, td[1].getAttribute('data-k') || td[1].textContent, td[2].textContent, td[3].textContent.replace(/,/g, '').replace('−', '-').replace(/[^0-9.\-]/g, ''), td[4].textContent].map(q).join(','));
+    });
+    if (lines.length < 2) { if (typeof window.toast === 'function') window.toast('Nothing to export', true); return; }
+    var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'transactions-' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#ppCsv')) { e.preventDefault(); exportCsv(); } });
   var mo = null;
   function watchTx() { var b = $('txB'); if (!b || mo) return; mo = new MutationObserver(function () { applyTx(); }); mo.observe(b, { childList: true }); }
 
