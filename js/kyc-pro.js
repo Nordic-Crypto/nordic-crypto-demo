@@ -166,6 +166,15 @@
   }
   document.addEventListener('click', function (e) {
     var t = e.target && e.target.closest ? e.target.closest('#verifyNext1,#verifyNext2,#verifyBack2,#verifyBack3') : null;
+    if (!t && typeof e.clientX === 'number' && e.clientX + e.clientY > 0 && document.getElementById('verifyScreen') && document.getElementById('verifyScreen').classList.contains('on')) {
+      // something invisible sits on top of a nav button: route the click by position
+      var ids = ['verifyNext1', 'verifyNext2', 'verifyBack2', 'verifyBack3'];
+      for (var k = 0; k < ids.length; k++) {
+        var bt = document.getElementById(ids[k]); if (!bt || bt.disabled || !bt.offsetParent) continue;
+        var r = bt.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { t = bt; break; }
+      }
+    }
     if (!t) return;
     var id = t.id;
     if (id === 'verifyNext1') {
