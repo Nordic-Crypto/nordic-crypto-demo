@@ -15,6 +15,7 @@
     feature: { subject: 'New in NordicCrypto: Rewards & daily bonus', title: 'Rewards are now live', body: 'We have added a new Rewards programme to your dashboard. The more you use your account, the more you unlock.\n\nOpen the Rewards bar on your dashboard to see your level and claim your daily bonus.', bullets: 'Daily bonus you can claim every day\nLevels that unlock extra benefits\nProgress shown right on your dashboard', cta: 'See my rewards' },
     mobile: { subject: 'A cleaner, faster NordicCrypto on your phone', title: 'Redesigned for mobile', body: 'We have rebuilt the mobile experience so everything fits and reads clearly, in your own language and currency format.', bullets: 'New bottom navigation\nAmounts formatted for your country\nBetter card view on small screens', cta: 'Open NordicCrypto' },
     security: { subject: 'Your security matters: new alerts are on', title: 'New security notifications', body: 'From now on we e-mail you when your password changes or when someone signs in from a new device, so you always stay in control.\n\nIf you ever see something you do not recognise, change your password and contact support.', bullets: 'Alerts for new device sign-ins\nPassword reset with a one-time code\nPush notifications for deposits and withdrawals', cta: 'Review my security' },
+    update: { subject: "What's new at NordicCrypto", title: "What's new at NordicCrypto", body: "We have just refreshed your account. Here is what is new:", bullets: 'Clearer dashboard: every transaction now shows what it is — crypto received, bank transfer, withdrawal to card or bank\nRedesigned Crypto section with your whole portfolio at a glance\nNew Explore page: airport lounge, hotels and travel help, and Bitcoin ATMs near you\nExtra security checks to keep your account and money safe', cta: 'Open NordicCrypto', label: 'NEW', image: 'https://www.nordiccrypto.net/img/mail/update-welcome.gif' },
     maint: { subject: 'Scheduled maintenance completed', title: 'Everything is back to normal', body: 'Our short maintenance window is finished and all services are running again. Thank you for your patience.', bullets: '', cta: 'Open NordicCrypto' }
   };
   function css() {
@@ -35,10 +36,11 @@
     var sec = document.createElement('div'); sec.className = 'admin-section'; sec.setAttribute('data-section', TAB);
     sec.innerHTML = '<div id="ncNews"><h2>📣 Announcements</h2><div class="sub">Send an update to every client by e-mail: new features, improvements, maintenance. Clients can unsubscribe from news (security and account e-mails are always sent).</div>' +
       '<div class="stat"><div><b id="nnClients">–</b>clients</div><div><b id="nnOff">–</b>unsubscribed</div></div>' +
-      '<div class="chips"><span style="font-size:12px;color:#8b95a5;align-self:center">Start from:</span><button class="chip" data-t="feature">New feature</button><button class="chip" data-t="mobile">Mobile update</button><button class="chip" data-t="security">Security</button><button class="chip" data-t="maint">Maintenance done</button></div>' +
+      '<div class="chips"><span style="font-size:12px;color:#8b95a5;align-self:center">Start from:</span><button class="chip" data-t="update">What\'s new</button><button class="chip" data-t="feature">New feature</button><button class="chip" data-t="mobile">Mobile update</button><button class="chip" data-t="security">Security</button><button class="chip" data-t="maint">Maintenance done</button></div>' +
       '<div class="grid"><div class="box"><label>Subject (what they see in the inbox)</label><input id="nnSubject" maxlength="120">' +
       '<label>Label above the heading (optional)</label><select id="nnLabel"><option value="">None</option><option>NEW</option><option>UPDATE</option><option>SECURITY</option><option>TRAVEL</option><option>IMPROVED</option><option>COMING SOON</option></select>' +
-      '<label>Picture or animation (optional): link to a .png / .jpg / .gif on nordiccrypto.net</label><input id="nnImg" placeholder="https://www.nordiccrypto.net/img/mail/update.png">' +
+      '<label>Picture or animation (optional)</label><select id="nnPick"><option value="">No picture</option><option value="__up">⬆ Upload from my computer…</option><option value="__link">Paste a link…</option><option value="https://www.nordiccrypto.net/img/mail/update-welcome.gif">Welcome tour (animation)</option><option value="https://www.nordiccrypto.net/img/mail/update-explore.png">Explore page</option><option value="https://www.nordiccrypto.net/img/mail/update-bitcoin-atm.png">Bitcoin ATMs</option><option value="https://www.nordiccrypto.net/img/mail/update-security.png">Security</option></select>' +
+      '<input type="file" id="nnFile" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none"><input id="nnImg" type="hidden"><div id="nnShot" style="margin-top:8px"></div>' +
       '<label>Heading inside the e-mail</label><input id="nnTitle" maxlength="120">' +
       '<label>Text (blank line = new paragraph)</label><textarea id="nnBody" maxlength="4000"></textarea>' +
       '<label>Highlights (one per line, optional, up to 8)</label><textarea id="nnBullets" style="min-height:80px"></textarea>' +
@@ -49,7 +51,24 @@
       '<div><div class="box"><iframe id="nnFrame" title="Preview" srcdoc="<body style=\'font:14px sans-serif;color:#888;display:flex;height:100%;align-items:center;justify-content:center\'>Press Preview</body>"></iframe></div>' +
       '<div class="box hist" style="margin-top:14px"><div style="font-size:12px;color:#8b95a5;margin-bottom:6px">Last announcements</div><div id="nnHist"><div style="color:#8b95a5">Nothing sent yet</div></div></div></div></div></div>';
     main.appendChild(sec);
-    sec.querySelectorAll('.chip').forEach(function (b) { b.onclick = function () { var t = TPL[b.getAttribute('data-t')]; $('nnSubject').value = t.subject; $('nnTitle').value = t.title; $('nnBody').value = t.body; $('nnBullets').value = t.bullets; $('nnCta').value = t.cta; preview(); }; });
+    sec.querySelectorAll('.chip').forEach(function (b) { b.onclick = function () { var t = TPL[b.getAttribute('data-t')]; $('nnSubject').value = t.subject; $('nnTitle').value = t.title; $('nnBody').value = t.body; $('nnBullets').value = t.bullets; $('nnCta').value = t.cta; $('nnLabel').value = t.label || ''; $('nnImg').value = t.image || ''; if ($('nnPick')) $('nnPick').value = t.image ? t.image : ''; shot(); preview(); }; });
+    function shot(msg) { var v = $('nnImg').value, h = $('nnShot'), pk = $('nnPick'); if (!h) return;
+      if (pk) { [].slice.call(pk.options).forEach(function (o) { if (o.getAttribute('data-x') && o.value !== v) o.remove(); }); if (v) { var o2 = [].filter.call(pk.options, function (x) { return x.value === v; })[0]; if (!o2) { o2 = document.createElement('option'); o2.value = v; o2.textContent = '✔ Your picture'; o2.setAttribute('data-x', '1'); pk.appendChild(o2); } pk.value = v; } else pk.value = ''; }
+      h.innerHTML = msg ? '<div style="font-size:12px;color:#8b95a5">' + esc(msg) + '</div>' : v ? '<img src="' + esc(v) + '" alt="" style="max-width:100%;max-height:150px;border-radius:10px;border:1px solid rgba(255,255,255,.12)"><div style="margin-top:4px"><button type="button" class="chip" id="nnClr">Remove picture</button></div>' : ''; var c = $('nnClr'); if (c) c.onclick = function () { $('nnImg').value = ''; shot(); preview(); }; }
+    $('nnPick').onchange = function () {
+      var v = this.value;
+      if (v === '__up') { this.value = $('nnImg').value || ''; $('nnFile').click(); return; }
+      if (v === '__link') { var u = window.prompt('Paste the picture link (https, .png .jpg .gif .webp on nordiccrypto.net)', $('nnImg').value || 'https://www.nordiccrypto.net/img/mail/'); this.value = ''; if (u) { $('nnImg').value = u.trim(); } shot(); preview(); return; }
+      $('nnImg').value = v; shot(); preview();
+    };
+    $('nnFile').onchange = function () {
+      var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { shot('Picture is too big (max 2 MB). Try a smaller one.'); return; }
+      shot('Uploading…');
+      var r = new FileReader(); r.onerror = function () { shot('Could not read the file'); };
+      r.onload = function () { post('newsUpload', { imageBase64: r.result }).then(function (d) { if (d && d.ok) { $('nnImg').value = d.url; shot(); preview(); } else shot((d && d.error) || 'Upload failed'); }); };
+      r.readAsDataURL(f);
+    };
     $('nnPrev').onclick = preview; $('nnTest').onclick = test; $('nnSend').onclick = send;
   }
   function data(mode) {
