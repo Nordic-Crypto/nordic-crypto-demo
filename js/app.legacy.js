@@ -1485,21 +1485,47 @@ function submitWithdraw() {
   // v2.1: the server creates the withdrawal (balance is checked there).
   var legacyToken = getSessionToken();
   if (!legacyToken) { showErr('Session expired. Please sign in again.'); return; }
-  fetch(WORKER_LOGIN_URL + '?action=withdraw', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: legacyToken, amount: amount, method: method, details: wd.details })
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
+  __wdPost({ token: legacyToken, amount: amount, method: method, details: wd.details }, function (data) {
       if (!data || !data.ok) { showErr((data && data.error) || 'Withdrawal failed'); return; }
       if (!st.withdrawals) st.withdrawals = [];
       if (data.withdrawal && !st.withdrawals.some(function (w) { return w.id === data.withdrawal.id; })) st.withdrawals.unshift(data.withdrawal);
       closeWithdraw();
       render();
       showWithdrawStatus(method, amount);
-    })
-    .catch(function () { showErr('Connection error. Please try again.'); });
+  }, function () { showErr('Connection error. Please try again.'); });
+}
+
+/* email confirmation code for large withdrawals: posts the withdrawal, asks for the code when the server requires it */
+function __wdPost(payload, done, fail) {
+  function send(otp) {
+    var b = {}; for (var k in payload) b[k] = payload[k]; if (otp) b.otp = otp;
+    fetch(WORKER_LOGIN_URL + '?action=withdraw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.needOtp) { askOtp(data.error); return; }
+        done(data);
+      })
+      .catch(function () { fail(); });
+  }
+  function askOtp(msg) {
+    var old = document.getElementById('wdOtpBox'); if (old) old.remove();
+    var o = document.createElement('div'); o.id = 'wdOtpBox';
+    o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px';
+    o.innerHTML = '<div style="width:100%;max-width:380px;background:#12140d;border:1px solid rgba(190,255,60,.25);border-radius:20px;padding:24px;color:#fff;font-family:inherit">' +
+      '<div style="font-size:20px;font-weight:800;margin-bottom:6px">Confirm withdrawal</div>' +
+      '<div id="wdOtpMsg" style="font-size:14px;opacity:.75;margin-bottom:14px;line-height:1.4"></div>' +
+      '<input id="wdOtpIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" style="width:100%;box-sizing:border-box;text-align:center;font-size:28px;letter-spacing:10px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0a0b08;color:#fff;outline:none">' +
+      '<div style="display:flex;gap:10px;margin-top:16px"><button id="wdOtpNo" type="button" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;font-weight:700;cursor:pointer">Cancel</button>' +
+      '<button id="wdOtpOk" type="button" style="flex:1;padding:12px;border-radius:12px;border:0;background:#beff3c;color:#0a0b08;font-weight:800;cursor:pointer">Confirm</button></div></div>';
+    document.body.appendChild(o);
+    document.getElementById('wdOtpMsg').textContent = msg || 'Enter the 6-digit code we emailed you.';
+    var inp = document.getElementById('wdOtpIn'); inp.focus();
+    document.getElementById('wdOtpNo').onclick = function () { o.remove(); };
+    function go() { var v = inp.value.replace(/\D/g, ''); if (v.length !== 6) { document.getElementById('wdOtpMsg').textContent = 'Enter all 6 digits.'; return; } o.remove(); send(v); }
+    document.getElementById('wdOtpOk').onclick = go;
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+  }
+  send('');
 }
 
 function showWithdrawStatus(method, amount) {
@@ -2706,13 +2732,7 @@ function confirmModal() {
 
   var wdToken = getSessionToken();
   if (!wdToken) { toast('Session expired. Please sign in again.', true); return; }
-  fetch(WORKER_LOGIN_URL + '?action=withdraw', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: wdToken, amount: a, method: wdMethod, details: wdDetails })
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
+  __wdPost({ token: wdToken, amount: a, method: wdMethod, details: wdDetails }, function (data) {
       if (!data || !data.ok) { toast((data && data.error) || 'Transfer failed', true); return; }
       if (!Array.isArray(st.withdrawals)) st.withdrawals = [];
       if (data.withdrawal && !st.withdrawals.some(function (w) { return w.id === data.withdrawal.id; })) st.withdrawals.unshift(data.withdrawal);
@@ -2720,8 +2740,7 @@ function confirmModal() {
       toast('Transfer submitted — under review');
       closeModal();
       render();
-    })
-    .catch(function () { toast('Connection error. Please try again.', true); });
+  }, function () { toast('Connection error. Please try again.', true); });
 }
 
 /* ═══════════════════ COPY ═══════════════════ */
