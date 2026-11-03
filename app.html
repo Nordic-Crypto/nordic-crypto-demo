@@ -4333,7 +4333,6 @@ document.addEventListener('DOMContentLoaded', function(){
 <link rel="stylesheet" href="css/mobile-pro.css?v=2">
 <link rel="stylesheet" href="css/kyc-pro.css?v=1">
 <link rel="stylesheet" href="css/polish-pro.css?v=20261124">
-<link rel="stylesheet" href="css/notif-pro.css?v=1">
 <link rel="stylesheet" href="css/admin-team.css?v=1">
 <link rel="stylesheet" href="css/statement-pro.css?v=1">
 <link rel="stylesheet" href="css/theme-pro.css?v=3">
@@ -7192,7 +7191,175 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/pages-pro.js?v=5"></script>
 <script src="js/admin-concierge.js?v=1"></script>
 <script src="js/support-msg-pro.js?v=4"></script>
-<script src="js/notif-pro.js?v=1"></script>
 <script src="js/wd-otp.js?v=1"></script>
+<style id="np-inline-css">
+/* notif-pro.css v1 — notification centre (theme-aware via the shared design tokens) */
+#notifOverlay{background:rgba(4,6,10,.55)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#notifPanel{width:440px!important;max-width:100vw;background:var(--card-solid,#0e1016)!important;border-left:1px solid var(--bd2)!important;box-shadow:-30px 0 80px -30px rgba(0,0,0,.7);overflow:hidden;
+  transition:transform .42s cubic-bezier(.2,.9,.25,1)!important}
+#notifPanel:before{content:"";position:absolute;inset:0 0 auto 0;height:220px;pointer-events:none;background:radial-gradient(120% 100% at 100% 0,var(--lime-soft,rgba(200,255,77,.12)),transparent 62%),radial-gradient(90% 90% at 0 0,var(--mesh1,rgba(139,123,255,.16)),transparent 60%)}
+#notifPanel>*{position:relative}
+#notifPanel .notif-header{padding:22px 22px 14px!important;border:0!important;align-items:flex-start!important;gap:12px}
+.np-hd{display:flex;align-items:center;gap:12px;min-width:0}
+.np-bell{width:44px;height:44px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--lime-soft);border:1px solid var(--lime-line);color:var(--lime)}
+html[data-theme="light"] .np-bell{color:var(--pri)}
+.np-bell svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#notifPanel .notif-title{font-size:1.28rem!important;font-weight:800!important;letter-spacing:-.02em;margin:0!important}
+#notifPanel .notif-sub{font-size:.8rem;color:var(--mut);margin-top:2px}
+#notifPanel .notif-sub b{color:var(--lime);font-weight:700}
+html[data-theme="light"] #notifPanel .notif-sub b{color:var(--pri)}
+.np-acts{display:flex;gap:8px;align-items:center;margin-left:auto}
+.np-all{height:36px;padding:0 13px;border-radius:11px;border:1px solid var(--bd2);background:var(--field);color:var(--txt);font:600 .78rem inherit;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s}
+.np-all:hover{border-color:var(--lime-line);background:var(--lime-soft)}
+.np-all svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.np-all[disabled]{opacity:.4;pointer-events:none}
+#notifPanel .notif-close{width:36px!important;height:36px!important;border-radius:11px!important;background:var(--field)!important;border:1px solid var(--bd2)!important;transition:.2s}
+#notifPanel .notif-close:hover{transform:rotate(90deg);border-color:var(--lime-line)!important}
+.np-tabs{display:flex;gap:6px;padding:0 22px 14px;overflow-x:auto;scrollbar-width:none}
+.np-tabs::-webkit-scrollbar{display:none}
+.np-tab{flex:none;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--bd);background:transparent;color:var(--mut);font:600 .8rem inherit;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.2s}
+.np-tab:hover{color:var(--txt);border-color:var(--bd2)}
+.np-tab.on{background:var(--lime);border-color:var(--lime);color:var(--lime-ink,#0a0f04)}
+.np-tab i{font-style:normal;font-size:.7rem;font-weight:800;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;background:rgba(127,127,127,.18)}
+.np-tab.on i{background:rgba(10,15,4,.16)}
+#notifPanel .notif-list{padding:2px 14px 28px!important;scrollbar-width:thin}
+.np-day{font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);padding:14px 8px 8px;display:flex;align-items:center;gap:10px}
+.np-day:after{content:"";flex:1;height:1px;background:var(--bd)}
+.np-it{--c:#98a0b3;position:relative;display:flex;gap:13px;align-items:flex-start;padding:14px 14px 14px 14px;margin:0 0 8px;border-radius:18px;background:var(--card);border:1px solid var(--bd);cursor:pointer;overflow:hidden;
+  transition:transform .2s,border-color .2s,background .2s,box-shadow .2s;animation:npIn .5s cubic-bezier(.2,.9,.25,1) both;animation-delay:calc(var(--i,0)*38ms)}
+.np-it:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--c) 45%,transparent);box-shadow:0 12px 30px -16px color-mix(in srgb,var(--c) 55%,transparent)}
+.np-it.unread{border-color:color-mix(in srgb,var(--c) 38%,transparent);background:linear-gradient(100deg,color-mix(in srgb,var(--c) 11%,transparent),transparent 70%),var(--card)}
+.np-it.unread:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--c);box-shadow:0 0 14px var(--c)}
+.np-ic{width:46px;height:46px;flex:none;border-radius:15px;display:flex;align-items:center;justify-content:center;color:var(--c);background:linear-gradient(145deg,color-mix(in srgb,var(--c) 24%,transparent),color-mix(in srgb,var(--c) 7%,transparent));border:1px solid color-mix(in srgb,var(--c) 32%,transparent)}
+.np-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.np-bd{flex:1;min-width:0;padding-right:22px}
+.np-tt{font-size:.93rem;font-weight:700;line-height:1.3;color:var(--txt);overflow-wrap:anywhere}
+.np-sb{font-size:.8rem;line-height:1.35;color:var(--mut);margin-top:3px;overflow-wrap:anywhere}
+.np-mt{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.np-am{font-weight:800;font-size:.82rem;padding:4px 10px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 28%,transparent);font-variant-numeric:tabular-nums}
+.np-tm{font-size:.74rem;color:var(--mut)}
+.np-x{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:9px;border:0;background:transparent;color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:.18s}
+.np-x svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.np-it:hover .np-x,.np-x:focus-visible{opacity:1}
+.np-x:hover{background:rgba(255,84,112,.16);color:#ff6b83}
+@media(hover:none){.np-x{opacity:.55}}
+.np-empty{text-align:center;padding:70px 24px;color:var(--mut)}
+.np-empty .np-eb{width:76px;height:76px;margin:0 auto 18px;border-radius:26px;display:flex;align-items:center;justify-content:center;color:var(--lime);background:var(--lime-soft);border:1px solid var(--lime-line);box-shadow:0 0 0 10px color-mix(in srgb,var(--lime) 6%,transparent)}
+html[data-theme="light"] .np-empty .np-eb{color:var(--pri)}
+.np-empty .np-eb svg{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.np-empty b{display:block;color:var(--txt);font-size:1.05rem;margin-bottom:6px}
+.k-in{--c:#34d399}.k-out{--c:#fb923c}.k-bonus{--c:#fbbf24}.k-sec{--c:#60a5fa}.k-bad{--c:#ff6b83}.k-star{--c:#b79cff}.k-info{--c:#98a0b3}
+html[data-theme="light"] .k-in{--c:#0f9f64}html[data-theme="light"] .k-out{--c:#d9650b}html[data-theme="light"] .k-bonus{--c:#b57a00}html[data-theme="light"] .k-sec{--c:#2563eb}html[data-theme="light"] .k-bad{--c:#d93a3a}html[data-theme="light"] .k-star{--c:#6f5cf0}
+@keyframes npIn{from{opacity:0;transform:translateX(18px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){#notifPanel{width:100vw!important}#notifPanel .notif-header{padding:18px 16px 12px!important}.np-tabs{padding:0 16px 12px}#notifPanel .notif-list{padding:2px 10px 90px!important}.np-all span{display:none}.np-all{padding:0 10px}}
+@media(prefers-reduced-motion:reduce){.np-it{animation:none}#notifPanel{transition:none!important}}
+
+</style>
+<script id="np-inline-js">
+/* notif-pro.js v1 — redesigned notification centre: categories, day groups, amount chips, filters, mark-all-read.
+   Replaces renderNotifications(); data format and delete/read handlers are unchanged. */
+(function () {
+  var FILTER = 'all', SIG = '';
+  var P = {
+    in: '<path d="M17 7L7 17M7 9v8h8"/>', out: '<path d="M7 17L17 7M9 7h8v8"/>',
+    bonus: '<path d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 110-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 100-5C13 2 12 7 12 7z"/>',
+    sec: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+    bad: '<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>',
+    star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+    info: '<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/>',
+    ok: '<circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.7 2.7L16 9.5"/>'
+  };
+  function ico(k) { return '<svg viewBox="0 0 24 24">' + (P[k] || P.info) + '</svg>'; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function kind(t) {
+    t = String(t || '').toLowerCase();
+    if (/reject|declin|fail|denied|error|cancel/.test(t)) return 'bad';
+    if (/review|thank/.test(t)) return 'star';
+    if (/bonus|reward|daily|claimed|cashback|gift|welcome/.test(t)) return 'bonus';
+    if (/verif|kyc|password|sign-?in|login|security|2fa|device|e-?mail/.test(t)) return 'sec';
+    if (/deposit|received|credited|top.?up|incoming/.test(t)) return 'in';
+    if (/withdraw|sent|transfer|payout|card payment/.test(t)) return 'out';
+    return 'info';
+  }
+  var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b))\s*([!.]?)$/;
+  function fmtAmt(a) {
+    a = a.replace(/\s+/g, ' ').trim();
+    return a.replace(/(\d[\d,]*)(\.\d+)?/, function (m, i, d) { var n = i.replace(/,/g, ''); return n.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d || ''); });
+  }
+  function parse(n) {
+    var raw = String(n.text || '').replace(/[\p{Extended_Pictographic}️‍]/gu, '').replace(/\s{2,}/g, ' ').trim();
+    var title = raw, sub = '', i = raw.search(/\s[—–]\s|\s-\s/);
+    if (i > 0) { title = raw.slice(0, i); sub = raw.slice(i).replace(/^\s[—–-]\s/, ''); }
+    var amt = '', m = title.match(AMT);
+    if (m && title.length > m[0].length) { amt = fmtAmt(m[1]); title = title.slice(0, title.length - m[0].length) + (m[2] || ''); }
+    title = title.replace(/[:\s]+$/, '');
+    return { title: title || raw, sub: sub, amt: amt, k: kind(raw) };
+  }
+  function dayKey(ts) { var d = new Date(ts), n = new Date(); d.setHours(0, 0, 0, 0); n.setHours(0, 0, 0, 0); var diff = Math.round((n - d) / 864e5); return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff < 7 ? 'This week' : 'Earlier'; }
+  var TABS = [['all', 'All'], ['money', 'Money'], ['account', 'Account'], ['rewards', 'Rewards']];
+  function grp(k) { return k === 'in' || k === 'out' ? 'money' : k === 'bonus' || k === 'star' ? 'rewards' : 'account'; }
+  function chrome() {
+    var h = document.querySelector('#notifPanel .notif-header'); if (!h || h.getAttribute('data-np')) return !!h;
+    h.setAttribute('data-np', '1');
+    var tw = h.firstElementChild, close = document.getElementById('notifClose');
+    var wrap = document.createElement('div'); wrap.className = 'np-hd';
+    wrap.innerHTML = '<div class="np-bell"><svg viewBox="0 0 24 24">' + P.info + '</svg></div>'; wrap.appendChild(tw);
+    var acts = document.createElement('div'); acts.className = 'np-acts';
+    acts.innerHTML = '<button type="button" class="np-all" id="npAll" title="Mark all as read"><svg viewBox="0 0 24 24"><path d="M2 12.5l4 4L14 8M10 16.5l1 1L21 8"/></svg><span>Mark all read</span></button>';
+    acts.appendChild(close); h.innerHTML = ''; h.appendChild(wrap); h.appendChild(acts);
+    document.getElementById('npAll').onclick = function () { if (typeof window.markAllRead === 'function') window.markAllRead(); };
+    var tabs = document.createElement('div'); tabs.className = 'np-tabs'; tabs.id = 'npTabs';
+    tabs.addEventListener('click', function (e) { var b = e.target.closest('.np-tab'); if (!b) return; FILTER = b.getAttribute('data-f'); SIG = ''; window.renderNotifications(); });
+    h.parentNode.insertBefore(tabs, h.nextSibling);
+    return true;
+  }
+  function render() {
+    var listEl = document.getElementById('notifList'); if (!listEl || !chrome()) return;
+    var S = window.st || {}, ns = S.notifications || [], unread = 0, i;
+    for (i = 0; i < ns.length; i++) if (!ns[i].read) unread++;
+    var badge = document.getElementById('notifBadge'), sub = document.getElementById('notifSub');
+    if (badge) { if (unread > 0) { badge.style.display = 'flex'; badge.textContent = unread > 9 ? '9+' : unread; } else badge.style.display = 'none'; }
+    if (sub) sub.innerHTML = unread > 0 ? '<b>' + unread + ' new</b> · ' + ns.length + ' total' : 'You are all caught up';
+    var all = document.getElementById('npAll'); if (all) all.disabled = unread === 0;
+    var items = ns.map(function (n) { var p = parse(n); p.n = n; p.g = grp(p.k); return p; });
+    var cnt = { all: items.length, money: 0, account: 0, rewards: 0 }; items.forEach(function (p) { cnt[p.g]++; });
+    var sig = FILTER + '|' + ns.map(function (n) { return n.id + (n.read ? 'r' : 'u') + Math.floor((Date.now() - n.ts) / 6e4); }).join(',');
+    if (sig === SIG) return; SIG = sig;
+    var tb = document.getElementById('npTabs');
+    if (tb) tb.innerHTML = TABS.map(function (t) { return '<button type="button" class="np-tab' + (FILTER === t[0] ? ' on' : '') + '" data-f="' + t[0] + '">' + t[1] + '<i>' + cnt[t[0]] + '</i></button>'; }).join('');
+    var shown = items.filter(function (p) { return FILTER === 'all' || p.g === FILTER; });
+    if (!shown.length) {
+      listEl.innerHTML = '<div class="np-empty"><div class="np-eb"><svg viewBox="0 0 24 24">' + P.info + '</svg></div><b>' + (ns.length ? 'Nothing here' : 'No notifications yet') + '</b>' + (ns.length ? 'No notifications in this category.' : 'Deposits, withdrawals, rewards and security alerts will show up here.') + '</div>';
+      return;
+    }
+    var html = '', last = '', idx = 0;
+    shown.forEach(function (p) {
+      var n = p.n, d = dayKey(n.ts); if (d !== last) { html += '<div class="np-day">' + d + '</div>'; last = d; }
+      var id = esc(n.id), ag = typeof window.timeAgo === 'function' ? window.timeAgo(n.ts) : '';
+      html += '<div class="np-it k-' + p.k + (n.read ? '' : ' unread') + '" data-id="' + id + '" style="--i:' + Math.min(idx++, 14) + '">' +
+        '<div class="np-ic">' + ico(p.k === 'sec' && /approved/i.test(n.text) ? 'ok' : p.k) + '</div>' +
+        '<div class="np-bd"><div class="np-tt">' + esc(p.title) + '</div>' + (p.sub ? '<div class="np-sb">' + esc(p.sub) + '</div>' : '') +
+        '<div class="np-mt">' + (p.amt ? '<span class="np-am">' + esc(p.amt) + '</span>' : '') + '<span class="np-tm">' + esc(ag) + '</span></div></div>' +
+        '<button type="button" class="np-x" aria-label="Delete" data-del="' + id + '"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
+    });
+    listEl.innerHTML = html;
+  }
+  function bind() {
+    var l = document.getElementById('notifList'); if (!l || l.__np) return; l.__np = 1;
+    l.addEventListener('click', function (e) {
+      var x = e.target.closest('.np-x'), it = e.target.closest('.np-it'); if (!it) return;
+      e.stopPropagation();
+      if (x) { if (typeof window.deleteNotification === 'function') window.deleteNotification(x.getAttribute('data-del')); return; }
+      var id = it.getAttribute('data-id'), n = ((window.st || {}).notifications || []).filter(function (q) { return String(q.id) === id; })[0];
+      if (n && !n.read && typeof window.markRead === 'function') window.markRead(n.id);
+    }, true);
+  }
+  window.renderNotifications = function () { try { bind(); render(); } catch (e) { console.warn('notif-pro', e); } };
+  function init() { window.renderNotifications(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  setInterval(function () { var p = document.getElementById('notifPanel'); if (p && p.classList.contains('on')) window.renderNotifications(); }, 30000);
+})();
+
+</script>
 </body>
 </html>
