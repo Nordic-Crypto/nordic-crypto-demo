@@ -125,7 +125,7 @@
   /* ---------- steps / type ---------- */
   function refresh() {
     var d = docs(), n1 = $('verifyNext1'), n2 = $('verifyNext2');
-    if (n1) { n1.disabled = !d.ok; n1.style.opacity = d.ok ? '' : '.5'; n1.style.pointerEvents = d.ok ? '' : 'none'; }
+    if (n1) { n1.disabled = !d.ok; n1.style.opacity = d.ok ? '' : '.5'; n1.style.pointerEvents = ''; }
     if (n2) n2.disabled = !store.selfie;
     var hint = $('kpNeed'); if (hint) hint.textContent = d.ok ? '' : (!store.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side');
   }
@@ -152,6 +152,33 @@
     e.stopImmediatePropagation();
     var f = e.target.files && e.target.files[0];
     if (f) accept(s, f); else clear(s);
+  }, true);
+  /* ---------- step navigation (self-contained, does not depend on older onclick bindings) ---------- */
+  function goStep(n) {
+    try { if (typeof window.showVerifyStep === 'function') window.showVerifyStep(n); else throw 0; }
+    catch (e) {
+      var st = document.querySelectorAll('#verifyScreen .verify-step');
+      for (var i = 0; i < st.length; i++) st[i].classList.remove('on');
+      var t = document.getElementById('verifyStep' + n); if (t) t.classList.add('on');
+    }
+    var sc = document.getElementById('verifyScreen'); if (sc) { try { sc.scrollTo(0, 0); } catch (e2) { } }
+    try { window.scrollTo(0, 0); } catch (e3) { }
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('#verifyNext1,#verifyNext2,#verifyBack2,#verifyBack3') : null;
+    if (!t) return;
+    var id = t.id;
+    if (id === 'verifyNext1') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      var d = docs();
+      if (!d.ok) { toast(!store.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side', true); return; }
+      goStep(2);
+    } else if (id === 'verifyNext2') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (!store.selfie) { toast('Upload your selfie to continue', true); return; }
+      goStep(3);
+    } else if (id === 'verifyBack2') { e.preventDefault(); e.stopImmediatePropagation(); goStep(1); }
+    else if (id === 'verifyBack3') { e.preventDefault(); e.stopImmediatePropagation(); goStep(2); }
   }, true);
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#verifyScreen .vtype-btn'); if (b) setTimeout(applyType, 0);
