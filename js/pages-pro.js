@@ -38,6 +38,15 @@
     '.pp-q{flex:1;min-width:180px;max-width:320px;margin-left:auto;padding:9px 14px;border-radius:99px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--pan,#111827);color:inherit;font:inherit;font-size:.9rem}.pp-q:focus{outline:none;border-color:var(--pri,#00E5FF)}' +
     '#txB tr.pp-day td{padding:12px 22px 8px;background:rgba(255,255,255,.025);color:var(--mut,#94A3B8);font-size:.74rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;border-bottom:1px solid var(--bd,rgba(255,255,255,.08))}#txB tr.pp-hide{display:none}#txB tr:not(.pp-day){transition:background .2s}#txB tr:not(.pp-day):hover{background:rgba(255,255,255,.035)}' +
     '.pp-none{display:none;padding:34px;text-align:center;color:var(--mut,#94A3B8)}.pp-none.on{display:block}' +
+    '@media(max-width:700px){#tx .tbl{overflow:hidden}#tx .tbl table,#tx .tbl tbody{display:block;width:100%}#tx .tbl thead{display:none}' +
+    '#tx .tbl tr:not(.pp-day){display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"desc desc amt" "typ date st";align-items:center;gap:6px 10px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05)}' +
+    '#tx .tbl tr:not(.pp-day)>td{display:block;padding:0!important;border:0!important;min-width:0;width:auto}' +
+    '#tx .tbl tr:not(.pp-day)>td:nth-child(1){grid-area:date;font-size:.76rem;color:var(--mut);white-space:nowrap}' +
+    '#tx .tbl tr:not(.pp-day)>td:nth-child(2){grid-area:typ}' +
+    '#tx .tbl tr:not(.pp-day)>td:nth-child(3){grid-area:desc;font-weight:600;line-height:1.3;overflow-wrap:anywhere}' +
+    '#tx .tbl tr:not(.pp-day)>td:nth-child(4){grid-area:amt;text-align:right;font-weight:700;white-space:nowrap}' +
+    '#tx .tbl tr:not(.pp-day)>td:nth-child(5){grid-area:st;text-align:right;font-size:.76rem;white-space:nowrap}' +
+    '#tx .tbl tr.pp-day,#tx .tbl tr.pp-day>td{display:block;width:100%}}' +
     '@media(max-width:700px){.pp-sum{grid-template-columns:1fr}.pp-q{max-width:none;margin-left:0;flex-basis:100%}.pp-tools{margin-bottom:10px}}' +
     /* order */
     '@media(min-width:1000px){#orderForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:8px 32px;align-items:start}#orderForm>.sh{grid-column:1/-1}#orderForm>.panel{grid-column:1;max-width:none!important}#orderForm>.pp-side{grid-column:2;grid-row:2}}' +
