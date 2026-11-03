@@ -2013,8 +2013,9 @@ window.submitRealVerification = async function () {
 
     var docEl = document.getElementById('docFile');
     var selfieEl = document.getElementById('selfieFile');
-    var docFile = docEl && docEl.files ? docEl.files[0] : null;
-    var selfieFile = selfieEl && selfieEl.files ? selfieEl.files[0] : null;
+    var __nd = (window.NCVerify && typeof window.NCVerify.getDocs === 'function') ? window.NCVerify.getDocs() : null;
+    var docFile = (docEl && docEl.files && docEl.files[0]) || (__nd && __nd.front) || null;
+    var selfieFile = (selfieEl && selfieEl.files && selfieEl.files[0]) || (__nd && __nd.selfie) || null;
 
     var streetEl = document.getElementById('vStreet');
     var cityEl = document.getElementById('vCity');
