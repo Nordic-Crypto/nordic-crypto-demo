@@ -28,6 +28,7 @@
     '.pp-bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.08)}.pp-bar i{display:block;transition:width .6s cubic-bezier(.2,.8,.2,1)}.pp-leg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:.84rem;color:var(--mut,#94A3B8)}.pp-leg b{color:var(--txt,#F8FAFC)}.pp-leg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;background:var(--c)}' +
     '.pp-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pp-acts button{padding:11px 18px;border-radius:13px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--pan,#111827);color:inherit;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:transform .2s,border-color .2s}.pp-acts button:hover{transform:translateY(-2px);border-color:var(--pri,#00E5FF)}.pp-acts button.p{background:var(--pri,#c6ff3d);color:#06101f;border:0}' +
     '#assets>div[style*="grid-template-columns"]{gap:14px!important}#assets .panel{position:relative;padding-left:78px!important;transition:transform .25s,border-color .25s}#assets .panel:hover{transform:translateY(-3px);border-color:var(--pri,#00E5FF)}' +
+    '.pp-kd{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);white-space:nowrap}' +
     '.pp-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pp-meta span{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:var(--mut,#94a3b8)}.pp-meta .pp-sh{color:var(--c);border-color:color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}' +
     '.pp-coin{position:absolute;left:20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.15rem;color:#fff}' +
     '.pp-empty{margin:0 0 16px;padding:14px 18px;border-radius:16px;border:1px dashed var(--bd2,rgba(255,255,255,.14));color:var(--mut,#94A3B8);font-size:.9rem}' +
@@ -98,10 +99,39 @@
 
   /* ───── Transactions ───── */
   var F = { chip: 'all', q: '' };
+  /* clear labels: what kind of money movement is this (same wording as the dashboard) */
+  function kindOf(d, a) {
+    var l = String(d || '').toLowerCase(), coin = ((String(d).match(/\b(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)\b/i) || [])[1] || '').toUpperCase();
+    var amt = (String(d).match(/([\d]+\.[\d]+)\s*(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)/i) || [])[0] || '';
+    if (/withdraw/.test(l)) {
+      if (/card/.test(l)) return ['Withdrawal to your card', 'TO CARD', '#f59e0b'];
+      if (/swift/.test(l)) return ['International bank transfer (SWIFT)', 'TO BANK', '#f59e0b'];
+      if (/iban|sepa|bank/.test(l)) return ['Withdrawal to your bank account', 'TO BANK', '#f59e0b'];
+      if (coin || /wallet|crypto|address/.test(l)) return ['Crypto sent to external wallet' + (coin ? ' · ' + coin : ''), 'CRYPTO OUT', '#fb923c'];
+      return ['Withdrawal', 'WITHDRAWAL', '#f59e0b'];
+    }
+    if (/crypto deposit|received.*(btc|eth|usdt)|deposit.*(btc|eth|usdt)/.test(l)) return ['Crypto received' + (amt ? ' · ' + amt : coin ? ' · ' + coin : ''), 'CRYPTO IN', '#10b981'];
+    if (/bank deposit|sepa|bank transfer|top up|topup|wire/.test(l) && a >= 0) return ['Bank transfer received', 'BANK IN', '#22d3ee'];
+    if (/deposit/.test(l)) return [d, 'DEPOSIT', '#10b981'];
+    if (/bonus|reward|cashback|refund/.test(l)) return [d, 'BONUS', '#fbbf24'];
+    if (/\b(buy|bought|sell|sold|swap|convert|exchange)\b/.test(l)) return [d, 'EXCHANGE', '#8b5cf6'];
+    if (/fee|commission/.test(l)) return [d, 'FEE', '#ec4899'];
+    if (/card payment|payment|purchase/.test(l)) return [d, 'CARD', '#c8ff4d'];
+    return null;
+  }
+  function relabel(tr) {
+    var td = tr.children; if (td.length < 5 || tr.classList.contains('pp-day')) return;
+    var dc = td[2], tc = td[1];
+    if (!dc.getAttribute('data-od')) { dc.setAttribute('data-od', dc.textContent.trim()); tc.setAttribute('data-ot', tc.textContent.trim()); }
+    var od = dc.getAttribute('data-od'), amt = num(td[td.length - 2].textContent) * (/^[-−–]/.test(td[td.length - 2].textContent.trim()) ? -1 : 1);
+    var k = kindOf(od, amt); if (!k) return;
+    if (dc.textContent !== k[0]) dc.textContent = k[0];
+    if (tc.getAttribute('data-k') !== k[1]) { tc.setAttribute('data-k', k[1]); tc.innerHTML = '<i class="pp-kd" style="--c:' + k[2] + '">' + esc(k[1]) + '</i>'; }
+  }
   function rowInfo(tr) {
     var td = tr.children; if (td.length < 4) return null;
     var n = td.length, amtTxt = td[n - 2].textContent.trim(), dateTxt = td[0].textContent.trim();
-    return { date: dateTxt, ts: Date.parse(dateTxt) || 0, type: n >= 5 ? td[1].textContent.trim() : '', desc: td[n >= 5 ? 2 : 1].textContent.trim(), amt: num(amtTxt) * (/^[-−–]/.test(amtTxt) ? (num(amtTxt) < 0 ? 1 : -1) : 1), neg: /^[-−–]/.test(amtTxt), pos: /^\+/.test(amtTxt), status: td[n - 1].textContent.trim() };
+    return { date: dateTxt, ts: Date.parse(dateTxt) || 0, type: n >= 5 ? (td[1].getAttribute('data-ot') || td[1].textContent.trim()) : '', desc: n >= 5 ? (td[2].getAttribute('data-od') || td[2].textContent.trim()) : td[1].textContent.trim(), amt: num(amtTxt) * (/^[-−–]/.test(amtTxt) ? (num(amtTxt) < 0 ? 1 : -1) : 1), neg: /^[-−–]/.test(amtTxt), pos: /^\+/.test(amtTxt), status: td[n - 1].textContent.trim() };
   }
   function txTools() {
     var p = $('tx'); if (!p) return;
@@ -116,13 +146,17 @@
     }
     applyTx();
   }
-  var applying = false;
+  var applying = false, lastSig = '';
   function applyTx() {
-    var b = $('txB'); if (!b || applying) return; applying = true; if (mo) mo.disconnect();
+    var b = $('txB'); if (!b || applying) return;
+    var sig = F.chip + '|' + F.q + '|' + [].filter.call(b.querySelectorAll('tr'), function (r) { return !r.classList.contains('pp-day'); }).map(function (r) { return r.textContent + (r.children[2] && r.children[2].getAttribute('data-od') ? '' : '#'); }).join('¦');
+    if (sig === lastSig && b.querySelector('tr.pp-day, tr')) { if (b.querySelector('tr.pp-day') || !b.querySelector('tr')) return; }
+    lastSig = sig; applying = true; if (mo) mo.disconnect();
     try {
       [].forEach.call(b.querySelectorAll('tr.pp-day'), function (r) { r.remove(); });
       var rows = [].slice.call(b.querySelectorAll('tr')), last = '', now = new Date(), y = new Date(now.getTime() - 864e5), shown = 0, inn = 0, out = 0, cur = '', mth = now.getMonth(), yr = now.getFullYear();
       rows.forEach(function (tr) {
+        relabel(tr);
         var r = rowInfo(tr); if (!r) return;
         if (!cur) { var m = tr.children[tr.children.length - 2].textContent.match(/[^\d\s+\-−–.,]+/); if (m) cur = m[0]; }
         var ok = true, t = (r.type + ' ' + r.desc).toLowerCase();
@@ -144,7 +178,7 @@
     } finally { applying = false; if (mo && b) mo.observe(b, { childList: true }); }
   }
   var mo = null;
-  function watchTx() { var b = $('txB'); if (!b || mo) return; mo = new MutationObserver(debounce(applyTx, 80)); mo.observe(b, { childList: true }); }
+  function watchTx() { var b = $('txB'); if (!b || mo) return; mo = new MutationObserver(function () { applyTx(); }); mo.observe(b, { childList: true }); }
 
   /* ───── Order New Card ───── */
   function order() {
