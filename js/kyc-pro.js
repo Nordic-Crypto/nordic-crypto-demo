@@ -27,9 +27,11 @@
   function curType() { var b = document.querySelector('#verifyScreen .vtype-btn.on'); return b ? b.getAttribute('data-type') : 'Passport'; }
   function sides() { return curType() === 'Passport' ? 1 : 2; }
 
+  function inFile(id) { var i = $(id); return i && i.files && i.files[0] ? i.files[0] : null; }
   function docs() {
     var s = sides();
-    return { type: curType(), sides: s, front: store.front, back: s === 2 ? store.back : null, selfie: store.selfie, ok: !!store.front && (s === 1 || !!store.back) };
+    var front = store.front || inFile('docFile'), back = store.back || inFile('docFileBack'), selfie = store.selfie || inFile('selfieFile');
+    return { type: curType(), sides: s, front: front, back: s === 2 ? back : null, selfie: selfie, ok: !!front && (s === 1 || !!back) };
   }
 
   /* ---------- image processing ---------- */
@@ -125,9 +127,9 @@
   /* ---------- steps / type ---------- */
   function refresh() {
     var d = docs(), n1 = $('verifyNext1'), n2 = $('verifyNext2');
-    if (n1) { n1.disabled = !d.ok; n1.style.opacity = d.ok ? '' : '.5'; n1.style.pointerEvents = ''; }
-    if (n2) n2.disabled = !store.selfie;
-    var hint = $('kpNeed'); if (hint) hint.textContent = d.ok ? '' : (!store.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side');
+    if (n1) { n1.disabled = false; n1.style.opacity = d.ok ? '' : '.5'; n1.style.pointerEvents = ''; }
+    if (n2) { n2.disabled = false; n2.style.opacity = d.selfie ? '' : '.5'; }
+    var hint = $('kpNeed'); if (hint) hint.textContent = d.ok ? '' : (!d.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side');
   }
   function applyType() {
     var two = sides() === 2, el = slotsEl(); if (!el) return;
@@ -180,11 +182,11 @@
     if (id === 'verifyNext1') {
       e.preventDefault(); e.stopImmediatePropagation();
       var d = docs();
-      if (!d.ok) { toast(!store.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side', true); return; }
+      if (!d.ok) { toast(!d.front ? (d.sides === 1 ? 'Upload the photo page to continue' : 'Upload the front side to continue') : 'Now upload the back side', true); return; }
       goStep(2);
     } else if (id === 'verifyNext2') {
       e.preventDefault(); e.stopImmediatePropagation();
-      if (!store.selfie) { toast('Upload your selfie to continue', true); return; }
+      if (!docs().selfie) { toast('Upload your selfie to continue', true); return; }
       goStep(3);
     } else if (id === 'verifyBack2') { e.preventDefault(); e.stopImmediatePropagation(); goStep(1); }
     else if (id === 'verifyBack3') { e.preventDefault(); e.stopImmediatePropagation(); goStep(2); }
