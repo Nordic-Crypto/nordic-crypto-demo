@@ -78,6 +78,23 @@
     z.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) accept(s, f); });
   }
 
+  /* quick on-device photo check: too dark / too bright / blurry (nothing is uploaded for this) */
+  function quality(im) {
+    try {
+      var W = 200, k = W / Math.max(im.naturalWidth, im.naturalHeight), w = Math.max(16, Math.round(im.naturalWidth * k)), h = Math.max(16, Math.round(im.naturalHeight * k));
+      var c = document.createElement('canvas'); c.width = w; c.height = h; var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, w, h);
+      var d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h), sum = 0, i, j;
+      for (i = 0, j = 0; i < d.length; i += 4, j++) { g[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; sum += g[j]; }
+      var mean = sum / g.length, lap = 0, n = 0, bright = 0;
+      for (var yy = 1; yy < h - 1; yy++) for (var xx = 1; xx < w - 1; xx++) { var o = yy * w + xx, l = 4 * g[o] - g[o - 1] - g[o + 1] - g[o - w] - g[o + w]; lap += l * l; n++; }
+      for (j = 0; j < g.length; j++) if (g[j] > 245) bright++;
+      lap = lap / n;
+      if (mean < 55) return { m: 'Too dark — move to a brighter place and retake', w: 1 };
+      if (bright / g.length > 0.2) return { m: 'Strong glare — tilt the document to avoid reflections', w: 1 };
+      if (lap < 60) return { m: 'Looks blurry — hold steady and retake', w: 1 };
+      return null;
+    } catch (e) { return null; }
+  }
   function accept(s, file) {
     var inp = $(s.input);
     if (!/^image\//.test(file.type) && !/\.(heic|heif|jpe?g|png|webp)$/i.test(file.name)) { toast('Please choose a photo (JPG, PNG or HEIC)', true); resetInput(inp); return; }
@@ -86,7 +103,7 @@
     load(file).then(function (r) {
       var w = r.img.naturalWidth, h = r.img.naturalHeight;
       return shrink(file, r.img).then(function (out) {
-        store[s.key] = out; meta[s.key] = { w: w, h: h, orig: file.size, size: out.size };
+        store[s.key] = out; meta[s.key] = { w: w, h: h, orig: file.size, size: out.size, q: quality(r.img) };
         show(s, r.url, out, w, h);
       });
     }).catch(function () {
@@ -104,7 +121,7 @@
     if (row) {
       row.style.display = 'flex';
       var n = $(s.name), sz = $(s.size); if (n) n.textContent = file.name; if (sz) sz.textContent = fmt(file.size) + (w ? ' · ' + w + '×' + h : '');
-      var q = row.querySelector('.kp-q'); if (q) { var low = w && w < MIN_W; q.textContent = !w ? 'Preview unavailable' : low ? 'Low resolution — retake if text is hard to read' : 'Looks good'; q.className = 'kp-q ' + (!w ? 'mute' : low ? 'warn' : 'ok'); }
+      var q = row.querySelector('.kp-q'); if (q) { var low = w && w < MIN_W, mq = (meta[s.key] || {}).q; q.textContent = !w ? 'Preview unavailable' : mq ? mq.m : low ? 'Low resolution — retake if text is hard to read' : 'Looks good'; q.className = 'kp-q ' + (!w ? 'mute' : (mq || low) ? 'warn' : 'ok'); }
     }
   }
   function clear(s) {
