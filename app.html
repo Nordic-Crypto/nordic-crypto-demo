@@ -7343,28 +7343,57 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     return null;
   }
 
+
+  var ADM = [], admT = 0;
+  function api() { try { return (typeof WORKER_URL !== 'undefined' && WORKER_URL) || (typeof WORKER_LOGIN_URL !== 'undefined' && WORKER_LOGIN_URL) || ''; } catch (e) { return ''; } }
+  function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
+  function src() { return admOn() ? ADM : (((window.st || {}).notifications) || []); }
+  function admCall(action, extra) {
+    var u = api(); if (!u || !tok()) return Promise.resolve(null);
+    return fetch(u + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok() }, extra || {})) })
+      .then(function (r) { return r.json(); }).then(function (d) { if (d && d.ok && Array.isArray(d.notifications)) { ADM = d.notifications; SIG = ''; window.renderNotifications(); } return d; }).catch(function () { return null; });
+  }
+  function admLoad() { if (admOn()) admCall('adminNotifs'); }
+  function admAct(op, id) {
+    if (op === 'readAll') ADM.forEach(function (n) { n.read = true; });
+    else if (op === 'read') ADM.forEach(function (n) { if (String(n.id) === String(id)) n.read = true; });
+    else if (op === 'delete') ADM = ADM.filter(function (n) { return String(n.id) !== String(id); });
+    SIG = ''; window.renderNotifications(); return admCall('adminNotifsAct', { op: op, id: id });
+  }
   function admOn() { var a = document.getElementById('adminPanel'); return !!(a && a.classList.contains('on')); }
   function tab(t, l) { return { l: l, go: function () { closePanel(); if (typeof window.showAdminTab === 'function') window.showAdminTab(t); } }; }
   function destAdmin(t) {
     t = String(t || '').toLowerCase();
+    if (/message from/.test(t)) return tab('chats', 'Open chats');
     if (/new withdrawal|scheduled withdrawal|limit increase/.test(t)) return tab('withdrawals', 'Open withdrawals');
     if (/deposit request|new deposit pending|deposit pending/.test(t)) return tab('deposits', 'Open deposits');
     if (/new verification|verification/.test(t)) return tab('verifications', 'Open verifications');
     if (/email change/.test(t)) return tab('emailChanges', 'Open e-mail changes');
-    if (/message from/.test(t)) return tab('chats', 'Open chats');
     if (/client review|review/.test(t)) return tab('reviews', 'Open reviews');
     if (/lounge request|hotel request/.test(t)) return tab('concierge', 'Open concierge');
     if (/daily summary/.test(t)) return tab('stats', 'Open dashboard');
-    if (/changed their password|password/.test(t)) return tab('clients', 'Open clients');
-    if (/security|login|sign-?in/.test(t)) return tab('security', 'Open security');
+    if (/changed their password/.test(t)) return tab('clients', 'Open clients');
+    if (/security alert|new device|sign-?in from|new sign-?in/.test(t)) return tab('security', 'Open security');
     return null;
   }
   function ensureAdminBell() {
     var box = document.querySelector('#adminPanel .admin-top-actions'); if (!box || document.getElementById('npAdminBell')) return;
     var b = document.createElement('button'); b.type = 'button'; b.id = 'npAdminBell'; b.className = 'np-abell'; b.title = 'Notifications';
     b.innerHTML = '<svg viewBox="0 0 24 24">' + P.info + '</svg><span id="npAdminBadge" style="display:none"></span>';
-    b.onclick = function () { document.body.classList.add('np-adm'); var a = document.getElementById('notifPanel'), o = document.getElementById('notifOverlay'); if (a) a.classList.add('on'); if (o) o.classList.add('on'); window.renderNotifications(); };
-    box.insertBefore(b, box.firstChild);
+    b.onclick = function () { document.body.classList.add('np-adm'); var a = document.getElementById('notifPanel'), o = document.getElementById('notifOverlay'); if (a) a.classList.add('on'); if (o) o.classList.add('on'); window.renderNotifications(); admLoad(); };
+    box.insertBefore(b, box.firstChild); admT = Date.now(); admLoad();
+  }
+
+  var ATT = [['verifications', 'verification', 'sec'], ['withdrawals', 'withdrawal', 'out'], ['deposits', 'pending deposit', 'in'], ['emailChanges', 'e-mail change request', 'sec'], ['chats', 'unread chat', 'sec']];
+  function attention() {
+    if (!admOn()) return [];
+    var out = [];
+    ATT.forEach(function (a) {
+      var b = document.querySelector('#adminPanel .admin-nav-item[data-tab="' + a[0] + '"] .admin-nav-badge'); if (!b || b.style.display === 'none') return;
+      var n = parseInt(b.textContent, 10); if (!(n > 0)) return;
+      out.push({ k: a[2], g: grp(a[2]), att: 1, d: tab(a[0], 'Open ' + a[0].replace('emailChanges', 'e-mail changes')), title: n + ' ' + a[1] + (n > 1 && a[1].slice(-1) !== 't' ? 's' : n > 1 ? 's' : '') + ' waiting', sub: 'Needs your decision', amt: '', n: { id: 'att_' + a[0], ts: Date.now(), read: false, text: '' } });
+    });
+    return out;
   }
   var TABS = [['all', 'All'], ['money', 'Money'], ['account', 'Account'], ['rewards', 'Rewards']];
   function grp(k) { return k === 'in' || k === 'out' ? 'money' : k === 'bonus' || k === 'star' ? 'rewards' : 'account'; }
@@ -7377,7 +7406,8 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     var acts = document.createElement('div'); acts.className = 'np-acts';
     acts.innerHTML = '<button type="button" class="np-all" id="npAll" title="Mark all as read"><svg viewBox="0 0 24 24"><path d="M2 12.5l4 4L14 8M10 16.5l1 1L21 8"/></svg><span>Mark all read</span></button>';
     acts.appendChild(close); h.innerHTML = ''; h.appendChild(wrap); h.appendChild(acts);
-    document.getElementById('npAll').onclick = function () { if (typeof window.markAllRead === 'function') window.markAllRead(); };
+    var cb = document.getElementById('notifClose'); if (cb) cb.onclick = closePanel; var ov = document.getElementById('notifOverlay'); if (ov) ov.onclick = closePanel;
+    document.getElementById('npAll').onclick = function () { if (admOn()) admAct('readAll'); else if (typeof window.markAllRead === 'function') window.markAllRead(); };
     var tabs = document.createElement('div'); tabs.className = 'np-tabs'; tabs.id = 'npTabs';
     tabs.addEventListener('click', function (e) { var b = e.target.closest('.np-tab'); if (!b) return; FILTER = b.getAttribute('data-f'); SIG = ''; window.renderNotifications(); });
     h.parentNode.insertBefore(tabs, h.nextSibling);
@@ -7385,7 +7415,7 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
   }
   function render() {
     var listEl = document.getElementById('notifList'); if (!listEl || !chrome()) return;
-    var S = window.st || {}, ns = S.notifications || [], unread = 0, i;
+    var ns = src(), unread = 0, i;
     for (i = 0; i < ns.length; i++) if (!ns[i].read) unread++;
     var badge = document.getElementById('notifBadge'), sub = document.getElementById('notifSub');
     if (badge) { if (unread > 0) { badge.style.display = 'flex'; badge.textContent = unread > 9 ? '9+' : unread; } else badge.style.display = 'none'; }
@@ -7393,8 +7423,9 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     if (sub) sub.innerHTML = unread > 0 ? '<b>' + unread + ' new</b> · ' + ns.length + ' total' : 'You are all caught up';
     var all = document.getElementById('npAll'); if (all) all.disabled = unread === 0;
     var items = ns.map(function (n) { var p = parse(n); p.d = dest(n.text); p.n = n; p.g = grp(p.k); return p; });
+    attention().forEach(function (q) { items.unshift(q); });
     var cnt = { all: items.length, money: 0, account: 0, rewards: 0 }; items.forEach(function (p) { cnt[p.g]++; });
-    var sig = FILTER + '|' + ns.map(function (n) { return n.id + (n.read ? 'r' : 'u') + Math.floor((Date.now() - n.ts) / 6e4); }).join(',');
+    var sig = FILTER + '|' + items.filter(function (q) { return q.att; }).map(function (q) { return q.title; }).join(';') + '|' + ns.map(function (n) { return n.id + (n.read ? 'r' : 'u') + Math.floor((Date.now() - n.ts) / 6e4); }).join(',');
     if (sig === SIG) return; SIG = sig;
     var tb = document.getElementById('npTabs');
     if (tb) tb.innerHTML = TABS.map(function (t) { return '<button type="button" class="np-tab' + (FILTER === t[0] ? ' on' : '') + '" data-f="' + t[0] + '">' + t[1] + '<i>' + cnt[t[0]] + '</i></button>'; }).join('');
@@ -7405,13 +7436,13 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     }
     var html = '', last = '', idx = 0;
     shown.forEach(function (p) {
-      var n = p.n, d = dayKey(n.ts); if (d !== last) { html += '<div class="np-day">' + d + '</div>'; last = d; }
-      var id = esc(n.id), ag = typeof window.timeAgo === 'function' ? window.timeAgo(n.ts) : '';
+      var n = p.n, d = p.att ? 'Needs attention' : dayKey(n.ts); if (d !== last) { html += '<div class="np-day">' + d + '</div>'; last = d; }
+      var id = esc(n.id), ag = p.att ? 'Now' : (typeof window.timeAgo === 'function' ? window.timeAgo(n.ts) : '');
       html += '<div class="np-it k-' + p.k + (p.d ? ' go' : '') + (n.read ? '' : ' unread') + '" data-id="' + id + '" style="--i:' + Math.min(idx++, 14) + '">' +
         '<div class="np-ic">' + ico(p.k === 'sec' && /approved/i.test(n.text) ? 'ok' : p.k) + '</div>' +
         '<div class="np-bd"><div class="np-tt">' + esc(p.title) + '</div>' + (p.sub ? '<div class="np-sb">' + esc(p.sub) + '</div>' : '') +
         '<div class="np-mt">' + (p.amt ? '<span class="np-am">' + esc(p.amt) + '</span>' : '') + '<span class="np-tm">' + esc(ag) + '</span>' + (p.d ? '<span class="np-go">' + esc(p.d.l) + '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>' : '') + '</div></div>' +
-        '<button type="button" class="np-x" aria-label="Delete" data-del="' + id + '"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
+        (p.att ? '' : '<button type="button" class="np-x" aria-label="Delete" data-del="' + id + '"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>') + '</div>';
     });
     listEl.innerHTML = html;
   }
@@ -7420,16 +7451,18 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     l.addEventListener('click', function (e) {
       var x = e.target.closest('.np-x'), it = e.target.closest('.np-it'); if (!it) return;
       e.stopPropagation();
-      if (x) { if (typeof window.deleteNotification === 'function') window.deleteNotification(x.getAttribute('data-del')); return; }
-      var id = it.getAttribute('data-id'), n = ((window.st || {}).notifications || []).filter(function (q) { return String(q.id) === id; })[0];
-      if (n && !n.read && typeof window.markRead === 'function') window.markRead(n.id);
+      if (x) { if (admOn()) admAct('delete', x.getAttribute('data-del')); else if (typeof window.deleteNotification === 'function') window.deleteNotification(x.getAttribute('data-del')); return; }
+      var id = it.getAttribute('data-id');
+      if (/^att_/.test(id)) { var ai = attention().filter(function (q) { return q.n.id === id; })[0]; if (ai) setTimeout(ai.d.go, 60); return; }
+      var n = src().filter(function (q) { return String(q.id) === id; })[0];
+      if (n && !n.read) { if (admOn()) admAct('read', n.id); else if (typeof window.markRead === 'function') window.markRead(n.id); }
       var d = n && dest(n.text); if (d) setTimeout(d.go, 60);
     }, true);
   }
   window.renderNotifications = function () { try { bind(); render(); } catch (e) { console.warn('notif-pro', e); } };
   function init() { window.renderNotifications(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  setInterval(function () { ensureAdminBell(); var p = document.getElementById('notifPanel'); if (p && p.classList.contains('on')) window.renderNotifications(); }, 30000);
+  setInterval(function () { ensureAdminBell(); if (admOn() && Date.now() - admT > 12000) { admT = Date.now(); admLoad(); } var p = document.getElementById('notifPanel'); if (p && p.classList.contains('on')) window.renderNotifications(); }, 15000);
 })();
 
 </script>
