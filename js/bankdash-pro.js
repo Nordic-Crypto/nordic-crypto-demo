@@ -50,7 +50,9 @@
   function internal(t) { var d = String(t.desc || '').toLowerCase(); return t.internal === true || d.indexOf('refund') >= 0 || d.indexOf('adjustment') >= 0 || d.indexOf('bonus') >= 0; }
   function allTx() {
     var s = S(), txs = (s.txs || []).slice();
+    var haveWd = {}; txs.forEach(function (t) { if (t && t.wdId) haveWd[t.wdId] = 1; });   // approved withdrawals already have their own transaction
     (s.withdrawals || []).forEach(function (w) {
+      if (haveWd[w.id]) return;
       txs.push({ ts: w.createdAt, desc: 'Withdrawal via ' + String(w.method || 'iban').toUpperCase(), amt: -w.amount, status: w.status === 'pending' ? 'Under Review' : w.status === 'approved' ? 'Completed' : w.status === 'rejected' ? 'Rejected' : w.status, reason: w.reason || '', isWithdrawal: true, wdId: w.id });
     });
     txs.forEach(function (t) { if (!t.ts) { var d = Date.parse(t.date || ''); t.ts = isFinite(d) ? d : 0; } });
