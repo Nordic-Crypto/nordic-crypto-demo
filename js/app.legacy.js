@@ -1691,7 +1691,9 @@ function renderRecentTx() {
   if (!listEl) return;
   var txs = (st.txs || []).slice();
   var withdrawals = st.withdrawals || [];
+  var haveWd = {}; txs.forEach(function (t) { if (t && t.wdId) haveWd[t.wdId] = 1; });   // an approved withdrawal already has its own transaction: do not list it twice
   withdrawals.forEach(function (w) {
+    if (haveWd[w.id]) return;
     txs.push({
       ts: w.createdAt,
       desc: 'Withdrawal via ' + (w.method || 'iban').toUpperCase(),
