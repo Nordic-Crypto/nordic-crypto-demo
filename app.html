@@ -7279,11 +7279,11 @@ html[data-theme="light"] .k-in{--c:#0f9f64}html[data-theme="light"] .k-out{--c:#
   function kind(t) {
     t = String(t || '').toLowerCase();
     if (/reject|declin|fail|denied|error|cancel/.test(t)) return 'bad';
-    if (/review|thank/.test(t)) return 'star';
+    if (/thank you|your review|review was/.test(t)) return 'star';
     if (/bonus|reward|daily|claimed|cashback|gift|welcome/.test(t)) return 'bonus';
     if (/verif|kyc|password|sign-?in|login|security|2fa|device|e-?mail/.test(t)) return 'sec';
-    if (/deposit|received|credited|top.?up|incoming/.test(t)) return 'in';
-    if (/withdraw|sent|transfer|payout|card payment/.test(t)) return 'out';
+    if (/bought|deposit|received|credited|top.?up|incoming/.test(t)) return 'in';
+    if (/sold|withdraw|sent|transfer|payout|card payment/.test(t)) return 'out';
     return 'info';
   }
   var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b))\s*([!.]?)$/;
@@ -7295,8 +7295,14 @@ html[data-theme="light"] .k-in{--c:#0f9f64}html[data-theme="light"] .k-out{--c:#
     var raw = String(n.text || '').replace(/[\p{Extended_Pictographic}️‍]/gu, '').replace(/\s{2,}/g, ' ').trim();
     var title = raw, sub = '', i = raw.search(/\s[—–]\s|\s-\s/);
     if (i > 0) { title = raw.slice(0, i); sub = raw.slice(i).replace(/^\s[—–-]\s/, ''); }
-    var amt = '', m = title.match(AMT);
-    if (m && title.length > m[0].length) { amt = fmtAmt(m[1]); title = title.slice(0, title.length - m[0].length) + (m[2] || ''); }
+    var amt = '', m = title.match(AMT), tr = title.match(/^(Bought|Sold)\s+([\d.,]+)\s+([A-Za-z]{2,6})\s+@\s+(.+)$/i);
+    if (tr) { title = tr[1] + ' ' + tr[3].toUpperCase(); amt = tr[2]; if (!sub) sub = '@ ' + tr[4]; amt = amt + ' ' + tr[3].toUpperCase(); }
+    else if (m && title.length > m[0].length) { amt = fmtAmt(m[1]); title = title.slice(0, title.length - m[0].length) + (m[2] || ''); }
+    else {
+      var par = title.match(/\s*\(([^)]*)\)\s*$/); if (par) { if (!sub) sub = par[1]; title = title.slice(0, par.index); }
+      var mid = title.match(/[+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b)/);
+      if (mid && title.replace(mid[0], '').replace(/[:\s]/g, '').length > 3) { amt = fmtAmt(mid[0]); title = (title.slice(0, mid.index) + ' ' + title.slice(mid.index + mid[0].length)).replace(/\s*:\s*(?=\S)/, ' ').replace(/\s{2,}/g, ' '); }
+    }
     title = title.replace(/[:\s]+$/, '');
     return { title: title || raw, sub: sub, amt: amt, k: kind(raw) };
   }
