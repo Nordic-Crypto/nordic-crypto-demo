@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege for the workflow token.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Explicit bash = "-eo pipefail", so a failing command is not hidden by `| tee`.
+defaults:
+  run:
+    shell: bash
+
+# Every check runs to the end even if an earlier one fails, and all errors are
+# collected into one report on the run's Summary page ("CI report").
+jobs:
+  quality:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Real databases for the integration tests.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bastion
+          POSTGRES_PASSWORD: bastion-ci-only
+          POSTGRES_DB: bastion_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bastion -d bastion_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgres://bastion:bastion-ci-only@localhost:5432/bastion_test
+      TEST_REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        id: install
+        run: pnpm install --no-frozen-lockfile 2>&1 | tee "$RUNNER_TEMP/install.log"
+      - name: Build shared package
+        id: shared
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm --filter @bastion/shared build 2>&1 | tee "$RUNNER_TEMP/shared.log"
+      - name: Lint
+        id: lint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint 2>&1 | tee "$RUNNER_TEMP/lint.log"
+      - name: Typecheck
+        id: typecheck
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm typecheck 2>&1 | tee "$RUNNER_TEMP/typecheck.log"
+      - name: Test
+        id: test
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm --no-bail -r test 2>&1 | tee "$RUNNER_TEMP/test.log"
+      - name: Build
+        id: build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm --no-bail -r build 2>&1 | tee "$RUNNER_TEMP/build.log"
+      - name: Audit dependencies
+        id: audit
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm audit --audit-level=high --prod 2>&1 | tee "$RUNNER_TEMP/audit.log"
+      - name: Upload lockfile (commit it to the repo)
+        if: ${{ !cancelled() && hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-lock
+          path: pnpm-lock.yaml
+          retention-days: 14
+      - name: CI report
+        if: ${{ always() }}
+        env:
+          R_INSTALL: ${{ steps.install.outcome }}
+          R_SHARED: ${{ steps.shared.outcome }}
+          R_LINT: ${{ steps.lint.outcome }}
+          R_TYPECHECK: ${{ steps.typecheck.outcome }}
+          R_TEST: ${{ steps.test.outcome }}
+          R_BUILD: ${{ steps.build.outcome }}
+          R_AUDIT: ${{ steps.audit.outcome }}
+        run: |
+          {
+            echo "## CI report"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            for pair in "install:$R_INSTALL" "shared:$R_SHARED" "lint:$R_LINT" "typecheck:$R_TYPECHECK" "test:$R_TEST" "build:$R_BUILD" "audit:$R_AUDIT"; do
+              name="${pair%%:*}"; res="${pair#*:}"
+              case "$res" in success) icon="✅";; failure) icon="❌";; *) icon="⏭️";; esac
+              echo "| $name | $icon $res |"
+            done
+            for pair in "install:$R_INSTALL" "shared:$R_SHARED" "lint:$R_LINT" "typecheck:$R_TYPECHECK" "test:$R_TEST" "build:$R_BUILD" "audit:$R_AUDIT"; do
+              name="${pair%%:*}"; res="${pair#*:}"
+              if [ "$res" = "failure" ] && [ -f "$RUNNER_TEMP/$name.log" ]; then
+                echo
+                echo "### ❌ $name (last 150 lines)"
+                echo '```'
+                # Strip ANSI colour codes so the report is plain text.
+                tail -n 150 "$RUNNER_TEMP/$name.log" | sed 's/\x1b\[[0-9;]*m//g'
+                echo '```'
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Dependabot PRs cannot read repository secrets; scanning main is what matters.
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  containers:
+    name: Build and scan images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build API image
+        id: api
+        run: docker build --progress=plain -f apps/api/Dockerfile -t bastion-api:ci . 2>&1 | tee "$RUNNER_TEMP/api-image.log"
+      - name: Build web image
+        id: web
+        if: ${{ !cancelled() }}
+        run: docker build --progress=plain -f infra/caddy/Dockerfile -t bastion-web:ci . 2>&1 | tee "$RUNNER_TEMP/web-image.log"
+      - name: Validate Caddyfile
+        id: caddy
+        if: ${{ !cancelled() && steps.web.outcome == 'success' }}
+        run: docker run --rm -e DOMAIN=localhost -e ACME_EMAIL=ci@example.com bastion-web:ci caddy validate --config /etc/caddy/Caddyfile 2>&1 | tee "$RUNNER_TEMP/caddy.log"
+      - name: Scan API image (fail on high/critical)
+        id: scan_api
+        if: ${{ !cancelled() && steps.api.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: bastion-api:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Scan web image (fail on high/critical)
+        id: scan_web
+        if: ${{ !cancelled() && steps.web.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: bastion-web:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Scan Docker config for misconfigurations
+        id: scan_config
+        if: ${{ !cancelled() }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Containers report
+        if: ${{ always() }}
+        env:
+          R_API: ${{ steps.api.outcome }}
+          R_WEB: ${{ steps.web.outcome }}
+          R_CADDY: ${{ steps.caddy.outcome }}
+          R_SCAN_API: ${{ steps.scan_api.outcome }}
+          R_SCAN_WEB: ${{ steps.scan_web.outcome }}
+          R_SCAN_CONFIG: ${{ steps.scan_config.outcome }}
+        run: |
+          {
+            echo "## Containers report"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| API image build | $R_API |"
+            echo "| Web image build | $R_WEB |"
+            echo "| Caddyfile | $R_CADDY |"
+            echo "| API image scan | $R_SCAN_API |"
+            echo "| Web image scan | $R_SCAN_WEB |"
+            echo "| Config scan | $R_SCAN_CONFIG |"
+            for f in api-image web-image caddy; do
+              if [ -f "$RUNNER_TEMP/$f.log" ] && grep -qiE 'error|failed' "$RUNNER_TEMP/$f.log"; then
+                echo
+                echo "### $f (last 80 lines)"
+                echo '```'
+                tail -n 80 "$RUNNER_TEMP/$f.log" | sed 's/\x1b\[[0-9;]*m//g'
+                echo '```'
+              fi
+            done
+            echo
+            echo "Trivy findings, if any, are in the scan steps' logs."
+          } >> "$GITHUB_STEP_SUMMARY"
