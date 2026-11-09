@@ -73,12 +73,12 @@
   };
 
   /* ---------- data ---------- */
-  var CURS = ['USD', 'EUR', 'GBP', 'SEK', 'NOK', 'DKK'];
-  var SYM = { USD: '$', EUR: '€', GBP: '£', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+  var CURS = ['USD', 'EUR', 'GBP', 'SEK', 'NOK', 'DKK', 'CAD', 'AUD'];
+  var SYM = { USD: '$', EUR: '€', GBP: '£', SEK: 'kr', NOK: 'kr', DKK: 'kr', CAD: 'CA$', AUD: 'A$' };
   function S() { return window.st || (typeof st !== 'undefined' ? st : {}) || {}; }
   function rate(cur) {
     var s = S();
-    return ({ USD: 1, EUR: Number(s.eurR) || 0.92, SEK: Number(s.sekR) || 10.45, NOK: Number(s.nokR) || 10.5, DKK: Number(s.dkkR) || 6.9, GBP: Number(s.gbpR) || 0.79 })[cur] || 1;
+    return ({ USD: 1, EUR: Number(s.eurR) || 0.92, SEK: Number(s.sekR) || 10.45, NOK: Number(s.nokR) || 10.5, DKK: Number(s.dkkR) || 6.9, GBP: Number(s.gbpR) || 0.79, CAD: Number(s.cadR) || 1.38, AUD: Number(s.audR) || 1.52 })[cur] || 1;
   }
   function tsOf(t) { if (typeof t.ts === 'number' && t.ts > 1e11) return t.ts; var d = Date.parse(t.date); return d || Date.now(); }
   function isDone(t) { var s = String(t.status || 'Completed').toLowerCase(); return /^(completed|done|success|settled|approved)/.test(s); }
