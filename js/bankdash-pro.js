@@ -385,7 +385,7 @@
       case 'gnew': B.goalForm = true; render(true); setTimeout(function () { var i = $('bdGName'); if (i) i.focus(); }, 30); break;
       case 'gcancel': B.goalForm = false; render(true); break;
       case 'gsave': { var n = ($('bdGName').value || '').trim(), amt = parseFloat($('bdGAmt').value); var cur = S().currency || 'USD'; if (!n) { toast('Enter a goal name'); break; } if (!(amt > 0)) { toast('Enter a target amount'); break; }
-        var rate = cur === 'EUR' ? S().eurR : cur === 'SEK' ? S().sekR : cur === 'NOK' ? (S().nokR || 10.5) : cur === 'DKK' ? (S().dkkR || 6.9) : cur === 'GBP' ? (S().gbpR || .79) : cur === 'CAD' ? (S().cadR || 1.38) : 1; // stored in USD
+        var rate = cur === 'EUR' ? S().eurR : cur === 'SEK' ? S().sekR : cur === 'NOK' ? (S().nokR || 10.5) : cur === 'DKK' ? (S().dkkR || 6.9) : cur === 'GBP' ? (S().gbpR || .79) : cur === 'CAD' ? (S().cadR || 1.38) : cur === 'AUD' ? (S().audR || 1.52) : 1; // stored in USD
         var g = goals(); if (g.length >= 6) { toast('Up to 6 goals'); break; } g.push({ name: n.slice(0, 28), target: amt / (rate || 1) }); saveGoals(g); B.goalForm = false; render(true); toast('Goal added'); break; }
       case 'gdel': { var g2 = goals(); g2.splice(+b.dataset.i, 1); saveGoals(g2); render(true); break; }
     }
