@@ -9,9 +9,9 @@
   function $(id) { return document.getElementById(id); }
   function S() { return window.st || {}; }
   function coin() { return ($('wdCryptoCoin') || {}).value || 'USDT'; }
-  var CURS = [['USD', 'US dollar'], ['EUR', 'Euro'], ['SEK', 'Swedish krona'], ['NOK', 'Norwegian krone'], ['DKK', 'Danish krone'], ['GBP', 'British pound'], ['CAD', 'Canadian dollar']];
+  var CURS = [['USD', 'US dollar'], ['EUR', 'Euro'], ['SEK', 'Swedish krona'], ['NOK', 'Norwegian krone'], ['DKK', 'Danish krone'], ['GBP', 'British pound'], ['CAD', 'Canadian dollar'], ['AUD', 'Australian dollar']];
   function locCode() { var e = $('ncwCur'); return (e && e.value) || 'USD'; }          // currency chosen in "Withdraw in"
-  function rateOf(code) { var s = S(), m = { USD: 1, EUR: s.eurR || 0.92, SEK: s.sekR || 10.45, NOK: s.nokR || 10.5, DKK: s.dkkR || 6.9, GBP: s.gbpR || 0.79, CAD: s.cadR || 1.38 }; return m[code] || 1; }   // 1 USD = rate units
+  function rateOf(code) { var s = S(), m = { USD: 1, EUR: s.eurR || 0.92, SEK: s.sekR || 10.45, NOK: s.nokR || 10.5, DKK: s.dkkR || 6.9, GBP: s.gbpR || 0.79, CAD: s.cadR || 1.38, AUD: s.audR || 1.52 }; return m[code] || 1; }   // 1 USD = rate units
   function locRate() { return rateOf(locCode()); }
   function priceUsd(c) { var s = S(); if (c === 'ETH') return s.ethP || 0; if (c === 'BTC') return s.btcP || 0; return 1; }
   function dp(c) { return (c === 'ETH' || c === 'BTC') ? 8 : 2; }
