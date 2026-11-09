@@ -834,6 +834,7 @@ function fmtCurrency(usdAmount) {
   else if (cur === 'DKK') { amount = usdAmount * (st.dkkR || 6.9); symbol = 'kr '; suffix = ' DKK'; }
   else if (cur === 'GBP') { amount = usdAmount * (st.gbpR || 0.79); symbol = '£'; }
   else if (cur === 'CAD') { amount = usdAmount * (st.cadR || 1.38); symbol = 'CA$'; }
+  else if (cur === 'AUD') { amount = usdAmount * (st.audR || 1.52); symbol = 'A$'; }
   var formatted = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return symbol + formatted + suffix;
 }
@@ -850,6 +851,7 @@ function loadExchangeRates() {
         if (r.DKK) st.dkkR = Number(r.DKK);
         if (r.GBP) st.gbpR = Number(r.GBP);
         if (r.CAD) st.cadR = Number(r.CAD);
+        if (r.AUD) st.audR = Number(r.AUD);
 
         var rateEUR = document.getElementById('rateEUR');
         if (rateEUR) rateEUR.textContent = '1$ = ' + st.eurR.toFixed(2) + '€';
@@ -861,6 +863,8 @@ function loadExchangeRates() {
         if (rateDKK && r.DKK) rateDKK.textContent = '1$ = ' + Number(r.DKK).toFixed(2) + 'kr';
         var rateCAD = document.getElementById('rateCAD');
         if (rateCAD && r.CAD) rateCAD.textContent = '1$ = ' + Number(r.CAD).toFixed(2) + 'CA$';
+        var rateAUD = document.getElementById('rateAUD');
+        if (rateAUD && r.AUD) rateAUD.textContent = '1$ = ' + Number(r.AUD).toFixed(2) + 'A$';
         var rateGBP = document.getElementById('rateGBP');
         if (rateGBP && r.GBP) rateGBP.textContent = '1$ = ' + Number(r.GBP).toFixed(2) + '£';
 
@@ -3507,7 +3511,7 @@ function initCountryCurrencyLink() {
   if (!countryEl) return;
   countryEl.addEventListener('change', function () {
     var country = this.value;
-    var currencyMap = { SE: 'SEK', NO: 'NOK', DK: 'DKK', FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', GB: 'GBP', US: 'USD', CA: 'CAD' };
+    var currencyMap = { SE: 'SEK', NO: 'NOK', DK: 'DKK', FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', GB: 'GBP', AU: 'AUD', US: 'USD', CA: 'CAD' };
     var currency = currencyMap[country] || 'EUR';
     var btns = document.querySelectorAll('.cur-btn');
     for (var i = 0; i < btns.length; i++) {
@@ -5874,9 +5878,9 @@ console.log('%c[NordicCrypto] 📦 Version: ' + window.NC_VERSION, 'color:#9b8cf
 
 /* ═══════════════════ AUTO CURRENCY BY COUNTRY (once per account) ═══════════════════ */
 (function () {
-  var MAP = { SE: 'SEK', NO: 'NOK', DK: 'DKK', GB: 'GBP', UK: 'GBP', CA: 'CAD', US: 'USD',
+  var MAP = { SE: 'SEK', NO: 'NOK', DK: 'DKK', GB: 'GBP', UK: 'GBP', CA: 'CAD', AU: 'AUD', US: 'USD',
     FI: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', PT: 'EUR', AT: 'EUR', BE: 'EUR', IE: 'EUR', GR: 'EUR' };
-  var NAME = { SWEDEN: 'SE', NORWAY: 'NO', DENMARK: 'DK', FINLAND: 'FI', GERMANY: 'DE', FRANCE: 'FR', SPAIN: 'ES', ITALY: 'IT', NETHERLANDS: 'NL', 'UNITED KINGDOM': 'GB', 'UNITED STATES': 'US', CANADA: 'CA' };
+  var NAME = { SWEDEN: 'SE', NORWAY: 'NO', DENMARK: 'DK', FINLAND: 'FI', GERMANY: 'DE', FRANCE: 'FR', SPAIN: 'ES', ITALY: 'IT', NETHERLANDS: 'NL', 'UNITED KINGDOM': 'GB', 'UNITED STATES': 'US', CANADA: 'CA', AUSTRALIA: 'AU' };
   function run() {
     try {
       var em = (localStorage.getItem('user_email') || '').toLowerCase(); if (!em || window.adminViewingEmail) return;
