@@ -289,6 +289,21 @@ footer p{max-width:820px;font-size:.78rem}
 <link rel="stylesheet" href="css/brand-pro.css?v=1">
 <link rel="stylesheet" href="css/perf-pro.css?v=1">
 <link rel="stylesheet" href="css/trust-pro.css?v=3">
+<style id="au-css">
+.au-card{display:grid;grid-template-columns:1.15fr 1fr;gap:34px;padding:38px;border-radius:34px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,132,61,.16),rgba(255,205,0,.08) 55%,transparent),var(--s1);border:1px solid rgba(255,205,0,.28)}
+.au-card:before{content:"";position:absolute;right:-90px;top:-90px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,205,0,.22),transparent 65%);pointer-events:none}
+.au-k{display:inline-flex;align-items:center;gap:8px;font-size:.74rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ffcd00;margin-bottom:12px}
+.au-k i{width:9px;height:9px;border-radius:50%;background:#00a651;box-shadow:0 0 0 4px rgba(0,166,81,.25)}
+.au-l h2{font-size:clamp(1.7rem,3.4vw,2.6rem);line-height:1.1;letter-spacing:-.03em;margin-bottom:14px}.au-l h2 span{background:linear-gradient(90deg,#ffcd00,#7bdc6b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.au-l p{color:var(--mut);max-width:520px;margin-bottom:20px}
+.au-live{display:grid;grid-template-columns:repeat(4,auto);gap:10px 22px;justify-content:start;margin-bottom:22px}
+.au-live small{display:block;font-size:.7rem;color:var(--mut);letter-spacing:.04em}.au-live b{font-size:1.02rem}
+.au-r{display:grid;gap:12px;align-content:center;position:relative}
+.au-t{display:flex;gap:14px;align-items:center;padding:15px 16px;border-radius:20px;background:var(--s2);border:1px solid var(--line)}
+.au-t b{flex:none;min-width:52px;height:46px;padding:0 6px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#00843d,#0a9d4f);color:#ffcd00;font-weight:800;font-size:.95rem}
+.au-t span{font-size:.85rem;color:var(--mut);line-height:1.4}.au-t strong{display:block;color:var(--tx);font-size:.95rem;margin-bottom:2px}
+@media(max-width:820px){.au-card{grid-template-columns:1fr;padding:26px 20px;gap:22px}.au-live{grid-template-columns:repeat(2,auto)}}
+</style>
 </head>
 <body>
 <div id="prog"></div>
@@ -373,7 +388,7 @@ footer p{max-width:820px;font-size:.78rem}
   <div class="bt c3 reveal"><h3 data-i="ft1"></h3><p data-i="bn5d"></p>
    <div class="ui"><div class="qr"><svg id="qr" viewBox="0 0 21 21" shape-rendering="crispEdges"></svg><div><small data-i="m_addr"></small><code>bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code></div></div></div></div>
   <div class="bt c3 reveal"><h3 data-i="bn6t"></h3><p data-i="bn6d"></p>
-   <div class="ui"><div class="chips"><span>EUR</span><span>USD</span><span>SEK</span><span>NOK</span><span>DKK</span><span>GBP</span><span>BTC</span><span>ETH</span><span>SOL</span><span>BNB</span><span>USDT</span></div></div></div>
+   <div class="ui"><div class="chips"><span>EUR</span><span>USD</span><span>SEK</span><span>NOK</span><span>DKK</span><span>GBP</span><span>AUD</span><span>BTC</span><span>ETH</span><span>SOL</span><span>BNB</span><span>USDT</span></div></div></div>
  </div>
 </div></section>
 
@@ -419,7 +434,7 @@ footer p{max-width:820px;font-size:.78rem}
 <section id="calc"><div class="wrap split">
  <div class="reveal"><div class="sh2"><small data-i="k_k"></small><h2 data-i="k_h"></h2><p data-i="k_p"></p></div></div>
  <div class="reveal"><div class="panel">
-  <div class="fld"><div class="col"><label data-i="k_send"></label><input id="cAmt" class="num" type="number" min="0" value="1000" inputmode="decimal"></div><select id="cFiat"><option>EUR</option><option>USD</option><option>SEK</option><option>NOK</option><option>DKK</option><option>GBP</option></select></div>
+  <div class="fld"><div class="col"><label data-i="k_send"></label><input id="cAmt" class="num" type="number" min="0" value="1000" inputmode="decimal"></div><select id="cFiat"><option>EUR</option><option>USD</option><option>SEK</option><option>NOK</option><option>DKK</option><option>GBP</option><option>AUD</option></select></div>
   <div class="fld"><div class="col"><label data-i="k_get"></label><div class="out num" id="cOut">—</div></div><select id="cCoin"><option value="bitcoin">BTC</option><option value="ethereum">ETH</option><option value="solana">SOL</option><option value="binancecoin">BNB</option><option value="tether">USDT</option></select></div>
   <div class="cchips" id="cChips" role="group" aria-label="Quick amounts"><button type="button" data-v="100">100</button><button type="button" data-v="500">500</button><button type="button" data-v="1000">1 000</button><button type="button" data-v="5000">5 000</button></div>
   <div class="note" id="cRate"></div><div class="note" data-i="k_note"></div>
@@ -430,6 +445,24 @@ footer p{max-width:820px;font-size:.78rem}
 <section class="alt"><div class="wrap">
  <div class="sh2 reveal"><small data-i="cn_k"></small><h2 data-i="cn_h"></h2><p data-i="cn_p"></p></div>
  <div class="cn reveal" id="cn"></div>
+</div></section>
+
+<section id="australia" class="au-sec"><div class="wrap">
+ <div class="au-card reveal">
+  <div class="au-l">
+   <span class="au-k"><i></i>Now welcoming Australia</span>
+   <h2>G&rsquo;day, Australia. <span>Your money, in A$.</span></h2>
+   <p>Open a NordicCrypto account from Sydney, Melbourne, Brisbane, Perth, Adelaide or anywhere in between. See your balance in Australian dollars, convert A$ to crypto in a tap, and verify with your Australian passport or driver licence.</p>
+   <div class="au-live"><div><small>Sydney time</small><b class="num" id="auClock">&mdash;</b></div><div><small>1 BTC &asymp;</small><b class="num" id="auBtc">&mdash;</b></div><div><small>1 ETH &asymp;</small><b class="num" id="auEth">&mdash;</b></div><div><small>1 USD &asymp;</small><b class="num" id="auUsd">&mdash;</b></div></div>
+   <button class="btn p" data-auth="signup">Open my account</button>
+  </div>
+  <div class="au-r">
+   <div class="au-t"><b>A$</b><span><strong>AUD everywhere</strong>Balances, rates and goals in Australian dollars</span></div>
+   <div class="au-t"><b>31/12</b><span><strong>Aussie formats</strong>Dates as day/month/year, amounts like A$1,234.56</span></div>
+   <div class="au-t"><b>ID</b><span><strong>Easy verification</strong>Passport or driver licence, done in minutes</span></div>
+   <div class="au-t"><b>&#8644;</b><span><strong>International transfers</strong>Send from your Australian bank by SWIFT</span></div>
+  </div>
+ </div>
 </div></section>
 
 <section id="fees"><div class="wrap">
@@ -723,13 +756,13 @@ $('#ctabs').addEventListener('click',function(e){var b=e.target.closest('button'
 $('#sw').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;cardCol=+b.dataset.c;buildCards()});
 
 /* ---------- live prices + calculator ---------- */
-var P={bitcoin:{usd:67000,eur:62000,sek:700000,nok:720000,dkk:462000,gbp:52000,c:1.2},ethereum:{usd:3300,eur:3050,sek:34500,nok:35500,dkk:22800,gbp:2600,c:-0.6},solana:{usd:160,eur:148,sek:1670,nok:1720,dkk:1100,gbp:126,c:2.1},binancecoin:{usd:590,eur:545,sek:6150,nok:6330,dkk:4060,gbp:465,c:0.4},tether:{usd:1,eur:.92,sek:10.4,nok:10.7,dkk:6.9,gbp:.79,c:0}};
-function tickRender(){var L=[['BTC','bitcoin'],['ETH','ethereum'],['SOL','solana']];
+var P={bitcoin:{usd:67000,eur:62000,sek:700000,nok:720000,dkk:462000,gbp:52000,aud:102000,c:1.2},ethereum:{usd:3300,eur:3050,sek:34500,nok:35500,dkk:22800,gbp:2600,aud:5000,c:-0.6},solana:{usd:160,eur:148,sek:1670,nok:1720,dkk:1100,gbp:126,aud:243,c:2.1},binancecoin:{usd:590,eur:545,sek:6150,nok:6330,dkk:4060,gbp:465,aud:895,c:0.4},tether:{usd:1,eur:.92,sek:10.4,nok:10.7,dkk:6.9,gbp:.79,aud:1.52,c:0}};
+window.__ncP=P;function tickRender(){var L=[['BTC','bitcoin'],['ETH','ethereum'],['SOL','solana']];
  $('#tick').innerHTML=L.map(function(x){var p=P[x[1]];return '<div><small>'+x[0]+'</small><b class="num">$'+Math.round(p.usd).toLocaleString('en-US')+'</b><i class="'+(p.c>=0?'up':'dn')+'">'+(p.c>=0?'+':'')+p.c.toFixed(1)+'%</i></div>'}).join('')}
 function loadPrices(){
  var ctl=window.AbortController?new AbortController():null;var to=setTimeout(function(){ctl&&ctl.abort()},6000);
- fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin,tether&vs_currencies=usd,eur,sek,nok,dkk,gbp&include_24hr_change=true',ctl?{signal:ctl.signal}:{})
- .then(function(r){return r.json()}).then(function(j){clearTimeout(to);for(var k in j){if(!P[k])continue;['usd','eur','sek','nok','dkk','gbp'].forEach(function(c){if(j[k][c])P[k][c]=j[k][c]});if(typeof j[k].usd_24h_change==='number')P[k].c=j[k].usd_24h_change}tickRender();rate()}).catch(function(){});
+ fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin,tether&vs_currencies=usd,eur,sek,nok,dkk,gbp,aud&include_24hr_change=true',ctl?{signal:ctl.signal}:{})
+ .then(function(r){return r.json()}).then(function(j){clearTimeout(to);for(var k in j){if(!P[k])continue;['usd','eur','sek','nok','dkk','gbp','aud'].forEach(function(c){if(j[k][c])P[k][c]=j[k][c]});if(typeof j[k].usd_24h_change==='number')P[k].c=j[k].usd_24h_change}tickRender();rate();window.ncAuUpdate&&window.ncAuUpdate()}).catch(function(){});
 }
 function fmt(n,max){return n.toLocaleString(lang==='no'?'nb':lang,{maximumFractionDigits:max})}
 function rate(){
@@ -950,6 +983,16 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)load
 if(location.hash==='#login')openAuth('login');else if(location.hash==='#signup')openAuth('signup');
 })();
 </script>
+<script id="au-js">(function(){
+function $(i){return document.getElementById(i)}
+function money(v,d){try{return new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',currencyDisplay:'code',maximumFractionDigits:d}).format(v).replace('AUD','A$').replace(/\s/g,'')}catch(e){return 'A$'+Math.round(v)}}
+function clock(){var e=$('auClock');if(!e)return;try{e.textContent=new Intl.DateTimeFormat('en-AU',{timeZone:'Australia/Sydney',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())}catch(x){}}
+window.ncAuUpdate=function(){try{var P=window.__ncP||null;if(!P)return;if($('auBtc')&&P.bitcoin.aud)$('auBtc').textContent=money(P.bitcoin.aud,0);if($('auEth')&&P.ethereum.aud)$('auEth').textContent=money(P.ethereum.aud,0);if($('auUsd')&&P.tether.aud)$('auUsd').textContent='A$'+P.tether.aud.toFixed(2)}catch(e){}};
+clock();setInterval(clock,20000);
+var au=false;try{au=/^en-AU/i.test(navigator.language||'')||/^Australia\//.test(Intl.DateTimeFormat().resolvedOptions().timeZone||'')}catch(e){}
+if(au){var f=$('cFiat');if(f){f.value='AUD';try{f.dispatchEvent(new Event('input'))}catch(e){}}setTimeout(function(){var b=document.querySelector('#ann [data-i=ann]');if(b){b.removeAttribute('data-i');b.textContent='G\u2019day! NordicCrypto now welcomes Australia \ud83c\udde6\ud83c\uddfa \u00b7 balances and rates in A$'}},500)}
+setTimeout(function(){window.ncAuUpdate()},300);
+})();</script>
 <script src="js/flags.js?v=2"></script>
 <script src="js/install-pro.js?v=1"></script>
 <script src="js/security-pro.js?v=2"></script>
