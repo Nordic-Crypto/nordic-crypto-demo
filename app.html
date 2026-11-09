@@ -4395,6 +4395,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="curr-opt" data-cur="DKK"><span>DKK</span> <span class="curr-rate" id="rateDKK">—</span></div>
         <div class="curr-opt" data-cur="GBP"><span>GBP</span> <span class="curr-rate" id="rateGBP">—</span></div>
         <div class="curr-opt" data-cur="CAD"><span>CAD</span> <span class="curr-rate" id="rateCAD">—</span></div>
+        <div class="curr-opt" data-cur="AUD"><span>AUD</span> <span class="curr-rate" id="rateAUD">—</span></div>
       </div>
     </div>
     <button class="settings-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
@@ -4647,7 +4648,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="fg" style="flex:2"><label>Full Name</label><input class="fc" id="oName" placeholder="Satoshi Sat Nakamoto"></div>
         <div class="fg" style="flex:1"><label>Card Type</label><select class="fc" id="oType"><option>Metal (Free)</option><option>Gold (+$100)</option></select></div>
       </div>
-      <div class="fg"><label>Country</label><select class="fc" id="oCountry"><option>Sweden</option><option>Norway</option><option>Finland</option><option>Denmark</option><option>Germany</option><option>United Kingdom</option><option>United States</option><option>Canada</option></select></div>
+      <div class="fg"><label>Country</label><select class="fc" id="oCountry"><option>Sweden</option><option>Norway</option><option>Finland</option><option>Denmark</option><option>Germany</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Australia</option></select></div>
       <div class="fg"><label>City</label><input class="fc" id="oCity" placeholder="Stockholm"></div>
       <div class="fg"><label>Street Address</label><input class="fc" id="oStreet" placeholder="Drottninggatan 1"></div>
       <div class="fr">
@@ -4830,7 +4831,7 @@ document.addEventListener('DOMContentLoaded', function(){
               <option value="DE">🇩🇪 Germany (EUR)</option><option value="FR">🇫🇷 France (EUR)</option>
               <option value="ES">🇪🇸 Spain (EUR)</option><option value="IT">🇮🇹 Italy (EUR)</option>
               <option value="NL">🇳🇱 Netherlands (EUR)</option><option value="GB">🇬🇧 United Kingdom (GBP)</option>
-              <option value="US">🇺🇸 United States (USD)</option><option value="CA">🇨🇦 Canada (CAD)</option>
+              <option value="US">🇺🇸 United States (USD)</option><option value="CA">🇨🇦 Canada (CAD)</option><option value="AU">🇦🇺 Australia (AUD)</option>
             </select>
           </div>
           <div class="onb-nav">
@@ -4876,6 +4877,7 @@ document.addEventListener('DOMContentLoaded', function(){
               <button class="cur-btn" data-cur="DKK">DKK</button>
               <button class="cur-btn" data-cur="GBP">GBP</button>
               <button class="cur-btn" data-cur="CAD">CAD</button>
+              <button class="cur-btn" data-cur="AUD">AUD</button>
             </div>
           </div>
           <button class="btn b1" style="width:100%;margin-top:8px" id="btnCreateCard">✨ Create my card</button>
@@ -5093,6 +5095,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <option value="GB">United Kingdom</option>
   <option value="US">United States</option>
   <option value="CA">Canada</option>
+  <option value="AU">Australia</option>
 </select></div>
           <div class="verify-nav">
             <button type="button" class="btn b2" id="verifyBack3" style="flex:1">Back</button>
@@ -6167,10 +6170,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261122"></script>
+<script src="js/app.legacy.js?v=20261123"></script>
 <script src="js/exdash-pro.js?v=20261117"></script>
 <script src="js/topbar-pro.js?v=20261117"></script>
-<script src="js/bankdash-pro.js?v=20261122"></script>
+<script src="js/bankdash-pro.js?v=20261123"></script>
 <script src="js/legacy-fix.js?v=20261017"></script>
 <!-- <script src="js/session-fix.js?v=20261017"></script> -->
 <script src="js/deposit-flow.js?v=20261017"></script>
@@ -7167,9 +7170,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/admin-team.js?v=1"></script>
 <script src="js/news-pro.js?v=5"></script>
 <script src="js/kyc-track.js?v=1"></script>
-<script src="js/statement-pro.js?v=2"></script>
+<script src="js/statement-pro.js?v=3"></script>
 <script src="js/cards-pro.js?v=2"></script>
-<script src="js/format-pro.js?v=1"></script>
+<script src="js/format-pro.js?v=2"></script>
 <script src="js/lang-pro.js?v=1"></script>
 <script src="js/fast-pro.js?v=2"></script>
 <script src="js/viewas-pro.js?v=2"></script>
@@ -7181,12 +7184,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/i18n-app.js?v=20261117"></script>
 <script src="js/theme-pro.js?v=5"></script>
 <script src="js/avatar-pro.js?v=3"></script>
-<script src="js/withdraw-crypto.js?v=3"></script>
+<script src="js/withdraw-crypto.js?v=4"></script>
 <script src="js/admin-avatars.js?v=2"></script>
 <script src="js/i18n-extra.js?v=2"></script>
 <script src="js/i18n-pro.js?v=20261117"></script>
 <script src="js/limits-pro.js?v=6"></script>
 <script src="js/welcome-pro.js?v=1"></script>
+<script src="js/au-pro.js?v=1"></script>
 <script src="js/explore-pro.js?v=2"></script>
 <script src="js/pages-pro.js?v=5"></script>
 <script src="js/admin-concierge.js?v=1"></script>
@@ -7294,7 +7298,7 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     if (/sold|withdraw|sent|transfer|payout|card payment/.test(t)) return 'out';
     return 'info';
   }
-  var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b))\s*([!.]?)$/;
+  var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI|CAD|AUD)\b))\s*([!.]?)$/;
   function fmtAmt(a) {
     a = a.replace(/\s+/g, ' ').trim();
     return a.replace(/(\d[\d,]*)(\.\d+)?/, function (m, i, d) { var n = i.replace(/,/g, ''); return n.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d || ''); });
@@ -7308,7 +7312,7 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     else if (m && title.length > m[0].length) { amt = fmtAmt(m[1]); title = title.slice(0, title.length - m[0].length) + (m[2] || ''); }
     else {
       var par = title.match(/\s*\(([^)]*)\)\s*$/); if (par) { if (!sub) sub = par[1]; title = title.slice(0, par.index); }
-      var mid = title.match(/[+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b)/);
+      var mid = title.match(/[+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI|CAD|AUD)\b)/);
       if (mid && title.replace(mid[0], '').replace(/[:\s]/g, '').length > 3) { amt = fmtAmt(mid[0]); title = (title.slice(0, mid.index) + ' ' + title.slice(mid.index + mid[0].length)).replace(/\s*:\s*(?=\S)/, ' ').replace(/\s{2,}/g, ' '); }
     }
     title = title.replace(/[:\s]+$/, '');
