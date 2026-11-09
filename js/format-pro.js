@@ -8,12 +8,13 @@
   var cache = {};
   function nf(cur, digits) {
     var k = loc() + '|' + cur + '|' + digits;
-    if (!cache[k]) { try { cache[k] = new Intl.NumberFormat(loc(), { style: 'currency', currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits, currencyDisplay: 'narrowSymbol' }); } catch (e) { cache[k] = null; } }
+    if (!cache[k]) { try { var wide = (cur === 'AUD' || cur === 'CAD'), L = (wide && /^en/.test(loc())) ? 'en-US' : loc();   /* A$ / CA$ so it is never confused with USD */
+      cache[k] = new Intl.NumberFormat(L, { style: 'currency', currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits, currencyDisplay: wide ? 'symbol' : 'narrowSymbol' }); } catch (e) { cache[k] = null; } }
     return cache[k];
   }
   function rate(cur) {
     var s = window.st || {};
-    return cur === 'EUR' ? Number(s.eurR) : cur === 'SEK' ? Number(s.sekR) : cur === 'NOK' ? Number(s.nokR || 10.5) : cur === 'DKK' ? Number(s.dkkR || 6.9) : cur === 'GBP' ? Number(s.gbpR || 0.79) : 1;
+    return cur === 'EUR' ? Number(s.eurR) : cur === 'SEK' ? Number(s.sekR) : cur === 'NOK' ? Number(s.nokR || 10.5) : cur === 'DKK' ? Number(s.dkkR || 6.9) : cur === 'GBP' ? Number(s.gbpR || 0.79) : cur === 'CAD' ? Number(s.cadR || 1.38) : cur === 'AUD' ? Number(s.audR || 1.52) : 1;
   }
   function money(v, cur) { var f = nf(cur, 2); v = Number(v) || 0; return f ? f.format(v) : (v.toFixed(2) + ' ' + cur); }
   var oldCur = window.fmtCurrency, oldFmt = window.fmt, oldEur = window.eurF;
