@@ -23,7 +23,7 @@
     if (/withdraw|sent|transfer|payout|card payment/.test(t)) return 'out';
     return 'info';
   }
-  var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI)\b))\s*([!.]?)$/;
+  var AMT = /\s*[:–-]?\s*([+\-−]?\s?(?:\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:USD|EUR|SEK|DKK|NOK|GBP|USDT|BTC|ETH|SOL|XRP|SUI|CAD|AUD)\b))\s*([!.]?)$/;
   function fmtAmt(a) {
     a = a.replace(/\s+/g, ' ').trim();
     return a.replace(/(\d[\d,]*)(\.\d+)?/, function (m, i, d) { var n = i.replace(/,/g, ''); return n.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d || ''); });
@@ -38,6 +38,32 @@
     return { title: title || raw, sub: sub, amt: amt, k: kind(raw) };
   }
   function dayKey(ts) { var d = new Date(ts), n = new Date(); d.setHours(0, 0, 0, 0); n.setHours(0, 0, 0, 0); var diff = Math.round((n - d) / 864e5); return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff < 7 ? 'This week' : 'Earlier'; }
+
+  function closePanel() { var a = document.getElementById('notifPanel'), b = document.getElementById('notifOverlay'); if (a) a.classList.remove('on'); if (b) b.classList.remove('on'); }
+  function nav(pg, chip) {
+    closePanel();
+    var all = [].slice.call(document.querySelectorAll('[data-p="' + pg + '"]')), e = all.filter(function (n) { return n.offsetParent !== null; })[0] || all[0];
+    if (e) e.click();
+    if (chip) setTimeout(function () { var c = document.querySelector('.pp-chip[data-c="' + chip + '"]'); if (c) c.click(); }, 380);
+    var m = document.getElementById('mobileMenu'); if (m && m.classList) m.classList.remove('on');
+  }
+  function dest(text) {
+    var t = String(text || '').toLowerCase();
+    if (/password|sign-?in|new device|security alert/.test(t)) return { l: 'Open security', go: function () { closePanel(); var b = document.getElementById('settingsBtn'); if (b) b.click(); } };
+    if (/message from|support/.test(t)) return { l: 'Open chat', go: function () { closePanel(); var pn = document.getElementById('chatPanel'); if (!(pn && pn.offsetParent !== null) && typeof window.toggleChat === 'function') window.toggleChat(); } };
+    if (/limit/.test(t)) return { l: 'Open limits', go: function () { closePanel(); if (typeof window.openLimits === 'function') window.openLimits(); else nav('dash'); } };
+    if (/withdrawal|transfer sent|scheduled/.test(t)) return { l: 'View withdrawal', go: function () { nav('tx', 'wd'); } };
+    if (/(verification|kyc|documents|rejected: )/.test(t) && /reject|fail|not accepted|documents/.test(t) && !/deposit/.test(t)) return { l: 'Verify again', go: function () { closePanel(); if (typeof window.showVerifyScreen === 'function') window.showVerifyScreen(); else nav('dash'); } };
+    if (/verification approved/.test(t)) return { l: 'Open dashboard', go: function () { nav('dash'); } };
+    if (/deposit address/.test(t)) return { l: 'View address', go: function () { nav('assets'); } };
+    if (/deposit.*(pending|submitted|rejected)|rejected.*deposit/.test(t)) return { l: 'View transactions', go: function () { nav('tx', 'all'); } };
+    if (/deposit|bonus|received|credited/.test(t)) return { l: 'View transactions', go: function () { nav('tx', 'in'); } };
+    if (/bought|sold/.test(t)) return { l: 'View trade', go: function () { nav('tx', 'crypto'); } };
+    if (/card order|physical card|tracking|order/.test(t)) return { l: 'Track order', go: function () { nav('order'); } };
+    if (/card (frozen|unfrozen|deleted)|iban/.test(t)) return { l: 'Open cards', go: function () { nav('cards'); } };
+    if (/lounge|hotel/.test(t)) return { l: 'Open Explore', go: function () { nav('explore'); } };
+    return null;
+  }
   var TABS = [['all', 'All'], ['money', 'Money'], ['account', 'Account'], ['rewards', 'Rewards']];
   function grp(k) { return k === 'in' || k === 'out' ? 'money' : k === 'bonus' || k === 'star' ? 'rewards' : 'account'; }
   function chrome() {
@@ -63,7 +89,7 @@
     if (badge) { if (unread > 0) { badge.style.display = 'flex'; badge.textContent = unread > 9 ? '9+' : unread; } else badge.style.display = 'none'; }
     if (sub) sub.innerHTML = unread > 0 ? '<b>' + unread + ' new</b> · ' + ns.length + ' total' : 'You are all caught up';
     var all = document.getElementById('npAll'); if (all) all.disabled = unread === 0;
-    var items = ns.map(function (n) { var p = parse(n); p.n = n; p.g = grp(p.k); return p; });
+    var items = ns.map(function (n) { var p = parse(n); p.d = dest(n.text); p.n = n; p.g = grp(p.k); return p; });
     var cnt = { all: items.length, money: 0, account: 0, rewards: 0 }; items.forEach(function (p) { cnt[p.g]++; });
     var sig = FILTER + '|' + ns.map(function (n) { return n.id + (n.read ? 'r' : 'u') + Math.floor((Date.now() - n.ts) / 6e4); }).join(',');
     if (sig === SIG) return; SIG = sig;
@@ -78,10 +104,10 @@
     shown.forEach(function (p) {
       var n = p.n, d = dayKey(n.ts); if (d !== last) { html += '<div class="np-day">' + d + '</div>'; last = d; }
       var id = esc(n.id), ag = typeof window.timeAgo === 'function' ? window.timeAgo(n.ts) : '';
-      html += '<div class="np-it k-' + p.k + (n.read ? '' : ' unread') + '" data-id="' + id + '" style="--i:' + Math.min(idx++, 14) + '">' +
+      html += '<div class="np-it k-' + p.k + (p.d ? ' go' : '') + (n.read ? '' : ' unread') + '" data-id="' + id + '" style="--i:' + Math.min(idx++, 14) + '">' +
         '<div class="np-ic">' + ico(p.k === 'sec' && /approved/i.test(n.text) ? 'ok' : p.k) + '</div>' +
         '<div class="np-bd"><div class="np-tt">' + esc(p.title) + '</div>' + (p.sub ? '<div class="np-sb">' + esc(p.sub) + '</div>' : '') +
-        '<div class="np-mt">' + (p.amt ? '<span class="np-am">' + esc(p.amt) + '</span>' : '') + '<span class="np-tm">' + esc(ag) + '</span></div></div>' +
+        '<div class="np-mt">' + (p.amt ? '<span class="np-am">' + esc(p.amt) + '</span>' : '') + '<span class="np-tm">' + esc(ag) + '</span>' + (p.d ? '<span class="np-go">' + esc(p.d.l) + '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>' : '') + '</div></div>' +
         '<button type="button" class="np-x" aria-label="Delete" data-del="' + id + '"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
     });
     listEl.innerHTML = html;
@@ -94,6 +120,7 @@
       if (x) { if (typeof window.deleteNotification === 'function') window.deleteNotification(x.getAttribute('data-del')); return; }
       var id = it.getAttribute('data-id'), n = ((window.st || {}).notifications || []).filter(function (q) { return String(q.id) === id; })[0];
       if (n && !n.read && typeof window.markRead === 'function') window.markRead(n.id);
+      var d = n && dest(n.text); if (d) setTimeout(d.go, 60);
     }, true);
   }
   window.renderNotifications = function () { try { bind(); render(); } catch (e) { console.warn('notif-pro', e); } };
