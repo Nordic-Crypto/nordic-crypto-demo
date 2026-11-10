@@ -1902,7 +1902,18 @@ function ncResetScreen(id) {
   el.removeAttribute('style');
 }
 
+function ncResetVerifyForm() {
+  /* a fresh attempt (first time or after a rejection) must start clean: no stuck button, no old files, no old overlay */
+  window._kycSubmitting = false;
+  document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
+  var b3 = document.getElementById('verifyNext3');
+  if (b3) { b3.disabled = false; b3.textContent = b3.getAttribute('data-lbl') || 'Submit for review'; }
+  ['docFile', 'selfieFile'].forEach(function (id) { var f = document.getElementById(id); if (f) { try { f.value = ''; } catch (e) {} } });
+  try { if (window.NCVerify && typeof window.NCVerify.reset === 'function') window.NCVerify.reset(); } catch (e) {}
+}
+
 function showVerifyScreen() {
+  ncResetVerifyForm();
   var screen = document.getElementById('verifyScreen');
   if (screen) { screen.removeAttribute('style'); screen.classList.add('on'); }
   if (typeof window.__ncPausePolling === 'function') window.__ncPausePolling(600000);
@@ -2008,6 +2019,8 @@ window.submitRealVerification = async function () {
   window._kycSubmitting = true;
 
   var btn = document.getElementById('verifyNext3');
+  if (btn && !btn.getAttribute('data-lbl')) btn.setAttribute('data-lbl', btn.textContent || 'Submit for review');
+  var btnLbl = btn ? btn.getAttribute('data-lbl') : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
 
   document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
@@ -2034,7 +2047,7 @@ window.submitRealVerification = async function () {
   var watchdog = setTimeout(function () {
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast('Upload timeout. Try smaller files or check connection.', true);
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
+    if (btn) { btn.disabled = false; btn.textContent = btnLbl; }
     window._kycSubmitting = false;
     alert('KYC Upload TIMEOUT\n\nЧто делать:\n1. F12 → Network → проверь запросы uploadKycDoc\n2. F12 → Console → проверь красные ошибки\n3. Уменьши размер файлов (max 3MB)\n4. Проверь интернет');
   }, 60000);
@@ -2176,11 +2189,12 @@ if (email) localStorage.setItem('nc_kyc_done_' + email, '1');
     console.error('[KYC] ❌ ERROR:', e);
     document.querySelectorAll('#kycLoadingOverlay').forEach(function (el) { el.remove(); });
     if (typeof toast === 'function') toast(e.message, true);
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit →'; }
+    if (btn) { btn.disabled = false; btn.textContent = btnLbl; }
     alert('KYC Error: ' + e.message);
   } finally {
     clearTimeout(watchdog);
     window._kycSubmitting = false;
+    if (btn) { btn.disabled = false; btn.textContent = btnLbl; }   // never leave the button stuck on "Uploading..."
   }
 };
 
