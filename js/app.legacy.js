@@ -2813,6 +2813,7 @@ function placeOrder() {
   renderOrder();
   addNotification('Physical card order placed. Tracking: ' + st.order.id, '📦');
   toast('Order placed! Tracking ID: ' + st.order.id);
+  try { if (typeof window.ncOrderFx === 'function') window.ncOrderFx(st.order); } catch (e) {}
 }
 
 function renderOrder() {
@@ -2831,8 +2832,8 @@ function renderOrder() {
     trackEl.classList.add('hidden');
     return;
   }
-  formEl.classList.add('hidden');
-  trackEl.classList.remove('hidden');
+  formEl.classList.add('hidden'); formEl.style.display = 'none';
+  trackEl.classList.remove('hidden'); trackEl.style.display = '';   // the empty state had set display:none inline
 
   var elapsedDays = (Date.now() - st.order.createdAt) / (24 * 60 * 60 * 1000);
   if (elapsedDays > MAX_DELIVERY_DAYS) { showDeliveryError(); return; }
