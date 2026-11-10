@@ -61,6 +61,24 @@
     document.addEventListener('keydown', function k(e) { if (e.key === 'Escape') { document.removeEventListener('keydown', k); close(false); } });
   }
 
+  /* make sure the server really has the change; if not, save again (up to 3 times), otherwise tell the client */
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  window.ncEnsureSaved = function (ok) {
+    var tries = 0, base = (typeof WORKER_LOGIN_URL !== 'undefined') ? WORKER_LOGIN_URL : '', tok = '';
+    try { tok = (typeof getSessionToken === 'function') ? getSessionToken() : lsGet('session_token'); } catch (e) {}
+    if (!base || !tok) return Promise.resolve(true);
+    function go() {
+      return Promise.resolve(window.__ncSavePromise).then(function () { return wait(400); }).then(function () {
+        return fetch(base + '?action=getUserState', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok }) });
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || d.ok === false || ok(d)) return true;
+        if (++tries < 3) { if (typeof window.saveToServer === 'function') window.saveToServer(); return wait(1200).then(go); }
+        toast('We could not save this change. Please refresh the page and try again.', true); return false;
+      });
+    }
+    return go().catch(function () { return true; });
+  };
+
   /* ── 1. physical card order ── */
   window.ncOrderFx = function (order) {
     if (!order) return;
@@ -92,6 +110,7 @@
       var v = S().verification, c = v && v.personalInfo && v.personalInfo.country; if (c && S().card && /^[A-Za-z]{2}$/.test(c)) S().card.country = c.toUpperCase();
       if (typeof window.saveToServer === 'function') window.saveToServer();
       if (typeof window.addNotification === 'function') window.addNotification('Your virtual ' + (type === 'Visa' ? 'Visa card' : type) + ' is ready', '💳');
+      window.ncEnsureSaved(function (d) { return !!(d.card && d.card.num); });
     } catch (e) { toast('Could not create the card. Please try again.', true); return; }
     var n = S().card.num || '', masked = '••••  ••••  ••••  ' + n.slice(-4);
     show({ virt: true, kind: type.toUpperCase(), name: S().card.name, num: masked, title: 'Your card is ready', sub: 'Your virtual ' + (type === 'Visa' ? 'Visa card' : type) + ' is active. Open your dashboard to see the details, freeze it or set limits.', cta: 'See my card', after: function () { try { if (typeof window.renderCard === 'function') window.renderCard(); var m = document.querySelector('.mi[data-p="dash"]'); if (m) m.click(); } catch (e) {} } });
