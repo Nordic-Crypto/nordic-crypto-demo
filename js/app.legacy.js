@@ -207,11 +207,35 @@ function saveToServer() {
   if (localStorage.getItem('user_role') === 'admin') return;
   var token = getSessionToken();
   if (!token) return;
-  fetch(WORKER_LOGIN_URL + '?action=setUserState', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: token, state: st, email: window.adminViewingEmail || undefined })
-  }).catch(function () {});
+  /* one save at a time, always the newest state, retried on failure: two parallel saves could finish out of order
+     and bring back something the client just cancelled (a card order, for example). */
+  if (window.__ncSaveBusy) { window.__ncSaveAgain = true; return window.__ncSavePromise || Promise.resolve(); }
+  window.__ncSaveBusy = true;
+  function run(tries) {
+    /* the server only takes these fields from a client (everything else it owns), so send just them: small enough to survive a page refresh */
+    var slim = { currency: st.currency, card: st.card, order: st.order, user: st.user,
+      notifications: (st.notifications || []).map(function (n) { return { id: n && n.id, read: !!(n && n.read) }; }),
+      balanceHistory: (st.balanceHistory || []).slice(-200) };
+    var payload = JSON.stringify({ token: token, state: slim, email: window.adminViewingEmail || undefined });
+    return fetch(WORKER_LOGIN_URL + '?action=setUserState', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: payload.length < 60000     // still delivered if the client refreshes the page right after clicking
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok === false && tries < 2 && !/authenticated|session/i.test(String(d.error || ''))) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return run(tries + 1); });
+      return d;
+    }).catch(function () {
+      if (tries < 2) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return run(tries + 1); });
+      return { ok: false };
+    });
+  }
+  window.__ncSavePromise = run(0).then(function (d) {
+    window.__ncSaveBusy = false;
+    if (window.__ncSaveAgain) { window.__ncSaveAgain = false; return saveToServer(); }
+    return d;
+  });
+  return window.__ncSavePromise;
 }
 
 /* ═══════════════════ AUTH ═══════════════════ */
@@ -1840,6 +1864,7 @@ function initDesignPicker() {
       var d = active.getAttribute('data-design');
       var mask = document.getElementById('designMask');
       if (mask) mask.classList.remove('on');
+      if (!st.card || !st.card.num) { toast('Create your card first', true); return; }
       openPasswordConfirm('Confirm changing card design to "' + d + '"', function () {
         if (!st.card) st.card = {};
         st.card.design = d;
@@ -2515,6 +2540,7 @@ function createVirtualCard(name, type, cur) {
 }
 
 function renderCard() {
+  if (st.card && !st.card.num) st.card = null;   // an empty stub is not a card: never invent a fake number for it
   if (!st.card) {
     if ($('cardDash')) $('cardDash').classList.add('frozen');
     if ($('cardNumDash')) $('cardNumDash').textContent = '— — — —   — — — —   — — — —   — — — —';
@@ -2812,6 +2838,7 @@ function placeOrder() {
   saveToServer();
   renderOrder();
   addNotification('Physical card order placed. Tracking: ' + st.order.id, '📦');
+  if (window.ncEnsureSaved) window.ncEnsureSaved(function (d) { return !!(d.order && d.order.id); });
   toast('Order placed! Tracking ID: ' + st.order.id);
   try { if (typeof window.ncOrderFx === 'function') window.ncOrderFx(st.order); } catch (e) {}
 }
@@ -2882,6 +2909,7 @@ function initTrackingActions() {
     st.order = null;
     saveToServer();
     renderOrder();
+    if (window.ncEnsureSaved) window.ncEnsureSaved(function (d) { return !d.order; });
     toast('Ready for new order');
   };
   var btnCancel = document.getElementById('btnCancelOrder');
@@ -2894,6 +2922,7 @@ function initTrackingActions() {
     st.order = null;
     saveToServer();
     renderOrder();
+    if (window.ncEnsureSaved) window.ncEnsureSaved(function (d) { return !d.order; });
     toast('Order cancelled');
   };
 }
