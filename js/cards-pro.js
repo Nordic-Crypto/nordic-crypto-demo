@@ -35,6 +35,7 @@
       var d = currentKey();
       if (!d) { if (typeof toast === 'function') toast('Please choose a design', true); return; }
       hide();
+      if (!st.card || !st.card.num) { if (typeof toast === 'function') toast('Create your card first', true); return; }
       var run = function () {
         if (!st.card) st.card = {};
         st.card.design = d;
