@@ -320,7 +320,7 @@
       '<div><span>Last transaction</span><b>' + esc(u.lastTx || '—') + '</b></div></div></div>' +
       '<div class="ap-sec"><h4>Verification (KYC)</h4><div class="ap-kv"><div><span>Status</span><b>' + kycPill(ks) + '</b></div>' +
       (v ? '<div><span>Document</span><b>' + esc(v.docType || '—') + '</b></div><div><span>Submitted</span><b>' + dt(parseT(v.submittedAt)) + '</b></div>' + (v.reason ? '<div><span>Reason</span><b>' + esc(v.reason) + '</b></div>' : '') : '') + '</div>' +
-      (v ? '<div class="ap-agrid" style="margin-top:8px"><button class="ap-btn" data-act="docs" data-e="' + esc(e) + '">' + ic('eye') + ' View documents</button>' + (ks !== 'approved' ? '<button class="ap-btn pri" data-act="approve" data-e="' + esc(e) + '">' + ic('check') + ' Approve</button>' : '') + (ks !== 'rejected' ? '<button class="ap-btn bad" data-act="reject" data-e="' + esc(e) + '">' + ic('x') + ' Reject</button>' : '') + '</div>' : '') + '</div>' +
+      (v ? '<div class="ap-agrid" style="margin-top:8px"><button class="ap-btn" data-act="docs" data-e="' + esc(e) + '">' + ic('eye') + ' View documents</button>' + (ks !== 'approved' ? '<button class="ap-btn pri" data-act="approve" data-e="' + esc(e) + '">' + ic('check') + ' Approve</button>' : '') + (ks !== 'rejected' ? '<button class="ap-btn bad" data-act="reject" data-e="' + esc(e) + '">' + ic('x') + ' Reject</button>' : '') + (ks === 'rejected' ? '<button class="ap-btn" data-act="resend" data-e="' + esc(e) + '">Resend email</button>' : '') + '</div>' : '') + '</div>' +
       (wds.length ? '<div class="ap-sec"><h4>Withdrawals</h4><div class="ap-kv">' + wds.map(function (w) { return '<div><span>' + ago(w.createdAt) + ' · ' + esc(w.method || '') + '</span><b>' + usd(w.amount) + ' <span class="ap-pill ' + (w.status === 'approved' ? 'ok' : w.status === 'rejected' ? 'bad' : 'warn') + '">' + esc(w.status) + '</span></b></div>'; }).join('') + '</div></div>' : '') +
       (txs.length ? '<div class="ap-sec"><h4>Latest transactions</h4><div class="ap-kv">' + txs.map(function (t) { return '<div><span>' + esc(t.title || t.type || t.name || 'Transaction') + '</span><b>' + (t.amount != null ? esc(typeof t.amount === 'number' ? usd(t.amount) : t.amount) : '') + '</b></div>'; }).join('') + '</div></div>' : '') +
       '</div>';
@@ -340,6 +340,7 @@
     if (a === 'docs') return window.viewKycDocs(e);
     if (a === 'approve') return window.approveKyc(e);
     if (a === 'reject') return window.rejectKyc(e);
+    if (a === 'resend') return post('resendKycMail', { email: e }).then(function (d) { toast(d.ok ? 'Email sent to ' + e : (d.error || 'Failed'), !d.ok ? true : true); });
     if (a === 'del') return window.adminDeleteUser(e, n);
   }
 
@@ -399,7 +400,7 @@
       return '<div class="ap-card ap-vc ap-fade"><div class="ap-vc-top">' + av(v.name, v.email) + '<div class="who"><b>' + esc(v.name || v.email) + '</b><small>' + esc(v.email) + '</small></div>' + kycPill(v.status) + '</div>' +
         '<div class="ap-meta"><span>' + ic('card') + esc(v.docType || 'No document') + '</span><span>' + ic('pulse') + dt(parseT(v.submittedAt)) + '</span>' + (old ? '<span style="color:#fbbf24">' + ic('alert') + 'Waiting > 24h</span>' : '') + (addr ? '<span>' + ic('user') + esc(addr) + '</span>' : '') + '</div>' +
         (v.status === 'rejected' && v.reason ? '<div class="ap-reason">' + esc(v.reason) + '</div>' : '') +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ap-btn" data-act="docs" data-e="' + esc(v.email) + '">' + ic('eye') + ' View docs</button>' + (v.status !== 'approved' ? '<button class="ap-btn pri" data-act="approve" data-e="' + esc(v.email) + '">' + ic('check') + ' Approve</button>' : '') + (v.status !== 'rejected' ? '<button class="ap-btn bad" data-act="reject" data-e="' + esc(v.email) + '">' + ic('x') + ' Reject</button>' : '') + '<button class="ap-btn" data-open="' + esc(v.email) + '" style="margin-left:auto">Profile</button></div></div>';
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ap-btn" data-act="docs" data-e="' + esc(v.email) + '">' + ic('eye') + ' View docs</button>' + (v.status !== 'approved' ? '<button class="ap-btn pri" data-act="approve" data-e="' + esc(v.email) + '">' + ic('check') + ' Approve</button>' : '') + (v.status !== 'rejected' ? '<button class="ap-btn bad" data-act="reject" data-e="' + esc(v.email) + '">' + ic('x') + ' Reject</button>' : '') + (v.status === 'rejected' ? '<button class="ap-btn" data-act="resend" data-e="' + esc(v.email) + '">Resend email</button>' : '') + '<button class="ap-btn" data-open="' + esc(v.email) + '" style="margin-left:auto">Profile</button></div></div>';
     }).join('') + '</div>';
   }
 
