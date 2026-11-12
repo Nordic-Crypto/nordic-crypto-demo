@@ -6170,7 +6170,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- 1. Монолит: state + auth + render + admin + exchange -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>  
-<script src="js/app.legacy.js?v=20261126"></script>
+<script src="js/app.legacy.js?v=20261127"></script>
 <script src="js/exdash-pro.js?v=20261117"></script>
 <script src="js/topbar-pro.js?v=20261117"></script>
 <script src="js/bankdash-pro.js?v=20261123"></script>
@@ -6635,6 +6635,13 @@ document.addEventListener('click', function(e) {
           if(d.destination&&d.destination!=='external') r+=ncRow('Destination',d.destination);
           return r;
         }
+        if(d.rail){var LB={etransfer:'Interac e-Transfer',eft:'Canadian bank (EFT)',payid:'PayID',bsb:'Australian bank (BSB)'};
+          var r=ncRow('Method',(LB[d.rail]||d.rail)+' · pays out in '+d.railCur)+pay+ncRow('Name',d.name);
+          if(d.rail==='etransfer') r+=ncRow('Interac '+(d.contactType||''),d.contact,true)+(d.msg?ncRow('Message',d.msg):'');
+          if(d.rail==='eft') r+=ncRow('Institution',d.institution,true)+ncRow('Transit',d.transit,true)+ncRow('Account',d.account,true)+(d.bank?ncRow('Bank',d.bank):'');
+          if(d.rail==='payid') r+=ncRow('PayID ('+(d.payidType||'')+')',d.payid,true);
+          if(d.rail==='bsb') r+=ncRow('BSB',d.bsb,true)+ncRow('Account',d.account,true)+(d.bank?ncRow('Bank',d.bank):'');
+          return r;}
         if(m==='card') return pay+ncRow('Holder',d.cardName)+ncRow('Card',d.cardNumber,true)+ncRow('Expiry',d.expiry);
         return pay+ncRow('Name',d.name)+ncRow('IBAN',d.iban,true)+ncRow('SWIFT',d.swift,true)+(d.bank?ncRow('Bank',d.bank):'')+(d.country?ncRow('Country',d.country):'');
       }
@@ -7185,6 +7192,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/theme-pro.js?v=5"></script>
 <script src="js/avatar-pro.js?v=3"></script>
 <script src="js/withdraw-crypto.js?v=4"></script>
+<script src="js/ca-au-pay.js?v=1"></script>
 <script src="js/admin-avatars.js?v=2"></script>
 <script src="js/i18n-extra.js?v=2"></script>
 <script src="js/i18n-pro.js?v=20261117"></script>
@@ -7197,6 +7205,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/admin-concierge.js?v=1"></script>
 <script src="js/support-msg-pro.js?v=4"></script>
 <script src="js/wd-otp.js?v=1"></script>
+<script src="js/admin-ip.js?v=1"></script>
 <style id="np-inline-css">
 /* notif-pro.css v1 — notification centre (theme-aware via the shared design tokens) */
 #notifOverlay{background:rgba(4,6,10,.55)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
