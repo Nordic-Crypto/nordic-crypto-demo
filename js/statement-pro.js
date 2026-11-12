@@ -330,7 +330,7 @@
     if (eh && !eh.querySelector('.ncs-open')) eh.insertAdjacentHTML('beforeend', btn());
   }
   function btn() { return '<button class="ncs-open" onclick="NCStatement.open()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Statement</button>'; }
-  window.NCStatement = { open: open, close: close, _compute: compute, _pdf: buildPdf, _csv: buildCsv };
+  window.NCStatement = { open: open, close: close, _compute: compute, _pdf: buildPdf, _csv: buildCsv, _kit: { Doc: Doc, save: save, PW: PW, PH: PH, tw: tw } };
   function start() { inject(); setInterval(inject, 2500); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
