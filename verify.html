@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Receipt verification</title>
+<style>:root{--bg:#07080c;--cd:#0e1016;--tx:#f4f5f8;--mu:#98a0b3;--bd:rgba(255,255,255,.1);--ok:#c8ff4d;--no:#ff6b6b}@media(prefers-color-scheme:light){:root{--bg:#f3f5f0;--cd:#fff;--tx:#10131a;--mu:#5b6475;--bd:rgba(15,23,42,.12);--ok:#3d7a00;--no:#c4283f}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,sans-serif;padding:16px}.c{max-width:420px;width:100%;background:var(--cd);border:1px solid var(--bd);border-radius:22px;padding:28px}.i{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:28px;margin-bottom:14px;background:color-mix(in srgb,var(--col) 15%,transparent);color:var(--col)}h1{margin:0 0 6px;font-size:22px}p{color:var(--mu);margin:0 0 16px}.r{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--bd);font-size:14px}.r span{color:var(--mu)}</style></head>
+<body><div class="c" id="c"><p>Checking…</p></div>
+<script>
+(function(){var c=document.getElementById('c'),no=(new URLSearchParams(location.search).get('no')||'').toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,40);
+function h(s){return String(s==null?'':s).replace(/[&<>"']/g,function(x){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]})}
+function bad(t,m){c.innerHTML='<div class="i" style="--col:var(--no)">✕</div><h1>'+t+'</h1><p>'+m+'</p>'}
+if(!no)return bad('Receipt not found','No receipt number in this link.');
+var W=window.WORKER_URL||'https://nordic-deposit-checker.otis-790.workers.dev';
+fetch(W+'?action=verifyReceipt&fmt=json&no='+encodeURIComponent(no)).then(function(r){return r.json()}).then(function(j){
+ if(!j||!j.ok)return bad('Receipt not found','We have no receipt with this number. Check the number or contact support.');
+ var r=j.receipt,d=new Date(r.at).toISOString().slice(0,16).replace('T',' ')+' UTC';
+ c.innerHTML='<div class="i" style="--col:var(--ok)">✓</div><h1>Receipt verified</h1><p>This receipt was issued by NordicCrypto.</p><div class="r"><span>Number</span><b>'+h(r.no)+'</b></div><div class="r"><span>Type</span><b>'+h(r.type)+'</b></div><div class="r"><span>Amount</span><b>'+h(r.cur)+' '+r.amount.toFixed(2)+'</b></div><div class="r"><span>Status</span><b>'+h(r.status)+'</b></div><div class="r"><span>Date</span><b>'+h(d)+'</b></div><div class="r"><span>Account holder</span><b>'+h(r.holder)+'</b></div>';
+}).catch(function(){bad('Connection error','Please try again in a moment.')});})();
+</script></body></html>
