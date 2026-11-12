@@ -364,7 +364,7 @@
     var big = segs.slice(0, 7), rest = segs.slice(7); if (rest.length) big.push({ k: 'Other', n: rest.length + ' more', v: rest.reduce(function (a, s) { return a + s.v; }, 0), c: '#64748b' });
     var R = 54, C = 2 * Math.PI * R, off = 0, arcs = '';
     big.forEach(function (s) { var f = s.v / tot, len = Math.max(0, f * C - (big.length > 1 ? 2 : 0)); arcs += '<circle r="' + R + '" cx="70" cy="70" fill="none" stroke="' + s.c + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)"/>'; off += f * C; });
-    var leg = big.map(function (s) { var f = s.v / tot * 100; return '<div class="dp-lg"><i style="background:' + s.c + '"></i><span><b>' + esc(s.k) + '</b><em class="dp-sens">' + esc(money(s.v)) + '</em></span><strong>' + (f < 0.1 ? '<0.1' : f.toFixed(1)) + '%</strong></div>'; }).join('');
+    var leg = big.map(function (s) { var f = s.v / tot * 100; return '<div class="dpx-lg"><i style="background:' + s.c + '"></i><span><b>' + esc(s.k) + '</b><em class="dp-sens">' + esc(money(s.v)) + '</em></span><strong>' + (f < 0.1 ? '<0.1' : f.toFixed(1)) + '%</strong></div>'; }).join('');
     var h = '<div class="dp-donut"><svg viewBox="0 0 140 140" width="172" height="172"><circle r="' + R + '" cx="70" cy="70" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="16"/>' + arcs + '</svg><div class="dp-dc"><small>Assets</small><b>' + cur.hold.length + (cur.cash > 0.005 ? '<i>+cash</i>' : '') + '</b></div></div><div class="dp-legend">' + leg + '</div>';
     if (box.__h !== h) { box.__h = h; box.innerHTML = h; }
   }
