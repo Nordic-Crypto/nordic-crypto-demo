@@ -221,7 +221,7 @@
       s.innerHTML = '<div class="rp-ok"><div class="rp-conf" id="rpConf"></div><svg class="ck" viewBox="0 0 84 84" fill="none"><circle cx="42" cy="42" r="40" stroke="' + m.color + '" stroke-width="4" transform="rotate(-90 42 42)"/><path d="M26 43l11 11 21-24" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Withdrawal submitted</h3><div style="color:#9db4cb;font-size:13px">' + m.name + ' · sent for approval</div>' +
         '<div class="amt" id="rpAmt">' + m.cur + ' 0.00<small>$' + nf(usd) + ' debited from your balance</small></div>' +
         '<div class="rc"><div><span>Recipient</span><b>' + esc(d.name || '—') + '</b></div><div><span>' + (d.contact || d.payid ? 'Sent to' : 'Account') + '</span><b>' + esc(where) + '</b></div>' + (d.bank ? '<div><span>Bank</span><b>' + esc(d.bank) + '</b></div>' : '') + '<div><span>Estimated</span><b style="color:#34d399">' + m.eta + '</b></div><div><span>Reference</span><b>' + esc(String((wd && wd.id) || '').slice(-8).toUpperCase()) + '</b></div></div>' +
-        '<button class="wd-btn wd-btn-submit" style="width:100%" onclick="closeWithdraw()">Done</button></div>';
+        '<button type="button" class="wd-btn wd-btn-submit" data-rp-done="1" style="width:100%" onclick="closeWithdraw()">Done</button></div>';
       stage('ok');
       var t0 = performance.now(); (function tick(t) { var k = Math.min(1, (t - t0) / 900), el = $('rpAmt'); if (el) { var sm = el.querySelector('small'); el.firstChild.nodeValue = m.cur + ' ' + nf(paid * (1 - Math.pow(1 - k, 3))); if (sm && !sm.parentNode) el.appendChild(sm); } if (k < 1 && el) requestAnimationFrame(tick); })(t0);
       var cf = $('rpConf'), cols = [m.color, '#47dcff', '#a855f7', '#ffd23f', '#34d399'];
@@ -233,6 +233,8 @@
   /* ───── wiring ───── */
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#withdrawModal .wd-btn-submit'); if (!b || !M[cur] || !$('ncRf')) return;
+    /* only the form's own Submit button: never the Done / Close button of the result screen */
+    if (b.hasAttribute('data-rp-done') || !b.closest('.wd-form-stage')) return;
     e.preventDefault(); e.stopImmediatePropagation(); submit();
   }, true);
   setInterval(mount, 400);
