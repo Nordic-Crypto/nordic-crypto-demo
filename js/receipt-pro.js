@@ -8,7 +8,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function token() { try { return typeof getSessionToken === 'function' ? getSessionToken() : localStorage.getItem('session_token'); } catch (e) { return null; } }
   function post(action, body) {
-    return fetch(BASE + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: token() }, body || {})) })
+    return fetch(BASE + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: token() }, window.adminViewingEmail ? { email: window.adminViewingEmail } : {}, body || {})) })
       .then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'Connection error. Please check your internet and try again.' }; });
   }
   function toast(m, w) { try { if (typeof window.toast === 'function') window.toast(m, w); } catch (e) { } }
@@ -22,6 +22,33 @@
     'html[data-theme="light"] .rcp-b{background:#eef7d8;border-color:rgba(63,114,0,.45);color:#2f5a00}html[data-theme="light"] .rcp-b:hover{background:#e3f1c4}';
   document.head.appendChild(css);
   var DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>';
+
+
+  /* built-in PDF writer: used when the statement module is missing or outdated, so a receipt can always be downloaded */
+  var PW0 = 595.28, PH0 = 841.89;
+  function lat(str) { var o = ''; str = String(str == null ? '' : str).replace(/[–—]/g, '-').replace(/•/g, '\x95').replace(/€/g, '\x80'); for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); o += (c === 0x95 || c === 0x80 || (c >= 32 && c < 127) || (c >= 160 && c < 256)) ? str.charAt(i) : (c < 32 ? ' ' : '?'); } return o; }
+  function esc2(t) { return t.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
+  function tw0(s, size, bold) { s = lat(s); var w = 0; for (var i = 0; i < s.length; i++) { var ch = s.charAt(i); w += /[A-Z0-9$&%#]/.test(ch) ? 0.66 : /[ilj.,:;'|!\u0095 ]/.test(ch) ? 0.28 : /[mw]/.test(ch) ? 0.8 : /[a-z]/.test(ch) ? 0.53 : 0.6; } return w * size * (bold ? 1.06 : 1); }
+  function n2(x) { return (Math.round(x * 100) / 100).toString(); }
+  function rg(c) { return n2(c[0] / 255) + ' ' + n2(c[1] / 255) + ' ' + n2(c[2] / 255); }
+  function MiniDoc() { this.cur = []; }
+  MiniDoc.prototype.text = function (x, top, str, o) { o = o || {}; var size = o.size || 10, s = lat(str), w = tw0(s, size, o.bold); if (o.align === 'right') x -= w; else if (o.align === 'center') x -= w / 2; this.cur.push('BT /F' + (o.bold ? 2 : 1) + ' ' + n2(size) + ' Tf ' + rg(o.color || [17, 17, 17]) + ' rg ' + n2(x) + ' ' + n2(PH0 - top) + ' Td (' + esc2(s) + ') Tj ET'); return w; };
+  MiniDoc.prototype.rect = function (x, top, w, h, o) { this.cur.push(rg((o || {}).fill || [255, 255, 255]) + ' rg ' + n2(x) + ' ' + n2(PH0 - top - h) + ' ' + n2(w) + ' ' + n2(h) + ' re f'); };
+  MiniDoc.prototype.line = function (x1, y1, x2, y2, o) { o = o || {}; this.cur.push(rg(o.color || [229, 231, 235]) + ' RG ' + n2(o.lw || 0.6) + ' w ' + n2(x1) + ' ' + n2(PH0 - y1) + ' m ' + n2(x2) + ' ' + n2(PH0 - y2) + ' l S'); };
+  MiniDoc.prototype.wrap = function (str, width, size, bold) { var words = lat(str).split(' '), lines = [], cur = ''; words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (tw0(t, size, bold) <= width) cur = t; else { if (cur) lines.push(cur); cur = w; } }); if (cur) lines.push(cur); return lines.length ? lines : ['']; };
+  MiniDoc.prototype.build = function (title) {
+    var stream = this.cur.join('\n'), out = '%PDF-1.4\n', offs = [];
+    function obj(id, body) { offs[id] = out.length; out += id + ' 0 obj\n' + body + '\nendobj\n'; }
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>'); obj(2, '<< /Type /Pages /Kids [6 0 R] /Count 1 >>');
+    obj(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'); obj(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    obj(5, '<< /Title (' + esc2(lat(title)) + ') /Producer (NordicCrypto) >>');
+    obj(6, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW0 + ' ' + PH0 + '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>'); obj(7, '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream');
+    var xref = out.length; out += 'xref\n0 8\n0000000000 65535 f \n'; for (var i = 1; i < 8; i++) out += ('0000000000' + offs[i]).slice(-10) + ' 00000 n \n';
+    out += 'trailer\n<< /Size 8 /Root 1 0 R /Info 5 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+    var u = new Uint8Array(out.length); for (var k = 0; k < out.length; k++) u[k] = out.charCodeAt(k) & 255; return new Blob([u], { type: 'application/pdf' });
+  };
+  function saveBlob(blob, name) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+  function getKit() { var k = window.NCStatement && window.NCStatement._kit; return k || { Doc: MiniDoc, save: saveBlob, PW: PW0, PH: PH0, tw: tw0 }; }
 
   /* ───── PDF ───── */
   var INK = [17, 17, 17], MUT = [107, 114, 128], LINE = [229, 231, 235], BG = [246, 246, 242], LIME = [200, 255, 77];
@@ -74,13 +101,15 @@
     return doc.build('NordicCrypto receipt ' + r.no);
   }
 
+  /* message right under the button (the toast can sit behind the transaction window) */
+  function say(btn, msg, bad) { var d = btn.parentNode, m = d.querySelector('.rcp-m'); if (!m) { m = document.createElement('div'); m.className = 'rcp-m'; m.style.cssText = 'flex:1 1 100%;font-size:13px;margin-top:2px'; d.appendChild(m); } m.style.color = bad ? '#ff8d8d' : '#9be26a'; m.textContent = msg; if (!bad) setTimeout(function () { if (m.parentNode) m.remove(); }, 4000); }
   function download(req, btn) {
-    var kit = window.NCStatement && window.NCStatement._kit; if (!kit) { toast('Receipts are not ready yet. Reload the page and try again.', true); return; }
+    var kit = getKit();
     if (btn.disabled) return; btn.disabled = true; btn.classList.add('ld');
     post('issueReceipt', req).then(function (r) {
       btn.disabled = false; btn.classList.remove('ld');
-      if (!r || !r.ok) { toast((r && r.error) || 'Could not create the receipt.', true); return; }
-      try { kit.save(build(r.receipt, kit), 'NordicCrypto-receipt-' + r.receipt.no + '.pdf'); toast('Receipt downloaded'); } catch (e) { console.error(e); toast('Could not create the PDF.', true); }
+      if (!r || !r.ok) { say(btn, (r && r.error) || 'Could not create the receipt.', true); return; }
+      try { kit.save(build(r.receipt, kit), 'NordicCrypto-receipt-' + r.receipt.no + '.pdf'); say(btn, 'Receipt downloaded ✓', false); } catch (e) { console.error(e); try { saveBlob(build(r.receipt, { Doc: MiniDoc, save: saveBlob, PW: PW0, PH: PH0, tw: tw0 }), 'NordicCrypto-receipt-' + r.receipt.no + '.pdf'); say(btn, 'Receipt downloaded ✓', false); } catch (e2) { say(btn, 'Could not create the PDF. Please try again.', true); } }
     });
   }
 
