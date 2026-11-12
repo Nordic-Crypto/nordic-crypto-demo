@@ -101,8 +101,8 @@
 .dp-donut svg { display: block; } .dp-dc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .dp-dc small { color: var(--dp-mut); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; } .dp-dc b { font-size: 28px; font-weight: 800; } .dp-dc b i { font-style: normal; font-size: 11px; color: var(--dp-mut); margin-left: 4px; font-weight: 700; }
 .dp-legend { display: flex; flex-direction: column; gap: 4px; }
-.dp-lg { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 12px; } .dp-lg:hover { background: var(--dp-s1); }
-.dp-lg i { width: 11px; height: 11px; border-radius: 4px; flex: none; } .dp-lg span { flex: 1; min-width: 0; display: flex; flex-direction: column; } .dp-lg b { font-size: 13.5px; } .dp-lg em { font-style: normal; color: var(--dp-mut); font-size: 12px; } .dp-lg strong { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.dpx-lg { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 12px; } .dpx-lg:hover { background: var(--dp-s1); }
+.dpx-lg i { width: 11px; height: 11px; border-radius: 4px; flex: none; } .dpx-lg span { flex: 1; min-width: 0; display: flex; flex-direction: column; } .dpx-lg b { font-size: 13.5px; } .dpx-lg em { font-style: normal; color: var(--dp-mut); font-size: 12px; } .dpx-lg strong { font-size: 13.5px; font-variant-numeric: tabular-nums; }
 
 /* holdings table */
 .dp-th, .dp-tr { display: grid; grid-template-columns: minmax(170px, 1.6fr) 1.2fr 1fr 1.1fr .8fr 1fr 76px; gap: 10px; align-items: center; }
