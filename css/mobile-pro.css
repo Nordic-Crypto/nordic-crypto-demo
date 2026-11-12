@@ -44,3 +44,10 @@
   .cp-qa button{font-size:9.5px!important}
   .nc3-balance{font-size:clamp(1.5rem,9vw,2rem)!important}
 }
+
+/* v3: banners and the chat bubble must never sit on top of a window's buttons */
+body:has(.mask.on) #ncInst, body:has(.mask.on) #ncPush, body:has(#verifyScreen.on) #ncInst, body:has(#verifyScreen.on) #ncPush { display: none !important; }
+@media (max-width: 820px) {
+  body:has(.mask.on) #chatToggle, body:has(#verifyScreen.on) #chatToggle { display: none !important; }
+  body:has(#ncInst) #chatToggle, body:has(#ncPush) #chatToggle { bottom: calc(156px + env(safe-area-inset-bottom)) !important; }
+}
