@@ -69,7 +69,7 @@
   }
   function build(r, kit) {
     var Doc = kit.Doc, PW = kit.PW, PH = kit.PH, doc = new Doc(), M = 40, R = PW - M;
-    var out = r.type === 'Withdrawal' || r.direction === 'out', url = BASE + '?action=verifyReceipt&no=' + encodeURIComponent(r.no);
+    var out = r.type === 'Withdrawal' || r.direction === 'out', url = location.origin + '/verify.html?no=' + encodeURIComponent(r.no);
     doc.rect(M, 34, 22, 22, { fill: LIME }); doc.text(M + 11, 50, 'N', { size: 13, bold: true, align: 'center' });
     doc.text(M + 32, 50, 'NordicCrypto', { size: 14, bold: true }); doc.text(R, 48, 'Payment receipt', { size: 9, align: 'right', color: MUT });
     doc.text(M, 118, 'Receipt', { size: 26, bold: true });
@@ -95,7 +95,7 @@
     doc.text(M + 112, yy + 14, 'Verify this receipt', { size: 12, bold: true });
     var tl = doc.wrap('Scan the code to open a public page that confirms this receipt was issued by NordicCrypto. It shows the number, amount, date, status and the holder\'s initials only.', 330, 9.5);
     tl.forEach(function (l, i) { doc.text(M + 112, yy + 32 + i * 13, l, { size: 9.5, color: MUT }); });
-    doc.wrap(url.replace(/^https?:\/\//, ''), 380, 7.5).forEach(function (l, i) { doc.text(M + 112, yy + 32 + tl.length * 13 + 8 + i * 10, l, { size: 7.5, color: MUT }); });
+    doc.text(M + 112, yy + 32 + tl.length * 13 + 8, 'Receipt no. ' + r.no, { size: 8, color: MUT });
     doc.text(M, PH - 50, 'Issued ' + fmtDT(r.issuedAt) + ' by NordicCrypto. This receipt confirms that the operation was recorded on your account.', { size: 7.5, color: MUT });
     doc.text(M, PH - 38, 'It is not a bank statement. Questions? Contact support from your dashboard.', { size: 7.5, color: MUT });
     return doc.build('NordicCrypto receipt ' + r.no);
