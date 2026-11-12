@@ -7186,6 +7186,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/tx-pro.js?v=3"></script>
 <script src="js/deposit-pro.js?v=2"></script>
 <script src="js/swap-pro.js?v=2"></script>
+<script src="js/access-pro.js?v=1"></script>
+<script src="js/access-admin.js?v=1"></script>
 <script src="js/wd-status.js?v=1"></script>
 <script src="js/install-pro.js?v=1"></script>
 <script src="js/security-pro.js?v=2"></script>
@@ -7383,6 +7385,7 @@ body.np-adm #notifPanel{z-index:4700!important}body.np-adm #notifOverlay{z-index
     if (/message from/.test(t)) return tab('chats', 'Open chats');
     if (/new withdrawal|scheduled withdrawal|limit increase/.test(t)) return tab('withdrawals', 'Open withdrawals');
     if (/deposit request|new deposit pending|deposit pending/.test(t)) return tab('deposits', 'Open deposits');
+    if (/access application/.test(t)) return tab('accessReq', 'Open access requests');
     if (/new verification|verification/.test(t)) return tab('verifications', 'Open verifications');
     if (/email change/.test(t)) return tab('emailChanges', 'Open e-mail changes');
     if (/client review|review/.test(t)) return tab('reviews', 'Open reviews');
