@@ -11,7 +11,7 @@
   window.__apProLoaded = true;
 
   var BASE = window.WORKER_LOGIN_URL || window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
-  var S = { users: [], vers: [], stats: {}, deps: [], wds: [], txs: [], loaded: false, ts: 0, filter: 'all', sort: { k: 'createdAt', d: -1 }, q: '', page: 1, vFilter: 'pending' };
+  var S = { users: [], vers: [], stats: {}, deps: [], wds: [], txs: [], loaded: false, ts: 0, filter: 'all', country: '', sort: { k: 'createdAt', d: -1 }, q: '', page: 1, vFilter: 'pending' };
   var PAGE = 25;
 
   /* ---------- helpers ---------- */
@@ -95,6 +95,18 @@
   function addrs(u) { var a = u.cryptoAddress; if (!a) return []; if (typeof a === 'string') return [['', a]]; return Object.keys(a).filter(function (k) { return /^(btc|eth|usdt|sol|bnb)$/i.test(k) && a[k] && typeof a[k] === 'string'; }).map(function (k) { return [k.toUpperCase(), a[k]]; }); }
   function userBy(email) { email = String(email).toLowerCase(); for (var i = 0; i < S.users.length; i++) if (String(S.users[i].email).toLowerCase() === email) return S.users[i]; return null; }
   function kyc(u) { var v = S.verBy && S.verBy[String(u.email).toLowerCase()]; return v ? v.status : (u.verified ? 'approved' : 'none'); }
+
+  /* ---------- countries ---------- */
+  var CN = null, CRev = null;
+  function cName(cc) { try { CN = CN || new Intl.DisplayNames(['en'], { type: 'region' }); return CN.of(cc) || cc; } catch (e) { return cc; } }
+  function cCode(raw) {
+    raw = String(raw || '').trim(); if (!raw) return '';
+    if (/^[A-Za-z]{2}$/.test(raw)) { raw = raw.toUpperCase(); return raw === 'UK' ? 'GB' : raw; }
+    if (!CRev) { CRev = {}; for (var a = 65; a < 91; a++) for (var b = 65; b < 91; b++) { var c = String.fromCharCode(a, b), n = cName(c); if (n && n !== c) CRev[n.toLowerCase()] = c; } CRev['usa'] = 'US'; CRev['united kingdom'] = 'GB'; CRev['uk'] = 'GB'; }
+    return CRev[raw.toLowerCase()] || '';
+  }
+  function ccOf(u) { return cCode(u.country) || 'ZZ'; }
+  function ccPill(cc) { return cc === 'ZZ' ? '<span class="ap-mute">Unknown</span>' : '<span style="display:inline-flex;align-items:center;gap:7px"><span style="font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);letter-spacing:.04em">' + cc + '</span>' + esc(cName(cc)) + '</span>'; }
   function kycPill(s) { return s === 'approved' ? '<span class="ap-pill ok">Verified</span>' : s === 'pending' ? '<span class="ap-pill warn">KYC pending</span>' : s === 'rejected' ? '<span class="ap-pill bad">Rejected</span>' : '<span class="ap-pill mute">Not started</span>'; }
   function typePill(t) { return t === 'banking' ? '<span class="ap-pill vio">Banking</span>' : t === 'exchange' ? '<span class="ap-pill cyan">Exchange</span>' : '<span class="ap-pill mute">—</span>'; }
 
@@ -225,6 +237,7 @@
     var q = S.q.toLowerCase().trim(), f = S.filter;
     var list = S.users.filter(function (u) {
       if (q && (String(u.name || '') + ' ' + u.email + ' ' + (u.iban || '') + ' ' + addrs(u).map(function (x) { return x[1]; }).join(' ')).toLowerCase().indexOf(q) < 0) return false;
+      if (S.country && ccOf(u) !== S.country) return false;
       if (f === 'banking' || f === 'exchange') return u.accountType === f;
       if (f === 'verified') return kyc(u) === 'approved';
       if (f === 'unverified') return kyc(u) !== 'approved';
@@ -234,6 +247,7 @@
     });
     var k = S.sort.k, d = S.sort.d;
     list.sort(function (a, b) {
+      if (k === 'country') { var ca = ccOf(a) === 'ZZ' ? '~' : cName(ccOf(a)), cb = ccOf(b) === 'ZZ' ? '~' : cName(ccOf(b)); return (ca > cb ? 1 : ca < cb ? -1 : 0) * d; }
       var x = k === 'createdAt' ? parseT(a.createdAt) : k === 'name' ? String(a.name || a.email).toLowerCase() : k === 'kyc' ? kyc(a) : (a[k] || 0), y = k === 'createdAt' ? parseT(b.createdAt) : k === 'name' ? String(b.name || b.email).toLowerCase() : k === 'kyc' ? kyc(b) : (b[k] || 0);
       return (x > y ? 1 : x < y ? -1 : 0) * d;
     });
@@ -246,7 +260,7 @@
       Array.prototype.slice.call(sec.children).forEach(function (c) { if (c !== box) c.style.display = 'none'; });
       bar = document.createElement('div'); bar.id = 'apClientBar';
       bar.innerHTML = '<div class="ap-toolbar"><div class="ap-search">' + ic('search') + '<input id="apCs" placeholder="Search by name, e-mail, IBAN or address…" autocomplete="off"></div>' +
-        '<button class="ap-btn" id="apCsv">' + ic('dl') + ' Export CSV</button><button class="ap-btn" id="apCr">' + ic('refresh') + ' Refresh</button></div><div class="ap-chips" id="apChips"></div>';
+        '<button class="ap-btn" id="apCsv">' + ic('dl') + ' Export CSV</button><button class="ap-btn" id="apCr">' + ic('refresh') + ' Refresh</button></div><div class="ap-chips" id="apChips"></div><div class="ap-chips" id="apCtry" style="margin-top:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px"></div>';
       sec.insertBefore(bar, box);
       $('apCs').addEventListener('input', function () { S.q = this.value; S.page = 1; renderClients(); var el = $('apCs'); });
       $('apCsv').onclick = exportCsv; $('apCr').onclick = function () { load(true); };
@@ -256,24 +270,28 @@
     all.forEach(function (u) { if (u.accountType === 'banking') cnt.banking++; if (u.accountType === 'exchange') cnt.exchange++; if (kyc(u) === 'approved') cnt.verified++; else cnt.unverified++; if (u.unreadChat) cnt.unread++; if (!(u.balance > 0)) cnt.zero++; });
     var defs = [['all', 'All'], ['banking', 'Banking'], ['exchange', 'Exchange'], ['verified', 'Verified'], ['unverified', 'Unverified'], ['unread', 'Unread chat'], ['zero', 'Zero balance']];
     $('apChips').innerHTML = defs.map(function (d) { return '<button class="ap-chip ' + (S.filter === d[0] ? 'on' : '') + '" data-f="' + d[0] + '">' + d[1] + ' <em>' + cnt[d[0]] + '</em></button>'; }).join('');
+    var cc = {}; all.forEach(function (u) { var k = ccOf(u); cc[k] = (cc[k] || 0) + 1; });
+    var ks = Object.keys(cc).sort(function (a, b) { return a === 'ZZ' ? 1 : b === 'ZZ' ? -1 : cc[b] - cc[a] || cName(a).localeCompare(cName(b)); });
+    if (S.country && !cc[S.country]) S.country = '';
+    $('apCtry').innerHTML = '<button class="ap-chip ' + (!S.country ? 'on' : '') + '" data-c="">All countries <em>' + ks.filter(function (k) { return k !== 'ZZ'; }).length + '</em></button>' + ks.map(function (k) { return '<button class="ap-chip ' + (S.country === k ? 'on' : '') + '" data-c="' + k + '" style="white-space:nowrap">' + (k === 'ZZ' ? 'Unknown' : '<b style="font:700 10px ui-monospace,monospace;opacity:.75;margin-right:5px">' + k + '</b>' + esc(cName(k))) + ' <em>' + cc[k] + '</em></button>'; }).join('');
     var list = filtered(), pages = Math.max(1, Math.ceil(list.length / PAGE)); if (S.page > pages) S.page = pages;
     var rows = list.slice((S.page - 1) * PAGE, S.page * PAGE);
     function th(k, l, cls) { var on = S.sort.k === k; return '<th class="s ' + (cls || '') + '" data-s="' + k + '">' + l + (on ? '<span class="arr">' + (S.sort.d > 0 ? '↑' : '↓') + '</span>' : '') + '</th>'; }
     box.className = '';
-    ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
+    ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
-          '<td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b></td>' +
+          '<td class="hide-m">' + ccPill(ccOf(u)) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b></td>' +
           '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
           '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
           '<td><div class="acts"><button class="ap-btn sm ic" data-act="add" data-e="' + esc(u.email) + '" title="Add balance">' + ic('wallet') + '</button><button class="ap-btn sm ic" data-act="view" data-e="' + esc(u.email) + '" title="View as client">' + ic('eye') + '</button><button class="ap-btn sm" data-open="' + esc(u.email) + '">Open</button></div></td></tr>';
-      }).join('') : '<tr><td colspan="10"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
+      }).join('') : '<tr><td colspan="11"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
       '</tbody></table></div><div class="ap-foot"><span>' + list.length + ' of ' + all.length + ' clients</span><span style="display:flex;gap:8px;align-items:center"><button class="ap-btn sm" data-p="-1" ' + (S.page <= 1 ? 'disabled' : '') + '>Prev</button>Page ' + S.page + ' / ' + pages + '<button class="ap-btn sm" data-p="1" ' + (S.page >= pages ? 'disabled' : '') + '>Next</button></span></div></div>';
     var cnE = $('navClientsCount'); if (cnE) cnE.textContent = all.length;
   }
   function exportCsv() {
-    var rows = [['Name', 'Email', 'Account', 'KYC', 'Balance USD', 'BTC', 'ETH', 'IBAN', 'Deposit address', 'Transactions', 'Joined']];
-    filtered().forEach(function (u) { rows.push([u.name, u.email, u.accountType || '', kyc(u), u.balance || 0, u.btc || 0, u.eth || 0, u.iban || '', addrs(u).map(function (x) { return (x[0] ? x[0] + ':' : '') + x[1]; }).join(' | '), u.txCount || 0, u.createdAt ? new Date(parseT(u.createdAt)).toISOString() : '']); });
+    var rows = [['Name', 'Email', 'Country', 'Account', 'KYC', 'Balance USD', 'BTC', 'ETH', 'IBAN', 'Deposit address', 'Transactions', 'Joined']];
+    filtered().forEach(function (u) { rows.push([u.name, u.email, ccOf(u) === 'ZZ' ? '' : cName(ccOf(u)), u.accountType || '', kyc(u), u.balance || 0, u.btc || 0, u.eth || 0, u.iban || '', addrs(u).map(function (x) { return (x[0] ? x[0] + ':' : '') + x[1]; }).join(' | '), u.txCount || 0, u.createdAt ? new Date(parseT(u.createdAt)).toISOString() : '']); });
     var csv = rows.map(function (r) { return r.map(function (c) { c = String(c == null ? '' : c); if (/^[=+\-@]/.test(c)) c = "'" + c; return '"' + c.replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv' })); a.download = 'nordiccrypto-clients-' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
     toast('Exported ' + (rows.length - 1) + ' clients');
@@ -447,6 +465,7 @@
     if (t.closest('#apDrX')) { closeDrawer(); return; }
     var o = t.closest('[data-open]'); if (o) { openClient(o.getAttribute('data-open')); return; }
     var g = t.closest('[data-go]'); if (g) { window.showAdminTab(g.getAttribute('data-go')); return; }
+    var cf = t.closest('#apCtry [data-c]'); if (cf) { S.country = cf.getAttribute('data-c'); S.page = 1; renderClients(); return; }
     var f = t.closest('[data-f]'); if (f) { S.filter = f.getAttribute('data-f'); S.page = 1; renderClients(); return; }
     var s = t.closest('[data-s]'); if (s) { var k = s.getAttribute('data-s'); S.sort = S.sort.k === k ? { k: k, d: -S.sort.d } : { k: k, d: k === 'name' ? 1 : -1 }; renderClients(); return; }
     var p = t.closest('[data-p]'); if (p) { S.page += +p.getAttribute('data-p'); renderClients(); return; }
