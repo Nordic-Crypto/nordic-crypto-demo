@@ -1657,6 +1657,7 @@ function openTxDetails(tx) {
         if (d.payCurrency && d.payAmount) rows += txdRow('Withdrawn in', escapeHtml(d.payAmount + ' ' + d.payCurrency));
         if (d.name) rows += txdRow('Recipient', escapeHtml(d.name));
         if (d.iban) rows += txdRow('IBAN', escapeHtml(d.iban), true);
+        if (d.rail && d.dest) rows += txdRow('Destination', escapeHtml(d.dest), true);
         if (d.swift) rows += txdRow('SWIFT / BIC', escapeHtml(d.swift), true);
         if (d.bank) rows += txdRow('Bank', escapeHtml(d.bank));
         if (d.country) rows += txdRow('Country', escapeHtml(d.country));
@@ -4609,7 +4610,12 @@ function renderAdminWithdrawalCard(w) {
   var s = statusMap[w.status] || statusMap['pending'];
   var d = w.details || {};
   var details = (d.payCurrency && d.payAmount) ? '<div class="awd-row"><span>Client withdraws in</span><b>' + escapeHtml(d.payAmount + ' ' + d.payCurrency) + '</b></div>' : '';
-  if (w.method === 'iban') {
+  if (d.rail) {
+    var LB = { etransfer: 'Interac e-Transfer', eft: 'Canadian bank (EFT)', payid: 'PayID', bsb: 'Australian bank (BSB)' };
+    var rw = function (l, v) { return '<div class="awd-row"><span>' + l + '</span><b>' + escapeHtml(v || '—') + '</b></div>'; };
+    details += rw('Method', (LB[d.rail] || d.rail) + ' · ' + d.railCur) + rw('Name', d.name) +
+      (d.rail === 'etransfer' ? rw('Interac', d.contact) : d.rail === 'payid' ? rw('PayID (' + d.payidType + ')', d.payid) : d.rail === 'bsb' ? rw('BSB', d.bsb) + rw('Account', d.account) + rw('Bank', d.bank) : rw('Institution', d.institution) + rw('Transit', d.transit) + rw('Account', d.account) + rw('Bank', d.bank));
+  } else if (w.method === 'iban') {
     details += '<div class="awd-row"><span>Name</span><b>' + escapeHtml(d.name || '—') + '</b></div>' +
       '<div class="awd-row"><span>IBAN</span><b>' + escapeHtml(d.iban || '—') + '</b></div>' +
       '<div class="awd-row"><span>SWIFT</span><b>' + escapeHtml(d.swift || '—') + '</b></div>';
