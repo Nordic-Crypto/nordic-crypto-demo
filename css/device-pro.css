@@ -30,9 +30,9 @@ html.dp-kb .dp-bbar, html.dp-kb #chatToggle { display: none !important; }
 }
 
 /* small phones: iPhone SE / 12 mini / Galaxy Z Fold cover (≈ 280-360 px) */
-html.dp-xs .bd-bal { font-size: 32px; } html.dp-xs .bd-hero { padding: 16px 12px 8px; } html.dp-xs .bd-card { padding: 14px; border-radius: 20px; }
-html.dp-xs .bd-acts { gap: 6px; } html.dp-xs .bd-act-l { font-size: 11px; } html.dp-xs .tbp-wm { display: none; }
-html.dp-xxs .bd-bal { font-size: 28px; } html.dp-xxs .bd-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.dp-xxs .bd-cacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.dvc-xs .bd-bal { font-size: 32px; } html.dvc-xs .bd-hero { padding: 16px 12px 8px; } html.dvc-xs .bd-card { padding: 14px; border-radius: 20px; }
+html.dvc-xs .bd-acts { gap: 6px; } html.dvc-xs .bd-act-l { font-size: 11px; } html.dvc-xs .tbp-wm { display: none; }
+html.dvc-xxs .bd-bal { font-size: 28px; } html.dvc-xxs .bd-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.dvc-xxs .bd-cacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* landscape phones (short viewport) */
 @media (max-height: 480px) and (orientation: landscape) {
