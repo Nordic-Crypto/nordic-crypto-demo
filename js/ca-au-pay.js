@@ -14,13 +14,23 @@
 
   var CA_BANKS = { '001': 'BMO', '002': 'Scotiabank', '003': 'RBC Royal Bank', '004': 'TD Canada Trust', '006': 'National Bank', '010': 'CIBC', '016': 'HSBC Canada', '030': 'Canadian Western Bank', '039': 'Laurentian Bank', '219': 'ATB Financial', '614': 'Tangerine', '815': 'Desjardins', '829': 'Desjardins' };
   var AU_BANKS = { '01': 'ANZ', '03': 'Westpac', '73': 'Westpac', '06': 'Commonwealth Bank', '08': 'NAB', '11': 'St.George', '30': 'Bankwest', '18': 'Macquarie', '92': 'ING' };
-  var M = {
-    etransfer: { cur: 'CAD', flag: '🇨🇦', name: 'Interac e-Transfer', sub: 'Email or mobile', eta: 'Usually within minutes after approval', chip: 'Fast', color: '#ffd23f' },
-    eft:       { cur: 'CAD', flag: '🇨🇦', name: 'Canadian bank', sub: 'Institution · transit · account', eta: '1–3 business days after approval', chip: 'Direct deposit', color: '#ff5d5d' },
-    payid:     { cur: 'AUD', flag: '🇦🇺', name: 'PayID', sub: 'Email, mobile or ABN', eta: 'Usually within minutes after approval', chip: 'Fast', color: '#2dd4bf' },
-    bsb:       { cur: 'AUD', flag: '🇦🇺', name: 'Australian bank', sub: 'BSB + account number', eta: 'Same or next business day after approval', chip: 'Direct credit', color: '#60a5fa' }
+
+  /* flags and coin are drawn as SVG: Windows has no flag emoji and older systems miss the coin emoji */
+  var SVG = {
+    CA: '<svg viewBox="0 0 30 20" width="1.5em" height="1em" style="vertical-align:-.12em;border-radius:3px"><rect width="30" height="20" fill="#fff"/><rect width="7.5" height="20" fill="#e8112d"/><rect x="22.5" width="7.5" height="20" fill="#e8112d"/><path d="M15 3l1.6 3.2 2.2-.8-.9 4.4 2.1-1.3.4 1.5-3.2 2.9.3 1.1-3.4-.4v3.2h-.2v-3.2l-3.4.4.3-1.1-3.2-2.9.4-1.5 2.1 1.3-.9-4.4 2.2.8z" fill="#e8112d"/></svg>',
+    AU: '<svg viewBox="0 0 30 20" width="1.5em" height="1em" style="vertical-align:-.12em;border-radius:3px"><rect width="30" height="20" fill="#012169"/><path d="M0 0l15 10M15 0L0 10" stroke="#fff" stroke-width="2"/><path d="M7.5 0v10M0 5h15" stroke="#fff" stroke-width="3.4"/><path d="M7.5 0v10M0 5h15" stroke="#c8102e" stroke-width="2"/><g fill="#fff"><circle cx="7.5" cy="15.2" r="1.7"/><circle cx="22" cy="4.5" r="1"/><circle cx="26" cy="9" r="1"/><circle cx="22" cy="16" r="1.2"/><circle cx="18" cy="10" r="1"/></g></svg>',
+    COIN: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em"><circle cx="12" cy="12" r="10.5" fill="#f7b731" stroke="#c98a0a" stroke-width="1.4"/><circle cx="12" cy="12" r="7.3" fill="none" stroke="#c98a0a" stroke-width="1"/><path d="M10 7.5h3a2 2 0 010 4h-3m0 0h3.4a2 2 0 010 4H10m0-8v8M11.5 6.2v1.3m0 8.5v1.3" fill="none" stroke="#7a4f00" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    BANK: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="#47dcff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5v2H3zM5 11v7M9.5 11v7M14.5 11v7M19 11v7M3 20h18"/></svg>',
+    CARD: '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="#ec4899" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>'
   };
-  var STD = [['iban', 'Bank (IBAN)', 'SEPA / SWIFT', '🏦'], ['card', 'Card payout', 'Visa / Mastercard', '💳'], ['crypto', 'Crypto', 'BTC · ETH · USDT', '🪙']];
+  function fl(c) { return SVG[c] || ''; }
+  var M = {
+    etransfer: { cur: 'CAD', flag: fl('CA'), name: 'Interac e-Transfer', sub: 'Email or mobile', eta: 'Usually within minutes after approval', chip: 'Fast', color: '#ffd23f' },
+    eft:       { cur: 'CAD', flag: fl('CA'), name: 'Canadian bank', sub: 'Institution · transit · account', eta: '1–3 business days after approval', chip: 'Direct deposit', color: '#ff5d5d' },
+    payid:     { cur: 'AUD', flag: fl('AU'), name: 'PayID', sub: 'Email, mobile or ABN', eta: 'Usually within minutes after approval', chip: 'Fast', color: '#2dd4bf' },
+    bsb:       { cur: 'AUD', flag: fl('AU'), name: 'Australian bank', sub: 'BSB + account number', eta: 'Same or next business day after approval', chip: 'Direct credit', color: '#60a5fa' }
+  };
+  var STD = [['iban', 'Bank (IBAN)', 'SEPA / SWIFT', SVG.BANK], ['card', 'Card payout', 'Visa / Mastercard', SVG.CARD], ['crypto', 'Crypto', 'BTC · ETH · USDT', SVG.COIN]];
 
   /* ───── styles ───── */
   var css = document.createElement('style');
@@ -31,7 +41,7 @@
     '#ncRp .rp-t:hover{transform:translateY(-2px);border-color:rgba(71,220,255,.4)}' +
     '#ncRp .rp-t.on{border-color:var(--c,#47dcff);background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:0 0 0 1px var(--c,#47dcff) inset,0 8px 26px -10px var(--c,#47dcff)}' +
     '#ncRp .rp-t.on:after{content:"✓";position:absolute;right:9px;top:8px;width:18px;height:18px;border-radius:50%;background:var(--c,#47dcff);color:#04121a;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;animation:rpPop .3s cubic-bezier(.3,1.6,.5,1)}' +
-    '#ncRp .rp-i{font-size:20px;line-height:1;margin-bottom:6px;display:block}#ncRp .rp-n{font-weight:700;font-size:13px;display:block}#ncRp .rp-s{font-size:11px;color:#7c9cbb;display:block;margin-top:2px}' +
+    '#ncRp .rp-i{font-size:22px;line-height:1;margin-bottom:6px;display:block}#ncRp .rp-n{font-weight:700;font-size:13px;display:block}#ncRp .rp-s{font-size:11px;color:#7c9cbb;display:block;margin-top:2px}' +
     '#ncRp .rp-k{display:inline-block;margin-top:7px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--c,#9fe)}' +
     '@keyframes rpPop{from{transform:scale(0)}to{transform:scale(1)}}@keyframes rpIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}' +
     '#ncRf{animation:rpIn .35s ease both;margin-top:4px}#ncRf .rp-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);margin:12px 0 4px}' +
@@ -69,8 +79,8 @@
   }
   function stdTile(a) { return '<button type="button" class="rp-t' + (cur === a[0] ? ' on' : '') + '" data-rp="' + a[0] + '" style="--c:#47dcff"><span class="rp-i">' + a[3] + '</span><span class="rp-n">' + a[1] + '</span><span class="rp-s">' + a[2] + '</span></button>'; }
   function groups() {
-    var uc = userCountry(), ca = '<div class="rp-g">🇨🇦 Canada</div><div class="rp-grid">' + tile('etransfer') + tile('eft') + '</div>',
-      au = '<div class="rp-g">🇦🇺 Australia</div><div class="rp-grid">' + tile('payid') + tile('bsb') + '</div>',
+    var uc = userCountry(), ca = '<div class="rp-g">' + fl('CA') + ' Canada</div><div class="rp-grid">' + tile('etransfer') + tile('eft') + '</div>',
+      au = '<div class="rp-g">' + fl('AU') + ' Australia</div><div class="rp-grid">' + tile('payid') + tile('bsb') + '</div>',
       std = '<div class="rp-g">Worldwide</div><div class="rp-grid rp-3">' + STD.map(stdTile).join('') + '</div>';
     return uc === 'CA' ? ca + au + std : uc === 'AU' ? au + ca + std : std + ca + au;
   }
