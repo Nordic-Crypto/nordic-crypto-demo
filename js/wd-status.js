@@ -28,6 +28,7 @@
       /* dashboard banner */
       '#wdsBanner{display:none;margin:0 0 14px;animation:wdsIn .4s ease both}#wdsBanner.on{display:block}' +
       '.wdb{display:flex;align-items:center;gap:14px;flex-wrap:wrap;width:100%;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(120deg,rgba(251,191,36,.1),rgba(251,191,36,.03));color:#f4f5f8;cursor:pointer;font-family:inherit;transition:.2s}.wdb:hover{transform:translateY(-1px);border-color:rgba(251,191,36,.6)}' +
+      '#wdsBanner{position:relative}#wdsBanner .wdb{padding-right:46px}.wdb-x{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.08);color:#a8b3c5;font-size:17px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}.wdb-x:hover{background:rgba(255,255,255,.16);color:#fff}html[data-theme="light"] .wdb-x{background:rgba(15,23,42,.07);color:#566074}html[data-theme="light"] .wdb-x:hover{background:rgba(15,23,42,.14);color:#0c111b}' +
       '.wdb.ok{border-color:rgba(200,255,77,.4);background:linear-gradient(120deg,rgba(200,255,77,.1),rgba(200,255,77,.02))}' +
       '.wdb-ic{flex:none;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:rgba(251,191,36,.18);color:#fbbf24}.wdb.ok .wdb-ic{background:rgba(200,255,77,.18);color:#c8ff4d}.wdb-ic svg{width:20px;height:20px}' +
       '.wdb-t{flex:1;min-width:150px}.wdb-t b{display:block;font-size:14.5px}.wdb-t small{color:#a8b3c5;font-size:12.5px}' +
@@ -101,13 +102,20 @@
       css();
       if (!el) { el = document.createElement('div'); el.id = 'wdsBanner'; host.insertBefore(el, host.firstChild); }
       var s = steps(w), done = w.status === 'approved' && w.creditedAt, key = w.id + w.status + (w.creditedAt || '') + (w.holdUntil || '');
-      el.classList.add('on'); if (key === lastKey) return; lastKey = key;
+      var dk = ''; try { dk = localStorage.getItem('nc_wdb_x') || ''; } catch (e2) { }
+      if (dk === key) { el.classList.remove('on'); el.innerHTML = ''; lastKey = ''; return; }
+      el.classList.add('on'); if (key === lastKey) return; lastKey = key; el.setAttribute('data-key', key);
       var dots = s.map(function (x) { return '<i class="' + (x[0] === 'done' ? 'd' : x[0] === 'now' ? 'n' : '') + '"></i>'; }).join('');
       var title = done ? 'Withdrawal arrived' : w.status === 'pending' ? (w.holdUntil && w.holdUntil > Date.now() ? 'Withdrawal on a safety check' : 'Withdrawal in review') : 'Withdrawal sent';
       var sub = done ? money(w.amount) + ' · ' + when(w.creditedAt) : money(w.amount) + ' · ' + String(w.method || 'iban').toUpperCase() + (w.status === 'approved' ? ' · ' + (ETA[method(w)] || 'on its way') : '');
-      el.innerHTML = '<button type="button" class="wdb' + (done ? ' ok' : '') + '" data-wid="' + esc(w.id) + '"><span class="wdb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span class="wdb-t"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span><span class="wdb-d">' + dots + '</span><span class="wdb-g">' + (done ? 'Receipt' : 'Track') + ' ›</span></button>';
+      el.innerHTML = '<button type="button" class="wdb' + (done ? ' ok' : '') + '" data-wid="' + esc(w.id) + '"><span class="wdb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span class="wdb-t"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span><span class="wdb-d">' + dots + '</span><span class="wdb-g">' + (done ? 'Receipt' : 'Track') + ' ›</span></button><button type="button" class="wdb-x" aria-label="Dismiss" title="Dismiss">×</button>';
     } catch (e) { }
   }
+  document.addEventListener('click', function (e) {
+    var x = e.target.closest && e.target.closest('#wdsBanner .wdb-x'); if (!x) return;
+    var el = document.getElementById('wdsBanner'); try { localStorage.setItem('nc_wdb_x', el.getAttribute('data-key') || ''); } catch (e2) { }
+    el.classList.remove('on'); el.innerHTML = ''; lastKey = '';
+  });
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('#wdsBanner .wdb'); if (!b) return;
     var w = (S().withdrawals || []).filter(function (x) { return x.id === b.getAttribute('data-wid'); })[0]; if (!w || typeof window.openTxDetails !== 'function') return;
