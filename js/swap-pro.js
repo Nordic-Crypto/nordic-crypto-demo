@@ -72,7 +72,7 @@
   /* ───── render ───── */
   var root = null;
   function open() {
-    if (root) return; if (window.adminViewingEmail) { if (window.toast) toast('View-only mode: exchange is not available', true); return; }
+    if (root) return;
     Z.amt = ''; Z.busy = false; Z.picking = null; Z.filt = '';
     var ha = bal('USD') > 0; Z.from = ha ? 'USD' : (bal('BTC') > 0 ? 'BTC' : (ASSETS.filter(function (a) { return bal(a) > 0; })[0] || 'USD')); Z.to = Z.from === 'BTC' ? 'USD' : (Z.from === 'USD' ? 'BTC' : 'USD');
     root = document.createElement('div'); root.className = 'sw-ov'; root.id = 'swOv';
