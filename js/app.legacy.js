@@ -737,8 +737,9 @@ function render() {
 function _renderAll() {
   var balEl = $('bal'); if (balEl) balEl.textContent = fmtCurrency(st.usd);
   var balEurEl = $('balEur'); if (balEurEl) balEurEl.textContent = eurF(st.usd * st.eurR);
-  var btcBEl = $('btcB'); if (btcBEl) btcBEl.textContent = (st.btc || 0).toFixed(8) + ' BTC';
-  var ethBEl = $('ethB'); if (ethBEl) ethBEl.textContent = (st.eth || 0).toFixed(8) + ' ETH';
+  function _hold(q, p, sym) { return (q || 0).toFixed(8) + ' ' + sym + (q > 0 && p > 0 ? '<small style="display:block;font-size:.72em;font-weight:600;opacity:.65;margin-top:2px">≈ ' + fmtCurrency(q * p) + '</small>' : ''); }
+  var btcBEl = $('btcB'); if (btcBEl) btcBEl.innerHTML = _hold(st.btc, st.btcP, 'BTC');
+  var ethBEl = $('ethB'); if (ethBEl) ethBEl.innerHTML = _hold(st.eth, st.ethP, 'ETH');
   var aBtcEl = $('aBtc'); if (aBtcEl) aBtcEl.textContent = (st.btc || 0).toFixed(8);
   var aEthEl = $('aEth'); if (aEthEl) aEthEl.textContent = (st.eth || 0).toFixed(8);
   var aBtcUEl = $('aBtcU'); if (aBtcUEl) aBtcUEl.textContent = '≈ ' + fmt((st.btc || 0) * (st.btcP || 0));
@@ -824,6 +825,8 @@ function refreshBalanceFromServer() {
       var newUsd = Number(d.usd) || 0;
       var changed = false;
       if (Math.abs(newUsd - (st.usd || 0)) > 0.01) { st.usd = newUsd; changed = true; }
+      if (typeof d.btc === 'number' && d.btc !== st.btc) { st.btc = d.btc; changed = true; }
+      if (typeof d.eth === 'number' && d.eth !== st.eth) { st.eth = d.eth; changed = true; }
       if (d.currency) st.currency = d.currency;
       if (d.card !== undefined) st.card = d.card;
       if (d.txs) st.txs = d.txs;
@@ -1749,6 +1752,7 @@ function renderRecentTx() {
     var amtClass = 'neutral', amtText = '—';
     if (t.amt > 0) { amtClass = 'plus'; amtText = '+' + fmtCurrency(t.amt); }
     else if (t.amt < 0) { amtClass = 'minus'; amtText = fmtCurrency(t.amt); }
+    if (t.coin) { var _ca = Number(t.coinAmt) || 0; amtClass = _ca >= 0 ? 'plus' : 'minus'; amtText = (_ca > 0 ? '+' : '') + _ca.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin; icon = t.coin === 'BTC' ? '₿' : 'Ξ'; iconClass = 'deposit'; }
 
     var badge = '';
     if (t.status === 'Completed') badge = '<div class="recent-tx-badge ok">✓ Completed</div>';
@@ -2459,7 +2463,7 @@ function renderTx() {
     var t = st.txs[i];
     var c = t.amt >= 0 ? 'var(--ok)' : 'var(--bad)';
     var s = t.amt >= 0 ? '+' : '';
-    h += '<tr style="cursor:pointer" data-tx-idx="' + i + '" onclick="openTxDetailsFromTable(' + i + ')"><td>' + t.date + '</td><td>' + escapeHtml(t.desc) + '</td><td style="color:' + c + ';font-weight:600">' + s + fmt(t.amt) + '</td><td><span class="' + badgeClass(t.status) + '">' + t.status + '</span></td></tr>';
+    h += '<tr style="cursor:pointer" data-tx-idx="' + i + '" onclick="openTxDetailsFromTable(' + i + ')"><td>' + t.date + '</td><td>' + escapeHtml(t.desc) + '</td><td style="color:' + (t.coin ? ((Number(t.coinAmt) || 0) >= 0 ? 'var(--ok)' : 'var(--bad)') : c) + ';font-weight:600">' + (t.coin ? ((Number(t.coinAmt) || 0) > 0 ? '+' : '') + (Number(t.coinAmt) || 0).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin : s + fmt(t.amt)) + '</td><td><span class="' + badgeClass(t.status) + '">' + t.status + '</span></td></tr>';
   }
   b.innerHTML = h;
 }
