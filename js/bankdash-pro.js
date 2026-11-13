@@ -101,13 +101,27 @@
   };
   function okTx(t) { return t.status !== 'Rejected' && t.status !== 'Failed' && t.status !== 'Cancelled'; }
 
+  /* crypto held right now (USD at the live price) and how many coins existed at an earlier time */
+  var CP = { btc: 'btcP', eth: 'ethP' };
+  function cryptoNow() { var s = S(); return (Number(s.btc) || 0) * (Number(s.btcP) || 0) + (Number(s.eth) || 0) * (Number(s.ethP) || 0); }
+  function coinMoves() {      // [{ts, usdAtNow}] : how much crypto (in USD at today's price) arrived with each transaction
+    var s = S(), out = [];
+    allTx().filter(okTx).forEach(function (t) {
+      var sym = '', q = 0;
+      if (t.coin && (t.coin === 'BTC' || t.coin === 'ETH')) { sym = t.coin.toLowerCase(); q = Number(t.coinAmt) || 0; }
+      else if (t.tradeId && /^(BTC|ETH)$/.test(String(t.symbol || '')) && Number(t.price) > 0 && Number(t.amt)) { sym = String(t.symbol).toLowerCase(); q = -Number(t.amt) / Number(t.price); }
+      if (sym && q) out.push({ ts: t.ts || 0, v: q * (Number(s[CP[sym]]) || 0) });
+    });
+    return out.sort(function (a, b) { return b.ts - a.ts; });
+  }
   function series(days) {
-    var s = S(), cur = Number(s.usd) || 0, txs = allTx().filter(okTx), now = Date.now(), t0 = now - days * 864e5, N = days <= 7 ? 56 : 64, pts = [], k = 0, run = cur;
-    // walk back from now: balance(t) = cur - sum(amt of tx with ts > t)
+    var s = S(), cash = Number(s.usd) || 0, cry = cryptoNow(), cur = cash + cry, txs = allTx().filter(okTx), mv = coinMoves(), now = Date.now(), t0 = now - days * 864e5, N = days <= 7 ? 56 : 64, pts = [], k = 0, j = 0, run = cash, runC = cry;
+    // walk back from now: cash(t) = cash - sum(amt of tx after t), crypto(t) = crypto - coins that arrived after t
     for (var i = N; i >= 0; i--) {
       var t = t0 + (now - t0) * (i / N);
       while (k < txs.length && (txs[k].ts || 0) > t) { run -= (txs[k].amt || 0); k++; }
-      pts.push({ t: t, v: run });
+      while (j < mv.length && mv[j].ts > t) { runC -= mv[j].v; j++; }
+      pts.push({ t: t, v: run + Math.max(0, runC) });
     }
     pts.reverse(); pts[pts.length - 1] = { t: now, v: cur };
     return pts;
@@ -156,6 +170,7 @@
           '<div class="bd-k">Total balance</div>' +
           '<div class="bd-bal bd-sens" id="bdBal">—</div>' +
           '<div class="bd-sub"><span class="bd-pill" id="bdDelta"></span><span class="bd-sens bd-mut" id="bdSecond"></span></div>' +
+          '<div class="bd-split bd-sens" id="bdSplit" style="display:none"></div>' +
           '<div class="bd-cur" id="bdCur" role="tablist" aria-label="Display currency"></div>' +
           '<div class="bd-chart-h"><div class="bd-seg" id="bdRng" role="tablist"><button type="button" data-a="rng" data-v="7">7D</button><button type="button" data-a="rng" data-v="30">30D</button><button type="button" data-a="rng" data-v="90">3M</button><button type="button" data-a="rng" data-v="365">1Y</button></div></div>' +
           '<div class="bd-chart" id="bdChart"></div>' +
@@ -185,11 +200,14 @@
 
   /* ---------- sections ---------- */
   function rHero() {
-    var s = S(), bal = Number(s.usd) || 0;
+    var s = S(), cash = Number(s.usd) || 0, cry = cryptoNow(), bal = cash + cry;
     $('bdHi').innerHTML = esc(T(greet())) + (firstName() ? ', <b>' + esc(firstName()) + '</b>' : '');
     $('bdEye').innerHTML = ic(B.hide ? I.eyeoff : I.eye, 20); $('bdEye').setAttribute('aria-pressed', B.hide ? 'true' : 'false');
     $('bd').classList.toggle('hide', B.hide);
-    $('bdBal').textContent = U(bal);
+    var be = $('bdBal'), prev = B.lastTotal; be.textContent = U(bal);
+    if (prev != null && Math.abs(bal - prev) >= 0.005) { be.classList.remove('tk-up', 'tk-dn'); void be.offsetWidth; be.classList.add(bal > prev ? 'tk-up' : 'tk-dn'); }
+    B.lastTotal = bal;
+    var sp = $('bdSplit'); if (sp) { sp.style.display = cry > 0 ? '' : 'none'; sp.innerHTML = '<span><i class="c"></i>Cash <b>' + esc(U(cash)) + '</b></span><span><i class="x"></i>Crypto <b>' + esc(U(cry)) + '</b></span>'; }
     var sec = (s.currency || 'USD') === 'USD' ? '≈ €' + (bal * (s.eurR || 0.92)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '≈ $' + bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     $('bdSecond').textContent = sec;
     var pts = series(+B.rng), d = pts[pts.length - 1].v - pts[0].v, pc = pts[0].v > 0 ? d / pts[0].v * 100 : null;
@@ -405,6 +423,8 @@
     hook();
     if (!build()) { setTimeout(init, 400); return; }
     accent(); render(true); setInterval(function () { hook(); accent(); render(); }, 2000);
+    /* live prices: the crypto part of the total follows the market while the dashboard is open */
+    setInterval(function () { try { if (!document.hidden && visible() && typeof window.loadPrices === 'function' && (Number(S().btc) > 0 || Number(S().eth) > 0)) window.loadPrices(); } catch (e) {} }, 30000);
     var rt = 0; function reR() { clearTimeout(rt); rt = setTimeout(function () { render(true); }, 80); }
     window.addEventListener('nc-lang', reR); window.addEventListener('nc-dict', reR);
     try { if (window.ResizeObserver) { var lw = 0; B.ro = new ResizeObserver(function () { var c = $('bdChart'); if (!c || !c.clientWidth || Math.abs(c.clientWidth - lw) < 2) return; lw = c.clientWidth; if (visible()) rHero(); }); B.ro.observe($('bdChart')); } } catch (e) {}
