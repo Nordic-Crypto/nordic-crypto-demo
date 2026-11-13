@@ -65,6 +65,9 @@
   var _fetch = window.fetch;
   window.fetch = function (url, init) {
     try {
+      if (window.adminViewingEmail && typeof url === 'string' && /action=trade(&|$)/.test(url) && init && typeof init.body === 'string') {
+        var tb = JSON.parse(init.body); if (!tb.email) { tb.email = window.adminViewingEmail; init = Object.assign({}, init, { body: JSON.stringify(tb) }); }
+      }
       if (window.adminViewingEmail && typeof url === 'string' && url.indexOf('action=withdraw') > -1 && url.indexOf('action=withdrawal') < 0 && init && typeof init.body === 'string') {
         var b = JSON.parse(init.body); if (!b.email) { b.email = window.adminViewingEmail; init = Object.assign({}, init, { body: JSON.stringify(b) }); }
       }
