@@ -3969,7 +3969,7 @@ function showAdminPanel() {
   if (main) main.style.display = 'none';
 
   var userEl = document.getElementById('adminUser');
-  if (userEl) userEl.textContent = localStorage.getItem('user_email') || '';
+  if (userEl) { var _ue = localStorage.getItem('user_email') || ''; userEl.textContent = _ue === 'admin@nordiccrypto.com' ? 'admin@nordiccrypto.net' : _ue; }
 
   if (typeof initAdminPanel === 'function') initAdminPanel();
 
