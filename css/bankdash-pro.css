@@ -225,3 +225,15 @@
 .bd-ti.coin { position: relative; color: #fff; background: linear-gradient(135deg, var(--c1), var(--c2)); box-shadow: 0 5px 14px color-mix(in srgb, var(--c1) 40%, transparent); }
 .bd-dir { position: absolute; right: -3px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font: 800 11px/1 system-ui; font-style: normal; border: 2px solid var(--bd-s1, #0f141b); } .bd-dir.in { background: #10b981; color: #04130d; } .bd-dir.out { background: #fb923c; color: #1c0c02; }
 @media (max-width: 640px) { .bd-tt b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; } .bd-ti { width: 40px; height: 40px; } }
+
+/* total balance = cash + crypto, live */
+.bd-split { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 2px; font-size: 13px; color: var(--bd-mut, #8b95a5); }
+.bd-split span { display: inline-flex; align-items: center; gap: 7px; }
+.bd-split b { color: var(--bd-tx, #e8eef7); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bd-split i { width: 8px; height: 8px; border-radius: 50%; background: #22d3a0; } .bd-split i.x { background: #f7931a; }
+.bd-bal { transition: color .25s; font-variant-numeric: tabular-nums; }
+.bd-bal.tk-up { animation: bdTkUp 1.3s ease-out; } .bd-bal.tk-dn { animation: bdTkDn 1.3s ease-out; }
+@keyframes bdTkUp { 0% { color: #22d3a0; text-shadow: 0 0 22px rgba(34,211,160,.55); } 100% { text-shadow: 0 0 0 transparent; } }
+@keyframes bdTkDn { 0% { color: #ff5470; text-shadow: 0 0 22px rgba(255,84,112,.5); } 100% { text-shadow: 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .bd-bal.tk-up, .bd-bal.tk-dn { animation: none; } }
+html[data-theme="light"] .bd-split { color: #566074; } html[data-theme="light"] .bd-split b { color: #0c111b; }
