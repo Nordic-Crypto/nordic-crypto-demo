@@ -86,15 +86,15 @@
     kv(M, y, 'Date and time', fmtDT(r.at)); kv(col2, y, 'Currency', (r.cur || 'USD') + (r.payCur ? ' (paid out in ' + r.payCur + ')' : ''));
     kv(M, y + 44, 'Reference', r.ref); kv(col2, y + 44, 'Type / method', r.type + (r.method ? ' / ' + r.method : ''));
     var yy = y + 92, NP = 'Not provided';
-    function party(x, top, title, p) {
+    function party(x, top, title, p, rr) {
       p = p || {}; doc.rect(x, top, 245, 160, { fill: BG });
       doc.text(x + 14, top + 22, title, { size: 8, bold: true, color: MUT });
-      var rows = [['Name', p.name], ['Bank', p.bank], ['IBAN / account', p.iban], ['SWIFT / BIC', p.swift], ['Country', p.country]], ry = top + 44;
+      var rows = (rr && rr.length) ? rr : [['Name', p.name], ['Bank', p.bank], ['IBAN / account', p.iban], ['SWIFT / BIC', p.swift], ['Country', p.country]], ry = top + 44;
       rows.forEach(function (rw) { doc.text(x + 14, ry, rw[0].toUpperCase(), { size: 6.5, bold: true, color: MUT }); var v = String(rw[1] || '').trim(), ls = doc.wrap(v || NP, 215, 9.5, !!v); doc.text(x + 14, ry + 12, ls[0], { size: 9.5, bold: !!v, color: v ? INK : MUT }); ry += 22; });
     }
-    party(M, yy, 'FROM  -  SENDER', r.sender); party(R - 245, yy, 'TO  -  BENEFICIARY', r.beneficiary); yy += 160;
-    var sc = (r.sender && r.sender.country) || '-', bc = (r.beneficiary && r.beneficiary.country) || '-';
-    doc.text(M, yy + 22, 'Countries: ' + sc + '  ->  ' + bc, { size: 9.5, color: MUT });
+    party(M, yy, 'FROM  -  SENDER', r.sender, r.senderRows); party(R - 245, yy, 'TO  -  BENEFICIARY', r.beneficiary, r.beneRows); yy += 160;
+    var sc = (r.sender && r.sender.country) || '', bc = (r.beneficiary && r.beneficiary.country) || '';
+    if (sc || bc) doc.text(M, yy + 22, 'Countries: ' + (sc || 'not provided') + '  ->  ' + (bc || 'not provided'), { size: 9.5, color: MUT });
     if (r.sentAt) doc.text(R, yy + 22, 'Sent ' + fmtDT(r.sentAt) + (r.creditedAt ? '  |  Credited ' + fmtDT(r.creditedAt) : ''), { size: 9.5, align: 'right', color: MUT });
     yy += 34;
     doc.line(M, yy + 6, R, yy + 6, { color: LINE }); yy += 30;
