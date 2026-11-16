@@ -59,6 +59,14 @@
   try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { } }
   function desktop() { return window.innerWidth > 900; }
+  function pins() { return Array.isArray(st.pins) ? st.pins : []; }
+  function effGroups() {
+    var pn = pins(), out = [];
+    if (pn.length) out.push({ id: 'pinned', t: 'Pinned', tabs: pn.slice() });
+    GROUPS.forEach(function (g) { out.push({ id: g.id, t: g.t, fold: g.fold, tabs: g.tabs.filter(function (t) { return pn.indexOf(t) < 0; }) }); });
+    return out;
+  }
+  window.__acNavTogglePin = function (t) { var a = pins().slice(), i = a.indexOf(t); if (i > -1) a.splice(i, 1); else a.push(t); st.pins = a; save(); organize(); };
   function isFolded(g) { return typeof st[g.id] === 'boolean' ? st[g.id] : !!g.fold; }
 
   function css() {
@@ -82,7 +90,11 @@
       '#adminPanel .admin-sidebar .anv-none{flex:none;padding:10px 12px;color:#8b95a5;font-size:13px;display:none}' +
       '#adminPanel .admin-sidebar .admin-nav-item[data-tab="chats"],#adminPanel .admin-sidebar .admin-nav-item[data-tab="deleted"]{margin-top:0}' +
       'html[data-theme="light"] #adminPanel .admin-sidebar .anv-q{border-color:rgba(15,23,42,.14);background-color:#f6f8f2}html[data-theme="light"] #adminPanel .admin-sidebar .anv-h{color:#6b7587}html[data-theme="light"] #adminPanel .admin-sidebar .anv-h:hover{color:#2f5a00;background:rgba(15,23,42,.05)}html[data-theme="light"] #adminPanel .admin-sidebar .anv-h .b{background:rgba(75,130,0,.14);color:#2f5a00}' +
-      '@media(max-width:900px){#adminPanel .admin-sidebar .anv-h,#adminPanel .admin-sidebar .anv-q,#adminPanel .admin-sidebar .anv-none{display:none!important}}' +
+      '#adminPanel .admin-sidebar .anv-pin{width:22px;height:22px;flex:none;margin-left:auto;border-radius:6px;opacity:0;cursor:pointer;background:currentColor;-webkit-mask:url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>') + '") center/14px no-repeat;mask:url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>') + '") center/14px no-repeat}' +
+      '#adminPanel .admin-sidebar .admin-nav-item:hover .anv-pin,#adminPanel .admin-sidebar .anv-pin:focus-visible{opacity:.55}#adminPanel .admin-sidebar .anv-pin:hover{opacity:1!important;color:#c8ff4d}#adminPanel .admin-sidebar .anv-pin.on{opacity:.9;color:#c8ff4d}' +
+      '#adminPanel .admin-sidebar .admin-nav-item .admin-nav-badge+.anv-pin{margin-left:6px}' +
+      'html[data-theme="light"] #adminPanel .admin-sidebar .anv-pin.on,html[data-theme="light"] #adminPanel .admin-sidebar .anv-pin:hover{color:#4b8200}' +
+      '@media(max-width:900px){#adminPanel .admin-sidebar .anv-pin{display:none}#adminPanel .admin-sidebar .anv-h,#adminPanel .admin-sidebar .anv-q,#adminPanel .admin-sidebar .anv-none{display:none!important}}' +
       '@media(prefers-reduced-motion:reduce){#adminPanel .admin-sidebar .anv-h .c{transition:none}}';
     document.head.appendChild(s);
   }
@@ -108,7 +120,7 @@
       var none = nav.querySelector('.anv-none'); if (!none) { none = document.createElement('div'); none.className = 'anv-none'; none.textContent = 'Nothing matches. Try another word.'; }
       var anchor = input;
       function put(el) { if (anchor.nextSibling !== el) nav.insertBefore(el, anchor.nextSibling); anchor = el; }
-      GROUPS.forEach(function (g) {
+      effGroups().forEach(function (g) {
         var members = g.tabs.map(byTab).filter(Boolean); if (!members.length) return;
         var h = heads[g.id];
         if (!h) {
@@ -125,7 +137,15 @@
         put(h2); rest.forEach(function (n) { n.setAttribute('data-g', 'more'); put(n); });
       }
       put(none);
-      all.forEach(function (n) { var t = n.getAttribute('data-tab'); if (HINT[t] && !n.getAttribute('title')) n.setAttribute('title', HINT[t]); });
+      all.forEach(function (n) {
+        var t = n.getAttribute('data-tab'); if (HINT[t] && !n.getAttribute('title')) n.setAttribute('title', HINT[t]);
+        var pb = n.querySelector('.anv-pin');
+        if (!pb) { pb = document.createElement('span'); pb.className = 'anv-pin'; pb.setAttribute('role', 'button'); pb.tabIndex = 0;
+          pb.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); window.__acNavTogglePin(t); }, true);
+          pb.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); window.__acNavTogglePin(t); } });
+          n.appendChild(pb); }
+        var on = pins().indexOf(t) > -1; pb.classList.toggle('on', on); pb.title = on ? 'Unpin from the top' : 'Pin to the top'; pb.setAttribute('aria-label', pb.title);
+      });
     } finally { busy = false; }
     refresh();
   }
@@ -134,9 +154,9 @@
   function refresh() {
     if (!nav) return;
     var dsk = desktop(), act = nav.querySelector('.admin-nav-item.active'), at = act ? act.getAttribute('data-tab') : '';
-    if (at && at !== lastActive) { lastActive = at; var gid = act.getAttribute('data-g'), gg = GROUPS.filter(function (g) { return g.id === gid; })[0]; if (gg && isFolded(gg) && dsk) { st[gid] = false; save(); } if (gid === 'more') st.more = false; }
+    if (at && at !== lastActive) { lastActive = at; var gid = act.getAttribute('data-g'), gg = effGroups().filter(function (g) { return g.id === gid; })[0]; if (gg && isFolded(gg) && dsk) { st[gid] = false; save(); } if (gid === 'more') st.more = false; }
     var shown = 0;
-    GROUPS.concat([{ id: 'more' }]).forEach(function (g) {
+    effGroups().concat([{ id: 'more' }]).forEach(function (g) {
       var h = heads[g.id]; if (!h) return;
       var ms = items().filter(function (n) { return n.getAttribute('data-g') === g.id; }), vis = ms.filter(function (n) { return !hiddenByStaff(n); });
       var folded = g.id === 'more' ? !!st.more : isFolded(g), sum = 0, hit = 0;
