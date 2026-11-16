@@ -1630,8 +1630,17 @@ function openTxDetails(tx) {
   }
 
   var amtEl = document.getElementById('txdAmount');
+  var _cx = null;
+  if (tx.coin && (tx.coin === 'BTC' || tx.coin === 'ETH') && !isWithdrawal && !Number(tx.amt)) {      // crypto credit/debit: show the coin amount and what it is worth in the client's currency
+    var _q = Number(tx.coinAmt) || 0, _nowP = Number(tx.coin === 'BTC' ? st.btcP : st.ethP) || 0, _thenP = Number(tx.px) || _nowP;
+    _cx = { q: _q, then: _q * _thenP, now: _q * _nowP, same: !tx.px || Math.abs(_thenP - _nowP) < 0.005 * Math.max(_nowP, 1) };
+    amount = _cx.then;
+  }
   if (amtEl) {
-    amtEl.textContent = (amount > 0 ? '+' : '') + fmtCurrency(amount);
+    if (_cx) {
+      var _qs = (_cx.q > 0 ? '+' : '') + _cx.q.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + tx.coin;
+      amtEl.innerHTML = escapeHtml(_qs) + '<div style="font-size:.95rem;font-weight:600;opacity:.8;margin-top:2px">≈ ' + escapeHtml(fmtCurrency(_cx.then)) + '</div>';
+    } else amtEl.textContent = (amount > 0 ? '+' : '') + fmtCurrency(amount);
     amtEl.style.color = amount >= 0 ? '#00e08a' : '#ff5470';
   }
 
@@ -1650,6 +1659,11 @@ function openTxDetails(tx) {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   }));
   rows += txdRow('Description', escapeHtml(tx.desc || '—'));
+  if (_cx) {
+    rows += txdRow('Amount', escapeHtml((_cx.q > 0 ? '+' : '') + _cx.q.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + tx.coin));
+    rows += txdRow(_cx.same ? 'Value' : 'Value when credited', escapeHtml(fmtCurrency(_cx.then)));
+    if (!_cx.same) rows += txdRow('Value now', escapeHtml(fmtCurrency(_cx.now)));
+  }
 
   if (isWithdrawal) {
     var wd = (st.withdrawals || []).find(function (w) { return w.id === tx.wdId; });
@@ -1752,7 +1766,7 @@ function renderRecentTx() {
     var amtClass = 'neutral', amtText = '—';
     if (t.amt > 0) { amtClass = 'plus'; amtText = '+' + fmtCurrency(t.amt); }
     else if (t.amt < 0) { amtClass = 'minus'; amtText = fmtCurrency(t.amt); }
-    if (t.coin) { var _ca = Number(t.coinAmt) || 0; amtClass = _ca >= 0 ? 'plus' : 'minus'; amtText = (_ca > 0 ? '+' : '') + _ca.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin; icon = t.coin === 'BTC' ? '₿' : 'Ξ'; iconClass = 'deposit'; }
+    if (t.coin) { var _ca = Number(t.coinAmt) || 0; amtClass = _ca >= 0 ? 'plus' : 'minus'; amtText = (_ca > 0 ? '+' : '') + _ca.toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin; icon = t.coin === 'BTC' ? '₿' : 'Ξ'; iconClass = 'deposit'; if (!Number(t.amt)) { var _pv = Number(t.px) || Number(t.coin === 'BTC' ? st.btcP : st.ethP) || 0; if (_pv) amtText += '<small style="display:block;font-size:.72em;font-weight:600;opacity:.7">≈ ' + escapeHtml(fmtCurrency(_ca * _pv)) + '</small>'; } }
 
     var badge = '';
     if (t.status === 'Completed') badge = '<div class="recent-tx-badge ok">✓ Completed</div>';
