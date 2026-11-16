@@ -99,10 +99,65 @@ window.__atLogout = function () {
         addNav(nav, 'myActivity', 'My activity', 'pulse');
         addSection(main, 'myActivity');
         applyStaffNav(nav);
+        watchDenials();
+        var rn = 0; new MutationObserver(function () { clearTimeout(rn); rn = setTimeout(function () { try { applyStaffNav(nav); } catch (e) { } }, 120); }).observe(nav, { childList: true });
         chip();
       }
       if (ME.mustChangePassword) forcePassword();
     });
+  }
+  /* ---- "ask the owner for access" ---- */
+  function gateCss() {
+    if ($('atGateCss')) return; var st = document.createElement('style'); st.id = 'atGateCss';
+    st.textContent = '.admin-nav-item.at-locked{opacity:.55}.admin-nav-item.at-locked:hover{opacity:.85}.at-lk{margin-left:auto;font-size:12px;opacity:.9}' +
+      '#atGate{position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;padding:16px}' +
+      '#atGate .bx{width:100%;max-width:410px;background:#12141b;color:#f3f5f9;border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.55)}' +
+      '#atGate .ic{width:48px;height:48px;border-radius:15px;background:rgba(139,123,255,.16);display:grid;place-items:center;font-size:22px;margin-bottom:14px}#atGate h3{margin:0 0 8px;font-size:19px}#atGate p{margin:0 0 6px;color:#aab4c5;font-size:14px;line-height:1.55}' +
+      '#atGate .pm{display:inline-block;margin:4px 0 12px;padding:5px 12px;border-radius:99px;background:rgba(200,255,77,.13);color:#d6ff5c;font-weight:700;font-size:13px}' +
+      '#atGate textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;margin:6px 0 14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.3);color:inherit;font:inherit;font-size:14px;outline:0}' +
+      '#atGate .bt{display:flex;gap:10px}#atGate .bt button{flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:transparent;color:inherit;font-weight:700;font-size:14px;cursor:pointer}#atGate .bt .pr{background:#c8ff4d;color:#10130a;border-color:#c8ff4d}#atGate .bt button:disabled{opacity:.6;cursor:default}' +
+      'html[data-theme="light"] #atGate .bx{background:#fff;color:#10131a;border-color:rgba(15,23,42,.12)}html[data-theme="light"] #atGate p{color:#566074}html[data-theme="light"] #atGate .pm{background:rgba(75,130,0,.12);color:#2f5a00}html[data-theme="light"] #atGate textarea{background:#f6f8f2}html[data-theme="light"] #atGate .bt button{border-color:rgba(15,23,42,.18)}';
+    document.head.appendChild(st);
+  }
+  var gateAt = 0;
+  window.__atGate = function (perm) {
+    if (Date.now() - gateAt < 1500) return; gateAt = Date.now(); gateCss();
+    var old = $('atGate'); if (old) old.remove();
+    var owner = perm === 'owner', name = owner ? 'Owner-only feature' : (PERMS[perm] || perm || 'this section');
+    var o = document.createElement('div'); o.id = 'atGate'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+    o.innerHTML = '<div class="bx"><div class="ic">🔒</div><h3>Access required</h3>' +
+      '<p>' + (owner ? 'This feature is only available to the owner.' : 'Your account does not include this permission:') + '</p>' + (owner ? '' : '<div class="pm">' + esc(name) + '</div>') +
+      '<p>Ask the owner to enable it for you, or send a request now and they will be notified.</p>' +
+      '<textarea id="atGateNote" maxlength="200" placeholder="Why do you need it? (optional)"></textarea>' +
+      '<div class="bt"><button type="button" id="atGateX">Close</button><button type="button" class="pr" id="atGateGo">Request access</button></div><p id="atGateMsg" style="margin:12px 0 0;font-size:13px"></p></div>';
+    document.body.appendChild(o);
+    function close() { o.remove(); document.removeEventListener('keydown', esc2); }
+    function esc2(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', esc2);
+    o.addEventListener('click', function (e) { if (e.target === o) close(); });
+    $('atGateX').onclick = close;
+    $('atGateGo').onclick = function () {
+      var b = this; b.disabled = true; b.textContent = 'Sending…';
+      post('staffRequestAccess', { perm: perm, note: ($('atGateNote') || {}).value || '' }).then(function (r) {
+        var m = $('atGateMsg'); if (!m) return;
+        if (r && r.ok) { m.style.color = '#5dde9a'; m.textContent = '✓ Request sent. The owner has been notified.'; b.textContent = 'Sent'; setTimeout(close, 1800); }
+        else { m.style.color = '#ff9a9a'; m.textContent = (r && r.error) || 'Could not send the request.'; b.disabled = false; b.textContent = 'Request access'; }
+      });
+    };
+  };
+  document.addEventListener('click', function (e) {
+    var n = e.target.closest && e.target.closest('.admin-nav-item.at-locked'); if (!n) return;
+    e.preventDefault(); e.stopImmediatePropagation(); window.__atGate(n.getAttribute('data-locked'));
+  }, true);
+  /* a section the server refused → the same friendly dialog (staff only, so owners pay nothing) */
+  function watchDenials() {
+    if (window.__atFetch) return; window.__atFetch = 1; var of = window.fetch, lastTap = 0;
+    document.addEventListener('click', function () { lastTap = Date.now(); }, true);   // only a request the person just triggered may open the dialog; background refreshes stay quiet
+    window.fetch = function (u, o) {
+      var p = of.apply(this, arguments);
+      try { if (ME && ME.level === 'staff' && typeof u === 'string' && u.indexOf(BASE) === 0 && u.indexOf('action=') > -1 && Date.now() - lastTap < 3000) p.then(function (r) { if (!r || !r.ok) return; r.clone().json().then(function (j) { if (j && j.denied && j.needPerm) window.__atGate(j.needPerm); }).catch(function () { }); }).catch(function () { }); } catch (e) { }
+      return p;
+    };
   }
   function addNav(nav, tab, text, ico) {
     if (nav.querySelector('[data-tab="' + tab + '"]')) return;
@@ -117,18 +172,25 @@ window.__atLogout = function () {
     var d = document.createElement('div'); d.className = 'admin-section'; d.setAttribute('data-section', tab); d.id = 'at_' + tab;
     main.appendChild(d);
   }
-  var TAB_PERM = { stats: 'stats', clients: 'clients.view', verifications: 'kyc', chats: 'chat', emailChanges: 'clients.edit', withdrawals: 'withdrawals', deposits: 'deposits', deleted: 'clients.view', kycIncomplete: 'kyc' };
+  var TAB_PERM = { stats: 'stats', clients: 'clients.view', verifications: 'kyc', chats: 'chat', emailChanges: 'clients.edit', withdrawals: 'withdrawals', deposits: 'deposits', deleted: 'clients.view', kycIncomplete: 'kyc', accessReq: 'kyc', taskQueue: '*' };
   function applyStaffNav(nav) {
     var first = null;
     nav.querySelectorAll('.admin-nav-item').forEach(function (n) {
       var t = n.getAttribute('data-tab');
       if (t === 'myActivity') return;
       var need = TAB_PERM[t];
-      var allowed = need ? ME.perms.indexOf(need) >= 0 : false;          // unknown / owner-only tabs (System) are hidden
-      if (!allowed) n.style.display = 'none'; else if (!first) first = t;
+      var allowed = need === '*' ? true : need ? ME.perms.indexOf(need) >= 0 : false;          // unknown / owner-only tabs (System) are hidden
+      if (!need) { n.style.display = 'none'; return; }
+      if (!allowed) {                                                  // known section without access: stays visible, locked, and explains itself
+        n.style.display = ''; n.classList.add('at-locked'); n.setAttribute('data-locked', need);
+        if (!n.querySelector('.at-lk')) { var lk = document.createElement('span'); lk.className = 'at-lk'; lk.textContent = '🔒'; lk.setAttribute('aria-label', 'No access'); n.appendChild(lk); }
+        return;
+      }
+      n.classList.remove('at-locked'); n.removeAttribute('data-locked'); var old = n.querySelector('.at-lk'); if (old) old.remove();
+      if (!first) first = t;
     });
     var active = nav.querySelector('.admin-nav-item.active');
-    if ((!active || active.style.display === 'none') && window.showAdminTab) window.showAdminTab(first || 'myActivity');
+    if ((!active || active.style.display === 'none' || active.classList.contains('at-locked')) && window.showAdminTab) window.showAdminTab(first || 'myActivity');
     var q = document.querySelector('#adminPanel .admin-top-actions'); // hide owner-only controls if any
     if (q) q.querySelectorAll('[data-owner-only]').forEach(function (e) { e.style.display = 'none'; });
   }
