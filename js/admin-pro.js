@@ -71,6 +71,10 @@
     if (!force && S.loaded && Date.now() - S.ts < 6000) return Promise.resolve(S);
     _inflight = Promise.all([post('listUsers'), post('listVerifications'), post('getStats'), post('listPendingDeposits')]).then(function (r) {
       S.users = (r[0].ok && r[0].users) || [];
+      (function () {                                                    // balance = cash + crypto at today's price, so a client who holds only ETH is not shown as $0
+        var P = window.st || {}, bp = Number(P.btcP) || 0, ep = Number(P.ethP) || 0;
+        S.users.forEach(function (u) { if (u.__cash == null) u.__cash = Number(u.balance) || 0; u.cryptoUsd = (Number(u.btc) || 0) * bp + (Number(u.eth) || 0) * ep; u.balance = u.__cash + u.cryptoUsd; });
+      })();
       S.vers = (r[1].ok && r[1].verifications) || [];
       S.stats = (r[2].ok && r[2].stats) || {};
       S.deps = (r[3].ok && r[3].deposits) || [];
@@ -281,9 +285,9 @@
     ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
-          '<td class="hide-m">' + ccPill(ccOf(u)) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b></td>' +
+          '<td class="hide-m">' + ccPill(ccOf(u)) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b>' + (u.cryptoUsd > 0 ? '<small style="display:block;font-weight:500;opacity:.6;font-size:11px">cash ' + usd(u.__cash) + ' · crypto ' + usd(u.cryptoUsd) + '</small>' : '') + '</td>' +
           '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
-          '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
+          '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH' + (u.cryptoUsd > 0 ? '<br><span style="opacity:.75">≈ ' + usd(u.cryptoUsd) + '</span>' : '') + '</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
           '<td><div class="acts"><button class="ap-btn sm ic" data-act="add" data-e="' + esc(u.email) + '" title="Add balance">' + ic('wallet') + '</button><button class="ap-btn sm ic" data-act="view" data-e="' + esc(u.email) + '" title="View as client">' + ic('eye') + '</button><button class="ap-btn sm" data-open="' + esc(u.email) + '">Open</button></div></td></tr>';
       }).join('') : '<tr><td colspan="11"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
       '</tbody></table></div><div class="ap-foot"><span>' + list.length + ' of ' + all.length + ' clients</span><span style="display:flex;gap:8px;align-items:center"><button class="ap-btn sm" data-p="-1" ' + (S.page <= 1 ? 'disabled' : '') + '>Prev</button>Page ' + S.page + ' / ' + pages + '<button class="ap-btn sm" data-p="1" ' + (S.page >= pages ? 'disabled' : '') + '>Next</button></span></div></div>';
@@ -319,7 +323,7 @@
       '<div class="ap-sec"><h4>Balance breakdown</h4><div class="ap-kv">' +
       '<div><span>Real deposits (money received)</span><b style="color:#34d399">' + usd(u.realDeposits) + '</b></div>' +
       '<div><span>Added by admin (bonus / manual)</span><b style="color:#fbbf24">' + usd(u.adminCredits) + '</b></div>' +
-      '<div><span>Real balance (balance − admin credits)</span><b>' + usd((u.balance || 0) - (u.adminCredits || 0)) + '</b></div></div>' +
+      '<div><span>Real balance (balance − admin credits)</span><b>' + usd((u.__cash != null ? u.__cash : (u.balance || 0)) - (u.adminCredits || 0)) + '</b></div>' + (u.cryptoUsd > 0 ? '<div><span>Crypto holdings (at today\'s price)</span><b>' + usd(u.cryptoUsd) + '</b></div>' : '') + '</div>' +
       '<div style="margin-top:8px"><button class="ap-btn" data-act="credits" data-e="' + esc(e) + '">Review credits (real / admin)</button></div></div>' +
       '<div class="ap-sec"><h4>Quick actions</h4><div class="ap-agrid">' +
       '<button class="ap-btn pri" data-act="add" data-e="' + esc(e) + '">' + ic('wallet') + ' Add balance</button>' +
