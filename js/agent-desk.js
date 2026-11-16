@@ -25,7 +25,7 @@
       'body:has(#agd) #adminPanel{display:none!important}' +
       '#agd{--bg:#0a0e14;--p1:#111823;--p2:#161f2d;--ln:rgba(255,255,255,.08);--tx:#e9eef6;--mu:#8b97aa;--ac:#c8ff4d;--acx:#10180a;--ok:#34d399;--wr:#ffb454;--me:#1d2b17;--them:#18212f;position:fixed;inset:0;z-index:100040;display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}' +
       'html[data-theme="light"] #agd{--bg:#eef1ea;--p1:#fff;--p2:#f6f8f2;--ln:rgba(15,23,42,.1);--tx:#0f172a;--mu:#5b6577;--ac:#4b8200;--acx:#fff;--ok:#0f9f6e;--wr:#b86a00;--me:#e4f3cf;--them:#eef1f6}' +
-      '#agd *{box-sizing:border-box}#agd button{font:inherit;color:inherit}' +
+      '#agd *{box-sizing:border-box}:where(#agd) button{font:inherit;color:inherit}' +
       '.agd-top{flex:none;display:flex;align-items:center;gap:14px;height:56px;padding:0 18px;background:var(--p1);border-bottom:1px solid var(--ln)}' +
       '.agd-brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.01em}.agd-brand i{width:30px;height:30px;border-radius:9px;background:var(--ac);color:var(--acx);display:grid;place-items:center;font-style:normal;font-weight:900}' +
       '.agd-brand small{display:block;font-weight:600;color:var(--mu);font-size:11px;letter-spacing:.06em;text-transform:uppercase}' +
@@ -58,6 +58,8 @@
       '.agd-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}.agd-tag{padding:3px 10px;border-radius:99px;background:var(--p2);border:1px solid var(--ln);font-size:11.5px;font-weight:700}.agd-tag.ok{color:var(--ok);border-color:rgba(52,211,153,.35)}.agd-tag.wr{color:var(--wr);border-color:rgba(255,180,84,.35)}' +
       '.agd-bal{margin:14px 0;padding:16px;border-radius:16px;background:linear-gradient(135deg,rgba(200,255,77,.12),var(--p2));border:1px solid var(--ln)}html[data-theme="light"] .agd-bal{background:linear-gradient(135deg,rgba(120,180,0,.14),#fff)}.agd-bal small{color:var(--mu);font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.agd-bal b{display:block;font-size:26px;margin:2px 0 12px;letter-spacing:-.01em}' +
       '.agd-bar{display:flex;height:8px;border-radius:9px;overflow:hidden;background:var(--ln);margin-bottom:12px}.agd-bar i{display:block;height:100%}.agd-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px}.agd-r span{display:flex;align-items:center;gap:8px;color:var(--mu)}.agd-r span::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--c,var(--mu))}.agd-r b{font-size:13px;text-align:right}.agd-r small{display:block;color:var(--mu);font-weight:500;font-size:11.5px}' +
+      '.agd-sec{border:1px solid var(--ln);border-radius:14px;background:var(--p2);padding:12px 14px;margin-top:12px}.agd-sec h4{margin:0 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}.agd-pr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 0;font-size:12px;border-top:1px solid var(--ln)}.agd-pr:first-of-type{border-top:0}.agd-pr span{flex:1 0 100%;color:var(--mu);font-size:11px}.agd-pr code{flex:1;min-width:0;overflow-wrap:anywhere;font:12px ui-monospace,Menlo,monospace}.agd-pr em{color:var(--mu)}.agd-mini{border:1px solid var(--ln);background:transparent;border-radius:8px;padding:3px 9px;font-size:11px;cursor:pointer}.agd-mini:hover{border-color:var(--ac)}.agd-hint{color:var(--mu);font-size:11px;display:block;margin-top:6px}.agd-op{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--ln);font-size:12px}.agd-op:first-of-type{border-top:0}.agd-op small{display:block;color:var(--mu);font-size:11px}.agd-op .r{text-align:right}.agd-st{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(255,180,84,.16);color:#ffb454}.agd-st.completed{background:rgba(120,220,120,.16);color:#6fdc8c}.agd-st.rejected{background:rgba(255,100,100,.16);color:#ff7b7b}.agd-st.hold{background:rgba(167,139,250,.18);color:#a78bfa}html[data-theme="light"] .agd-st{filter:saturate(1.2) brightness(.7)}' +
+      '.agd-pop{position:absolute;left:18px;bottom:calc(100% - 6px);z-index:5;display:flex;flex-wrap:wrap;gap:2px;max-width:min(320px,calc(100% - 36px));padding:8px;border:1px solid var(--ln);border-radius:14px;background:var(--p1);box-shadow:0 16px 40px rgba(0,0,0,.35)}.agd-pop[hidden]{display:none}.agd-pop button{all:unset;cursor:pointer;padding:6px 8px;border-radius:8px;font-size:18px;line-height:1}.agd-pop button:hover{background:var(--p2)}.agd-qp{flex-direction:column;max-width:min(520px,calc(100% - 36px))}.agd-qp button{font-size:13px;line-height:1.3;padding:8px 10px;color:var(--tx)}.agd-jump{position:absolute;right:22px;bottom:84px;z-index:4;border:1px solid var(--ln);border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--acx);background:var(--ac);box-shadow:0 8px 22px rgba(0,0,0,.35)}.agd-jump[hidden]{display:none}#agdMid{position:relative}html.hol .agd-ch .n::after{content:\' 🎄\'}' +
       '.agd-kv{border:1px solid var(--ln);border-radius:14px;background:var(--p2);padding:4px 14px}.agd-kv div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:13px}.agd-kv div+div{border-top:1px solid var(--ln)}.agd-kv span{color:var(--mu)}.agd-kv b{text-align:right;word-break:break-word}' +
       '.agd-note{margin-top:14px;color:var(--mu);font-size:12px;text-align:center}.agd-sk{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--p2),var(--ln),var(--p2));background-size:200% 100%;animation:agdSk 1.2s linear infinite;margin:10px 0}@keyframes agdSk{to{background-position:-200% 0}}' +
       '.agd-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:100060;padding:10px 16px;border-radius:12px;background:var(--p1);color:var(--tx);border:1px solid var(--ac);box-shadow:0 10px 30px rgba(0,0,0,.4);font-size:13px}' +
@@ -184,7 +186,7 @@
   function openChat(email) {
     cur = email; msgs = []; lastSig = ''; card = null; typingNow = false; $('#agd').classList.add('chat'); $('#agd').classList.remove('cardopen');
     drawList(); drawMid(); drawCard(); renderMsgs(false); pull(true);
-    api('agentClientCard', { email: email }).then(function (r) { if (email !== cur) return; card = r && r.ok ? r.client : { error: (r && r.error) || 'Could not load the details' }; drawCard(); });
+    api('agentClientCard', { email: email }).then(function (r) { if (email !== cur) return; card = r && r.ok ? Object.assign({}, r.client, { payments: r.payments || {}, ops: r.ops || [] }) : { error: (r && r.error) || 'Could not load the details' }; drawCard(); });
     setTimeout(function () { var t = $('#agdTx'); if (t && window.innerWidth > 760) t.focus(); }, 60);
   }
 
@@ -202,9 +204,85 @@
       '<div class="agd-r" style="--c:#ffb454"><span>Bitcoin</span><b>' + esc(coin(c.btc)) + ' BTC<small>≈ ' + esc(money(c.btcUsd, c)) + '</small></b></div>' +
       '<div class="agd-r" style="--c:#a78bfa"><span>Ethereum</span><b>' + esc(coin(c.eth)) + ' ETH<small>≈ ' + esc(money(c.ethUsd, c)) + '</small></b></div></div>' +
       '<div class="agd-kv"><div><span>Country</span><b>' + esc(c.country || 'Not provided') + '</b></div><div><span>Account</span><b>' + esc(c.accountNo || '—') + '</b></div><div><span>Currency</span><b>' + esc(c.currency || 'USD') + '</b></div><div><span>Client since</span><b>' + (c.joinedAt ? esc(new Date(c.joinedAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })) : '—') + '</b></div><div><span>Transactions</span><b>' + esc(c.txCount) + '</b></div></div>' +
+      payBlock(c) + opsBlock(c) +
       '<div class="agd-note">Read-only. You can chat with this client, but not change their account.</div></div>';
     $('#agdCp').onclick = function () { try { navigator.clipboard.writeText(c.email); toast('E-mail copied'); } catch (e) { } };
+    [].forEach.call(box.querySelectorAll('[data-cp]'), function (b) { b.onclick = function () { try { navigator.clipboard.writeText(b.getAttribute('data-cp')); toast('Copied'); } catch (e) { } }; });
+    [].forEach.call(box.querySelectorAll('[data-rev]'), function (b) {
+      b.onclick = function () {
+        if (b.getAttribute('data-on')) { b.previousElementSibling.textContent = b.getAttribute('data-mask'); b.textContent = 'Show'; b.removeAttribute('data-on'); return; }
+        b.disabled = true; var em = cur;
+        api('agentReveal', { email: em, what: b.getAttribute('data-rev') }).then(function (r) {
+          b.disabled = false; if (em !== cur) return;
+          if (r && r.ok && r.value) { b.setAttribute('data-mask', b.previousElementSibling.textContent); b.previousElementSibling.textContent = r.value; b.textContent = 'Hide'; b.setAttribute('data-on', '1'); setTimeout(function () { if (b.getAttribute('data-on')) b.click(); }, 20000); } else toast((r && r.error) || 'Not available');
+        });
+      };
+    });
   }
+  function short(a) { a = String(a || ''); return a.length > 22 ? a.slice(0, 10) + '…' + a.slice(-8) : a; }
+  function payBlock(c) {
+    var p = c.payments || {}, h = '';
+    var row = function (l, v, ext) { return '<div class="agd-pr"><span>' + l + '</span>' + ext + '</div>'; };
+    h += p.btc ? '<div class="agd-pr"><span>Bitcoin address</span><code title="' + esc(p.btc) + '">' + esc(short(p.btc)) + '</code><button type="button" class="agd-mini" data-cp="' + esc(p.btc) + '">Copy</button></div>' : '<div class="agd-pr"><span>Bitcoin address</span><em>Not connected</em></div>';
+    h += p.eth ? '<div class="agd-pr"><span>Ethereum address</span><code title="' + esc(p.eth) + '">' + esc(short(p.eth)) + '</code><button type="button" class="agd-mini" data-cp="' + esc(p.eth) + '">Copy</button></div>' : '<div class="agd-pr"><span>Ethereum address</span><em>Not connected</em></div>';
+    h += p.iban ? '<div class="agd-pr"><span>Bank account (IBAN)</span><code>' + esc(p.iban) + '</code><button type="button" class="agd-mini" data-rev="iban">Show</button></div>' : '<div class="agd-pr"><span>Bank account (IBAN)</span><em>Not connected</em></div>';
+    (p.dests || []).forEach(function (d) { h += '<div class="agd-pr"><span>Payout · ' + esc(d.method) + (d.holder ? ' · ' + esc(d.holder) : '') + '</span><code>' + esc(d.masked) + '</code><button type="button" class="agd-mini" data-rev="' + esc(d.id) + '">Show</button></div>'; });
+    return '<div class="agd-sec"><h4>Connected details</h4>' + h + '<small class="agd-hint">Full details are logged when shown.</small></div>';
+  }
+  var OPL = { withdrawal: 'Withdrawal', crypto_deposit: 'Crypto deposit', deposit: 'Deposit' }, STL = { pending: 'Awaiting confirmation', hold: 'On 24h hold', completed: 'Completed', rejected: 'Rejected' };
+  function opsBlock(c) {
+    var o = c.ops || []; if (!o.length) return '<div class="agd-sec"><h4>Recent activity</h4><div class="agd-hint">No deposits or withdrawals yet.</div></div>';
+    return '<div class="agd-sec"><h4>Recent activity</h4>' + o.map(function (x) {
+      var amt = x.kind === 'crypto_deposit' ? coin(x.amount) + ' ' + esc(x.cur) + (x.usd ? ' <small>≈ ' + esc(money(x.usd, c)) + '</small>' : '') : esc(money(x.amount, c));
+      var meta = (x.method ? esc(x.method) + ' · ' : '') + (x.at ? esc(new Date(x.at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : '') + (x.status === 'hold' && x.holdUntil ? ' · until ' + esc(new Date(x.holdUntil).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : '');
+      return '<div class="agd-op"><div><b>' + OPL[x.kind] + '</b><small>' + meta + '</small></div><div class="r"><b>' + amt + '</b><span class="agd-st ' + x.status + '">' + STL[x.status] + '</span></div></div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- chat upgrades: drafts, emoji, "/" quick replies, jump-to-latest, paste/drop photos, Alt+↑/↓ ---------- */
+  var drafts = {}, EMO = ['😊', '🙂', '👍', '🙏', '✅', '⏳', '🎄', '🎁', '🥂', '✨', '❄️', '🎉', '😉', '👋', '💬', '🔒', '💳', '₿', '📎', '👌', '🙌', '😅', '🤝', '❤️'];
+  function myQR() { try { var a = JSON.parse(localStorage.getItem('agd_qr') || '[]'); return Array.isArray(a) ? a.filter(function (x) { return typeof x === 'string'; }).slice(0, 20) : []; } catch (e) { return []; } }
+  function enhance() {
+    var mid = $('#agdMid'), tx = $('#agdTx'), msgs = $('#agdMsgs'); if (!mid || !tx || !msgs || !cur) return; var who = cur;
+    var grow = function () { tx.style.height = 'auto'; tx.style.height = Math.min(140, tx.scrollHeight) + 'px'; };
+    tx.value = drafts[who] || ''; grow();
+    var keep = function () { setTimeout(function () { drafts[who] = tx.value; }, 60); };
+    tx.addEventListener('input', function () { drafts[who] = tx.value; }); tx.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) keep(); }); $('#agdGo').addEventListener('click', keep);
+    var cmp = mid.querySelector('.agd-cmp'); cmp.style.position = 'relative';
+    /* emoji */
+    var eb = document.createElement('button'); eb.type = 'button'; eb.className = 'agd-ph'; eb.id = 'agdEmo'; eb.title = 'Emoji'; eb.setAttribute('aria-label', 'Emoji'); eb.textContent = '😊'; cmp.insertBefore(eb, tx);
+    var pop = document.createElement('div'); pop.className = 'agd-pop'; pop.hidden = true; cmp.appendChild(pop);
+    pop.innerHTML = EMO.map(function (e) { return '<button type="button">' + e + '</button>'; }).join('');
+    eb.onclick = function () { pop.hidden = !pop.hidden; };
+    pop.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var a = tx.selectionStart == null ? tx.value.length : tx.selectionStart; tx.value = tx.value.slice(0, a) + b.textContent + tx.value.slice(tx.selectionEnd == null ? a : tx.selectionEnd); drafts[who] = tx.value; tx.focus(); tx.selectionStart = tx.selectionEnd = a + b.textContent.length; pop.hidden = true; grow(); };
+    /* "/" quick replies + save own */
+    var qp = document.createElement('div'); qp.className = 'agd-pop agd-qp'; qp.hidden = true; cmp.appendChild(qp);
+    var all = function () { return QR.concat(myQR()); };
+    function showQ() {
+      var v = tx.value; if (v.charAt(0) !== '/') { qp.hidden = true; return; } var f = v.slice(1).toLowerCase(), rows = all().filter(function (t) { return !f || t.toLowerCase().indexOf(f) > -1; }).slice(0, 6);
+      if (!rows.length) { qp.hidden = true; return; } qp.innerHTML = rows.map(function (t, i) { return '<button type="button" data-t="' + esc(t) + '">' + esc(t) + '</button>'; }).join(''); qp.hidden = false;
+    }
+    tx.addEventListener('input', showQ);
+    qp.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; tx.value = b.getAttribute('data-t'); drafts[who] = tx.value; qp.hidden = true; tx.focus(); grow(); };
+    tx.addEventListener('keydown', function (e) { if (e.key === 'Escape') { qp.hidden = true; pop.hidden = true; } else if (e.key === 'Tab' && !qp.hidden) { e.preventDefault(); var b = qp.querySelector('button'); if (b) b.click(); } });
+    var sb = document.createElement('button'); sb.type = 'button'; sb.className = 'agd-ph'; sb.title = 'Save this text as your quick reply (type / to use it)'; sb.setAttribute('aria-label', 'Save as quick reply'); sb.textContent = '★'; cmp.insertBefore(sb, tx);
+    sb.onclick = function () { var t = tx.value.trim(); if (!t || t.charAt(0) === '/') { toast('Write the reply first, then press ★ to save it'); return; } var a = myQR(); if (a.indexOf(t) < 0) a.unshift(t.slice(0, 400)); try { localStorage.setItem('agd_qr', JSON.stringify(a.slice(0, 20))); toast('Saved. Type / to use it'); } catch (e) { } };
+    /* paste / drop photo */
+    var sendFile = function (f) { var inp = $('#agdFile'); if (f && inp && inp.onchange) inp.onchange.call({ files: [f], value: '' }); };
+    tx.addEventListener('paste', function (e) { var it = (e.clipboardData && e.clipboardData.files) || []; for (var i = 0; i < it.length; i++) if (/^image\//.test(it[i].type)) { e.preventDefault(); sendFile(it[i]); return; } });
+    mid.addEventListener('dragover', function (e) { if (e.dataTransfer && [].indexOf.call(e.dataTransfer.types || [], 'Files') > -1) e.preventDefault(); });
+    mid.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f && /^image\//.test(f.type)) { e.preventDefault(); sendFile(f); } });
+    /* jump to latest */
+    var jb = document.createElement('button'); jb.type = 'button'; jb.className = 'agd-jump'; jb.hidden = true; jb.textContent = '↓ Latest'; mid.appendChild(jb);
+    jb.onclick = function () { msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'smooth' }); };
+    var tick = 0; msgs.addEventListener('scroll', function () { if (tick) return; tick = setTimeout(function () { tick = 0; jb.hidden = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 240; }, 80); }, { passive: true });
+    document.addEventListener('click', function off(e) { if (!document.body.contains(pop)) { document.removeEventListener('click', off); return; } if (!e.target.closest('#agdEmo,.agd-pop')) { pop.hidden = true; qp.hidden = true; } });
+  }
+  var _dm = drawMid; drawMid = function () { _dm(); enhance(); };
+  document.addEventListener('keydown', function (e) {                    // Alt + ↑ / ↓ : previous / next conversation
+    if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || !$('#agdList')) return; var its = [].slice.call(document.querySelectorAll('#agdList .agd-it')); if (!its.length) return;
+    var i = its.findIndex(function (b) { return b.getAttribute('data-e') === cur; }); i = e.key === 'ArrowDown' ? Math.min(its.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1); e.preventDefault(); openChat(its[i].getAttribute('data-e'));
+  });
 
   /* ---------- boot ---------- */
   function mount(me) {
@@ -214,7 +292,7 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var d = $('#agd'); if (d && d.classList.contains('cardopen')) d.classList.remove('cardopen'); } });
     var panel = document.getElementById('adminPanel'); if (panel) panel.style.setProperty('display', 'none', 'important');
     window.__atGate = function () { };                                                    // the admin panel is not used here: no "access required" pop-ups from its background polls
-    var OK = /^(adminMe|adminMyActivity|logout|login|changePassword|session|staffRequestAccess|agentInbox|agentClientCard|getChat|sendChatMessage|markChatRead|setTyping|sendChatImage|getChatImage)$/, _f = window.fetch;
+    var OK = /^(adminMe|adminMyActivity|logout|login|changePassword|session|staffRequestAccess|agentInbox|agentClientCard|agentReveal|holidayConfig|getChat|sendChatMessage|markChatRead|setTyping|sendChatImage|getChatImage)$/, _f = window.fetch;
     window.fetch = function (u, o) {                                                       // legacy admin pollers would only be refused by the server: do not even send them
       try { var m = typeof u === 'string' && u.indexOf(BASE) === 0 && /[?&]action=([A-Za-z_]+)/.exec(u); if (m && !OK.test(m[1])) return Promise.resolve(new Response(JSON.stringify({ ok: false, error: 'Not available for agents' }), { status: 200, headers: { 'Content-Type': 'application/json' } })); } catch (e) { }
       return _f.apply(this, arguments);
