@@ -33,6 +33,7 @@
       '.agd-main{flex:1;min-height:0;display:grid;grid-template-columns:340px minmax(0,1fr) 330px}' +
       '.agd-col{min-height:0;display:flex;flex-direction:column;background:var(--p1)}.agd-col+.agd-col{border-left:1px solid var(--ln)}.agd-mid{background:var(--bg)}' +
       '.agd-h{flex:none;padding:16px 16px 10px}.agd-h h2{margin:0 0 10px;font-size:17px}' +
+      '.agd-rf{width:34px;height:34px;border-radius:10px;border:1px solid var(--ln);background:var(--p2);cursor:pointer;font-size:17px;line-height:1}.agd-rf:hover{border-color:var(--ac)}.agd-rf.sp{animation:agdSp .7s linear infinite}@keyframes agdSp{to{transform:rotate(360deg)}}.agd-up{color:var(--mu);font-size:11.5px;font-weight:500;margin-left:auto}' +
       '.agd-s{width:100%;height:40px;padding:0 12px 0 36px;border-radius:12px;border:1px solid var(--ln);background:var(--p2) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%238b97aa%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27M21 21l-4-4%27/%3E%3C/svg%3E") 11px center/16px no-repeat;color:var(--tx);font:inherit;outline:0}.agd-s:focus{border-color:var(--ac)}' +
       '.agd-tabs{display:flex;gap:6px;margin-top:10px}.agd-tab{flex:1;height:32px;border-radius:9px;border:1px solid var(--ln);background:transparent;color:var(--mu);font-size:12.5px;font-weight:700;cursor:pointer}.agd-tab.on{background:var(--ac);border-color:var(--ac);color:var(--acx)}.agd-tab em{font-style:normal;opacity:.75;margin-left:4px}' +
       '.agd-list{flex:1;overflow:auto;padding:4px 8px 12px}' +
@@ -72,10 +73,11 @@
       '<button class="agd-chip" id="agdSnd" type="button" title="Sound for new messages"><span class="tx">Sound</span><span id="agdSndI">🔔</span></button>' +
       '<div class="agd-chip" style="cursor:default" title="Connection"><span class="agd-live" id="agdLive"></span><span class="tx" id="agdMe"></span></div>' +
       '<button class="agd-chip" id="agdOut" type="button">Sign out</button></div>' +
-      '<div class="agd-main"><section class="agd-col"><div class="agd-h"><h2>Your conversations</h2><input class="agd-s" id="agdQ" type="search" placeholder="Search by name or e-mail" aria-label="Search" autocomplete="off"><div class="agd-tabs" id="agdTabs"></div></div><div class="agd-list" id="agdList"></div></section>' +
+      '<div class="agd-main"><section class="agd-col"><div class="agd-h"><h2 style="display:flex;align-items:center;gap:10px">Your conversations<span class="agd-sp"></span><button class="agd-rf" id="agdRf" type="button" title="Refresh" aria-label="Refresh">⟳</button></h2><input class="agd-s" id="agdQ" type="search" placeholder="Search by name or e-mail" aria-label="Search" autocomplete="off"><div class="agd-tabs" id="agdTabs"></div></div><div class="agd-list" id="agdList"></div></section>' +
       '<section class="agd-col agd-mid" id="agdMid"></section>' +
       '<aside class="agd-col" id="agdCard"></aside></div>';
     document.body.appendChild(d);
+    $('#agdRf').onclick = function () { var b = this; b.classList.add('sp'); Promise.all([loadInbox(), pull(true)]).then(function () { setTimeout(function () { b.classList.remove('sp'); }, 400); }); };
     $('#agdQ').addEventListener('input', function () { q = this.value.trim().toLowerCase(); drawList(); });
     $('#agdSnd').onclick = function () { sound = !sound; $('#agdSndI').textContent = sound ? '🔔' : '🔕'; try { localStorage.setItem('agd_sound', sound ? '1' : '0'); } catch (e) { } };
     $('#agdOut').onclick = function () { api('logout').then(function () { window.__atLogout ? window.__atLogout() : location.replace('index.html'); }); };
@@ -155,7 +157,10 @@
     var who = cur;
     return api('getChat', { email: who }).then(function (r) {
       if (who !== cur) return;
-      if (!r || !r.ok) { if (r && r.error && !/Connection/.test(r.error)) toast(r.error); return; }
+      if (!r || !r.ok) {
+        if (r && r.needPerm === 'assign') { cur = ''; msgs = []; card = null; $('#agd').classList.remove('chat', 'cardopen'); drawMid(); drawCard(); toast('This client is no longer on your list.'); loadInbox(); return; }
+        if (r && r.error && !/Connection/.test(r.error)) toast(r.error); return;
+      }
       var ch = r.chat || [], t = r.typing || {}, tn = !!(t.client && Date.now() - (t.clientTs || 0) < 6000);
       var sig = ch.length + ':' + (ch.length ? ch[ch.length - 1].id + (ch[ch.length - 1].read ? 1 : 0) : '') + ':' + tn;
       if (sig === lastSig && !force) return;
@@ -168,6 +173,7 @@
     go.disabled = true; var id = 'a' + Date.now() + Math.random().toString(36).slice(2, 7);
     api('sendChatMessage', { email: cur, text: t, clientMsgId: id }).then(function (r) {
       go.disabled = false;
+      if (!r.ok && r.needPerm === 'assign') { toast('This client is no longer on your list. Your message was not sent.'); loadInbox(); pull(true); return; }
       if (!r.ok) { toast(r.error || 'Could not send. Try again.'); return; }
       tx.value = ''; tx.style.height = 'auto'; sent++; pull(true); loadInbox(); tx.focus();
     });
@@ -202,7 +208,7 @@
   /* ---------- boot ---------- */
   function mount(me) {
     if (mounted) return; mounted = true; ME = me; css(); shell(); loadInbox();
-    setInterval(function () { if (!document.hidden) { loadInbox(); pull(false); } }, 4000);
+    setInterval(function () { if (!document.hidden) { loadInbox(); pull(false); } }, 3000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { loadInbox(); pull(true); } });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var d = $('#agd'); if (d && d.classList.contains('cardopen')) d.classList.remove('cardopen'); } });
     var panel = document.getElementById('adminPanel'); if (panel) panel.style.setProperty('display', 'none', 'important');
