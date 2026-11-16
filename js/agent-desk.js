@@ -22,6 +22,7 @@
   function css() {
     if ($('#agdCss')) return; var s = document.createElement('style'); s.id = 'agdCss';
     s.textContent =
+      'body:has(#agd) #adminPanel{display:none!important}' +
       '#agd{--bg:#0a0e14;--p1:#111823;--p2:#161f2d;--ln:rgba(255,255,255,.08);--tx:#e9eef6;--mu:#8b97aa;--ac:#c8ff4d;--acx:#10180a;--ok:#34d399;--wr:#ffb454;--me:#1d2b17;--them:#18212f;position:fixed;inset:0;z-index:100040;display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}' +
       'html[data-theme="light"] #agd{--bg:#eef1ea;--p1:#fff;--p2:#f6f8f2;--ln:rgba(15,23,42,.1);--tx:#0f172a;--mu:#5b6577;--ac:#4b8200;--acx:#fff;--ok:#0f9f6e;--wr:#b86a00;--me:#e4f3cf;--them:#eef1f6}' +
       '#agd *{box-sizing:border-box}#agd button{font:inherit;color:inherit}' +
@@ -207,7 +208,7 @@
 
   /* ---------- boot ---------- */
   function mount(me) {
-    if (mounted) return; mounted = true; ME = me; css(); shell(); loadInbox();
+    if (mounted) return; mounted = true; ME = me; try { localStorage.setItem('nc_agent', '1'); } catch (e) { } css(); shell(); loadInbox();
     setInterval(function () { if (!document.hidden) { loadInbox(); pull(false); } }, 3000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { loadInbox(); pull(true); } });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var d = $('#agd'); if (d && d.classList.contains('cardopen')) d.classList.remove('cardopen'); } });
@@ -220,7 +221,13 @@
     };
     document.documentElement.style.overflow = 'hidden';
   }
+  function unmountDesk() { var d = $('#agd'); if (d) d.remove(); mounted = false; document.documentElement.classList.remove('agd-pre'); var pre = $('#agdPre'); if (pre) pre.remove(); var pn = document.getElementById('adminPanel'); if (pn) pn.style.removeProperty('display'); document.documentElement.style.overflow = ''; try { localStorage.setItem('nc_agent', ''); } catch (e) { } }
   var asked = '', tries = 0;
+  (function early() {                                                  // we already know this sign-in is an agent: open the desk at once, confirm with the server after
+    try { if (localStorage.getItem('nc_agent') !== '1' || localStorage.getItem('user_role') !== 'admin' || !tok()) return; } catch (e) { return; }
+    var go = function () { if (mounted) return; mount({ name: (localStorage.getItem('user_name') || 'Agent') }); api('adminMe').then(function (r) { if (r && r.ok && r.me) { if (!r.me.agent) unmountDesk(); else { ME = r.me; var n = $('#agdMe'); if (n) n.textContent = r.me.name; document.documentElement.classList.remove('agd-pre'); var pre = $('#agdPre'); if (pre) pre.remove(); } } else { document.documentElement.classList.remove('agd-pre'); var pr = $('#agdPre'); if (pr) pr.remove(); } }); };
+    if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
+  })();
   function check() {
     var t = tok(); if (!t || mounted) return;
     var p = document.getElementById('adminPanel'); if (!p || !p.getClientRects().length) return;
