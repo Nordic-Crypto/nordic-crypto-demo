@@ -71,8 +71,8 @@
     var Doc = kit.Doc, PW = kit.PW, PH = kit.PH, doc = new Doc(), M = 40, R = PW - M;
     var out = r.type === 'Withdrawal' || r.direction === 'out', url = location.origin + '/verify.html?no=' + encodeURIComponent(r.no);
     doc.rect(M, 34, 22, 22, { fill: LIME }); doc.text(M + 11, 50, 'N', { size: 13, bold: true, align: 'center' });
-    doc.text(M + 32, 50, 'NordicCrypto', { size: 14, bold: true }); doc.text(R, 48, 'Payment receipt', { size: 9, align: 'right', color: MUT });
-    doc.text(M, 118, 'Receipt', { size: 26, bold: true });
+    doc.text(M + 32, 50, 'NordicCrypto', { size: 14, bold: true }); doc.text(R, 48, 'Transfer confirmation', { size: 9, align: 'right', color: MUT });
+    doc.text(M, 118, 'Transfer confirmation', { size: 24, bold: true });
     doc.text(M, 138, 'No. ' + r.no, { size: 11, color: MUT });
     var st = String(r.status), good = /completed|sent|done|success/i.test(st), bad = /reject|fail|cancel/i.test(st);
     var pc = bad ? [255, 226, 230] : good ? [226, 247, 190] : [255, 238, 200], tc = bad ? [170, 30, 55] : good ? [47, 90, 0] : [138, 90, 0], pw = kit.tw(st.toUpperCase(), 8, true) + 22;
@@ -81,14 +81,22 @@
     doc.text(M + 20, 192, (out ? 'AMOUNT SENT' : 'AMOUNT RECEIVED'), { size: 7.5, bold: true, color: MUT });
     doc.text(M + 20, 232, (out ? '-' : '+') + money(r.amount), { size: 34, bold: true });
     if (r.payAmount && r.payCur) doc.text(R - 20, 232, 'Paid out: ' + Number(r.payAmount).toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ' + r.payCur, { size: 10, align: 'right', color: MUT });
-    var y = 296, col2 = M + 270;
-    function kv(x, y0, k, v, bold) { doc.text(x, y0, k.toUpperCase(), { size: 7, bold: true, color: MUT }); var ls = doc.wrap(String(v || '-'), 240, 10.5, !!bold); doc.text(x, y0 + 14, ls[0], { size: 10.5, bold: !!bold }); if (ls[1]) doc.text(x, y0 + 27, ls[1], { size: 10.5, bold: !!bold }); }
-    kv(M, y, 'Date and time', fmtDT(r.at)); kv(col2, y, 'Type', r.type);
-    kv(M, y + 46, 'Description', r.desc); kv(col2, y + 46, 'Method', r.method || '-');
-    var yy = y + 92;
-    if (r.dest) { kv(M, yy, out ? 'Destination' : 'Source', r.dest); kv(col2, yy, 'Reference', r.ref); yy += 46; } else { kv(M, yy, 'Reference', r.ref); yy += 46; }
-    kv(M, yy, 'Account holder', r.holder, true); kv(col2, yy, 'E-mail', r.email); yy += 46;
-    if (r.sentAt) { kv(M, yy, 'Sent', fmtDT(r.sentAt)); if (r.creditedAt) kv(col2, yy, 'Credited', fmtDT(r.creditedAt)); yy += 46; }
+    var y = 290, col2 = M + 270;
+    function kv(x, y0, k, v, bold, w) { doc.text(x, y0, k.toUpperCase(), { size: 7, bold: true, color: MUT }); var ls = doc.wrap(String(v || '-'), w || 240, 10.5, !!bold); doc.text(x, y0 + 14, ls[0], { size: 10.5, bold: !!bold }); if (ls[1]) doc.text(x, y0 + 27, ls[1], { size: 10.5, bold: !!bold }); }
+    kv(M, y, 'Date and time', fmtDT(r.at)); kv(col2, y, 'Currency', (r.cur || 'USD') + (r.payCur ? ' (paid out in ' + r.payCur + ')' : ''));
+    kv(M, y + 44, 'Reference', r.ref); kv(col2, y + 44, 'Type / method', r.type + (r.method ? ' / ' + r.method : ''));
+    var yy = y + 92, NP = 'Not provided';
+    function party(x, top, title, p) {
+      p = p || {}; doc.rect(x, top, 245, 160, { fill: BG });
+      doc.text(x + 14, top + 22, title, { size: 8, bold: true, color: MUT });
+      var rows = [['Name', p.name], ['Bank', p.bank], ['IBAN / account', p.iban], ['SWIFT / BIC', p.swift], ['Country', p.country]], ry = top + 44;
+      rows.forEach(function (rw) { doc.text(x + 14, ry, rw[0].toUpperCase(), { size: 6.5, bold: true, color: MUT }); var v = String(rw[1] || '').trim(), ls = doc.wrap(v || NP, 215, 9.5, !!v); doc.text(x + 14, ry + 12, ls[0], { size: 9.5, bold: !!v, color: v ? INK : MUT }); ry += 22; });
+    }
+    party(M, yy, 'FROM  -  SENDER', r.sender); party(R - 245, yy, 'TO  -  BENEFICIARY', r.beneficiary); yy += 160;
+    var sc = (r.sender && r.sender.country) || '-', bc = (r.beneficiary && r.beneficiary.country) || '-';
+    doc.text(M, yy + 22, 'Countries: ' + sc + '  ->  ' + bc, { size: 9.5, color: MUT });
+    if (r.sentAt) doc.text(R, yy + 22, 'Sent ' + fmtDT(r.sentAt) + (r.creditedAt ? '  |  Credited ' + fmtDT(r.creditedAt) : ''), { size: 9.5, align: 'right', color: MUT });
+    yy += 34;
     doc.line(M, yy + 6, R, yy + 6, { color: LINE }); yy += 30;
     var qrOk = qrRects(doc, url, M, yy, 92);
     if (!qrOk) { doc.rect(M, yy, 92, 92, { fill: BG }); doc.text(M + 46, yy + 50, 'QR', { size: 12, bold: true, align: 'center', color: MUT }); }
@@ -96,8 +104,8 @@
     var tl = doc.wrap('Scan the code to open a public page that confirms this receipt was issued by NordicCrypto. It shows the number, amount, date, status and the holder\'s initials only.', 330, 9.5);
     tl.forEach(function (l, i) { doc.text(M + 112, yy + 32 + i * 13, l, { size: 9.5, color: MUT }); });
     doc.text(M + 112, yy + 32 + tl.length * 13 + 8, 'Receipt no. ' + r.no, { size: 8, color: MUT });
-    doc.text(M, PH - 50, 'Issued ' + fmtDT(r.issuedAt) + ' by NordicCrypto. This receipt confirms that the operation was recorded on your account.', { size: 7.5, color: MUT });
-    doc.text(M, PH - 38, 'It is not a bank statement. Questions? Contact support from your dashboard.', { size: 7.5, color: MUT });
+    doc.text(M, PH - 50, 'Issued ' + fmtDT(r.issuedAt) + ' by NordicCrypto. This statement confirms that the operation was recorded on the account of ' + (r.holder || 'the holder') + '.', { size: 7.5, color: MUT });
+    doc.text(M, PH - 38, 'It is a NordicCrypto statement, not a bank-issued SWIFT message (MT103). Party details are shown as recorded by us. Questions? Contact support.', { size: 7.5, color: MUT });
     return doc.build('NordicCrypto receipt ' + r.no);
   }
 
