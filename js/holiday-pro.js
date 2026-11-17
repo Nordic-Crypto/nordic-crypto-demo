@@ -5,7 +5,7 @@
   'use strict';
   if (window.__holPro) return; window.__holPro = 1;
   var BASE = window.WORKER_LOGIN_URL || window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
-  var CFG = { mode: 'auto', snow: true, garland: true, greeting: '', clients: true, staff: true };
+  var CFG = { mode: 'on', snow: true, garland: true, greeting: '', clients: true, staff: true };
   var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   function tok() { return typeof window.getSessionToken === 'function' ? window.getSessionToken() : LS.get('session_token'); }
@@ -25,9 +25,9 @@
     if ($('#holCss')) return; var s = document.createElement('style'); s.id = 'holCss';
     s.textContent =
       '#holSnow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100045}' +
-      '#holGar{position:fixed;left:0;right:0;top:0;height:20px;pointer-events:none;z-index:100046;overflow:hidden;opacity:.95}' +
-      '#holGar svg{display:block;width:100%;height:20px}' +
-      '#holGar .b{animation:holTw 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}#holGar .b.b1{animation-delay:.6s}#holGar .b.b2{animation-delay:1.2s}#holGar .b.b3{animation-delay:1.8s}' +
+      '#holGar{position:fixed;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:100046;overflow:hidden;opacity:.95}' +
+      '#holGar svg{display:block;width:100%;height:34px}' +
+      '#holGar .b{animation:holTw 2.4s ease-in-out infinite}#holGar .b.b1{animation-delay:.6s}#holGar .b.b2{animation-delay:1.2s}#holGar .b.b3{animation-delay:1.8s}' +
       '@keyframes holTw{0%,100%{opacity:1}50%{opacity:.35}}' +
       '#holChip{position:fixed;left:14px;bottom:14px;z-index:100047;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:99px;font:600 12px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#e9eef6;background:rgba(17,24,35,.82);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px);cursor:pointer;opacity:.85;transition:opacity .2s}' +
       '#holChip:hover{opacity:1}#holChip i{font-style:normal}' +
@@ -55,7 +55,7 @@
   function startSnow() {
     if (cv || reduced() || !CFG.snow) return; cv = document.createElement('canvas'); cv.id = 'holSnow'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); cx = cv.getContext('2d');
     resize(); lightTheme = document.documentElement.getAttribute('data-theme') === 'light'; buildSprites();
-    var n = W < 700 ? 22 : W < 1200 ? 34 : 46; seedFlakes(n); last = 0; slow = 0; frames = 0; acc = 0; raf = requestAnimationFrame(loop);
+    var n = W < 700 ? 30 : W < 1200 ? 46 : 64; seedFlakes(n); last = 0; slow = 0; frames = 0; acc = 0; raf = requestAnimationFrame(loop);
   }
   function stopSnow() { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.remove(); cv = null; } }
   function loop(t) {
@@ -76,9 +76,9 @@
   function startGarland() {
     if ($('#holGar') || !CFG.garland) return; var d = document.createElement('div'); d.id = 'holGar'; d.setAttribute('aria-hidden', 'true');
     var cols = ['#ff5a5f', '#ffd166', '#6ee7a8', '#6aa9ff'], b = '', w = 1600, step = 40;
-    for (var x = 10, i = 0; x < w; x += step, i++) { var y = 7 + Math.sin(x / step * Math.PI) * 4; b += '<circle class="b b' + (i % 4) + '" cx="' + x + '" cy="' + (y + 6) + '" r="3.4" fill="' + cols[i % 4] + '"/>'; }
+    for (var x = 10, i = 0; x < w; x += step, i++) { var y = 4 + Math.sin(x / step * Math.PI) * 5; b += '<g class="b b' + (i % 4) + '"><circle cx="' + x + '" cy="' + (y + 13) + '" r="10" fill="' + cols[i % 4] + '" opacity=".22"/><rect x="' + (x - 1.5) + '" y="' + (y + 3) + '" width="3" height="5" fill="#556"/><ellipse cx="' + x + '" cy="' + (y + 13) + '" rx="4.6" ry="6" fill="' + cols[i % 4] + '"/></g>'; }
     var wire = 'M0 6 '; for (var x2 = 0; x2 <= w; x2 += step) wire += 'Q' + (x2 + step / 2) + ' ' + 16 + ' ' + (x2 + step) + ' 6 ';
-    d.innerHTML = '<svg viewBox="0 0 ' + w + ' 20" preserveAspectRatio="xMidYMin slice"><path d="' + wire + '" fill="none" stroke="rgba(120,120,120,.55)" stroke-width="1"/>' + b + '</svg>';
+    d.innerHTML = '<svg viewBox="0 0 ' + w + ' 34" preserveAspectRatio="xMidYMin slice"><path d="' + wire + '" fill="none" stroke="rgba(150,150,150,.8)" stroke-width="1.6"/>' + b + '</svg>';
     document.body.appendChild(d);
   }
 
