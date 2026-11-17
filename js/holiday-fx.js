@@ -31,7 +31,8 @@
     s.textContent = [
       '.hx{--bg:#0d121b;--p:#141c29;--p2:#1a2434;--ln:rgba(255,255,255,.1);--tx:#eef3fa;--mu:#93a0b5;--ac:#c8ff4d;--acx:#10180a;--r:#ff5a5f;--g:#6ee7a8;--y:#ffd166;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);-webkit-tap-highlight-color:transparent}',
       'html[data-theme="light"] .hx{--bg:#f3f6f1;--p:#fff;--p2:#f1f4ee;--ln:rgba(15,23,42,.12);--tx:#0f172a;--mu:#5b6577;--ac:#4b8200;--acx:#fff}',
-      '.hx *{box-sizing:border-box}.hx button{font:inherit;color:inherit}',
+      ':where(.hx) *{box-sizing:border-box}:where(.hx) button{font:inherit;color:inherit}',
+      '.hx-top{all:unset;box-sizing:border-box;position:relative;flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:19px;line-height:1;transition:background .2s,border-color .2s,transform .2s}.hx-top:hover{background:rgba(255,255,255,.1);border-color:var(--ac,#c8ff4d);transform:translateY(-1px)}.hx-top:focus-visible{outline:2px solid #c8ff4d;outline-offset:2px}.hx-top em{display:none;position:absolute;right:-3px;top:-3px;width:11px;height:11px;border-radius:50%;background:#ff5a5f;border:2px solid #0d121b}.hx-top.new em{display:block;animation:hxPulse 1.8s ease-in-out infinite}@keyframes hxPulse{50%{transform:scale(1.25)}}html[data-theme="light"] .hx-top{background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.12)}html[data-theme="light"] .hx-top em{border-color:#fff}',
       '.hx-back{position:fixed;inset:0;z-index:100060;background:rgba(5,8,14,.62);display:flex;align-items:flex-end;justify-content:center;animation:hxF .2s ease;overscroll-behavior:contain}',
       '@media(min-width:640px){.hx-back{align-items:center}}',
       '@keyframes hxF{from{opacity:0}}@keyframes hxU{from{transform:translateY(30px);opacity:0}}@keyframes hxZ{from{transform:scale(.94);opacity:0}}',
@@ -333,6 +334,21 @@
     document.addEventListener('click', function (e) { if (pn && !e.target.closest('.hx-cp,#hxCe')) close(); }); document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && pn) close(); });
   }
   setInterval(function () { if (!document.hidden) chatTick(); }, 1500);
+
+  /* ---------- the Holiday button in the top bar (next to the bell) ---------- */
+  function topBtn() {
+    var bell = $('#notifBell'), b = $('#hxTop');
+    var on = hasClientApp() && window.__holApi && window.__holApi.active();
+    if (!on) { if (b) b.remove(); return; }
+    if (!bell || !bell.parentNode) return; css();
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.id = 'hxTop'; b.className = 'hx hx-top'; b.setAttribute('aria-label', 'Holiday menu'); b.title = 'Holiday';
+      b.innerHTML = '<span aria-hidden="true">🎁</span><em></em>'; b.onclick = function () { openHub(); }; bell.parentNode.insertBefore(b, bell);
+    }
+    var real = new Date().getMonth() === 11 || (new Date().getMonth() === 0 && new Date().getDate() <= 6), dot = real && advOpened().indexOf(advToday()) < 0;
+    b.classList.toggle('new', !!dot); b.title = dot ? 'Holiday: today’s door is waiting' : 'Holiday';
+  }
+  setInterval(topBtn, 1200);
 
   window.__holFx = { open: function () { if (hasClientApp()) { openHub(); return true; } return false; }, skin: skin, fireworks: fireworks, year: openYear, advent: openAdvent, card: openCard, ny: scheduleNY };
   setInterval(function () { if (window.__holApi) { skin(); chatCss(); } }, 2500);
