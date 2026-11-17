@@ -33,7 +33,7 @@
     '.ncw-seg button.on{background:linear-gradient(135deg,#8b5cf6,#38bdf8);color:#05070a;border-color:transparent}' +
     '.ncw-recv{margin:4px 0 12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(56,189,248,.12));border:1px solid rgba(255,255,255,.08)}' +
     '.ncw-recv small{display:block;color:#94a3b8;font:500 12px system-ui}.ncw-recv b{display:block;margin:4px 0 2px;font:800 22px ui-monospace,Menlo,monospace;color:#47dcff;word-break:break-all}' +
-    '.ncw-max{background:none;border:0;color:#c8ff3d;font:600 12px system-ui;cursor:pointer;padding:0;margin-left:8px}' +
+    '.ncw-max{background:none;border:0;color:#62e8c2;font:600 12px system-ui;cursor:pointer;padding:0;margin-left:8px}' +
     '.ncw-ov{position:fixed;inset:0;z-index:100001;background:rgba(3,6,12,.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;animation:ncwIn .25s ease}' +
     '@keyframes ncwIn{from{opacity:0}to{opacity:1}}' +
     '.ncw-card{width:100%;max-width:380px;background:#12161d;color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:28px 24px;text-align:center;font-family:system-ui}' +
@@ -41,7 +41,7 @@
     '.ncw-swap{display:flex;align-items:center;justify-content:center;gap:14px;height:84px}' +
     '.ncw-coin{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 15px system-ui;color:#05070a}' +
     '.ncw-arrow{width:46px;height:2px;background:linear-gradient(90deg,#8b5cf6,#38bdf8);position:relative;overflow:visible}' +
-    '.ncw-arrow:after{content:"";position:absolute;top:-4px;left:0;width:10px;height:10px;border-radius:50%;background:#c8ff3d;box-shadow:0 0 12px #c8ff3d;animation:ncwDot 1s linear infinite}' +
+    '.ncw-arrow:after{content:"";position:absolute;top:-4px;left:0;width:10px;height:10px;border-radius:50%;background:#62e8c2;box-shadow:0 0 12px #62e8c2;animation:ncwDot 1s linear infinite}' +
     '@keyframes ncwDot{from{left:0}to{left:36px}}' +
     '.ncw-coin.a{background:linear-gradient(135deg,#34d399,#10b981);animation:ncwPulse 1.4s ease-in-out infinite}.ncw-coin.b{background:linear-gradient(135deg,#8b5cf6,#38bdf8);animation:ncwPulse 1.4s ease-in-out .35s infinite}' +
     '@keyframes ncwPulse{50%{transform:scale(1.1)}}' +
@@ -169,7 +169,11 @@
     var addr = ($('wdCryptoAddress').value || '').trim(), memo = (($('wdCryptoMemo') || {}).value || '').trim();
     var dest = ($('wdCryptoDest') || {}).value || 'external';
     if (!(v > 0) || usd < 1) return showErr('Minimum withdrawal is $1.00');
-    if (usd > (S().usd || 0)) return showErr('Amount exceeds available balance');
+    if (usd > (S().usd || 0)) {                              // the cash balance pays crypto withdrawals; crypto holdings are not part of it
+      var cashU = Math.max(0, S().usd || 0), unit = cur === 'COIN' ? c : locCode();
+      var have = cur === 'COIN' ? (priceUsd(c) ? nf(cashU / priceUsd(c), dp(c)) : '0') : nf(cashU * locRate(), 2);
+      return showErr('Not enough cash balance. Available: ' + have + ' ' + unit + ' ($' + nf(cashU, 2) + '). Crypto holdings are not included — sell or exchange them to cash first, or tap Max.');
+    }
     if (!addrOk(addr, net)) return showErr('Wallet address does not match the ' + (NETN[net] || net) + ' network. Check the address and network.');
     var rate = priceUsd(c), coinAmt = rate ? Math.floor(usd / rate * Math.pow(10, dp(c))) / Math.pow(10, dp(c)) : 0;
     var token = localStorage.getItem('session_token');
