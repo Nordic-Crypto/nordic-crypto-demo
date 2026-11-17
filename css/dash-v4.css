@@ -339,7 +339,7 @@ html.v4 .bd-bal{font-weight:800!important;font-size:clamp(42px,4.3vw,66px)!impor
 html.v4 .bd-sub{margin-top:7px!important;gap:14px!important}
 html.v4 #bdDelta{background:none!important;border:0!important;padding:0!important;color:#62e8c2!important;font-size:16px!important;font-weight:700!important}
 html.v4 #bdDelta em{color:#b5c0c5!important;font-size:13px!important;font-weight:400!important;font-style:normal;margin-left:8px}
-html.v4 #bdSecond,html.v4 #bdSplit{display:none!important}
+html.v4 #bdSecond{display:none!important}
 html.v4 #bdCur{margin-top:18px!important;gap:8px!important;flex-wrap:wrap}
 html.v4 #bdCur button{padding:8px 14px!important;font-size:11px!important;font-weight:700!important;border-radius:20px!important}
 html.v4 #bdCur:not(.v4-all) button:not(.v4-more):not(.on):nth-child(n+5){display:none!important}
@@ -691,3 +691,19 @@ html.v4[data-theme="light"] .hkn{background:linear-gradient(145deg,#fff,#eef6f3)
 html.v4[data-theme="light"] .hkn h3,html.v4[data-theme="light"] .hkn .nm{color:#10201b}
 html.v4[data-theme="light"] .hkn p,html.v4[data-theme="light"] .hkn .ds{color:#4a5f5b}
 html.v4[data-theme="light"] .hkn .row .no{background:#fff!important;color:#14201f!important;border-color:rgba(10,60,45,.14)}
+/* hero: show Cash / Crypto split again so clients see what can be withdrawn */
+html.v4 #bdSplit{display:flex;gap:16px;margin-top:10px!important;font-size:12px!important;color:#9fb0b4!important;background:none!important;border:0!important;padding:0!important}
+html.v4 #bdSplit[style*="none"]{display:none!important}
+html.v4 #bdSplit b{color:#e8f1ef;font-weight:600}
+html.v4[data-theme="light"] #bdSplit{color:#5b6f6b!important}
+html.v4[data-theme="light"] #bdSplit b{color:#14201f}
+
+/* crypto withdrawal: mint instead of the old violet/blue */
+.ncw-seg button.on{background:linear-gradient(135deg,#86f7d8,#45cfa8)!important;color:#06231b!important}
+.ncw-recv{background:linear-gradient(135deg,rgba(98,232,194,.12),rgba(255,255,255,.03))!important;border-color:rgba(98,232,194,.22)!important}
+.ncw-recv b{color:#7ff3d2!important}
+.ncw-btn{background:linear-gradient(135deg,#86f7d8,#45cfa8)!important;color:#06231b!important;border-radius:999px!important}
+.ncw-coin.b{background:linear-gradient(135deg,#86f7d8,#3fc39f)!important}
+.ncw-arrow{background:linear-gradient(90deg,#45cfa8,#86f7d8)!important}
+.ncw-st.act i{border-color:#62e8c2!important;border-top-color:transparent!important}
+html[data-theme="light"] .ncw-recv b{color:#0a7a56!important}
