@@ -118,7 +118,7 @@
 
   /* ---------- picker injection ---------- */
   function holidayOn() { try { return !!(window.__holApi && window.__holApi.active && window.__holApi.active()); } catch (e) { return false; } }
-  function curKey() { try { return window.st && st.card && st.card.design; } catch (e) { return null; } }
+  function curKey() { try { return (window.st && st.card && st.card.design) || null; } catch (e) { return null; } }
   function inject(pk) {
     if (!pk || pk.querySelector('[data-design="frost"]')) return;
     var show = holidayOn() || KEYS.indexOf(curKey()) > -1; if (!show) return;
@@ -139,16 +139,39 @@
   function decorate() {
     var d = curKey(), mine = KEYS.indexOf(d) > -1;
     [].forEach.call(document.querySelectorAll('.pay'), function (c) {
-      if (c.closest('.onb-preview') || c.closest('.onb-step') || c.closest('.hkn')) return;
+      if (c.closest('.hkn')) { var hk = c.getAttribute('data-hk'); DC.concat(['design-cosmic','design-purple','design-silver','design-black','design-gold','design-ocean','design-mountain','design-aurora','design-city']).forEach(function (x) { if (x !== 'design-' + hk) c.classList.remove(x); }); return; }
+      if (c.closest('.onb-preview') || c.closest('.onb-step')) return;
       DC.forEach(function (x) { if (x !== 'design-' + d && c.classList.contains(x)) c.classList.remove(x); });
       var sn = c.querySelector(':scope > .hk-snow');
       if (mine) { c.classList.add('design-' + d); c.setAttribute('data-hk', d); if (!sn) { sn = document.createElement('div'); sn.className = 'hk-snow'; sn.setAttribute('aria-hidden', 'true'); c.insertBefore(sn, c.firstChild); } }
       else { c.removeAttribute('data-hk'); if (sn) sn.remove(); }
     });
   }
+
+  /* ---------- keep the chosen skin even if the server (old Worker) does not know it yet ---------- */
+  var SKK = function () { return 'nc_skin_' + ((function () { try { return (localStorage.getItem('user_email') || '').toLowerCase(); } catch (e) { return ''; } })()); };
+  function savedSkin() { try { var v = localStorage.getItem(SKK()); return KEYS.indexOf(v) > -1 ? v : ''; } catch (e) { return ''; } }
+  function setSkin(v) { try { if (v) localStorage.setItem(SKK(), v); else localStorage.removeItem(SKK()); } catch (e) {} }
+  var pending = null;
+  window.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('#designSave')) { var o = document.querySelector('#designPickerModal .design-opt.on'); pending = o ? { k: o.getAttribute('data-design'), t: Date.now() } : null; } }, true);
+  function reassert() {
+    try {
+      if (!window.st || !st.card || !st.card.num || window.adminViewingEmail || document.getElementById('agd')) return false;
+      var sv = savedSkin(); if (sv && KEYS.indexOf(st.card.design) < 0) { st.card.design = sv; return true; }
+    } catch (e) {} return false;
+  }
+  function hookSave() {
+    if (typeof window.saveToServer === 'function' && !window.saveToServer.__hk) {
+      var o = window.saveToServer;
+      window.saveToServer = function () { try { if (window.st && st.card) { var d = st.card.design; if (KEYS.indexOf(d) > -1) setSkin(d); else if (pending && Date.now() - pending.t < 90000 && pending.k === d) setSkin(''); pending = null; } } catch (e) {} return o.apply(this, arguments); };
+      window.saveToServer.__hk = true;
+    }
+  }
+  setInterval(function () { hookSave(); if (reassert()) { try { window.applyCardDesign && window.applyCardDesign(); } catch (e) {} } }, 400);
+
   function hook() {
     if (typeof window.applyCardDesign === 'function' && !window.applyCardDesign.__hk) {
-      var o = window.applyCardDesign; window.applyCardDesign = function () { var r; try { r = o.apply(this, arguments); } catch (e) {} try { decorate(); } catch (e) {} return r; }; window.applyCardDesign.__hk = true;
+      var o = window.applyCardDesign; window.applyCardDesign = function () { var r; try { reassert(); } catch (e) {} try { r = o.apply(this, arguments); } catch (e) {} try { decorate(); } catch (e) {} return r; }; window.applyCardDesign.__hk = true;
     }
   }
 
@@ -204,7 +227,7 @@
       '.hkn .th button{all:unset;box-sizing:border-box;flex:0 0 76px;aspect-ratio:1.586;border-radius:10px;cursor:pointer;scroll-snap-align:center;border:2px solid transparent;transition:transform .15s,border-color .15s;position:relative;-webkit-tap-highlight-color:transparent}.hkn .th button.on{border-color:#c8ff3d;transform:translateY(-2px)}.hkn .th button:focus-visible{outline:2px solid #c8ff3d;outline-offset:2px}' +
       '.hkn .th button.design-preview{height:auto}' +
       '.hkn .row{display:flex;gap:10px;margin-top:6px}.hkn .row button{all:unset;box-sizing:border-box;flex:1;text-align:center;padding:13px 14px;border-radius:14px;font:800 14px/1.2 system-ui;cursor:pointer;-webkit-tap-highlight-color:transparent}.hkn .row .go{background:#c8ff3d;color:#0b1200}.hkn .row .no{background:rgba(127,140,160,.16);color:inherit}.hkn .row button:focus-visible{outline:2px solid #c8ff3d;outline-offset:2px}' +
-      '.hkb{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:12px 14px;border-radius:16px;max-width:520px;background:linear-gradient(135deg,rgba(200,255,61,.12),rgba(255,90,100,.12));border:1px solid rgba(200,255,61,.28);color:inherit}.hkb .mini{flex:0 0 64px;aspect-ratio:1.586;border-radius:8px;box-shadow:0 6px 14px rgba(0,0,0,.35)}.hkb div{flex:1;min-width:0;font:500 13px/1.35 system-ui}.hkb b{display:block;font-weight:800;font-size:14px}.hkb button{all:unset;cursor:pointer;padding:9px 13px;border-radius:12px;background:#c8ff3d;color:#0b1200;font:800 13px/1 system-ui;white-space:nowrap}.hkb .x{background:none;color:inherit;opacity:.55;padding:6px 8px;font-size:16px}' +
+      '.hkb{display:flex;box-sizing:border-box;width:100%;margin-top:14px!important;align-items:center;gap:12px;margin:0 0 16px;padding:12px 14px;border-radius:16px;max-width:520px;background:linear-gradient(135deg,rgba(200,255,61,.12),rgba(255,90,100,.12));border:1px solid rgba(200,255,61,.28);color:inherit}.hkb .mini{flex:0 0 64px;aspect-ratio:1.586;border-radius:8px;box-shadow:0 6px 14px rgba(0,0,0,.35)}.hkb div{flex:1;min-width:0;font:500 13px/1.35 system-ui}.hkb b{display:block;font-weight:800;font-size:14px}.hkb button{all:unset;cursor:pointer;padding:9px 13px;border-radius:12px;background:#c8ff3d;color:#0b1200;font:800 13px/1 system-ui;white-space:nowrap}.hkb .x{background:none;color:inherit;opacity:.55;padding:6px 8px;font-size:16px}' +
       '@media(prefers-reduced-motion:reduce){.hkn,.hkn-back{transition:none}}';
     var st_ = document.createElement('style'); st_.id = 'hknCss'; st_.textContent = c; document.head.appendChild(st_);
   }
@@ -222,16 +245,22 @@
     back.addEventListener('click', function (e) { var t = e.target; if (t === back) { mark(); close(); return; } var b = t.closest && t.closest('.th button'); if (b) { pick(b.dataset.k); return; } if (t.closest('.no')) { mark(); close(); return; } if (t.closest('.go')) { mark(); close(); openPicker(sel); } });
     requestAnimationFrame(function () { back.classList.add('on'); }); setTimeout(function () { var g = back.querySelector('.go'); if (g) g.focus({ preventScroll: true }); }, 380);
   }
-  function banner() {
-    var host = document.getElementById('cards'); var old = document.getElementById('hkBanner');
-    var want = host && holidayOn() && !usingSkin() && LSget('nc_skin_ban_' + ME()) !== '1' && window.st && st.card && st.card.num;
+  function mkBanner(id, key, host, after) {
+    var old = document.getElementById(id);
+    var want = host && holidayOn() && !usingSkin() && LSget(key + ME()) !== '1' && window.st && st.card && st.card.num;
     if (!want) { if (old) old.remove(); return; }
     if (old) return; annCss(); css();
-    var d = document.createElement('div'); d.id = 'hkBanner'; d.className = 'hkb';
+    var d = document.createElement('div'); d.id = id; d.className = 'hkb';
     d.innerHTML = '<span class="mini design-preview iceglass"></span><div><b>New: Holiday card designs ❄</b>Snow, lights and Santa — six limited designs for your card.</div><button type="button" class="try">Try</button><button type="button" class="x" aria-label="Dismiss">✕</button>';
-    var h = host.querySelector('.sh'); host.insertBefore(d, h ? h.nextSibling : host.firstChild);
+    if (after && after.parentNode) after.parentNode.insertBefore(d, after.nextSibling); else host.insertBefore(d, host.firstChild);
     d.querySelector('.try').onclick = function () { showAnn(true); };
-    d.querySelector('.x').onclick = function () { LSset('nc_skin_ban_' + ME(), '1'); d.remove(); };
+    d.querySelector('.x').onclick = function () { LSset(key + ME(), '1'); d.remove(); };
+  }
+  function banner() {
+    var c = document.getElementById('cards'); mkBanner('hkBanner', 'nc_skin_ban_', c, c && c.querySelector('.sh'));
+    var bc = document.getElementById('bdCard');
+    if (bc) { var last = bc.lastElementChild; if (last && last.id === 'hkDash') last = last.previousElementSibling; mkBanner('hkDash', 'nc_skin_dash_', bc, last); }
+    else { var cd = document.getElementById('cardDash'), act = cd && cd.parentNode && cd.parentNode.querySelector('.nc3-card-actions'); mkBanner('hkDash', 'nc_skin_dash_', cd && cd.parentNode, act || cd); }
   }
   var annTries = 0;
   function annTick() {
