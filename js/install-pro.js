@@ -26,9 +26,9 @@
 
   var css = '#ncInst{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:99990;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:#12161f;color:#eef4ff;border:1px solid rgba(255,255,255,.12);box-shadow:0 12px 40px rgba(0,0,0,.5);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto}' +
     '#ncInst img{width:44px;height:44px;border-radius:11px;flex:none}#ncInst .tx{flex:1;min-width:0}#ncInst b{display:block;font-size:14px}#ncInst small{display:block;opacity:.65;font-size:12px;margin-top:2px}' +
-    '#ncInst button{border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;background:#c6ff3d;color:#07080c;white-space:nowrap}#ncInst .x{background:transparent;color:#9aa4b5;padding:6px 8px;font-size:18px;font-weight:400}' +
+    '#ncInst button{border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;background:#5fe3bf;color:#07080c;white-space:nowrap}#ncInst .x{background:transparent;color:#9aa4b5;padding:6px 8px;font-size:18px;font-weight:400}' +
     '#ncInstHow{position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}#ncInstHow .bx{width:100%;max-width:520px;background:#12161f;color:#eef4ff;border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}' +
-    '#ncInstHow h3{margin:0 0 12px;font-size:17px}#ncInstHow ol{margin:0 0 16px;padding-left:22px}#ncInstHow li{margin:6px 0}#ncInstHow button{width:100%;border:0;border-radius:12px;padding:13px;font-weight:700;background:#c6ff3d;color:#07080c;font-size:15px}';
+    '#ncInstHow h3{margin:0 0 12px;font-size:17px}#ncInstHow ol{margin:0 0 16px;padding-left:22px}#ncInstHow li{margin:6px 0}#ncInstHow button{width:100%;border:0;border-radius:12px;padding:13px;font-weight:700;background:#5fe3bf;color:#07080c;font-size:15px}';
   function addCss() { if (document.getElementById('ncInstCss')) return; var s = document.createElement('style'); s.id = 'ncInstCss'; s.textContent = css; document.head.appendChild(s); }
 
   function hide() { var e = document.getElementById('ncInst'); if (e) e.remove(); }
