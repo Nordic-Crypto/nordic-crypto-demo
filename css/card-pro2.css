@@ -10,7 +10,7 @@ html body #cardFull{max-width:420px!important}
 html body .pay::after{content:"";position:absolute;right:-18cqw;top:-26cqw;width:70cqw;height:70cqw;border-radius:50%;border:1.2cqw solid rgba(255,255,255,.07);box-shadow:inset 0 0 0 7cqw rgba(255,255,255,.025);pointer-events:none;z-index:0}
 /* top row */
 html body .pay .pb{display:flex;align-items:center;gap:2.2cqw;font-size:max(11px,3.5cqw);letter-spacing:.16em;font-weight:800}
-html body .pay .pb::before{content:"N";display:inline-grid;place-items:center;width:7cqw;height:7cqw;border-radius:2cqw;background:#c6ff3d;color:#0a0b08;font:900 4.2cqw/1 system-ui,sans-serif;letter-spacing:0}
+html body .pay .pb::before{content:"N";display:inline-grid;place-items:center;width:7cqw;height:7cqw;border-radius:2cqw;background:#5fe3bf;color:#0a0b08;font:900 4.2cqw/1 system-ui,sans-serif;letter-spacing:0}
 html body .pay .pt{font-size:max(9px,2.5cqw);letter-spacing:.14em;opacity:.8;white-space:nowrap}
 /* chip */
 html body .pay .chip-row{margin-block:0;gap:3.6cqw;align-items:center}
