@@ -45,8 +45,9 @@
   function me() { return (ls('user_email') || '').toLowerCase(); }
   function stNow() { try { return (typeof st !== 'undefined' && st) || null; } catch (e) { return null; } }
   function ready() {
-    if (shown || ls('user_role') === 'admin' || !tok() || !me() || ls('nc_welcome_' + me()) === '1') return false;
+    if (shown || ls('user_role') === 'admin' || !tok() || !me() || ls('nc_welcome_' + me()) === '1' || seenCk()) return false;
     var s = stNow(); if (!s || !s.user || !s.user.verified) return false;
+    if ((s.txs && s.txs.length > 2) || Number(s.usd) > 0 || Number(s.btc) > 0 || Number(s.eth) > 0) { mark(); return false; }   // an account that is already in use never needs the intro
     var m = $('mainApp'); if (!m || getComputedStyle(m).display === 'none') return false;
     var bad = ['onboard', 'pendingScreen', 'verifyScreen', 'rejectedScreen'].some(function (id) { var e = $(id); return e && (e.classList.contains('on') || (e.style.display && e.style.display !== 'none' && getComputedStyle(e).display !== 'none')); });
     return !bad;
@@ -93,7 +94,10 @@
     var t0 = performance.now();
     (function f(n) { var k = n - t0; x.clearRect(0, 0, c.width, c.height); P.forEach(function (p) { p.vy += .38; p.x += p.vx; p.y += p.vy; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.globalAlpha = Math.max(0, 1 - k / 2200); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 3, p.s, p.s * .6); x.restore(); }); if (k < 2300) requestAnimationFrame(f); else c.remove(); })(t0);
   }
-  function finish() { ls('nc_welcome_' + me(), '1'); var w = document.querySelector('.nw'); if (w) { w.style.transition = 'opacity .3s'; w.style.opacity = '0'; setTimeout(function () { w.remove(); }, 300); } confetti(); }
+  function ck() { return 'ncw_' + me().replace(/[^a-z0-9]/g, '').slice(0, 40); }
+  function seenCk() { try { return document.cookie.indexOf(ck() + '=1') > -1; } catch (e) { return false; } }
+  function mark() { ls('nc_welcome_' + me(), '1'); try { document.cookie = ck() + '=1; max-age=31536000; path=/; SameSite=Lax'; } catch (e) { } }
+  function finish() { mark(); var w = document.querySelector('.nw'); if (w) { w.style.transition = 'opacity .3s'; w.style.opacity = '0'; setTimeout(function () { w.remove(); }, 300); } confetti(); }
   function first() { var n = (ls('user_name') || '').trim().split(/\s+/)[0]; return n || ''; }
   function render() {
     var total = 2 + TOUR[type].length, h = '<div class="nw-dots">';
