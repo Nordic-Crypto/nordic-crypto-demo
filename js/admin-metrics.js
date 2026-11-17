@@ -29,16 +29,16 @@
   function delta(a, b) { if (!b) return a ? '<span style="color:#34d399">new</span>' : ''; var p = Math.round((a - b) / b * 100); return '<span style="color:' + (p >= 0 ? '#34d399' : '#ff8a8a') + '">' + (p >= 0 ? '▲ ' : '▼ ') + Math.abs(p) + '% vs prev. 7d</span>'; }
   var CSS = '' +
     '.sx{color:#e8ecf4;font-family:inherit}.sx *{box-sizing:border-box}' +
-    '.bk-kind{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}.bk-kind.auto{background:rgba(52,211,153,.15);color:#34d399}.bk-kind.manual{background:rgba(200,255,77,.15);color:#c8ff4d}.bk-kind.pre{background:rgba(255,193,7,.15);color:#ffc107}.bk-prog{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0}.bk-prog i{display:block;height:100%;width:0;background:#c8ff4d;transition:width .2s}' +
+    '.bk-kind{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}.bk-kind.auto{background:rgba(52,211,153,.15);color:#34d399}.bk-kind.manual{background:rgba(98,232,194,.15);color:#62e8c2}.bk-kind.pre{background:rgba(255,193,7,.15);color:#ffc107}.bk-prog{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0}.bk-prog i{display:block;height:100%;width:0;background:#62e8c2;transition:width .2s}' +
     '.sx-top{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}' +
     '.sx-in{flex:1;min-width:200px;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:14px;outline:none}' +
-    '.sx-in:focus{border-color:#c8ff4d}' +
+    '.sx-in:focus{border-color:#62e8c2}' +
     '.sx-btn{padding:10px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8ecf4;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}' +
-    '.sx-btn:hover{background:rgba(255,255,255,.1)}.sx-btn.p{background:#c8ff4d;color:#0b0f08;border-color:#c8ff4d}.sx-btn.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}.sx-btn.s{padding:6px 10px;font-size:12px}' +
-    '.sx-btn.on{border-color:#c8ff4d;color:#c8ff4d}' +
+    '.sx-btn:hover{background:rgba(255,255,255,.1)}.sx-btn.p{background:#62e8c2;color:#0b0f08;border-color:#62e8c2}.sx-btn.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}.sx-btn.s{padding:6px 10px;font-size:12px}' +
+    '.sx-btn.on{border-color:#62e8c2;color:#62e8c2}' +
     '.sx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}' +
     '.sx-st{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}.sx-st small{display:block;color:#8b95a5;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.sx-st b{font-size:24px}' +
-    '.sx-st.w b{color:#ff8a8a}.sx-st.g b{color:#c8ff4d}' +
+    '.sx-st.w b{color:#ff8a8a}.sx-st.g b{color:#62e8c2}' +
     '.sx-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:16px}' +
     '.sx-card h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px;justify-content:space-between}' +
     '.sx-tb{width:100%;border-collapse:collapse;font-size:13px}.sx-tb th{text-align:left;color:#8b95a5;font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.08)}' +
@@ -46,14 +46,14 @@
     '.sx-w{overflow-x:auto}.sx-ip{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}' +
     '.sx-tag{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}.sx-tag.ok{background:rgba(52,211,153,.15);color:#34d399}.sx-tag.no{background:rgba(255,82,82,.15);color:#ff8a8a}.sx-tag.am{background:rgba(246,195,68,.15);color:#f6c344}' +
     '.sx-e{color:#8b95a5;padding:14px;text-align:center}.sx-form{display:grid;grid-template-columns:1.2fr .7fr 1.6fr auto;gap:8px}' +
-    '.sx-form .sx-in{min-width:0}.sx-lnk{color:#c8ff4d;cursor:pointer;background:none;border:0;padding:0;font:inherit}' +
+    '.sx-form .sx-in{min-width:0}.sx-lnk{color:#62e8c2;cursor:pointer;background:none;border:0;padding:0;font:inherit}' +
     '.sx-m{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}.sx-md{background:#0f131c;border:1px solid rgba(255,255,255,.12);border-radius:18px;max-width:760px;width:100%;max-height:86vh;overflow:auto;padding:18px}' +
     '@media(max-width:700px){.sx-form{grid-template-columns:1fr 1fr}.sx-form>*:nth-child(3){grid-column:1/-1}}';
 
 
 
-  var X = '.mx-bars{display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:8px}.mx-bars i{flex:1;background:linear-gradient(#c8ff4d,#6fa11c);border-radius:3px 3px 0 0;min-height:2px;position:relative}.mx-bars i:hover{filter:brightness(1.25)}' +
-    '.mx-fn{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;margin:9px 0;font-size:13px}.mx-fn div.b{height:22px;border-radius:7px;background:rgba(255,255,255,.06);overflow:hidden}.mx-fn div.b i{display:block;height:100%;background:linear-gradient(90deg,#c8ff4d,#34d399)}' +
+  var X = '.mx-bars{display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:8px}.mx-bars i{flex:1;background:linear-gradient(#62e8c2,#6fa11c);border-radius:3px 3px 0 0;min-height:2px;position:relative}.mx-bars i:hover{filter:brightness(1.25)}' +
+    '.mx-fn{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;margin:9px 0;font-size:13px}.mx-fn div.b{height:22px;border-radius:7px;background:rgba(255,255,255,.06);overflow:hidden}.mx-fn div.b i{display:block;height:100%;background:linear-gradient(90deg,#62e8c2,#34d399)}' +
     '.mx-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.mx-2{grid-template-columns:1fr}.mx-fn{grid-template-columns:110px 1fr 70px}}';
   function inject() { if ($('#nc-mx-css')) return; var st = document.createElement('style'); st.id = 'nc-mx-css'; st.textContent = CSS + X; document.head.appendChild(st); }
   function mount() {
