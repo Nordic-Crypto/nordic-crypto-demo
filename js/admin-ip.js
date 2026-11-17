@@ -14,13 +14,13 @@
       var old = document.getElementById('ncIpBox'); if (old) old.remove();
       var o = document.createElement('div'); o.id = 'ncIpBox';
       o.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit';
-      o.innerHTML = '<div style="width:100%;max-width:390px;background:#12140d;border:1px solid rgba(190,255,60,.28);border-radius:22px;padding:26px 24px;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
-        '<div style="width:46px;height:46px;border-radius:14px;background:rgba(190,255,60,.12);color:#beff3c;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px">🛡️</div>' +
+      o.innerHTML = '<div style="width:100%;max-width:390px;background:#12140d;border:1px solid rgba(95,227,191,.28);border-radius:22px;padding:26px 24px;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
+        '<div style="width:46px;height:46px;border-radius:14px;background:rgba(95,227,191,.12);color:#5ae0bb;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px">🛡️</div>' +
         '<div style="font-size:21px;font-weight:800;margin-bottom:6px">New location</div>' +
         '<div id="ncIpMsg" style="font-size:14px;line-height:1.45;opacity:.8;margin-bottom:16px"></div>' +
         '<input id="ncIpIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" style="width:100%;box-sizing:border-box;text-align:center;font:700 30px ui-monospace,Menlo,monospace;letter-spacing:10px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:#0a0b08;color:#fff;outline:none">' +
         '<div style="display:flex;gap:10px;margin-top:16px"><button id="ncIpNo" type="button" style="flex:1;padding:13px;border-radius:13px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer">Cancel</button>' +
-        '<button id="ncIpOk" type="button" style="flex:1;padding:13px;border-radius:13px;border:0;background:#beff3c;color:#0a0b08;font-weight:800;cursor:pointer">Approve</button></div></div>';
+        '<button id="ncIpOk" type="button" style="flex:1;padding:13px;border-radius:13px;border:0;background:#5ae0bb;color:#0a0b08;font-weight:800;cursor:pointer">Approve</button></div></div>';
       document.body.appendChild(o);
       var m = document.getElementById('ncIpMsg'), inp = document.getElementById('ncIpIn');
       m.textContent = msg || 'Enter the 6-digit code we emailed you.';
