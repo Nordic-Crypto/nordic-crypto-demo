@@ -48,7 +48,8 @@
     });
     tp.sort(function (a, b) { return b.len - a.len; });
     cache = {};
-    loaded[l] = 2;
+    /* only a full dictionary marks the language as loaded; small phrase packs (rewards, dashboard…) must not block the main file */
+    if (Object.keys(map).length > 200) loaded[l] = 2;
     if (l === lang) { refreshAll(); try { window.dispatchEvent(new CustomEvent('nc-dict', { detail: l })); } catch (e) {} }
   }
 
@@ -172,7 +173,7 @@
     var items = Array.from(queue); queue.clear();
     items.forEach(function (n) { try { if (n.isConnected !== false) walk(n); } catch (e) {} });
   }
-  function enqueue(n) { queue.add(n); if (!scheduled) { scheduled = true; (window.requestAnimationFrame || setTimeout)(flush); } }
+  function enqueue(n) { queue.add(n); if (!scheduled) { scheduled = true; (window.Promise ? Promise.resolve().then(flush) : setTimeout(flush, 0)); } }
 
   var mo = new MutationObserver(function (list) {
     for (var i = 0; i < list.length; i++) {
@@ -239,12 +240,24 @@
     document.documentElement.lang = lang;
   }
 
+  var swT = 0;
   function setLang(l, silent) {
     if (CODES.indexOf(l) < 0) l = 'en';
     lang = l; cache = {};
     if (!silent) safeSet('nc_lang', l);
     if (l !== 'en' && !loaded[l]) loadLang(l);
-    refreshAll();
+    /* smooth switch: dim the page, swap the text once the dictionary is in, fade back (no half-translated flashes) */
+    var de = document.documentElement, ready = l === 'en' || loaded[l] === 2;
+    if (!silent && de.classList) {
+      clearTimeout(swT); de.classList.add('nc-lsw');
+      var reveal = function () { refreshAll(); clearTimeout(swT); swT = setTimeout(function () { de.classList.remove('nc-lsw'); }, 40); };
+      if (ready) setTimeout(reveal, 140);
+      else {
+        var onD = function (e) { if (e.detail === l) { window.removeEventListener('nc-dict', onD); reveal(); } };
+        window.addEventListener('nc-dict', onD);
+        swT = setTimeout(function () { window.removeEventListener('nc-dict', onD); reveal(); }, 2200);
+      }
+    } else refreshAll();
     try { window.dispatchEvent(new CustomEvent('nc-lang', { detail: l })); } catch (e) {}
     // страховка: догоняем всё, что отрисовалось позже (словарь, ленивые экраны)
     [350, 1400, 3500].forEach(function (ms) { setTimeout(function () { if (lang === l) refreshAll(); }, ms); });
@@ -264,7 +277,7 @@
   };
 
   var css = document.createElement('style');
-  css.textContent = '.nc-lang{position:relative;display:inline-block}' +
+  css.textContent = '.main,.side,#sideBar{transition:opacity .22s ease}html.nc-lsw .main,html.nc-lsw .side,html.nc-lsw #sideBar{opacity:.12;transition:opacity .12s ease}' + '.nc-lang{position:relative;display:inline-block}' +
     '.nc-lang-btn{display:flex;align-items:center;gap:7px;padding:7px 12px;background:rgba(255,255,255,.04);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:999px;color:var(--txt,#f8fafc);cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600}' +
     '.nc-lang-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:190px;background:linear-gradient(180deg,var(--pan2,#1a1f2e),#0f151e);border:1px solid var(--bd2,rgba(255,255,255,.14));border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.45);padding:6px;display:none;z-index:99999}' +
     '.nc-lang-menu.on{display:block}' +
