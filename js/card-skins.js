@@ -139,7 +139,7 @@
   function decorate() {
     var d = curKey(), mine = KEYS.indexOf(d) > -1;
     [].forEach.call(document.querySelectorAll('.pay'), function (c) {
-      if (c.closest('.onb-preview') || c.closest('.onb-step')) return;
+      if (c.closest('.onb-preview') || c.closest('.onb-step') || c.closest('.hkn')) return;
       DC.forEach(function (x) { if (x !== 'design-' + d && c.classList.contains(x)) c.classList.remove(x); });
       var sn = c.querySelector(':scope > .hk-snow');
       if (mine) { c.classList.add('design-' + d); c.setAttribute('data-hk', d); if (!sn) { sn = document.createElement('div'); sn.className = 'hk-snow'; sn.setAttribute('aria-hidden', 'true'); c.insertBefore(sn, c.firstChild); } }
@@ -163,4 +163,85 @@
   css(); tick(); setInterval(tick, 1500);
   document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#btnChangeDesign,.design-opt')) setTimeout(function () { tick(); }, 60); }, true);
   window.__cardSkins = { keys: KEYS, names: DESC, decorate: decorate };
+
+  /* ---------- onboarding (new clients choose a skin while creating the card) ---------- */
+  document.addEventListener('click', function (e) {
+    var o = e.target && e.target.closest && e.target.closest('#designPicker .design-opt'); if (!o) return;
+    var k = o.getAttribute('data-design'); if (KEYS.indexOf(k) < 0) return;
+    [].forEach.call(document.querySelectorAll('#designPicker .design-opt'), function (x) { x.classList.toggle('on', x === o); });
+    try { window.selectedDesign = k; selectedDesign = k; } catch (er) {}
+    [].forEach.call(document.querySelectorAll('.onb-preview .pay'), function (c) { DC.forEach(function (x) { c.classList.remove(x); }); c.classList.add('design-' + k); });
+  }, true);
+  document.addEventListener('click', function (e) {
+    var o = e.target && e.target.closest && e.target.closest('#designPicker .design-opt'); if (!o || KEYS.indexOf(o.getAttribute('data-design')) > -1) return;
+    [].forEach.call(document.querySelectorAll('.onb-preview .pay'), function (c) { DC.forEach(function (x) { c.classList.remove(x); }); });
+  });
+
+  /* ---------- "what's new" for existing clients: one-time sheet + banner on My Cards ---------- */
+  var ME = function () { try { return (localStorage.getItem('user_email') || '').toLowerCase(); } catch (e) { return ''; } };
+  var LSget = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, LSset = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} };
+  function isClient() { return !!(ME() && LSget('user_role') !== 'admin' && !document.getElementById('agd') && document.getElementById('mainApp') && document.getElementById('mainApp').getClientRects().length && window.st && st.card && st.card.num); }
+  function busy() { return !!(document.querySelector('.nw,.hx-back,.mask.on,#onboard.on,#designMask.on,.hkn-back')); }
+  function usingSkin() { return KEYS.indexOf(curKey()) > -1; }
+  function openPicker(k) {
+    var mi = document.querySelector('.mi[data-p="cards"]'); if (mi) mi.click();
+    setTimeout(function () {
+      var b = document.getElementById('btnChangeDesign'); if (b) b.click();
+      setTimeout(function () { tick(); var o = document.querySelector('#designPickerModal [data-design="' + k + '"]'); if (o) { o.click(); try { o.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} } }, 160);
+    }, 220);
+  }
+  function annCss() {
+    if (document.getElementById('hknCss')) return;
+    var c = '.hkn-back{position:fixed;inset:0;z-index:100250;display:flex;align-items:flex-end;justify-content:center;background:rgba(4,7,12,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .25s}.hkn-back.on{opacity:1}' +
+      '.hkn{width:min(520px,100%);max-height:94vh;max-height:94dvh;overflow:auto;overscroll-behavior:contain;border-radius:26px 26px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));background:#10151d;color:#edf2f9;font:500 14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;box-shadow:0 -20px 60px rgba(0,0,0,.5);transform:translateY(40px);transition:transform .35s cubic-bezier(.2,.9,.3,1.1)}.hkn-back.on .hkn{transform:none}' +
+      '@media(min-width:640px){.hkn-back{align-items:center}.hkn{border-radius:26px;padding-bottom:22px}}' +
+      'html[data-theme="light"] .hkn{background:#fff;color:#0f1722;box-shadow:0 30px 80px rgba(20,30,50,.3)}' +
+      '.hkn small{display:inline-block;padding:3px 9px;border-radius:99px;background:linear-gradient(135deg,#ff5a64,#c8141e);color:#fff;font:800 10px/1.4 system-ui;letter-spacing:.1em}' +
+      '.hkn h3{margin:10px 0 4px;font:800 22px/1.2 system-ui;letter-spacing:-.01em}.hkn p{margin:0;opacity:.7}' +
+      '.hkn .stage{margin:16px 0 10px;perspective:900px}.hkn .stage .pay{margin:0 auto;max-width:360px;height:auto;aspect-ratio:1.586;padding:5% 6%;cursor:default}.hkn .stage .pay:hover{transform:none}.hkn .stage .pay .pn{font-size:clamp(14px,4.6vw,19px);letter-spacing:.1em}.hkn .stage .chip-real{width:42px;height:32px}' +
+      '.hkn .nm{text-align:center;font:700 15px/1.3 system-ui;margin:2px 0 2px}.hkn .ds{text-align:center;opacity:.65;font-size:13px;margin-bottom:12px}' +
+      '.hkn .th{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 10px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.hkn .th::-webkit-scrollbar{display:none}' +
+      '.hkn .th button{all:unset;box-sizing:border-box;flex:0 0 76px;aspect-ratio:1.586;border-radius:10px;cursor:pointer;scroll-snap-align:center;border:2px solid transparent;transition:transform .15s,border-color .15s;position:relative;-webkit-tap-highlight-color:transparent}.hkn .th button.on{border-color:#c8ff3d;transform:translateY(-2px)}.hkn .th button:focus-visible{outline:2px solid #c8ff3d;outline-offset:2px}' +
+      '.hkn .th button.design-preview{height:auto}' +
+      '.hkn .row{display:flex;gap:10px;margin-top:6px}.hkn .row button{all:unset;box-sizing:border-box;flex:1;text-align:center;padding:13px 14px;border-radius:14px;font:800 14px/1.2 system-ui;cursor:pointer;-webkit-tap-highlight-color:transparent}.hkn .row .go{background:#c8ff3d;color:#0b1200}.hkn .row .no{background:rgba(127,140,160,.16);color:inherit}.hkn .row button:focus-visible{outline:2px solid #c8ff3d;outline-offset:2px}' +
+      '.hkb{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:12px 14px;border-radius:16px;max-width:520px;background:linear-gradient(135deg,rgba(200,255,61,.12),rgba(255,90,100,.12));border:1px solid rgba(200,255,61,.28);color:inherit}.hkb .mini{flex:0 0 64px;aspect-ratio:1.586;border-radius:8px;box-shadow:0 6px 14px rgba(0,0,0,.35)}.hkb div{flex:1;min-width:0;font:500 13px/1.35 system-ui}.hkb b{display:block;font-weight:800;font-size:14px}.hkb button{all:unset;cursor:pointer;padding:9px 13px;border-radius:12px;background:#c8ff3d;color:#0b1200;font:800 13px/1 system-ui;white-space:nowrap}.hkb .x{background:none;color:inherit;opacity:.55;padding:6px 8px;font-size:16px}' +
+      '@media(prefers-reduced-motion:reduce){.hkn,.hkn-back{transition:none}}';
+    var st_ = document.createElement('style'); st_.id = 'hknCss'; st_.textContent = c; document.head.appendChild(st_);
+  }
+  function stageCard(k) { return '<div class="pay pay-large design-' + k + '" data-hk="' + k + '"><div class="hk-snow" aria-hidden="true"></div><div class="pay-shine"></div><div class="ptop"><div class="pb">NORDIC CRYPTO</div><div class="pt">' + (((st.card.type || 'Virtual') + '').toUpperCase()) + '</div></div><div class="chip-row"><div class="chip-real"></div></div><div class="pn">' + (window.fmtCard ? fmtCard(st.card.num) : st.card.num) + '</div><div class="pf"><div><div class="pl">CARD HOLDER</div><div class="pv">' + String(st.card.name || st.card.holder || '').replace(/[<>&"]/g, '') + '</div></div><div style="text-align:right"><div class="pl">EXPIRES</div><div class="pv m">' + String(st.card.expiry || '').replace(/[<>&"]/g, '') + '</div></div></div></div>'; }
+  function showAnn(force) {
+    if (document.querySelector('.hkn-back')) return; annCss(); css();
+    var sel = KEYS[0], back = document.createElement('div'); back.className = 'hkn-back'; back.setAttribute('role', 'dialog'); back.setAttribute('aria-modal', 'true'); back.setAttribute('aria-label', 'New holiday card designs');
+    back.innerHTML = '<div class="hkn"><small>NEW · LIMITED EDITION</small><h3>Holiday card collection ❄</h3><p>Six winter designs for your card — falling snow, lights and a little magic. Free, change it any time.</p><div class="stage"></div><div class="nm"></div><div class="ds"></div><div class="th" role="listbox" aria-label="Designs">' + SK.map(function (s) { return '<button type="button" role="option" class="design-preview ' + s[0] + '" data-k="' + s[0] + '" aria-label="' + s[1] + '"></button>'; }).join('') + '</div><div class="row"><button type="button" class="no">Maybe later</button><button type="button" class="go">Use this design</button></div></div>';
+    document.body.appendChild(back); var prevOv = document.documentElement.style.overflow; document.documentElement.style.overflow = 'hidden';
+    function pick(k) { sel = k; back.querySelector('.stage').innerHTML = stageCard(k); var s0 = SK.filter(function (x) { return x[0] === k; })[0]; back.querySelector('.nm').textContent = s0[1]; back.querySelector('.ds').textContent = s0[2]; [].forEach.call(back.querySelectorAll('.th button'), function (b) { b.classList.toggle('on', b.dataset.k === k); b.setAttribute('aria-selected', b.dataset.k === k ? 'true' : 'false'); }); }
+    function close() { document.removeEventListener('keydown', key, true); back.classList.remove('on'); document.documentElement.style.overflow = prevOv; setTimeout(function () { back.remove(); }, 260); }
+    function key(e) { if (e.key === 'Escape') { e.stopPropagation(); mark(); close(); } }
+    function mark() { LSset('nc_skin_ann_' + ME(), '1'); }
+    pick(KEYS[0]); document.addEventListener('keydown', key, true);
+    back.addEventListener('click', function (e) { var t = e.target; if (t === back) { mark(); close(); return; } var b = t.closest && t.closest('.th button'); if (b) { pick(b.dataset.k); return; } if (t.closest('.no')) { mark(); close(); return; } if (t.closest('.go')) { mark(); close(); openPicker(sel); } });
+    requestAnimationFrame(function () { back.classList.add('on'); }); setTimeout(function () { var g = back.querySelector('.go'); if (g) g.focus({ preventScroll: true }); }, 380);
+  }
+  function banner() {
+    var host = document.getElementById('cards'); var old = document.getElementById('hkBanner');
+    var want = host && holidayOn() && !usingSkin() && LSget('nc_skin_ban_' + ME()) !== '1' && window.st && st.card && st.card.num;
+    if (!want) { if (old) old.remove(); return; }
+    if (old) return; annCss(); css();
+    var d = document.createElement('div'); d.id = 'hkBanner'; d.className = 'hkb';
+    d.innerHTML = '<span class="mini design-preview iceglass"></span><div><b>New: Holiday card designs ❄</b>Snow, lights and Santa — six limited designs for your card.</div><button type="button" class="try">Try</button><button type="button" class="x" aria-label="Dismiss">✕</button>';
+    var h = host.querySelector('.sh'); host.insertBefore(d, h ? h.nextSibling : host.firstChild);
+    d.querySelector('.try').onclick = function () { showAnn(true); };
+    d.querySelector('.x').onclick = function () { LSset('nc_skin_ban_' + ME(), '1'); d.remove(); };
+  }
+  var annTries = 0;
+  function annTick() {
+    try { banner(); } catch (e) {}
+    if (annTries > 40) return; annTries++;
+    if (LSget('nc_skin_ann_' + ME()) === '1') return;
+    if (!isClient() || !holidayOn() || usingSkin() || busy() || document.hidden) return;
+    LSset('nc_skin_ann_' + ME(), '1'); showAnn();
+  }
+  setTimeout(function () { annTick(); setInterval(annTick, 4000); }, 5000);
+  window.__cardSkins.show = showAnn;
+
 })();
