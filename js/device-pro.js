@@ -63,7 +63,7 @@
   T(function () {
     if (window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')) return;
     function hex(c) { c = c.trim(); var m = /^#([0-9a-f]{3,8})$/i.exec(c); if (m) { var h = m[1]; if (h.length < 6) h = h.replace(/./g, '$&$&'); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), h.length >= 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1]; } m = /^rgba?\(([^)]+)\)/.exec(c); if (m) { var p = m[1].split(/[ ,\/]+/).map(parseFloat); return [p[0], p[1], p[2], p[3] == null ? 1 : p[3]]; } if (/^transparent$/i.test(c)) return [0, 0, 0, 0]; if (/^white$/i.test(c)) return [255, 255, 255, 1]; if (/^black$/i.test(c)) return [0, 0, 0, 1]; return null; }
-    var acc = getComputedStyle(de).getPropertyValue('--nc-acc') || '#c8ff4d';
+    var acc = getComputedStyle(de).getPropertyValue('--nc-acc') || '#62e8c2';
     function res(c) { c = c.trim(); var v = /^var\((--[\w-]+)(?:,\s*([^)]+))?\)$/.exec(c); if (v) { c = (getComputedStyle(de).getPropertyValue(v[1]) || '').trim() || (/acc/.test(v[1]) ? acc : v[2] || '#fff'); } return hex(c) || hex(acc); }
     function conv(css) {
       return css.replace(/color-mix\(\s*in srgb\s*,\s*((?:var\([^)]*\)|#[0-9a-f]+|rgba?\([^)]*\)|[a-z]+))\s+(\d+)%\s*,\s*((?:var\([^)]*\)|#[0-9a-f]+|rgba?\([^)]*\)|[a-z]+))\s*\)/gi, function (all, a, pct, b) {
