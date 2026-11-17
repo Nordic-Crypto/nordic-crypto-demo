@@ -707,3 +707,7 @@ html.v4[data-theme="light"] #bdSplit b{color:#14201f}
 .ncw-arrow{background:linear-gradient(90deg,#45cfa8,#86f7d8)!important}
 .ncw-st.act i{border-color:#62e8c2!important;border-top-color:transparent!important}
 html[data-theme="light"] .ncw-recv b{color:#0a7a56!important}
+
+/* support chat button: mint like the rest (was blue/violet) */
+html #chatToggle{background:linear-gradient(135deg,#8ff5d8 0%,#5fe3bf 50%,#36bf99 100%)!important;color:#05211a!important;box-shadow:0 14px 34px -8px rgba(69,216,181,.55),inset 0 1px rgba(255,255,255,.5)!important}
+html #chatToggle svg{color:#05211a;stroke:#05211a}
