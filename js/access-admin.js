@@ -33,12 +33,12 @@
     s.textContent =
       '#acaBox h2{margin:0 0 4px;font-size:22px}#acaBox .sub{color:#8b95a5;font-size:13px;margin-bottom:16px}' +
       '#acaBox .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}' +
-      '#acaBox .chip{padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font-size:13px;cursor:pointer}#acaBox .chip.on{background:rgba(198,255,61,.14);border-color:#c6ff3d;color:#d6ff5c}' +
+      '#acaBox .chip{padding:7px 13px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font-size:13px;cursor:pointer}#acaBox .chip.on{background:rgba(95,227,191,.14);border-color:#5fe3bf;color:#8ff3d6}' +
       '#acaBox input.s{flex:1;min-width:160px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:inherit;font-size:14px}' +
       '#acaBox .rq{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);border-radius:16px;padding:16px;margin-bottom:12px}' +
       '#acaBox .rq.pending{border-color:rgba(255,196,60,.35)}' +
       '#acaBox .hd{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}#acaBox .hd .nm{font-weight:700;font-size:15px}#acaBox .hd .em{color:#8b95a5;font-size:12.5px;word-break:break-all}' +
-      '#acaBox .tg{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}#acaBox .tg.ex{background:rgba(124,196,255,.14);color:#7cc4ff}#acaBox .tg.bk{background:rgba(198,255,61,.14);color:#d6ff5c}' +
+      '#acaBox .tg{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}#acaBox .tg.ex{background:rgba(124,196,255,.14);color:#7cc4ff}#acaBox .tg.bk{background:rgba(95,227,191,.14);color:#8ff3d6}' +
       '#acaBox .tg.pending{background:rgba(255,196,60,.14);color:#ffc43c}#acaBox .tg.approved{background:rgba(34,197,94,.14);color:#4ade80}#acaBox .tg.rejected{background:rgba(239,68,68,.14);color:#f87171}' +
       '#acaBox .sc{margin-left:auto;text-align:center;min-width:58px}#acaBox .sc b{display:block;font-size:22px;line-height:1}#acaBox .sc span{font-size:10.5px;color:#8b95a5;text-transform:uppercase;letter-spacing:.05em}' +
       '#acaBox .meta{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;font-size:12.5px;color:#8b95a5}#acaBox .meta b{color:#e7edf5}' +
