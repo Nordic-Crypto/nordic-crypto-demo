@@ -85,17 +85,22 @@
   window.addEventListener('pointermove', function (e) { if (e.pointerType === 'touch' && !e.isPrimary) return; px = e.clientX; py = e.clientY; }, { passive: true });
   window.addEventListener('pointerleave', function () { px = py = -999; }); document.addEventListener('mouseleave', function () { px = py = -999; });
   function startSnow() {
-    if (cv || reduced() || !CFG.snow) return; cv = document.createElement('canvas'); cv.id = 'holSnow'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); cx = cv.getContext('2d');
+    if (cv || !CFG.snow) return; cv = document.createElement('canvas'); cv.id = 'holSnow'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); cx = cv.getContext('2d');
     resize(); lightTheme = document.documentElement.getAttribute('data-theme') === 'light'; buildSprites();
-    var n = W < 700 ? 30 : W < 1200 ? 46 : 64; seedFlakes(n); last = 0; slow = 0; frames = 0; acc = 0; raf = requestAnimationFrame(loop);
+    var n = W < 700 ? 30 : W < 1200 ? 46 : 64; seedFlakes(n); last = 0; slow = 0; frames = 0; acc = 0;
+    if (reduced()) { staticSnow = true; drawStatic(); return; }                              // system asks for less motion: a calm, still snowfall instead of nothing
+    staticSnow = false; raf = requestAnimationFrame(loop);
   }
+  var staticSnow = false, slowOff = false;
+  function drawStatic() { if (!cv) return; cx.clearRect(0, 0, W, H); for (var i = 0; i < flakes.length; i++) { var f = flakes[i], sp = sprites[f.s]; cx.drawImage(sp, f.x - sp._n / 2, f.y - sp._n / 2, sp._n, sp._n); } }
+  window.addEventListener('resize', function () { if (cv && staticSnow) { resize(); seedFlakes(flakes.length); drawStatic(); } }, { passive: true });
   function stopSnow() { if (raf) cancelAnimationFrame(raf); raf = 0; if (cv) { cv.remove(); cv = null; } }
   function loop(t) {
     raf = requestAnimationFrame(loop); if (document.hidden) { last = 0; return; }
     if (!last) { last = t; return; } var dt = t - last; if (dt < 30) return; last = t; if (dt > 250) dt = 250;
     if (t - themeAt > 1500) { themeAt = t; var lt = document.documentElement.getAttribute('data-theme') === 'light'; if (lt !== lightTheme) { lightTheme = lt; buildSprites(); } }
     frames++; acc += dt;                                                           // self-protection: if the device cannot keep ~20 fps, thin the flakes, then stop
-    if (frames === 40) { var avg = acc / frames; frames = 0; acc = 0; if (avg > 48) { slow++; if (slow >= 2) { stopSnow(); LS.set('nc_hol_auto_off', '1'); return; } flakes.length = Math.ceil(flakes.length / 2); } else if (slow) slow = 0; }
+    if (frames === 40) { var avg = acc / frames; frames = 0; acc = 0; if (avg > 70) { slow++; if (slow >= 3) { stopSnow(); slowOff = true; return; } flakes.length = Math.ceil(flakes.length / 2); } else if (slow) slow = 0; }
     var s = dt / 1000; cx.clearRect(0, 0, W, H);
     for (var i = 0; i < flakes.length; i++) {
       var f = flakes[i]; f.y += f.v * s; f.p += s * f.w; f.x += Math.sin(f.p) * 14 * s; if (px > -900) { var ddx = f.x - px, ddy = f.y - py, dd = ddx * ddx + ddy * ddy; if (dd < 9600) { var k = (1 - dd / 9600) * 140 * s, dl = Math.sqrt(dd) || 1; f.x += ddx / dl * k; f.y += ddy / dl * k; } } if (f.y > H + 8) { f.y = -8; f.x = Math.random() * W; } if (f.x < -8) f.x = W + 8; else if (f.x > W + 8) f.x = -8;
@@ -168,7 +173,7 @@
     if (!(active() && allowedHere())) { unland(); stopSnow(); var g = $('#holGar'); if (g) g.remove(); var c = $('#holChip'); if (c) c.remove(); var k = $('#holCount'); if (k) k.remove(); return; }
     css(); chip();
     if (userOff()) { unland(); stopSnow(); var g2 = $('#holGar'); if (g2) g2.remove(); countdown(); return; }
-    if (LS.get('nc_hol_auto_off') !== '1') startSnow(); startGarland(); if (isLanding()) { landing(); tree(); plan(); } else greet(); countdown();
+    if (!slowOff) startSnow(); startGarland(); if (isLanding()) { landing(); tree(); plan(); } else greet(); countdown();
   }
 
   /* ---------- owner card (Admin → System) ---------- */
@@ -191,14 +196,15 @@
       '<h3 style="margin-top:16px">💬 Out-of-hours auto-reply</h3><p>When a client writes during the quiet hours, one short automatic answer is sent (at most once every 8 hours per client). It is marked “Auto-reply” for agents and never counts as an answer.</p>' +
       '<div class="hol-row">' + opt('ar', 'Enable auto-reply') + '</div><div class="hol-row"><input type="text" id="holArT" maxlength="300" placeholder="e.g. Thanks for your message! We are offline right now and will reply first thing in the morning." value="' + q(cur.arText) + '"></div>' +
       '<div class="hol-row"><label>From ' + hrs('holArF', cur.arFrom === 0 && !cur.arText ? 20 : cur.arFrom) + '</label><label>to ' + hrs('holArTo', cur.arTo === 0 && !cur.arText ? 8 : cur.arTo) + '</label><label><select id="holTz">' + tzo + '</select></label></div>' +
-      '<button class="hol-save" type="button">Save</button>';
+      '<div class="hol-row" id="holStat" style="font-size:12px;opacity:.75"></div><button class="hol-save" type="button">Save</button>';
     sec.insertBefore(c, sec.firstChild);
+    (function st() { var e = c.querySelector('#holStat'); if (!e || !document.body.contains(c)) return; e.textContent = 'Status on this device: holiday script v7 ✓ · extras (menu, calendar, cards) ' + (window.__holFx && window.__holFx.open ? '✓' : '✗ not loaded: upload js/holiday-fx.js') + ' · snow ' + (cv ? (staticSnow ? 'still (reduced motion is on in your system)' : 'running') : (slowOff ? 'paused (slow device)' : 'off')) + ' · mode ' + (active() ? 'active' : 'inactive'); setTimeout(st, 2000); })();
     var segs = c.querySelectorAll('#holMode button'); function mark() { [].forEach.call(segs, function (b) { b.classList.toggle('on', b.getAttribute('data-m') === cur.mode); }); } mark();
     [].forEach.call(segs, function (b) { b.onclick = function () { cur.mode = b.getAttribute('data-m'); mark(); }; });
     c.querySelector('.hol-save').onclick = function () {
       [].forEach.call(c.querySelectorAll('input[data-k]'), function (i) { cur[i.getAttribute('data-k')] = i.checked; }); cur.greeting = c.querySelector('#holGreet').value; cur.teamMsg = c.querySelector('#holTeam').value; cur.arText = c.querySelector('#holArT').value; cur.arFrom = +c.querySelector('#holArF').value; cur.arTo = +c.querySelector('#holArTo').value; cur.tz = c.querySelector('#holTz').value;
       var b = c.querySelector('.hol-save'); if (cur.ar && !String(cur.arText).trim()) { b.textContent = 'Write the auto-reply text first'; setTimeout(function () { b.textContent = 'Save'; }, 2200); return; }
-      post('setHoliday', { config: cur }).then(function (r) { if (r && r.ok) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); LS.set('nc_hol_auto_off', ''); apply(); b.textContent = 'Saved ✓'; } else b.textContent = 'Could not save'; setTimeout(function () { b.textContent = 'Save'; }, 1800); });
+      post('setHoliday', { config: cur }).then(function (r) { if (r && r.ok) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); slowOff = false; apply(); b.textContent = 'Saved ✓'; } else b.textContent = 'Could not save'; setTimeout(function () { b.textContent = 'Save'; }, 1800); });
     };
   }
 
