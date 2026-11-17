@@ -193,15 +193,26 @@
 
   function done(method, amt, meta, rq) {
     var pn = $('dpPanel'), box = document.querySelector('#mask .box'); if (!pn || !box) return;
-    var col = isBank(method) ? '#47dcff' : '#ec4899', lbl = isBank(method) ? (method.indexOf('SEPA') > -1 ? 'SEPA transfer' : 'SWIFT transfer') : 'Card deposit';
+    var col = isBank(method) ? '#62e8c2' : '#ec4899', lbl = isBank(method) ? (method.indexOf('SEPA') > -1 ? 'SEPA transfer' : 'SWIFT transfer') : 'Card deposit';
     var rows = '<div><span>Method</span><b>' + lbl + '</b></div><div><span>Amount</span><b>$' + nf(amt) + '</b></div>' + (meta.last4 ? '<div><span>Card</span><b>' + esc(meta.brand) + ' •••• ' + meta.last4 + '</b></div>' : '') + (meta.ref ? '<div><span>Reference</span><b>' + esc(meta.ref) + '</b></div>' : '') + '<div><span>Status</span><b style="color:#fbbf24">Under review</b></div>';
     var keep = [].slice.call(box.children), ov = document.createElement('div'); ov.className = 'dpd-done';
     ov.innerHTML = '<svg class="ck" viewBox="0 0 84 84" fill="none"><circle cx="42" cy="42" r="40" stroke="' + col + '" stroke-width="4" transform="rotate(-90 42 42)"/><path d="M26 43l11 11 21-24" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Request received</h3><div style="color:#9db4cb;font-size:13px">' + (isBank(method) ? 'We will credit your balance once the transfer arrives.' : 'Our team will review your card deposit.') + '</div><div class="am">$' + nf(amt) + '</div><div class="rc">' + rows + '</div><button type="button" class="btn b1" style="width:100%;justify-content:center" id="dpClose">Done</button>';
+    var saved = keep.map(function (c) { return [c, c.style.display]; });           // restore exactly what was visible before (crypto address block stays hidden for bank/card)
+    ov.__restore = function () { saved.forEach(function (x) { x[0].style.display = x[1]; }); if (ov.parentNode) ov.remove(); };
     keep.forEach(function (c) { c.style.display = 'none'; }); box.appendChild(ov);
-    $('dpClose').onclick = function () { ov.remove(); keep.forEach(function (c) { c.style.display = ''; }); if (typeof closeModal === 'function') closeModal(); };
+    $('dpClose').onclick = function () { ov.__restore(); if (typeof closeModal === 'function') closeModal(); };
     if (typeof window.playChime === 'function') try { window.playChime(); } catch (e) {}
   }
-  document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('#mCancel')) { var o = document.querySelector('#mask .dpd-done'); if (o) { o.remove(); [].forEach.call(document.querySelectorAll('#mask .box > *'), function (c) { c.style.display = ''; }); } } }, true);
+  /* the success screen must never survive closing the window (X, backdrop, Esc) or reopening it */
+  function dpReset() { var o = document.querySelector('#mask .dpd-done'); if (!o) return; if (o.__restore) o.__restore(); else { o.remove(); [].forEach.call(document.querySelectorAll('#mask .box > *'), function (c) { c.style.display = ''; }); } }
+  window.__dpReset = dpReset;
+  (function wrap() {
+    if (typeof window.openModal === 'function' && !window.openModal.__dp) { var oo = window.openModal; window.openModal = function () { dpReset(); return oo.apply(this, arguments); }; window.openModal.__dp = 1; }
+    if (typeof window.closeModal === 'function' && !window.closeModal.__dp) { var oc = window.closeModal; window.closeModal = function () { var r = oc.apply(this, arguments); setTimeout(dpReset, 250); return r; }; window.closeModal.__dp = 1; }
+    setTimeout(wrap, 1500);
+  })();
+  setInterval(function () { var m = $('mask'); if (m && !m.classList.contains('on') && document.querySelector('#mask .dpd-done')) dpReset(); }, 500);
+  document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('#mCancel')) dpReset(); }, true);
 
   setInterval(mount, 350);
 })();
