@@ -26,13 +26,13 @@
     '.sx{color:#e8ecf4;font-family:inherit}.sx *{box-sizing:border-box}' +
     '.sx-top{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}' +
     '.sx-in{flex:1;min-width:200px;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-size:14px;outline:none}' +
-    '.sx-in:focus{border-color:#c8ff4d}' +
+    '.sx-in:focus{border-color:#62e8c2}' +
     '.sx-btn{padding:10px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8ecf4;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}' +
-    '.sx-btn:hover{background:rgba(255,255,255,.1)}.sx-btn.p{background:#c8ff4d;color:#0b0f08;border-color:#c8ff4d}.sx-btn.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}.sx-btn.s{padding:6px 10px;font-size:12px}' +
-    '.sx-btn.on{border-color:#c8ff4d;color:#c8ff4d}' +
+    '.sx-btn:hover{background:rgba(255,255,255,.1)}.sx-btn.p{background:#62e8c2;color:#0b0f08;border-color:#62e8c2}.sx-btn.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}.sx-btn.s{padding:6px 10px;font-size:12px}' +
+    '.sx-btn.on{border-color:#62e8c2;color:#62e8c2}' +
     '.sx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}' +
     '.sx-st{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}.sx-st small{display:block;color:#8b95a5;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.sx-st b{font-size:24px}' +
-    '.sx-st.w b{color:#ff8a8a}.sx-st.g b{color:#c8ff4d}' +
+    '.sx-st.w b{color:#ff8a8a}.sx-st.g b{color:#62e8c2}' +
     '.sx-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:16px}' +
     '.sx-card h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px;justify-content:space-between}' +
     '.sx-tb{width:100%;border-collapse:collapse;font-size:13px}.sx-tb th{text-align:left;color:#8b95a5;font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.08)}' +
@@ -40,7 +40,7 @@
     '.sx-w{overflow-x:auto}.sx-ip{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}' +
     '.sx-tag{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}.sx-tag.ok{background:rgba(52,211,153,.15);color:#34d399}.sx-tag.no{background:rgba(255,82,82,.15);color:#ff8a8a}.sx-tag.am{background:rgba(246,195,68,.15);color:#f6c344}' +
     '.sx-e{color:#8b95a5;padding:14px;text-align:center}.sx-form{display:grid;grid-template-columns:1.2fr .7fr 1.6fr auto;gap:8px}' +
-    '.sx-form .sx-in{min-width:0}.sx-lnk{color:#c8ff4d;cursor:pointer;background:none;border:0;padding:0;font:inherit}' +
+    '.sx-form .sx-in{min-width:0}.sx-lnk{color:#62e8c2;cursor:pointer;background:none;border:0;padding:0;font:inherit}' +
     '.sx-m{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}.sx-md{background:#0f131c;border:1px solid rgba(255,255,255,.12);border-radius:18px;max-width:760px;width:100%;max-height:86vh;overflow:auto;padding:18px}' +
     '@media(max-width:700px){.sx-form{grid-template-columns:1fr 1fr}.sx-form>*:nth-child(3){grid-column:1/-1}}';
 
@@ -53,7 +53,7 @@
     if (!side || !main || $('[data-section="security"]')) return !!$('[data-section="security"]');
     inject();
     var nav = document.createElement('div'); nav.className = 'admin-nav-item'; nav.setAttribute('data-tab', 'security');
-    nav.innerHTML = '<span>🛡️</span> Security <span class="admin-nav-badge" id="navSecCount" style="display:none;background:#ff5252;color:#fff">0</span>';
+    nav.innerHTML = '<span data-ap="1" style="background:none;-webkit-mask:none;mask:none;font-size:0"><svg class="ap-ico lg" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><rect x="9.5" y="11" width="5" height="4" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11"/></svg></span> Security <span class="admin-nav-badge" id="navSecCount" style="display:none;background:#ff5252;color:#fff">0</span>';
     nav.onclick = function () { if (typeof showAdminTab === 'function') showAdminTab('security'); load(); };
     var sys = side.querySelector('[data-tab="system"]'); side.insertBefore(nav, sys || null);
     var sec = document.createElement('div'); sec.className = 'admin-section'; sec.setAttribute('data-section', 'security');
