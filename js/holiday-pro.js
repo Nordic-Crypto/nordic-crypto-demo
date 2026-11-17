@@ -12,13 +12,45 @@
   function post(a, b) { return fetch(BASE + '?action=' + a, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok() }, b || {})) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; }); }
 
   /* ---------- when is it on ---------- */
-  function inSeason(d) { var m = d.getMonth(), day = d.getDate(); return m === 11 || (m === 0 && day <= 6); }
+  /* country-aware dates: visitor's own clock + country from time zone (fallback: browser language) */
+  var TZC = { 'Europe/Copenhagen': 'DK', 'Europe/Stockholm': 'SE', 'Europe/Oslo': 'NO', 'Europe/Helsinki': 'FI', 'Atlantic/Reykjavik': 'IS', 'Europe/Berlin': 'DE', 'Europe/Busingen': 'DE', 'Europe/Vienna': 'AT', 'Europe/Zurich': 'CH', 'Europe/Warsaw': 'PL', 'Europe/Prague': 'CZ', 'Europe/Bratislava': 'SK', 'Europe/Budapest': 'HU', 'Europe/Vilnius': 'LT', 'Europe/Riga': 'LV', 'Europe/Tallinn': 'EE', 'Europe/Minsk': 'BY', 'Europe/Belgrade': 'RS', 'Europe/Podgorica': 'ME', 'Europe/Skopje': 'MK', 'Asia/Tbilisi': 'GE' };
+  var EVE = /^(DK|SE|NO|FI|IS|DE|AT|CH|PL|CZ|SK|HU|LT|LV|EE)$/, ORTH = /^(RU|BY|RS|ME|MK|GE)$/;
+  var _cc;
+  function country() {
+    if (_cc) return _cc; var c = '';
+    try { c = (LS.get('nc_hol_cc') || '').toUpperCase(); } catch (e) { }
+    if (!c) { try { var z = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; c = TZC[z] || ''; if (!c && /^(Europe\/(Moscow|Samara|Volgograd|Kaliningrad|Kirov|Astrakhan|Saratov|Ulyanovsk)|Asia\/(Yekaterinburg|Omsk|Novosibirsk|Barnaul|Tomsk|Novokuznetsk|Krasnoyarsk|Irkutsk|Chita|Yakutsk|Khandyga|Vladivostok|Ust-Nera|Magadan|Sakhalin|Srednekolymsk|Kamchatka|Anadyr))$/.test(z)) c = 'RU'; } catch (e) { } }
+    if (!c) { var m = /-([A-Za-z]{2})\b/.exec(navigator.language || ''); c = m ? m[1].toUpperCase() : ''; }
+    return (_cc = c || 'XX');
+  }
+  function style() { var c = country(); return ORTH.test(c) ? 'orth' : EVE.test(c) ? 'eve' : 'west'; }
+  function dd(a, b) { return Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5); }
+  function xmasDate(n) { n = n || new Date(); var s = style(); if (s === 'orth') return new Date(n.getMonth() === 0 ? n.getFullYear() : n.getFullYear() + 1, 0, 7); return new Date(n.getFullYear(), 11, s === 'eve' ? 24 : 25); }
+  function inSeason(d) { var m = d.getMonth(), day = d.getDate(); return m === 11 || (m === 0 && day <= (style() === 'orth' ? 8 : 6)); }
+  function daysToXmas() { var n = new Date(), k = dd(n, xmasDate(n)); return k > 0 ? k : 0; }
+  function daysToNY() { var n = new Date(); if (n.getMonth() === 0 && n.getDate() === 1) return 0; return dd(n, new Date(n.getFullYear() + 1, 0, 1)); }
+  function pl(k) { return k + (k === 1 ? ' day' : ' days'); }
+  function pillTxt() {
+    var n = new Date(), m = n.getMonth(), d = n.getDate(), s = style(), x = daysToXmas(), y = daysToNY(), xd = dd(n, xmasDate(n)), what = s === 'eve' ? 'Christmas Eve' : 'Christmas';
+    var MC = 'Merry Christmas', HNY = 'Happy New Year', from = 'From all of us at Nordic Crypto';
+    if (s === 'orth') {
+      if (m === 0 && d === 1) return [HNY, 'Welcome to ' + n.getFullYear()];
+      if (m === 0 && xd > 0) return [MC, pl(x) + ' to Christmas'];
+      if (m === 0 && xd >= -1) return [MC, from];
+      if (m === 0) return [HNY, 'Welcome to ' + n.getFullYear()];
+      return [HNY, y > 0 && y < 60 ? pl(y) + ' to ' + (n.getFullYear() + 1) : 'Happy holidays'];
+    }
+    if (m === 0) return [HNY, 'Welcome to ' + n.getFullYear()];
+    if (m === 11 && xd <= 0 && xd >= -2) return [MC, from];
+    if (m === 11 && xd < -2) return [HNY, pl(y) + ' to ' + (n.getFullYear() + 1)];
+    return [MC, x > 0 && x < 60 ? pl(x) + ' to ' + what : 'Happy holidays'];
+  }
+  function pillHtml() { var pt = pillTxt(); return '<span class="hp1">🎄</span><b>' + pt[0] + '</b><span class="hp2">' + pt[1] + '</span>'; }
   function active() { if (CFG.mode === 'off') return false; return CFG.mode === 'on' || inSeason(new Date()); }
   function isLanding() { return !!$('header.hero'); }
   function isStaffView() { return !!($('#agd') || ($('#adminPanel') && $('#adminPanel').getClientRects().length)); }
   function allowedHere() { return isStaffView() ? CFG.staff !== false : CFG.clients !== false; }
   function userOff() { return LS.get('nc_hol_off') === '1'; }
-  function daysToNY() { var n = new Date(), y = n.getMonth() === 0 && n.getDate() <= 1 ? n.getFullYear() : n.getFullYear() + 1; var t = new Date(y, 0, 1); return Math.max(0, Math.ceil((t - n) / 864e5)); }
   function reduced() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
 
   /* ---------- styles ---------- */
@@ -135,7 +167,7 @@
       '<svg class="hd" viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0 60V38c60-16 110-10 170 0s120 14 190-2 130-18 200-4 140 22 210 8 130-22 200-8 150 20 220 6 130-14 190-2 120 8 160 2v22z" fill="currentColor"/></svg>';
     hero.insertBefore(d, hero.firstChild);
     var eb = hero.querySelector('.eyebrow'), n = daysToNY();
-    if (eb && !$('#holPill')) { var pl = document.createElement('div'); pl.id = 'holPill'; pl.innerHTML = '<span class="hp1">🎄</span><b>Season’s greetings</b><span class="hp2">' + (n > 0 && n < 60 ? n + (n === 1 ? ' day' : ' days') + ' to ' + (new Date().getFullYear() + 1) : 'Happy New Year') + '</span>'; eb.parentNode.insertBefore(pl, eb); }
+    if (eb && !$('#holPill')) { var pl = document.createElement('div'); pl.id = 'holPill'; pl._t = pillHtml(); pl.innerHTML = pillHtml(); eb.parentNode.insertBefore(pl, eb); }
     var ph = hero.querySelector('.phone'); if (ph && !ph.querySelector('.hcap')) { var cap = document.createElement('div'); cap.className = 'hcap'; cap.innerHTML = '<svg viewBox="0 0 220 30" preserveAspectRatio="none"><defs><linearGradient id="hcg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d7e6f7"/></linearGradient></defs><path d="M0 30C2 24 8 20 16 20c4-9 15-12 24-7 6-9 20-11 29-3 7-7 20-7 28 0 8-8 24-7 31 2 9-6 22-4 28 5 8-4 18-1 22 6 8 0 14 4 22 8z" fill="url(#hcg)"/><path d="M70 30c0 5-3 6-3 10s3 4 3 0 3-5 0-10zM150 30c0 4-2 5-2 8s3 3 3 0-1-4-1-8z" fill="#e4effb"/></svg>'; ph.appendChild(cap); }
   }
   /* ---------- landing: tree of live rates ---------- */
@@ -194,7 +226,7 @@
     var host = document.querySelector('#features'); if (!host || $('#holTree')) return; css();
     var sec = document.createElement('section'); sec.id = 'holTree'; sec.setAttribute('aria-label', 'Holiday tree with live crypto prices');
     var pos = [[50, 31, 0, 30], [68, 45, -1.2, 24], [31, 52, -2.1, 34], [27, 73, -1.5, 22], [71, 70, -.6, 30]];
-    sec.innerHTML = '<div class="wrap ht"><div><small class="k">Season special</small><h2>The market tree</h2><p>Live prices, hanging on the holiday tree. A bit of fun while you look around — rates update on their own.</p></div><div class="tr"><i class="gl"></i>' + treeSvg() +
+    sec.innerHTML = '<div class="wrap ht"><div><small class="k">Christmas special</small><h2>The market tree</h2><p>Live prices, hanging on the Christmas tree. A bit of fun while you look around — rates update on their own.</p></div><div class="tr"><i class="gl"></i>' + treeSvg() +
       pos.map(function (p, i) { return '<div class="bz" data-i="' + i + '" style="left:' + p[0] + '%;top:' + p[1] + '%;--d:' + p[2] + 's;--h:' + p[3] + 'px"><i class="sh"></i><em>•</em><b></b><span>—</span><u></u></div>'; }).join('') + '</div></div>';
     host.parentNode.insertBefore(sec, host);
     /* coin badges drawn as vectors (crisp at any size); unknown coins get a neat letter badge */
@@ -219,7 +251,7 @@
   function greet() {
     if (isStaffView()) return; var key = 'nc_hol_greet', today = new Date().toDateString(); if (LS.get(key) === today) return;
     var nm = (LS.get('user_name') || '').split(' ')[0], n = daysToNY();
-    var msg = CFG.greeting || ((new Date().getMonth() === 0 ? 'Happy New Year' : 'Happy holidays') + (nm ? ', ' + nm : '') + '! 🎄' + (n > 0 && n < 40 ? ' New Year in ' + n + (n === 1 ? ' day.' : ' days.') : ''));
+    var msg = CFG.greeting || (function () { var pt = pillTxt(); return pt[0] + (nm ? ', ' + nm : '') + '! 🎄' + (/\d/.test(pt[1]) ? ' ' + pt[1].charAt(0).toUpperCase() + pt[1].slice(1) + '.' : ''); })();
     var t = document.createElement('div'); t.id = 'holToast'; t.textContent = msg; document.body.appendChild(t); LS.set(key, today);
     setTimeout(function () { t.classList.add('on'); }, 400); setTimeout(function () { t.classList.remove('on'); }, 5200); setTimeout(function () { t.remove(); }, 5800);
   }
@@ -232,8 +264,9 @@
   }
   function countdown() {
     var host = $('#agd .agd-top') || $('#agd header') || null; var n = daysToNY();
-    var old = $('#holCount'); if (!host || !active() || userOff() || n <= 0 || n > 60) { if (old) old.remove(); return; }
-    if (old) return; var s = document.createElement('span'); s.id = 'holCount'; s.className = 'hol-count'; s.textContent = '🎄 ' + n + (n === 1 ? ' day' : ' days') + ' to New Year';
+    var pt = pillTxt(), txt = /\d/.test(pt[1]) ? '🎄 ' + pt[1] : '';
+    var old = $('#holCount'); if (!host || !active() || userOff() || !txt) { if (old) old.remove(); return; }
+    if (old) { if (old.textContent !== txt) old.textContent = txt; return; } var s = document.createElement('span'); s.id = 'holCount'; s.className = 'hol-count'; s.textContent = txt;
     var me = host.querySelector('#agdMe'); host.insertBefore(s, (me && me.closest('div,button')) || host.lastElementChild);
   }
 
@@ -286,7 +319,7 @@
     if (isStaffView() && active() && allowedHere() && !userOff() && CFG.teamMsg) { var k = 'nc_hol_team_' + (CFG.teamMsg.length) + '_' + new Date().toDateString(); if (LS.get(k) !== '1' && !$('#holToast')) { LS.set(k, '1'); var t = document.createElement('div'); t.id = 'holToast'; t.className = 'bt'; t.textContent = '🎄 ' + CFG.teamMsg; document.body.appendChild(t); setTimeout(function () { t.classList.add('on'); }, 400); setTimeout(function () { t.classList.remove('on'); }, 7000); setTimeout(function () { t.remove(); }, 7600); } }
   }
 
-  window.__holApi = { apply: function () { apply(); }, active: function () { return active() && allowedHere(); }, daysToNY: daysToNY };
+  window.__holApi = { apply: function () { apply(); }, active: function () { return active() && allowedHere(); }, daysToNY: daysToNY, country: country, pill: pillTxt };
 
   /* ---------- boot ---------- */
   function boot() {
@@ -294,7 +327,7 @@
     apply();
     var fresh; try { fresh = JSON.parse(LS.get('nc_hol_cfg') || 'null'); } catch (e) { }
     if (!fresh || Date.now() - fresh.t > 10 * 60 * 1000) fetch(BASE + '?action=holidayConfig', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(function (r) { return r.json(); }).then(function (r) { if (r && r.ok && r.config) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); apply(); } }).catch(function () { });
-    setInterval(function () { var ch = $('#holChip'); if (ch && window.__holFx && !userOff() ) { var hb = !isStaffView() && !isLanding() && $('#mainApp') && $('#mainApp').getClientRects().length; var want = hb ? '<i>🎁</i> Holiday' : null; if (want) ch.remove(); } ownerCard(); staffExtras(); if (active() && allowedHere() && !userOff()) countdown(); if (!$('#holGar') && active() && allowedHere() && !userOff() && CFG.garland) startGarland(); }, 1500);
+    setInterval(function () { var ch = $('#holChip'); if (ch && window.__holFx && !userOff() ) { var hb = !isStaffView() && !isLanding() && $('#mainApp') && $('#mainApp').getClientRects().length; var want = hb ? '<i>🎁</i> Holiday' : null; if (want) ch.remove(); } ownerCard(); staffExtras(); if (active() && allowedHere() && !userOff()) countdown(); var hp = $('#holPill'); if (hp) { var nh = pillHtml(); if (hp._t !== nh) { hp._t = nh; hp.innerHTML = nh; } } if (!$('#holGar') && active() && allowedHere() && !userOff() && CFG.garland) startGarland(); }, 1500);
   }
   if (document.body) boot(); else document.addEventListener('DOMContentLoaded', boot);
 })();
