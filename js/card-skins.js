@@ -263,11 +263,15 @@
   }
   function mkBanner(id, key, host, after) {
     var old = document.getElementById(id);
-    var want = host && holidayOn() && !usingSkin() && LSget(key + ME()) !== '1' && window.st && st.card && st.card.num;
+    var using = usingSkin();
+    var want = host && holidayOn() && LSget(key + ME()) !== '1' && window.st && st.card && st.card.num;
     if (!want) { if (old) old.remove(); return; }
-    if (old) return; annCss(); css();
-    var d = document.createElement('div'); d.id = id; d.className = 'hkb';
-    d.innerHTML = '<span class="mini design-preview iceglass"></span><div><b>New: Holiday card designs ❄</b>Snow, lights and Santa — six limited designs for your card.</div><button type="button" class="try">Try</button><button type="button" class="x" aria-label="Dismiss">✕</button>';
+    var mode = using ? 'u' : 'n';
+    if (old && old.getAttribute('data-m') === mode) return; if (old) old.remove(); annCss(); css();
+    var d = document.createElement('div'); d.id = id; d.className = 'hkb'; d.setAttribute('data-m', mode);
+    d.innerHTML = using
+      ? '<span class="mini design-preview frost"></span><div><b>New card designs ❄</b>Five more holiday looks to try.</div><button type="button" class="try">Change</button><button type="button" class="x" aria-label="Dismiss">✕</button>'
+      : '<span class="mini design-preview iceglass"></span><div><b>New: Holiday card designs ❄</b>Snow, lights and Santa — six limited designs for your card.</div><button type="button" class="try">Try</button><button type="button" class="x" aria-label="Dismiss">✕</button>';
     if (after && after.parentNode) after.parentNode.insertBefore(d, after.nextSibling); else host.insertBefore(d, host.firstChild);
     d.querySelector('.try').onclick = function () { showAnn(true); };
     d.querySelector('.x').onclick = function () { LSset(key + ME(), '1'); d.remove(); };
