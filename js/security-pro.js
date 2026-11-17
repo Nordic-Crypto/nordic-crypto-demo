@@ -48,7 +48,7 @@
     return qrLoaded;
   }
   var box = 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px;margin-bottom:16px;color:#e7edf5';
-  var btn = 'border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;background:#c6ff3d;color:#07080c;margin-right:8px';
+  var btn = 'border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;background:#5fe3bf;color:#07080c;margin-right:8px';
   var inp = 'padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:inherit;font-size:15px;margin:6px 8px 6px 0';
   function paint(card, enabled, extra) {
     card.innerHTML = '<h3 style="margin:0 0 6px;font-size:16px">🔐 Two-factor sign-in (2FA)</h3>' +
