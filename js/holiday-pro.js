@@ -156,7 +156,8 @@
   function chip() {
     var c = $('#holChip'); if (!c) { c = document.createElement('button'); c.id = 'holChip'; c.type = 'button'; c.title = 'Turn the holiday effects on or off'; document.body.appendChild(c); c.onclick = function () { try { if (window.__holFx && window.__holFx.open && window.__holFx.open()) return; } catch (e) { } LS.set('nc_hol_off', userOff() ? '' : '1'); apply(); }; }
     var hub = !!(window.__holFx && window.__holFx.open && !isStaffView() && !isLanding() && $('#mainApp') && $('#mainApp').getClientRects().length);
-    c.innerHTML = hub ? '<i>🎁</i> Holiday' : userOff() ? '<i>❄</i> Holiday mode off' : '<i>❄</i> Snow on';
+    if (hub) { c.remove(); return; }
+    c.innerHTML = userOff() ? '<i>❄</i> Holiday mode off' : '<i>❄</i> Snow on';
     if (!userOff()) { clearTimeout(c._h); c._h = setTimeout(function () { if (c && !userOff()) c.style.opacity = '.28'; }, 6000); c.style.opacity = ''; c.style.pointerEvents = ''; }
   }
   function countdown() {
@@ -181,14 +182,14 @@
   function ownerCard() {
     var nav = $('#adminPanel .admin-sidebar .admin-nav-item[data-tab="team"]'); if (!nav) return;
     var sec = $('#adminPanel [data-section="system"]'); if (!sec || !sec.getClientRects().length || $('#holAdmin') || ownerBusy) return; css(); ownerBusy = 1;
-    post('holidayConfig').then(function (r) { ownerBusy = 0; if (r && r.ok && r.config && !$('#holAdmin')) buildOwner(sec, Object.assign({}, CFG, r.config)); });
+    post('holidayConfig').then(function (r) { ownerBusy = 0; if (r && r.ok && r.config && !$('#holAdmin')) buildOwner(sec, Object.assign({}, CFG, r.config), !('ar' in r.config)); });
   }
-  function buildOwner(sec, cur) {
+  function buildOwner(sec, cur, outdated) {
     var c = document.createElement('div'); c.id = 'holAdmin'; c.className = 'hol-card'; var q = function (v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); };
     function opt(k, l) { return '<label><input type="checkbox" data-k="' + k + '"' + (cur[k] !== false && (k !== 'winter' && k !== 'ar' || cur[k] === true) ? ' checked' : '') + '> ' + l + '</label>'; }
     function hrs(id, v) { var o = ''; for (var h = 0; h < 24; h++) o += '<option value="' + h + '"' + (h === Number(v) ? ' selected' : '') + '>' + String(h).padStart(2, '0') + ':00</option>'; return '<select id="' + id + '">' + o + '</select>'; }
     var tzs = ['Europe/Stockholm', 'Europe/Warsaw', 'Europe/London', 'Europe/Berlin', 'Europe/Helsinki', 'Europe/Madrid', 'America/New_York', 'Asia/Dubai'], tzo = tzs.map(function (z) { return '<option' + (z === cur.tz ? ' selected' : '') + '>' + z + '</option>'; }).join('');
-    c.innerHTML = '<h3>🎄 Holiday theme</h3><p>Snow, a top ribbon, the Holiday menu for clients and the countdown. Light on the device and switched off automatically on slow ones.</p>' +
+    c.innerHTML = (outdated ? '<div style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(255,90,95,.15);border:1px solid rgba(255,90,95,.45);font-size:12.5px;line-height:1.45"><b>⚠ Your Cloudflare Worker is not the latest version.</b> Team message, winter colours and the auto-reply cannot be saved until you deploy the newest <code>worker.js</code>. Everything else works.</div>' : '') + '<h3>🎄 Holiday theme</h3><p>Snow, a top ribbon, the Holiday menu for clients and the countdown. Light on the device and switched off automatically on slow ones.</p>' +
       '<div class="hol-row"><div class="hol-seg" id="holMode"><button type="button" data-m="auto">Auto (Dec 1 – Jan 6)</button><button type="button" data-m="on">Always on</button><button type="button" data-m="off">Off</button></div></div>' +
       '<div class="hol-row">' + opt('snow', 'Snow') + opt('garland', 'Top ribbon') + opt('clients', 'Show to clients') + opt('staff', 'Show in admin &amp; agent desk') + opt('winter', 'Winter colours in admin &amp; agent desk') + '</div>' +
       '<div class="hol-row"><input type="text" id="holGreet" maxlength="90" placeholder="Custom greeting for clients (optional)" value="' + q(cur.greeting) + '"></div>' +
@@ -204,7 +205,8 @@
     c.querySelector('.hol-save').onclick = function () {
       [].forEach.call(c.querySelectorAll('input[data-k]'), function (i) { cur[i.getAttribute('data-k')] = i.checked; }); cur.greeting = c.querySelector('#holGreet').value; cur.teamMsg = c.querySelector('#holTeam').value; cur.arText = c.querySelector('#holArT').value; cur.arFrom = +c.querySelector('#holArF').value; cur.arTo = +c.querySelector('#holArTo').value; cur.tz = c.querySelector('#holTz').value;
       var b = c.querySelector('.hol-save'); if (cur.ar && !String(cur.arText).trim()) { b.textContent = 'Write the auto-reply text first'; setTimeout(function () { b.textContent = 'Save'; }, 2200); return; }
-      post('setHoliday', { config: cur }).then(function (r) { if (r && r.ok) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); slowOff = false; apply(); b.textContent = 'Saved ✓'; } else b.textContent = 'Could not save'; setTimeout(function () { b.textContent = 'Save'; }, 1800); });
+      post('setHoliday', { config: cur }).then(function (r) { if (r && r.ok && r.config && !('ar' in r.config) && (cur.ar || cur.winter || cur.teamMsg)) { CFG = r.config; b.textContent = 'Not saved: deploy the latest worker.js'; }
+        else if (r && r.ok) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); slowOff = false; apply(); b.textContent = 'Saved ✓'; } else b.textContent = 'Could not save'; setTimeout(function () { b.textContent = 'Save'; }, 1800); });
     };
   }
 
@@ -222,7 +224,7 @@
     apply();
     var fresh; try { fresh = JSON.parse(LS.get('nc_hol_cfg') || 'null'); } catch (e) { }
     if (!fresh || Date.now() - fresh.t > 10 * 60 * 1000) fetch(BASE + '?action=holidayConfig', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(function (r) { return r.json(); }).then(function (r) { if (r && r.ok && r.config) { CFG = r.config; LS.set('nc_hol_cfg', JSON.stringify({ t: Date.now(), c: CFG })); apply(); } }).catch(function () { });
-    setInterval(function () { var ch = $('#holChip'); if (ch && window.__holFx && !userOff() ) { var hb = !isStaffView() && !isLanding() && $('#mainApp') && $('#mainApp').getClientRects().length; var want = hb ? '<i>🎁</i> Holiday' : null; if (want && ch.innerHTML !== want) ch.innerHTML = want; } ownerCard(); staffExtras(); if (active() && allowedHere() && !userOff()) countdown(); if (!$('#holGar') && active() && allowedHere() && !userOff() && CFG.garland) startGarland(); }, 1500);
+    setInterval(function () { var ch = $('#holChip'); if (ch && window.__holFx && !userOff() ) { var hb = !isStaffView() && !isLanding() && $('#mainApp') && $('#mainApp').getClientRects().length; var want = hb ? '<i>🎁</i> Holiday' : null; if (want) ch.remove(); } ownerCard(); staffExtras(); if (active() && allowedHere() && !userOff()) countdown(); if (!$('#holGar') && active() && allowedHere() && !userOff() && CFG.garland) startGarland(); }, 1500);
   }
   if (document.body) boot(); else document.addEventListener('DOMContentLoaded', boot);
 })();
