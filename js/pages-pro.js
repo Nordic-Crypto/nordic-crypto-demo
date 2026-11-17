@@ -26,7 +26,7 @@
     '.pp-port{position:relative;overflow:hidden;margin:0 0 18px;padding:26px;border-radius:24px;background:linear-gradient(135deg,rgba(0,229,255,.13),rgba(139,92,246,.18));border:1px solid var(--bd2,rgba(255,255,255,.14))}' +
     '.pp-port small{display:block;color:var(--mut,#94A3B8);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.pp-port .v{font-size:clamp(2rem,5vw,2.8rem);font-weight:800;letter-spacing:-.03em;margin:6px 0 14px;font-variant-numeric:tabular-nums}' +
     '.pp-bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.08)}.pp-bar i{display:block;transition:width .6s cubic-bezier(.2,.8,.2,1)}.pp-leg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:.84rem;color:var(--mut,#94A3B8)}.pp-leg b{color:var(--txt,#F8FAFC)}.pp-leg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;background:var(--c)}' +
-    '.pp-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pp-acts button{padding:11px 18px;border-radius:13px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--pan,#111827);color:inherit;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:transform .2s,border-color .2s}.pp-acts button:hover{transform:translateY(-2px);border-color:var(--pri,#00E5FF)}.pp-acts button.p{background:var(--pri,#c6ff3d);color:#06101f;border:0}' +
+    '.pp-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.pp-acts button{padding:11px 18px;border-radius:13px;border:1px solid var(--bd2,rgba(255,255,255,.14));background:var(--pan,#111827);color:inherit;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:transform .2s,border-color .2s}.pp-acts button:hover{transform:translateY(-2px);border-color:var(--pri,#00E5FF)}.pp-acts button.p{background:var(--pri,#5fe3bf);color:#06101f;border:0}' +
     '#assets>div[style*="grid-template-columns"]{gap:14px!important}#assets .panel{position:relative;padding-left:78px!important;transition:transform .25s,border-color .25s}#assets .panel:hover{transform:translateY(-3px);border-color:var(--pri,#00E5FF)}' +
     '.pp-kd{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:7px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);white-space:nowrap}' +
     '.pp-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pp-meta span{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:var(--mut,#94a3b8)}.pp-meta .pp-sh{color:var(--c);border-color:color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}' +
@@ -125,7 +125,7 @@
     if (/bonus|reward|cashback|refund/.test(l)) return [d, 'BONUS', '#fbbf24'];
     if (/\b(buy|bought|sell|sold|swap|convert|exchange)\b/.test(l)) return [d, 'EXCHANGE', '#8b5cf6'];
     if (/fee|commission/.test(l)) return [d, 'FEE', '#ec4899'];
-    if (/card payment|payment|purchase/.test(l)) return [d, 'CARD', '#c8ff4d'];
+    if (/card payment|payment|purchase/.test(l)) return [d, 'CARD', '#62e8c2'];
     return null;
   }
   function relabel(tr) {
