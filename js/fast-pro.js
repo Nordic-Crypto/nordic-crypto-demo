@@ -6,12 +6,12 @@
   var $ = function (id) { return document.getElementById(id); };
 
   /* ---------- small "waiting for deposit" pill ---------- */
-  var css = '.nc-wait{position:fixed;left:16px;bottom:16px;z-index:99990;display:flex;align-items:center;gap:12px;max-width:min(380px,calc(100vw - 32px));padding:12px 14px 12px 16px;border-radius:16px;background:#12141a;color:#f4f5f8;border:1px solid rgba(198,255,61,.35);box-shadow:0 18px 40px -12px rgba(0,0,0,.7);font:600 13px/1.35 Inter,system-ui,sans-serif;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s}' +
+  var css = '.nc-wait{position:fixed;left:16px;bottom:16px;z-index:99990;display:flex;align-items:center;gap:12px;max-width:min(380px,calc(100vw - 32px));padding:12px 14px 12px 16px;border-radius:16px;background:#12141a;color:#f4f5f8;border:1px solid rgba(95,227,191,.35);box-shadow:0 18px 40px -12px rgba(0,0,0,.7);font:600 13px/1.35 Inter,system-ui,sans-serif;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s}' +
     '.nc-wait.on{opacity:1;transform:none}.nc-wait small{display:block;font-weight:500;color:#98a0b3;margin-top:2px}' +
-    '.nc-wait i{flex:none;width:10px;height:10px;border-radius:50%;background:#c8ff4d;box-shadow:0 0 0 0 rgba(200,255,77,.6);animation:ncw 1.6s infinite}' +
-    '@keyframes ncw{70%{box-shadow:0 0 0 10px rgba(200,255,77,0)}100%{box-shadow:0 0 0 0 rgba(200,255,77,0)}}' +
+    '.nc-wait i{flex:none;width:10px;height:10px;border-radius:50%;background:#62e8c2;box-shadow:0 0 0 0 rgba(98,232,194,.6);animation:ncw 1.6s infinite}' +
+    '@keyframes ncw{70%{box-shadow:0 0 0 10px rgba(98,232,194,0)}100%{box-shadow:0 0 0 0 rgba(98,232,194,0)}}' +
     '.nc-wait button{flex:none;margin-left:4px;width:26px;height:26px;border-radius:8px;color:#98a0b3;font-size:16px;line-height:1}.nc-wait button:hover{background:rgba(255,255,255,.08);color:#fff}' +
-    'html[data-theme="light"] .nc-wait{background:#fff;color:#0b0d14;border-color:rgba(61,107,0,.4)}html[data-theme="light"] .nc-wait small{color:#586074}';
+    'html[data-theme="light"] .nc-wait{background:#fff;color:#0b0d14;border-color:rgba(10,112,80,.4)}html[data-theme="light"] .nc-wait small{color:#586074}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   var pill = null, pillTimer = 0;
