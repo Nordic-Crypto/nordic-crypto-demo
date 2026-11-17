@@ -17,6 +17,7 @@
   function dp(c) { return (c === 'ETH' || c === 'BTC') ? 8 : 2; }
   function nf(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function toUsd(v) {
+    if (isAsset()) return v * priceUsd(src());
     if (cur === 'COIN') return v * priceUsd(coin());
     return v / locRate();
   }
@@ -25,6 +26,13 @@
     return u * locRate();
   }
   function round2(x) { return Math.round(x * 100) / 100; }
+  /* ---------- pay from: cash balance or a crypto holding (send your own ETH/BTC/USDT/USDC) ---------- */
+  var SRC_COINS = ['ETH', 'BTC', 'USDT', 'USDC'];
+  function src() { var e = $('ncwSrc'); return (e && e.value) || 'CASH'; }
+  function isAsset() { return src() !== 'CASH'; }
+  function pendAsset(c) { return (S().withdrawals || []).filter(function (w) { return w && w.status === 'pending' && w.asset === c; }).reduce(function (a, w) { return a + (Number(w.assetAmount) || 0); }, 0); }
+  function holding(c) { return Math.max(0, (Number(S()[c.toLowerCase()]) || 0) - pendAsset(c)); }
+  function trunc(x, d) { var m = Math.pow(10, d); return Math.floor(x * m + 1e-9) / m; }
 
   /* ---------- styles ---------- */
   var css = document.createElement('style');
@@ -67,6 +75,13 @@
     var c = coin(), v = parseFloat(inp.value) || 0, u = round2(toUsd(v));
     var rcv = fromUsd(u, 'COIN');
     var rate = priceUsd(c);
+    if (isAsset()) {
+      var hv = holding(c);
+      box.innerHTML = '<small>' + (v > 0 ? 'You will send' : 'Enter the amount of ' + c + ' to send') + '</small>' +
+        '<b>' + (v > 0 ? nf(v, dp(c)) + ' ' + c : '— ' + c) + '</b>' +
+        '<small>From your ' + c + ' holdings · available ' + nf(hv, dp(c)) + ' ' + c + (rate && c !== 'USDT' && c !== 'USDC' ? ' · ≈ $' + nf(round2(v * rate), 2) : '') + '</small>';
+      return;
+    }
     box.innerHTML = '<small>' + (v > 0 ? 'You will receive ≈' : 'Enter amount to see conversion') + '</small>' +
       '<b>' + (v > 0 ? nf(rcv, dp(c)) + ' ' + c : '— ' + c) + '</b>' +
       '<small>' + (v > 0 ? 'Debited from balance: $' + nf(u, 2) + (cur === 'FIAT' && locCode() !== 'USD' ? ' (' + nf(v, 2) + ' ' + locCode() + ')' : '') + ' · ' : '') +
@@ -82,13 +97,16 @@
   function enhance() {
     var f = $('wdFieldsCrypto'); if (!f || $('ncwSeg')) return;
     var wrap = document.createElement('div');
-    wrap.innerHTML = '<label class="wd-label">Amount in <button type="button" class="ncw-max" id="ncwMax">Max</button></label>' +
+    wrap.innerHTML = '<label class="wd-label">Pay from</label><select id="ncwSrc" class="wd-input"><option value="CASH">Cash balance</option></select>' +
+      '<label class="wd-label" id="ncwAmtLab">Amount in <button type="button" class="ncw-max" id="ncwMax">Max</button></label>' +
       '<div class="ncw-seg" id="ncwSeg"><button type="button" data-c="FIAT" class="on">USD</button><button type="button" data-c="COIN">ETH</button></div>' +
       '<div class="ncw-recv" id="ncwRecv"></div>';
     f.insertBefore(wrap, f.firstChild);
     $('ncwSeg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setCur(b.dataset.c); });
+    $('ncwSrc').addEventListener('change', applySrc);
     $('ncwMax').addEventListener('click', function () {
-      var pend = (S().withdrawals || []).filter(function (w) { return w.status === 'pending'; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0);
+      if (isAsset()) { var hc = src(); $('wdAmount').value = String(trunc(holding(hc), dp(hc))); updatePreview(); return; }
+      var pend = pendingUsd();
       var avail = Math.max(0, (S().usd || 0) - pend), v = fromUsd(avail, cur);
       $('wdAmount').value = cur === 'COIN' ? v.toFixed(dp(coin())) : (Math.floor(v * 100) / 100).toFixed(2);
       updatePreview();
@@ -104,9 +122,30 @@
     if (cs && cs.value !== 'ETH') { cs.value = 'ETH'; var n0 = $('wdCryptoNetwork'); if (n0) n0.value = 'ERC20'; }
     syncCoinButton(); setCur('FIAT');
   }
+  function srcOptions() {
+    var e = $('ncwSrc'); if (!e) return;
+    var opts = [['CASH', 'Cash balance']];
+    SRC_COINS.forEach(function (c) { var h = holding(c); if (h > 0) opts.push([c, c + ' holdings — ' + nf(trunc(h, dp(c)), dp(c)) + ' ' + c]); });
+    var sig = opts.map(function (o) { return o.join('='); }).join('|');
+    if (e.getAttribute('data-s') === sig) return;
+    var keep = e.value; e.innerHTML = opts.map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + '</option>'; }).join('');
+    e.value = opts.some(function (o) { return o[0] === keep; }) ? keep : 'CASH'; e.setAttribute('data-s', sig);
+    if (e.value !== keep) applySrc();
+  }
+  function applySrc() {
+    var a = isAsset(), cs = $('wdCryptoCoin'), seg = $('ncwSeg'), n = $('wdCryptoNetwork');
+    if (a && cs) { cs.value = src(); if (n) { if (src() === 'BTC') n.value = 'BTC'; else if (src() === 'ETH' && n.value !== 'ERC20' && n.value !== 'BEP20') n.value = 'ERC20'; } }
+    if (cs) cs.disabled = a;
+    if (seg) seg.style.display = a ? 'none' : '';
+    var cw = $('ncwCur'); if (cw) { cw.disabled = a; }
+    var inp = $('wdAmount'); if (inp) { inp.value = ''; inp.placeholder = a ? '0.00000000 ' + src() : '0.00 ' + (cur === 'COIN' ? coin() : locCode()); inp.step = a ? '0.00000001' : '0.01'; }
+    var lab = $('ncwAmtLab'); if (lab && lab.firstChild) lab.firstChild.textContent = a ? 'Amount in ' + src() + ' ' : 'Amount in ';
+    if (!a) setCur(cur); else updatePreview();
+  }
   function tick() {
     var m = $('wdMethod'), isC = m && m.value === 'crypto';
-    enhance(); enhanceCur(); syncCoinButton();
+    enhance(); enhanceCur(); syncCoinButton(); srcOptions();
+    var cwx = $('ncwCur'); if (cwx) { var dis = !!(isC && isAsset()); if (cwx.disabled !== dis) cwx.disabled = dis; }
     var seg = $('ncwSeg'); if (seg) {
       if (!isC && cur !== 'FIAT') { cur = 'FIAT'; [].forEach.call(seg.children, function (b) { b.classList.toggle('on', b.dataset.c === 'FIAT'); }); }
     }
@@ -114,7 +153,7 @@
   }
   /* ---------- "Withdraw in" currency (all methods) ---------- */
   var wasOpen = false;
-  function pendingUsd() { return (S().withdrawals || []).filter(function (w) { return w.status === 'pending'; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0); }
+  function pendingUsd() { return (S().withdrawals || []).filter(function (w) { return w.status === 'pending' && !w.asset; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0); }
   function enhanceCur() {
     var amt = $('wdAmount'); if (!amt) return;
     if (!$('ncwCur')) {
@@ -165,30 +204,36 @@
     function showErr(m) { if (errEl) { errEl.textContent = m; errEl.style.display = 'block'; } }
     if (errEl) errEl.style.display = 'none';
     var v = parseFloat($('wdAmount').value) || 0, c = coin(), net = $('wdCryptoNetwork').value;
-    var usd = round2(toUsd(v)), fiatCode = locCode();
+    var usd = round2(toUsd(v)), fiatCode = locCode(), asset = isAsset() ? src() : '';
+    if (asset) c = asset;
     var addr = ($('wdCryptoAddress').value || '').trim(), memo = (($('wdCryptoMemo') || {}).value || '').trim();
     var dest = ($('wdCryptoDest') || {}).value || 'external';
-    if (!(v > 0) || usd < 1) return showErr('Minimum withdrawal is $1.00');
-    if (usd > (S().usd || 0)) {                              // the cash balance pays crypto withdrawals; crypto holdings are not part of it
+    if (asset) {
+      if (!(v > 0)) return showErr('Enter the amount of ' + asset + ' to send');
+      if (v > holding(asset) + 1e-12) return showErr('Not enough ' + asset + '. Available: ' + nf(trunc(holding(asset), dp(asset)), dp(asset)) + ' ' + asset);
+      if (!priceUsd(asset) || usd < 1) return showErr('Minimum withdrawal is $1.00');
+    } else if (!(v > 0) || usd < 1) return showErr('Minimum withdrawal is $1.00');
+    if (!asset && usd > (S().usd || 0)) {                              // the cash balance pays crypto withdrawals; crypto holdings are not part of it
       var cashU = Math.max(0, S().usd || 0), unit = cur === 'COIN' ? c : locCode();
       var have = cur === 'COIN' ? (priceUsd(c) ? nf(cashU / priceUsd(c), dp(c)) : '0') : nf(cashU * locRate(), 2);
       return showErr('Not enough cash balance. Available: ' + have + ' ' + unit + ' ($' + nf(cashU, 2) + '). Crypto holdings are not included — sell or exchange them to cash first, or tap Max.');
     }
     if (!addrOk(addr, net)) return showErr('Wallet address does not match the ' + (NETN[net] || net) + ' network. Check the address and network.');
-    var rate = priceUsd(c), coinAmt = rate ? Math.floor(usd / rate * Math.pow(10, dp(c))) / Math.pow(10, dp(c)) : 0;
+    var rate = priceUsd(c), coinAmt = asset ? trunc(v, dp(c)) : (rate ? Math.floor(usd / rate * Math.pow(10, dp(c))) / Math.pow(10, dp(c)) : 0);
     var token = localStorage.getItem('session_token');
     if (!token) return showErr('Session expired. Please sign in again.');
-    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: cur === 'COIN' ? c : locCode(), inputAmount: String(v), payCurrency: locCode() };
+    var details = { destination: dest, network: net, coin: c, address: addr, memo: memo, coinAmount: coinAmt.toFixed(dp(c)), rate: round2(rate), inputCurrency: asset || (cur === 'COIN' ? c : locCode()), inputAmount: String(v), payCurrency: asset ? 'USD' : locCode() };
+    if (asset) details.source = asset;
 
-    var fcode = cur === 'FIAT' ? fiatCode : 'USD';
+    var fcode = asset ? asset : (cur === 'FIAT' ? fiatCode : 'USD');
     overlay('<div class="ncw-swap"><div class="ncw-coin a">' + esc(fcode) + '</div><div class="ncw-arrow"></div><div class="ncw-coin b">' + esc(c) + '</div></div>' +
-      '<h3>Processing withdrawal</h3><p>' + (cur === 'FIAT' ? nf(v, 2) + ' ' + esc(locCode()) : '$' + nf(usd, 2)) + ' → ≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</p>' +
+      '<h3>Processing withdrawal</h3><p>' + (asset ? nf(coinAmt, dp(c)) + ' ' + esc(c) + ' from your holdings' : (cur === 'FIAT' ? nf(v, 2) + ' ' + esc(locCode()) : '$' + nf(usd, 2)) + ' → ≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c)) + '</p>' +
       '<div class="ncw-steps">' +
-      '<div class="ncw-st act" data-ncws="0"><i></i>Converting ' + esc(fcode) + ' to ' + esc(c) + '</div>' +
+      '<div class="ncw-st act" data-ncws="0"><i></i>' + (asset ? 'Reserving ' + esc(c) + ' from your holdings' : 'Converting ' + esc(fcode) + ' to ' + esc(c)) + '</div>' +
       '<div class="ncw-st" data-ncws="1"><i></i>Checking address ' + esc(short(addr)) + '</div>' +
       '<div class="ncw-st" data-ncws="2"><i></i>Sending to compliance review</div></div>');
 
-    var req = fetch(WORKER + '?action=withdraw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token, amount: usd, method: 'crypto', details: details }) })
+    var req = fetch(WORKER + '?action=withdraw', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(asset ? { token: token, amount: usd, method: 'crypto', source: asset, assetAmount: coinAmt, details: details } : { token: token, amount: usd, method: 'crypto', details: details }) })
       .then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'Connection error. Please try again.' }; });
 
     Promise.all([req, sleep(1300).then(function () { setStep(0, 'done'); setStep(1, 'act'); return sleep(1200); }).then(function () { setStep(1, 'done'); setStep(2, 'act'); return sleep(1100); })])
@@ -204,7 +249,7 @@
         try { if (typeof window.closeWithdraw === 'function') window.closeWithdraw(); if (typeof window.render === 'function') window.render(); } catch (e) {}
         return sleep(450).then(function () {
           overlay('<div class="ncw-ok"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div><h3>Request submitted</h3><p>Your withdrawal is under review. We will notify you once it is sent.</p>' +
-            '<div class="ncw-sum"><div><span>Debited</span><b>$' + nf(usd, 2) + (cur === 'FIAT' && fiatCode !== 'USD' ? ' (' + nf(v, 2) + ' ' + esc(fiatCode) + ')' : '') + '</b></div><div><span>You receive</span><b>≈ ' + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</b></div>' +
+            '<div class="ncw-sum"><div><span>Debited</span><b>' + (asset ? nf(coinAmt, dp(c)) + ' ' + esc(c) + ' (≈ $' + nf(usd, 2) + ')' : '$' + nf(usd, 2) + (cur === 'FIAT' && fiatCode !== 'USD' ? ' (' + nf(v, 2) + ' ' + esc(fiatCode) + ')' : '')) + '</b></div><div><span>You receive</span><b>' + (asset ? '' : '≈ ') + nf(coinAmt, dp(c)) + ' ' + esc(c) + '</b></div>' +
             '<div><span>Network</span><b>' + esc(NETN[net] || net) + '</b></div><div><span>To</span><b>' + esc(short(addr)) + '</b></div><div><span>Status</span><b style="color:#fbbf24">Under review</b></div></div>' +
             '<button class="ncw-btn" id="ncwDone">Done</button>');
           $('ncwDone').onclick = closeOv;
