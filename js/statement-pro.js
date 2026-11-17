@@ -149,7 +149,7 @@
   function refId() { return 'NC-' + ymd(new Date()).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(); }
 
   /* ---------- PDF layout ---------- */
-  var INK = [17, 17, 17], MUT = [107, 114, 128], LINE = [229, 231, 235], BG = [246, 246, 242], LIME = [200, 255, 77], GREEN = [16, 128, 80];
+  var INK = [17, 17, 17], MUT = [107, 114, 128], LINE = [229, 231, 235], BG = [246, 246, 242], LIME = [98, 232, 194], GREEN = [16, 128, 80];
   function buildPdf(d) {
     var h = holder(), ref = refId(), doc = new Doc(), M = 40, R = PW - M;
     var X = { date: M, desc: M + 78, out: M + 330, inn: M + 420, bal: R };
