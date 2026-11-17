@@ -14,6 +14,7 @@
   /* ---------- when is it on ---------- */
   function inSeason(d) { var m = d.getMonth(), day = d.getDate(); return m === 11 || (m === 0 && day <= 6); }
   function active() { if (CFG.mode === 'off') return false; return CFG.mode === 'on' || inSeason(new Date()); }
+  function isLanding() { return !!$('header.hero'); }
   function isStaffView() { return !!($('#agd') || ($('#adminPanel') && $('#adminPanel').getClientRects().length)); }
   function allowedHere() { return isStaffView() ? CFG.staff !== false : CFG.clients !== false; }
   function userOff() { return LS.get('nc_hol_off') === '1'; }
@@ -25,12 +26,30 @@
     if ($('#holCss')) return; var s = document.createElement('style'); s.id = 'holCss';
     s.textContent =
       '#holSnow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100045}' +
-      '#holGar{position:fixed;left:0;right:0;top:0;height:34px;pointer-events:none;z-index:100046;overflow:hidden;opacity:.95}' +
-      '#holGar svg{display:block;width:100%;height:34px}' +
-      '#holGar .b{animation:holTw 2.4s ease-in-out infinite}#holGar .b.b1{animation-delay:.6s}#holGar .b.b2{animation-delay:1.2s}#holGar .b.b3{animation-delay:1.8s}' +
-      '@keyframes holTw{0%,100%{opacity:1}50%{opacity:.35}}' +
+      '#holGar{position:fixed;left:0;right:0;top:0;height:3px;pointer-events:none;z-index:100046;background:linear-gradient(90deg,#ff5a5f,#ffd166,#6ee7a8,#6aa9ff,#ff5a5f);background-size:300% 100%;animation:holRb 14s linear infinite;opacity:.9}' +
+      '@keyframes holRb{to{background-position:300% 0}}' +
+            '@keyframes holTw{0%,100%{opacity:1}50%{opacity:.35}}' +
+      '#holLand{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;color:#eaf3ff}' +
+      'html[data-theme="light"] #holLand{color:#fff}' +
+      '#holLand .ha{position:absolute;inset:0}#holLand .ha i{position:absolute;width:60vw;height:60vw;max-width:820px;max-height:820px;border-radius:50%;opacity:.5;will-change:transform}' +
+      '#holLand .ha i:nth-child(1){left:-12%;top:-30%;background:radial-gradient(circle,rgba(255,90,95,.22),transparent 62%);animation:holA1 22s ease-in-out infinite alternate}' +
+      '#holLand .ha i:nth-child(2){right:-10%;top:-26%;background:radial-gradient(circle,rgba(110,231,168,.22),transparent 62%);animation:holA2 26s ease-in-out infinite alternate}' +
+      '#holLand .ha i:nth-child(3){left:30%;top:-40%;background:radial-gradient(circle,rgba(255,209,102,.16),transparent 62%);animation:holA1 30s ease-in-out infinite alternate-reverse}' +
+      '@keyframes holA1{to{transform:translate3d(8vw,6vh,0) scale(1.15)}}@keyframes holA2{to{transform:translate3d(-9vw,8vh,0) scale(1.1)}}' +
+      '#holLand .hb{position:absolute;top:0;width:0;height:var(--l);transform-origin:50% 0;animation:holSw 5.5s ease-in-out infinite;animation-delay:var(--d)}' +
+      '#holLand .hl{position:absolute;left:-.5px;top:0;width:1px;height:100%;background:rgba(160,170,190,.55)}' +
+      '#holLand .hc{position:absolute;left:-5px;bottom:calc(var(--s) - 2px);width:10px;height:7px;border-radius:2px;background:linear-gradient(#e6c565,#a98424)}' +
+      '#holLand .hb span{position:absolute;left:calc(var(--s) / -2);top:100%;margin-top:-2px;width:var(--s);height:var(--s);border-radius:50%;box-shadow:0 10px 24px rgba(0,0,0,.35),inset 0 -6px 12px rgba(0,0,0,.18)}' +
+      '@keyframes holSw{0%,100%{transform:rotate(3.5deg)}50%{transform:rotate(-3.5deg)}}' +
+      '#holLand .hd{position:absolute;left:0;right:0;bottom:0;width:100%;height:46px;opacity:.9}' +
+      '#holPill{display:flex;width:max-content;max-width:100%;align-items:center;gap:9px;margin:0 0 16px;padding:7px 14px 7px 10px;border-radius:99px;font:600 13px/1 inherit;color:#fff;background:linear-gradient(135deg,rgba(214,38,44,.9),rgba(22,145,90,.9));box-shadow:0 8px 26px rgba(214,38,44,.28);position:relative;z-index:2}' +
+      '#holPill .hp2{padding-left:9px;border-left:1px solid rgba(255,255,255,.35);font-weight:500;opacity:.92}' +
+      '.hero .hcap{position:absolute;left:-2%;right:-2%;top:-20px;height:34px;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}.hero .hcap svg{width:100%;height:100%;display:block}' +
+      '.hero .wrap.grid{z-index:1}' +
+      '@media (max-width:900px){#holLand .hb:nth-of-type(n+4){display:none}#holLand .hb{left:calc(55% + (var(--s) * 2))!important}#holLand .ha i{opacity:.35}}' +
+      '@media (prefers-reduced-motion:reduce){#holLand *,#holGar{animation:none!important}}' +
       '#holChip{position:fixed;left:14px;bottom:14px;z-index:100047;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:99px;font:600 12px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#e9eef6;background:rgba(17,24,35,.82);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px);cursor:pointer;opacity:.85;transition:opacity .2s}' +
-      '#holChip:hover{opacity:1}#holChip i{font-style:normal}' +
+      'html.hol-land #holChip{bottom:70px}#holChip:hover{opacity:1}#holChip i{font-style:normal}' +
       'html[data-theme="light"] #holChip{color:#0f172a;background:rgba(255,255,255,.9);border-color:rgba(15,23,42,.12)}' +
       '.hol-count{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;font:600 12px/1 inherit;color:#c8ff4d;background:rgba(200,255,77,.1);border:1px solid rgba(200,255,77,.25);white-space:nowrap}' +
       'html[data-theme="light"] .hol-count{color:#2f6a00;background:rgba(80,140,0,.1);border-color:rgba(80,140,0,.3)}' +
@@ -72,15 +91,25 @@
   }
   document.addEventListener('visibilitychange', function () { last = 0; });
 
-  /* ---------- garland ---------- */
+  /* ---------- top ribbon (3px, never covers anything) ---------- */
   function startGarland() {
-    if ($('#holGar') || !CFG.garland) return; var d = document.createElement('div'); d.id = 'holGar'; d.setAttribute('aria-hidden', 'true');
-    var cols = ['#ff5a5f', '#ffd166', '#6ee7a8', '#6aa9ff'], b = '', w = 1600, step = 40;
-    for (var x = 10, i = 0; x < w; x += step, i++) { var y = 4 + Math.sin(x / step * Math.PI) * 5; b += '<g class="b b' + (i % 4) + '"><circle cx="' + x + '" cy="' + (y + 13) + '" r="10" fill="' + cols[i % 4] + '" opacity=".22"/><rect x="' + (x - 1.5) + '" y="' + (y + 3) + '" width="3" height="5" fill="#556"/><ellipse cx="' + x + '" cy="' + (y + 13) + '" rx="4.6" ry="6" fill="' + cols[i % 4] + '"/></g>'; }
-    var wire = 'M0 6 '; for (var x2 = 0; x2 <= w; x2 += step) wire += 'Q' + (x2 + step / 2) + ' ' + 16 + ' ' + (x2 + step) + ' 6 ';
-    d.innerHTML = '<svg viewBox="0 0 ' + w + ' 34" preserveAspectRatio="xMidYMin slice"><path d="' + wire + '" fill="none" stroke="rgba(150,150,150,.8)" stroke-width="1.6"/>' + b + '</svg>';
-    document.body.appendChild(d);
+    if ($('#holGar') || !CFG.garland) return; var d = document.createElement('div'); d.id = 'holGar'; d.setAttribute('aria-hidden', 'true'); document.body.appendChild(d);
   }
+
+  /* ---------- landing page: aurora, hanging baubles, snow-capped phone, snow drift, season pill ---------- */
+  function landing() {
+    var hero = $('header.hero'); if (!hero || $('#holLand')) return; css();
+    var d = document.createElement('div'); d.id = 'holLand'; d.setAttribute('aria-hidden', 'true');
+    var bauble = function (x, len, size, c1, c2, delay) { return '<div class="hb" style="left:' + x + '%;--l:' + len + 'px;--s:' + size + 'px;--d:' + delay + 's"><i class="hl"></i><b class="hc"></b><span style="background:radial-gradient(circle at 32% 28%,#fff 0,' + c1 + ' 22%,' + c2 + ' 70%,rgba(0,0,0,.35) 100%)"></span></div>'; };
+    d.innerHTML = '<div class="ha"><i></i><i></i><i></i></div>' +
+      bauble(58, 70, 34, '#ff8a8e', '#d4262c', 0) + bauble(66, 130, 26, '#ffe29a', '#d99a1c', -1.4) + bauble(74, 52, 30, '#8fe9b5', '#16915a', -.7) + bauble(83, 112, 36, '#9cc4ff', '#2a62c9', -2.1) + bauble(91, 64, 24, '#ffb3d1', '#c2255f', -1.1) +
+      '<svg class="hd" viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0 60V38c60-16 110-10 170 0s120 14 190-2 130-18 200-4 140 22 210 8 130-22 200-8 150 20 220 6 130-14 190-2 120 8 160 2v22z" fill="currentColor"/></svg>';
+    hero.insertBefore(d, hero.firstChild);
+    var eb = hero.querySelector('.eyebrow'), n = daysToNY();
+    if (eb && !$('#holPill')) { var pl = document.createElement('div'); pl.id = 'holPill'; pl.innerHTML = '<span class="hp1">🎄</span><b>Season’s greetings</b><span class="hp2">' + (n > 0 && n < 60 ? n + (n === 1 ? ' day' : ' days') + ' to ' + (new Date().getFullYear() + 1) : 'Happy New Year') + '</span>'; eb.parentNode.insertBefore(pl, eb); }
+    var ph = hero.querySelector('.phone'); if (ph && !ph.querySelector('.hcap')) { var cap = document.createElement('div'); cap.className = 'hcap'; cap.innerHTML = '<svg viewBox="0 0 300 46" preserveAspectRatio="none"><path d="M0 46C6 30 24 22 40 24c8-14 30-18 44-6 12-12 36-10 46 4 12-8 32-6 40 8 10-10 32-8 42 6 14-6 30 0 36 10 14-4 28 4 32 14z" fill="#fff"/><path d="M20 46c4-8 12-12 20-10M120 46c2-6 10-10 16-8M210 46c4-6 12-8 18-4" stroke="#cfe3f7" stroke-width="3" fill="none" stroke-linecap="round"/></svg>'; ph.appendChild(cap); }
+  }
+  function unland() { var l = $('#holLand'); if (l) l.remove(); var p = $('#holPill'); if (p) p.remove(); var c = $('.hcap'); if (c) c.remove(); }
 
   /* ---------- greeting, countdown chip ---------- */
   function greet() {
@@ -105,11 +134,11 @@
   /* ---------- apply ---------- */
   function apply() {
     var on = active() && allowedHere() && !userOff();
-    document.documentElement.classList.toggle('hol', !!on);
-    if (!(active() && allowedHere())) { stopSnow(); var g = $('#holGar'); if (g) g.remove(); var c = $('#holChip'); if (c) c.remove(); var k = $('#holCount'); if (k) k.remove(); return; }
+    document.documentElement.classList.toggle('hol', !!on); document.documentElement.classList.toggle('hol-land', isLanding());
+    if (!(active() && allowedHere())) { unland(); stopSnow(); var g = $('#holGar'); if (g) g.remove(); var c = $('#holChip'); if (c) c.remove(); var k = $('#holCount'); if (k) k.remove(); return; }
     css(); chip();
-    if (userOff()) { stopSnow(); var g2 = $('#holGar'); if (g2) g2.remove(); countdown(); return; }
-    if (LS.get('nc_hol_auto_off') !== '1') startSnow(); startGarland(); greet(); countdown();
+    if (userOff()) { unland(); stopSnow(); var g2 = $('#holGar'); if (g2) g2.remove(); countdown(); return; }
+    if (LS.get('nc_hol_auto_off') !== '1') startSnow(); startGarland(); if (isLanding()) landing(); else greet(); countdown();
   }
 
   /* ---------- owner card (Admin → System) ---------- */
