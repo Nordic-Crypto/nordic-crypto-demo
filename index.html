@@ -166,7 +166,7 @@ section{padding:96px 0;position:relative}
 .cc:after{content:"";position:absolute;right:-30px;top:-40px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.17)}
 .ctl{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;border-radius:16px;background:var(--s2);border:1px solid var(--line);max-width:330px;font-size:.88rem;font-weight:600}
 .qr{display:flex;gap:16px;align-items:center}.qr svg{width:96px;height:96px;flex:none;background:#fff;border-radius:14px;padding:7px}
-.qr code{font:600 .72rem ui-monospace,Menlo,monospace;color:var(--mut);word-break:break-all;display:block}.qr small{font-size:.68rem;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.qr-demo .qrw{position:relative;flex:none;width:96px;height:96px}.qr-demo .qrw svg{filter:blur(4px);opacity:.55;pointer-events:none;user-select:none}.qr-demo .qrl{position:absolute;inset:0;display:grid;place-items:center;font-size:26px}.qrn{display:block;margin-top:8px;font-style:normal;font-size:.72rem;line-height:1.4;color:var(--mut)}.qr code{font:600 .72rem ui-monospace,Menlo,monospace;color:var(--mut);word-break:break-all;display:block}.qr small{font-size:.68rem;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .chips{display:flex;flex-wrap:wrap;gap:8px}.chips span{padding:9px 14px;border-radius:99px;background:var(--s2);border:1px solid var(--line);font-weight:700;font-size:.85rem}
 .chips span:first-child{background:var(--a);color:var(--ink);border-color:transparent}
 /* steps */
@@ -386,7 +386,7 @@ footer p{max-width:820px;font-size:.78rem}
   <div class="bt c3 reveal"><h3 data-i="bn3t"></h3><p data-i="bn3d"></p>
    <div class="ui"><div class="bars" id="bars"></div></div></div>
   <div class="bt c3 reveal"><h3 data-i="ft1"></h3><p data-i="bn5d"></p>
-   <div class="ui"><div class="qr"><svg id="qr" viewBox="0 0 21 21" shape-rendering="crispEdges"></svg><div><small data-i="m_addr"></small><code>bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code></div></div></div></div>
+   <div class="ui"><div class="qr qr-demo"><div class="qrw"><svg id="qr" viewBox="0 0 21 21" shape-rendering="crispEdges"></svg><span class="qrl" aria-hidden="true">🔒</span></div><div><small data-i="m_addr"></small><code>bc1q ···· ···· ···· ····</code><em class="qrn">Illustration only — not a real address. Your personal deposit address and QR code appear inside the app after you sign in.</em></div></div></div></div>
   <div class="bt c3 reveal"><h3 data-i="bn6t"></h3><p data-i="bn6d"></p>
    <div class="ui"><div class="chips"><span>EUR</span><span>USD</span><span>SEK</span><span>NOK</span><span>DKK</span><span>GBP</span><span>AUD</span><span>BTC</span><span>ETH</span><span>SOL</span><span>BNB</span><span>USDT</span></div></div></div>
  </div>
@@ -995,6 +995,7 @@ setTimeout(function(){window.ncAuUpdate()},300);
 })();</script>
 <script src="js/flags.js?v=2"></script>
 <script src="js/install-pro.js?v=1"></script>
+<script src="js/holiday-pro.js?v=4" defer></script>
 <script src="js/security-pro.js?v=2"></script>
 <script src="js/trust-content.js?v=3" defer></script>
 <script src="js/trust-pro.js?v=4" defer></script>
