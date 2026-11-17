@@ -146,7 +146,7 @@
     msgs.forEach(function (m) {
       var dl = dayLabel(m.ts); if (dl !== day) { day = dl; h += '<div class="agd-day">' + esc(dl) + '</div>'; }
       var me = m.from === 'admin';
-      h += '<div class="agd-m' + (me ? ' me' : '') + '">' + (m.img ? imgHtml(m) + (m.text && m.text.indexOf('Photo') < 0 ? '<div>' + esc(m.text) + '</div>' : '') : esc(m.text)) + '<small>' + new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + (me ? (m.read ? ' · Seen' : '') : '') + '</small></div>';
+      h += '<div class="agd-m' + (me ? ' me' : '') + (!m.img && window.__hxIsEmo && window.__hxIsEmo(m.text) ? ' big' : '') + (m.auto ? ' auto' : '') + '">' + (m.auto ? '<small style="text-align:left;margin:0 0 3px">Auto-reply</small>' : '') + (m.img ? imgHtml(m) + (m.text && m.text.indexOf('Photo') < 0 ? '<div>' + esc(m.text) + '</div>' : '') : esc(m.text)) + '<small>' + new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + (me ? (m.read ? ' · Seen' : '') : '') + '</small></div>';
     });
     if (typingNow) h += '<div class="agd-typing">typing…</div>';
     if (!msgs.length) h = '<div class="agd-empty" style="margin:auto"><b>No messages yet</b>Send the first message to start the conversation.</div>';
