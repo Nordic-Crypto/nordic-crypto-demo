@@ -220,7 +220,12 @@
   var ME = function () { try { return (localStorage.getItem('user_email') || '').toLowerCase(); } catch (e) { return ''; } };
   var LSget = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, LSset = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} };
   function isClient() { return !!(ME() && LSget('user_role') !== 'admin' && !document.getElementById('agd') && document.getElementById('mainApp') && document.getElementById('mainApp').getClientRects().length && window.st && st.card && st.card.num); }
-  function busy() { return !!(document.querySelector('.nw,.hx-back,.mask.on,#onboard.on,#designMask.on,.hkn-back')); }
+  function busy() {
+    if (document.querySelector('.nw,.hx-back,.mask.on,#onboard.on,#designMask.on,.hkn-back,.ncw-ov,.dpd-done')) return true;
+    var vis = function (el) { return !!(el && el.offsetWidth > 0 && el.offsetHeight > 0 && getComputedStyle(el).visibility !== 'hidden'); };
+    if (vis(document.getElementById('withdrawModal')) || vis(document.getElementById('chatPanel'))) return true;   // never pop over a form the client is filling in
+    return [].some.call(document.querySelectorAll('[aria-modal="true"],[role="dialog"]'), vis);
+  }
   function usingSkin() { return HOLK.indexOf(curKey()) > -1; }
   function openPicker(k) {
     var mi = document.querySelector('.mi[data-p="cards"]'); if (mi) mi.click();
