@@ -44,10 +44,21 @@
       '#holLand .hd{position:absolute;left:0;right:0;bottom:0;width:100%;height:46px;opacity:.9}' +
       '#holTree{position:relative;padding:56px 0 20px}#holTree .ht{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center}' +
       '#holTree h2{margin:6px 0 10px;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em}#holTree p{margin:0;max-width:440px;opacity:.75;line-height:1.55}#holTree small.k{font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px;opacity:.7}' +
-      '#holTree .tr{position:relative;width:min(100%,340px);aspect-ratio:300/360;margin:0 auto}#holTree .tr svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(0,0,0,.35))}' +
-      '#holTree .bz{position:absolute;width:23%;aspect-ratio:1;margin:-11.5% 0 0 -11.5%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 clamp(11px,3.1vw,14px)/1.15 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);box-shadow:0 10px 22px rgba(0,0,0,.4),0 0 24px rgba(255,255,255,.06),inset 0 -6px 10px rgba(0,0,0,.2);animation:holBz 4s ease-in-out infinite;animation-delay:var(--d)}' +
-      '#holTree .bz b{font-size:1.02em;font-weight:800;opacity:1;white-space:nowrap;letter-spacing:-.02em;font-variant-numeric:tabular-nums}#holTree .bz i{font-style:normal;font-size:.7em;opacity:.9}#holTree .bz span{white-space:nowrap;font-size:.74em;letter-spacing:.12em;text-transform:uppercase;opacity:.92}#holTree .bz u{text-decoration:none;margin-top:3px;padding:1px 6px;border-radius:99px;font-size:.62em;font-weight:800;background:rgba(0,0,0,.34);backdrop-filter:blur(2px)}#holTree .bz u.up{color:#b8ffd6}#holTree .bz u.dn{color:#ffc4c4}#holTree .bz::before{content:"";position:absolute;top:-7%;left:50%;width:22%;height:9%;margin-left:-11%;border-radius:3px 3px 1px 1px;background:linear-gradient(#ffe9a8,#c8922a);box-shadow:0 -4px 0 -1px rgba(255,226,140,.0)}#holTree .bz::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 28% 14%,rgba(255,255,255,.5) 0,rgba(255,255,255,0) 20%);pointer-events:none}' +
-      '@keyframes holBz{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}' +
+      '#holTree .tr{position:relative;width:min(100%,430px);aspect-ratio:300/390;margin:0 auto}#holTree .tr>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}' +
+      '#holTree .tr .gl{position:absolute;left:-12%;right:-12%;top:4%;bottom:-2%;background:radial-gradient(ellipse at 50% 45%,rgba(255,196,92,.20),rgba(255,170,60,.07) 45%,transparent 70%);filter:blur(6px);pointer-events:none}' +
+      '#holTree .lt{animation:holTw 2.6s ease-in-out infinite;animation-delay:var(--t)}@keyframes holTw{0%,100%{opacity:1}50%{opacity:.35}}' +
+      '#holTree .cd{animation:holCd 3.4s ease-in-out infinite;animation-delay:var(--t)}@keyframes holCd{0%,100%{opacity:1}50%{opacity:.62}}' +
+      '#holTree .st{animation:holSt 3s ease-in-out infinite}@keyframes holSt{0%,100%{filter:drop-shadow(0 0 6px rgba(255,200,80,.9)) drop-shadow(0 0 18px rgba(255,170,40,.6))}50%{filter:drop-shadow(0 0 10px rgba(255,214,110,1)) drop-shadow(0 0 30px rgba(255,170,40,.85))}}' +
+      '#holTree .bz{position:absolute;width:21%;aspect-ratio:1;margin:-10.5% 0 0 -10.5%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 clamp(10px,2.9vw,13.5px)/1.12 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);' +
+        'background:radial-gradient(circle at 34% 28%,#3a3f47 0,#16191e 55%,#07080a 100%);border:2.5px solid transparent;background-clip:padding-box;box-shadow:0 0 0 2.5px #c9973f,0 0 0 4px rgba(255,214,140,.35),0 12px 26px rgba(0,0,0,.6),0 0 26px rgba(255,180,60,.25),inset 0 -8px 14px rgba(0,0,0,.5),inset 0 2px 2px rgba(255,255,255,.18);animation:holBz 4s ease-in-out infinite;animation-delay:var(--d);transform-origin:50% -40%}' +
+      '#holTree .bz em{display:block;width:36%;aspect-ratio:1;margin-bottom:3px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.55),0 0 12px rgba(255,255,255,.08)}#holTree .bz em svg{display:block;width:100%;height:100%}' +
+      '#holTree .bz b{font-size:.98em;font-weight:800;white-space:nowrap;letter-spacing:-.02em;font-variant-numeric:tabular-nums}#holTree .bz span{white-space:nowrap;font-size:.62em;letter-spacing:.14em;text-transform:uppercase;opacity:.8;margin-top:1px}' +
+      '#holTree .bz u{text-decoration:none;margin-top:3px;padding:1px 6px;border-radius:99px;font-size:.6em;font-weight:800;background:rgba(0,0,0,.45)}#holTree .bz u.up{color:#5dff9c}#holTree .bz u.dn{color:#ff7a84}' +
+      '#holTree .bz::before{content:"";position:absolute;bottom:100%;left:50%;width:1px;height:var(--h,26px);background:linear-gradient(rgba(255,215,140,.15),rgba(255,215,140,.85));margin-bottom:4px}' +
+      '#holTree .bz::after{content:"";position:absolute;top:-9px;left:50%;width:16%;height:8px;margin-left:-8%;border-radius:3px 3px 1px 1px;background:linear-gradient(#ffe9a8,#b8862a);box-shadow:0 1px 2px rgba(0,0,0,.5)}' +
+      '#holTree .bz i.sh{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 18%,rgba(255,255,255,.35) 0,rgba(255,255,255,0) 22%);pointer-events:none}' +
+      '@keyframes holBz{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}' +
+      '@media (prefers-reduced-motion:reduce){#holTree .lt,#holTree .cd,#holTree .st,#holTree .bz{animation:none}}' +
       '@media (max-width:820px){#holTree .ht{grid-template-columns:1fr;text-align:center}#holTree p{margin:0 auto}}' +
       'html.hol .sh2 h2{text-shadow:0 0 28px rgba(150,200,255,.22)}.hz-plan{display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;padding:5px 11px;border-radius:99px;font:700 12px/1 inherit;color:#fff;background:linear-gradient(135deg,rgba(63,120,200,.9),rgba(40,160,150,.9))}' +
       '#holPill{display:flex;width:max-content;max-width:100%;align-items:center;gap:9px;margin:0 0 16px;padding:7px 14px 7px 10px;border-radius:99px;font:600 13px/1 inherit;color:#fff;background:linear-gradient(135deg,rgba(214,38,44,.9),rgba(22,145,90,.9));box-shadow:0 8px 26px rgba(214,38,44,.28);position:relative;z-index:2}' +
@@ -132,14 +143,71 @@
   function readTicker() { var out = [], seen = {}; [].forEach.call(document.querySelectorAll('#tick > .mi'), function (d) { var sy = d.querySelector('b'), pr = d.querySelector('span.num'), ch = d.querySelector('i'); if (!sy || !pr) return; var k = sy.textContent.trim(); if (seen[k]) return; seen[k] = 1; var pt = pr.textContent.trim().replace(/\.\d+$/, ''); out.push({ s: k, p: pt, c: ch ? ch.textContent.trim() : '', up: ch ? ch.classList.contains('up') : true }); }); 
     if (!out.length && window.__ncP) { [['BTC','bitcoin'],['ETH','ethereum'],['SOL','solana'],['BNB','binancecoin'],['USDT','tether']].forEach(function (L) { var q = window.__ncP[L[1]]; if (q) out.push({ s: L[0], p: '$' + Math.round(q.usd).toLocaleString('en-US'), c: (q.c >= 0 ? '+' : '') + q.c.toFixed(1) + '%', up: q.c >= 0 }); }); }
     return out; }
+  /* candlestick tree: dark fir, glowing green/red candles, warm string lights, ₿ star and gifts (all vector, no images) */
+  function treeSvg() {
+    var seed = 7; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    var o = [], top = 34, base = 318, cx = 150, half = function (y) { var t = (y - top) / (base - top); var tier = t < .36 ? t / .36 * .55 : t < .68 ? .3 + (t - .36) / .32 * .62 : .55 + (t - .68) / .32 * .45; return 14 + tier * 128; };
+    o.push('<svg viewBox="0 0 300 390" aria-hidden="true"><defs>' +
+      '<linearGradient id="hfg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13402b"/><stop offset="1" stop-color="#071d13"/></linearGradient>' +
+      '<pattern id="hnd" width="7" height="6" patternUnits="userSpaceOnUse"><path d="M0 6 3.5 0 7 6" fill="none" stroke="#1d5a3a" stroke-width=".7" opacity=".55"/></pattern>' +
+      '<linearGradient id="hst" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".5" stop-color="#ffc44d"/><stop offset="1" stop-color="#d48a12"/></linearGradient>' +
+      '<linearGradient id="hgb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22252b"/><stop offset="1" stop-color="#0a0b0e"/></linearGradient>' +
+      '<linearGradient id="hrb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a87a2c"/><stop offset=".5" stop-color="#ffe2a0"/><stop offset="1" stop-color="#a87a2c"/></linearGradient>' +
+      '<filter id="hgw" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '</defs>');
+    // fir silhouette, three tiers
+    var tiers = [[34, 128, 66], [92, 218, 104], [168, 318, 142]];
+    var tp = [];
+    tiers.forEach(function (t) { var p = 'M' + cx + ' ' + t[0] + ' Q' + (cx + t[2] * .55) + ' ' + (t[1] - 28) + ' ' + (cx + t[2]) + ' ' + t[1] + ' Q' + cx + ' ' + (t[1] + 12) + ' ' + (cx - t[2]) + ' ' + t[1] + ' Q' + (cx - t[2] * .55) + ' ' + (t[1] - 28) + ' ' + cx + ' ' + t[0] + 'Z'; tp.push(p); o.push('<path d="' + p + '" fill="url(#hfg)"/><path d="' + p + '" fill="url(#hnd)"/>'); });
+    o.push('<defs><clipPath id="htc">' + tp.map(function (p) { return '<path d="' + p + '"/>'; }).join('') + '</clipPath></defs>');
+    // candles
+    var cnd = [];
+    for (var y = 48; y < 312; y += 10.5) {
+      var hw = half(y) - 6, n = Math.max(1, Math.floor(hw * 2 / 11));
+      for (var k = 0; k < n; k++) {
+        if (rnd() < .4) continue;
+        var x = cx - hw + (k + .5) * (hw * 2 / n) + (rnd() - .5) * 3, h = 6 + rnd() * 11, up = rnd() > .45, w = 4;
+        var col = up ? '#36ff8a' : '#ff3d4f';
+        cnd.push('<g class="cd" style="--t:' + (rnd() * 3.4).toFixed(2) + 's"><line x1="' + x.toFixed(1) + '" y1="' + (y - h / 2 - 2.5).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + h / 2 + 2.5).toFixed(1) + '" stroke="' + col + '" stroke-width=".7"/><rect x="' + (x - w / 2).toFixed(1) + '" y="' + (y - h / 2).toFixed(1) + '" width="' + w + '" height="' + h.toFixed(1) + '" rx=".6" fill="' + col + '"/></g>');
+      }
+    }
+    o.push('<g clip-path="url(#htc)"><g filter="url(#hgw)" opacity=".92">' + cnd.join('') + '</g></g>');
+    // string lights: sagging garlands, bulbs sampled along each curve
+    var gar = [[70, 104, 112, 12], [118, 176, 166, 16], [168, 128, 232, 14], [214, 196, 282, 18], [258, 118, 304, 16]], lt = [];
+    gar.forEach(function (g, gi) {
+      var y0 = g[0], hw0 = half(y0) - 2, y1 = g[2], hw1 = half(y1) - 2, x0 = gi % 2 ? cx + hw0 : cx - hw0, x1 = gi % 2 ? cx - hw1 : cx + hw1, mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + g[3];
+      o.push('<path d="M' + x0.toFixed(1) + ' ' + y0 + ' Q' + mx.toFixed(1) + ' ' + my.toFixed(1) + ' ' + x1.toFixed(1) + ' ' + y1 + '" fill="none" stroke="rgba(255,214,140,.35)" stroke-width=".6"/>');
+      for (var q = 0; q <= 1.0001; q += 1 / 22) { var bx = (1 - q) * (1 - q) * x0 + 2 * (1 - q) * q * mx + q * q * x1, by = (1 - q) * (1 - q) * y0 + 2 * (1 - q) * q * my + q * q * y1; lt.push('<circle class="lt" style="--t:' + (rnd() * 2.6).toFixed(2) + 's" cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="1.8" fill="#ffd98a"/>'); }
+    });
+    o.push('<g filter="url(#hgw)">' + lt.join('') + '</g>');
+    // small gold baubles
+    [[120, 250], [190, 150], [214, 286], [96, 300], [168, 210]].forEach(function (b) { o.push('<circle cx="' + b[0] + '" cy="' + b[1] + '" r="5.2" fill="url(#hst)" opacity=".95"/><circle cx="' + (b[0] - 1.6) + '" cy="' + (b[1] - 1.8) + '" r="1.4" fill="#fff" opacity=".7"/>'); });
+    // ₿ star
+    o.push('<g class="st"><circle cx="150" cy="22" r="17" fill="rgba(255,190,70,.18)"/><text x="150" y="33" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="31" fill="url(#hst)">₿</text></g>');
+    // gifts
+    var gifts = [[84, 318, 50, 40], [132, 326, 46, 34], [174, 314, 52, 44], [222, 330, 34, 26], [60, 340, 30, 22]];
+    gifts.forEach(function (g) { var x = g[0], y = g[1], w = g[2], h = g[3]; o.push('<g><rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="2" fill="url(#hgb)" stroke="rgba(255,214,140,.25)" stroke-width=".6"/><rect x="' + (x + w / 2 - 2.5) + '" y="' + y + '" width="5" height="' + h + '" fill="url(#hrb)"/><rect x="' + x + '" y="' + (y + h * .38) + '" width="' + w + '" height="4.5" fill="url(#hrb)"/><path d="M' + (x + w / 2) + ' ' + y + ' c-8 -9 -15 -2 -7 1 M' + (x + w / 2) + ' ' + y + ' c8 -9 15 -2 7 1" fill="none" stroke="#f3cf7e" stroke-width="2.2" stroke-linecap="round"/></g>'); });
+    o.push('</svg>');
+    return o.join('');
+  }
   function tree() {
     var host = document.querySelector('#features'); if (!host || $('#holTree')) return; css();
     var sec = document.createElement('section'); sec.id = 'holTree'; sec.setAttribute('aria-label', 'Holiday tree with live crypto prices');
-    var pos = [[50, 29, '#ff6b72,#a8141b', 0], [34, 47, '#f2b640,#a86400', -1], [66, 49, '#4fd08a,#0b6b40', -2], [24, 70, '#6aa6ff,#1b3f9a', -1.5], [50, 66, '#f56fa4,#8f1245', -.5]];
-    sec.innerHTML = '<div class="wrap ht"><div><small class="k">Season special</small><h2>The market tree</h2><p>Live prices, hanging on the holiday tree. A bit of fun while you look around — rates update on their own.</p></div><div class="tr"><svg viewBox="0 0 300 360" aria-hidden="true"><defs><linearGradient id="htg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c9a62"/><stop offset="1" stop-color="#0c5c3b"/></linearGradient></defs><path d="M150 18 L214 112 H86Z" fill="url(#htg)"/><path d="M150 70 L240 190 H60Z" fill="url(#htg)"/><path d="M150 130 L268 280 H32Z" fill="url(#htg)"/><rect x="132" y="280" width="36" height="46" rx="4" fill="#6b3f1d"/><path d="M150 4l5.6 11.6 12.7 1.8-9.2 9 2.2 12.6L150 33l-11.3 6 2.2-12.6-9.2-9 12.7-1.8z" fill="#ffd166"/></svg>' +
-      pos.map(function (p, i) { var c = p[2].split(','); return '<div class="bz" data-i="' + i + '" style="left:' + p[0] + '%;top:' + p[1] + '%;--d:' + p[3] + 's;background:radial-gradient(circle at 32% 28%,#fff 0,' + c[0] + ' 24%,' + c[1] + ' 78%)"><span>—</span><b></b><u></u></div>'; }).join('') + '</div></div>';
+    var pos = [[50, 31, 0, 30], [68, 45, -1.2, 24], [31, 52, -2.1, 34], [27, 73, -1.5, 22], [71, 70, -.6, 30]];
+    sec.innerHTML = '<div class="wrap ht"><div><small class="k">Season special</small><h2>The market tree</h2><p>Live prices, hanging on the holiday tree. A bit of fun while you look around — rates update on their own.</p></div><div class="tr"><i class="gl"></i>' + treeSvg() +
+      pos.map(function (p, i) { return '<div class="bz" data-i="' + i + '" style="left:' + p[0] + '%;top:' + p[1] + '%;--d:' + p[2] + 's;--h:' + p[3] + 'px"><i class="sh"></i><em>•</em><b></b><span>—</span><u></u></div>'; }).join('') + '</div></div>';
     host.parentNode.insertBefore(sec, host);
-    function upd() { var d = readTicker(); [].forEach.call(sec.querySelectorAll('.bz'), function (b, i) { var x = d[i]; if (!x) return; b.firstChild.textContent = x.s; b.querySelector('b').textContent = x.p; var u = b.querySelector('u'); u.textContent = (x.up ? '▲ ' : '▼ ') + x.c.replace(/^[+\-▲▼\s]+/, ''); u.className = x.up ? 'up' : 'dn'; b.title = x.s + ' ' + x.p + ' ' + x.c; }); }
+    /* coin badges drawn as vectors (crisp at any size); unknown coins get a neat letter badge */
+    var IC = {
+      BTC: '<svg viewBox="0 0 32 32"><defs><linearGradient id="hiB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb84d"/><stop offset="1" stop-color="#f08a00"/></linearGradient></defs><circle cx="16" cy="16" r="16" fill="url(#hiB)"/><path fill="#fff" d="M21.6 14.1c.3-2-1.2-3-3.3-3.8l.7-2.7-1.6-.4-.7 2.6-1.3-.3.7-2.6-1.6-.4-.7 2.7-1-.3-2.2-.5-.4 1.7s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.1c0 .1.1.1.1.1h-.1l-1.1 4.4c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.8 2.1.5 1.2.3-.7 2.7 1.6.4.7-2.7 1.3.3-.7 2.7 1.6.4.7-2.7c2.8.5 4.9.3 5.8-2.2.7-2-.1-3.2-1.5-3.9 1-.2 1.8-.9 2-2.4zm-3.7 5.2c-.5 2-3.9.9-5 .6l.9-3.5c1.1.3 4.6.8 4.1 2.9zm.5-5.2c-.5 1.8-3.3.9-4.2.7l.8-3.2c.9.2 3.9.6 3.4 2.5z"/></svg>',
+      ETH: '<svg viewBox="0 0 32 32"><defs><linearGradient id="hiE" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a9bff"/><stop offset="1" stop-color="#4b5bd6"/></linearGradient></defs><circle cx="16" cy="16" r="16" fill="url(#hiE)"/><g fill="#fff"><path fill-opacity=".6" d="M16.5 4v8.9l7.5 3.3z"/><path d="M16.5 4 9 16.2l7.5-3.3z"/><path fill-opacity=".6" d="M16.5 22v6L24 17.6z"/><path d="M16.5 28v-6L9 17.6z"/><path fill-opacity=".25" d="m16.5 20.6 7.5-4.4-7.5-3.3z"/><path fill-opacity=".6" d="m9 16.2 7.5 4.4v-7.7z"/></g></svg>',
+      SOL: '<svg viewBox="0 0 32 32"><defs><linearGradient id="hiS" x1="8" y1="24" x2="24" y2="8" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9945ff"/><stop offset=".55" stop-color="#5a8dee"/><stop offset="1" stop-color="#14f195"/></linearGradient></defs><circle cx="16" cy="16" r="16" fill="#0b0b14"/><circle cx="16" cy="16" r="15.3" fill="none" stroke="#5a8dee" stroke-opacity=".55" stroke-width="1.2"/><g fill="url(#hiS)"><path d="M10.4 19.9a.6.6 0 0 1 .4-.2h13.4c.3 0 .4.3.2.5l-2.6 2.6a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z"/><path d="M10.4 9.6a.6.6 0 0 1 .4-.2h13.4c.3 0 .4.3.2.5l-2.6 2.6a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z"/><path d="M21.8 14.7a.6.6 0 0 0-.4-.2H8c-.3 0-.4.3-.2.5l2.6 2.6c.1.1.3.2.4.2h13.4c.3 0 .4-.3.2-.5z"/></g></svg>',
+      BNB: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f3ba2f"/><g fill="#fff"><path d="m12.1 14.1 3.9-3.9 3.9 3.9 2.3-2.3L16 5.6l-6.2 6.2z"/><path d="m5.6 16 2.3-2.3 2.3 2.3-2.3 2.3z"/><path d="m12.1 17.9 3.9 3.9 3.9-3.9 2.3 2.3-6.2 6.2-6.2-6.2z"/><path d="m21.8 16 2.3-2.3 2.3 2.3-2.3 2.3z"/><path d="m18.4 16-2.4-2.4-1.8 1.8-.2.2-.4.4 2.4 2.4z"/></g></svg>',
+      USDT: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path fill="#fff" d="M17.9 17.4v0c-.1 0-.7.1-1.9.1-1 0-1.7 0-1.9-.1v0c-3.7-.2-6.5-.8-6.5-1.6s2.8-1.4 6.5-1.6v2.5c.2 0 .9.1 1.9.1 1.2 0 1.8-.1 1.9-.1v-2.5c3.7.2 6.5.8 6.5 1.6s-2.8 1.4-6.5 1.6zm0-3.4v-2.3h5.2V8.3H8.9v3.4h5.2V14c-4.2.2-7.4 1-7.4 2s3.2 1.8 7.4 2v7.2h3.8V18c4.2-.2 7.3-1 7.3-2s-3.1-1.8-7.3-2z"/></svg>',
+      USDC: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#2775ca"/><path fill="#fff" d="M20.1 18.1c0-2.1-1.3-2.9-3.8-3.2-1.8-.2-2.2-.7-2.2-1.6s.6-1.4 1.8-1.4c1.1 0 1.7.4 2 1.3 0 .1.2.2.3.2h1c.2 0 .3-.1.3-.3-.3-1.3-1.3-2.3-2.7-2.5V9.2c0-.2-.1-.3-.3-.3h-.9c-.2 0-.3.1-.3.3v1.4c-1.8.3-2.9 1.4-2.9 2.9 0 2 1.2 2.8 3.7 3.1 1.7.3 2.3.7 2.3 1.7s-.9 1.6-2 1.6c-1.6 0-2.1-.7-2.3-1.5 0-.2-.2-.3-.3-.3h-1.1c-.2 0-.3.1-.3.3.3 1.5 1.2 2.5 3.1 2.8v1.4c0 .2.1.3.3.3h.9c.2 0 .3-.1.3-.3v-1.4c1.9-.3 3.1-1.5 3.1-3.1z"/><path fill="#fff" d="M12.9 24.4c-4.6-1.6-7-6.8-5.3-11.4.9-2.5 2.8-4.4 5.3-5.3.2-.1.3-.3.3-.5v-.9c0-.2-.1-.3-.3-.3h-.1c-5.5 1.7-8.5 7.6-6.8 13.1 1 3.2 3.5 5.7 6.8 6.8.2.1.4 0 .4-.2v-.9c0-.2-.1-.3-.3-.4zm6.2-18.4c-.2-.1-.4 0-.4.2v.9c0 .2.1.4.3.5 4.6 1.6 7 6.8 5.3 11.4-.9 2.5-2.8 4.4-5.3 5.3-.2.1-.3.3-.3.5v.9c0 .2.1.3.3.3h.1c5.5-1.7 8.5-7.6 6.8-13.1-1-3.3-3.5-5.8-6.8-6.9z"/></svg>'
+    };
+    function icon(sym) { return IC[sym] || '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#c9973f"/><text x="16" y="21.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="15" fill="#fff">' + String(sym || '?').charAt(0) + '</text></svg>'; }
+    function upd() { var d = readTicker(); [].forEach.call(sec.querySelectorAll('.bz'), function (b, i) { var x = d[i]; if (!x) return; var em = b.querySelector('em'); if (em.getAttribute('data-s') !== x.s) { em.innerHTML = icon(x.s); em.setAttribute('data-s', x.s); } b.querySelector('span').textContent = x.s; b.querySelector('b').textContent = x.p; var u = b.querySelector('u'); u.textContent = (x.up ? '▲ ' : '▼ ') + x.c.replace(/^[+\-▲▼\s]+/, ''); u.className = x.up ? 'up' : 'dn'; b.title = x.s + ' ' + x.p + ' ' + x.c; }); }
     upd(); setTimeout(upd, 1500); setTimeout(upd, 4000); treeT = setInterval(function () { if (!document.hidden && document.getElementById('holTree')) upd(); }, 5000);
   }
   function untree() { var t = $('#holTree'); if (t) t.remove(); clearInterval(treeT); var pl = $('#holPlan'); if (pl) pl.remove(); }
