@@ -26,7 +26,7 @@
       '#ncNews label{display:block;font-size:12px;color:#8b95a5;margin:12px 0 5px}#ncNews label:first-child{margin-top:0}' +
       '#ncNews input,#ncNews textarea,#ncNews select{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:inherit;font-size:14px;font-family:inherit}' +
       '#ncNews textarea{min-height:110px;resize:vertical}#ncNews .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}' +
-      '#ncNews .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}#ncNews .chip{padding:6px 11px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font-size:12px;cursor:pointer}#ncNews .chip:hover{border-color:#c6ff3d;color:#c6ff3d}' +
+      '#ncNews .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}#ncNews .chip{padding:6px 11px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font-size:12px;cursor:pointer}#ncNews .chip:hover{border-color:#5fe3bf;color:#5fe3bf}' +
       '#ncNews iframe{width:100%;height:560px;border:0;border-radius:12px;background:#eceef2}#ncNews .msg{margin-top:12px;font-size:13px;padding:10px 12px;border-radius:10px}' +
       '#ncNews .ok{background:rgba(34,197,94,.12);color:#4ade80}#ncNews .er{background:rgba(239,68,68,.12);color:#f87171}#ncNews .hist div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}' +
       '#ncNews .stat{display:flex;gap:18px;margin:0 0 14px;font-size:13px;color:#8b95a5}#ncNews .stat b{color:#fff;font-size:18px;display:block}';
