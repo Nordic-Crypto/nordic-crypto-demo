@@ -46,9 +46,9 @@
   var GEM = '<svg viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="v4c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1fffa"/><stop offset=".5" stop-color="#46e8b0"/><stop offset="1" stop-color="#0d5a45"/></linearGradient></defs><polygon points="60,6 100,32 84,86 36,86 20,32" fill="url(#v4c)" opacity=".92"/><polygon points="60,6 100,32 60,44" fill="#fff" opacity=".55"/><polygon points="20,32 60,44 36,86" fill="#06241c" opacity=".35"/><polygon points="60,44 100,32 84,86" fill="#06241c" opacity=".2"/><polyline points="20,32 60,44 100,32" fill="none" stroke="#fff" stroke-opacity=".6"/><polyline points="60,44 36,86 84,86 60,44" fill="none" stroke="#fff" stroke-opacity=".3"/></svg>';
   function promo() {
     var side = $('#sideBar'); if (!side) return; var user = side.querySelector('.umi'), pr = $('#v4Promo');
-    var hol = false; try { hol = !!(window.__holApi && window.__holApi.active && window.__holApi.active()) && !(window.__cardSkins && st.card && (window.__cardSkins.keys || []).indexOf(st.card.design) > -1 && st.card.design !== 'obsidian'); } catch (e) { }
-    var kind = hol ? 'skins' : 'invite';
-    var html = GEM + (kind === 'skins' ? '<i class="v4-eb">NEW CARD DESIGNS</i><b>Holiday card skins</b><span>Snow, lights and Santa for your card.</span><a>See designs →</a>' : '<i class="v4-eb">NORDIC REWARDS</i><b>Invite friends, earn NC</b><span>Share your link and collect bonus points.</span><a>Learn more →</a>');
+    var hol = false; try { hol = !!(window.__holApi && window.__holApi.active && window.__holApi.active()); } catch (e) { }
+    var kind = 'skins';
+    var html = GEM + (kind === 'skins' ? '<i class="v4-eb">NEW CARD DESIGNS</i><b>New card designs</b><span>' + (hol ? 'Snow, lights and Santa for your card.' : 'Fresh premium looks for your card.') + '</span><a>See designs →</a>' : '<i class="v4-eb">NORDIC REWARDS</i><b>Invite friends, earn NC</b><span>Share your link and collect bonus points.</span><a>Learn more →</a>');
     if (!pr) { pr = document.createElement('div'); pr.id = 'v4Promo'; pr.className = 'v4-promo'; pr.setAttribute('role', 'button'); pr.tabIndex = 0;
       var go = function () { var k = pr.getAttribute('data-k'); if (k === 'skins' && window.__cardSkins && window.__cardSkins.show) window.__cardSkins.show(true); else if (typeof window.openClientBonus === 'function') window.openClientBonus(); };
       pr.addEventListener('click', go); pr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
@@ -79,14 +79,8 @@
     chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'
   };
   function titles() {
-    var M = { bdIns: ['Money Flow', IC.bars], bdTx: ['Recent activity', IC.clock], bdCrypto: ['Your assets', IC.gem] };
-    Object.keys(M).forEach(function (id) {
-      var sec = document.getElementById(id), h = sec && sec.querySelector('.bd-ch h3'); if (!h) return;
-      if (!h.previousElementSibling || !h.previousElementSibling.classList.contains('v4-ti')) h.insertAdjacentHTML('beforebegin', '<span class="v4-ti">' + M[id][1] + '</span>');
-      if (en() && h.textContent !== M[id][0]) h.textContent = M[id][0];
-    });
     var k = $('.bd-hero > .bd-k');
-    if (k && en() && !k.querySelector('.v4-i')) k.innerHTML = 'Total Wealth <span class="v4-i" title="Combined value of your accounts">' + IC.info + '</span>';
+    if (k && !k.querySelector('.v4-i')) k.insertAdjacentHTML('beforeend', ' <span class="v4-i" aria-hidden="true">' + IC.info + '</span>');
   }
   function curMore() {
     var cb = $('#bdCur'); if (!cb) return; var n = cb.querySelectorAll('button:not(.v4-more)').length;
@@ -108,19 +102,53 @@
     s.classList.toggle('warn', !full);
   }
   function cardLook() {
-    var pb = document.getElementById('cardBrandDash');
-    if (pb && !pb.querySelector('.v4-wm')) pb.insertAdjacentHTML('beforeend', '<span class="v4-wm"><b>Nordic</b>Crypto</span>');
+    [].forEach.call(document.querySelectorAll('.pay .ptop .pb'), function (pb) { if (!pb.querySelector('.v4-wm')) pb.insertAdjacentHTML('beforeend', '<span class="v4-wm"><b>Nordic</b>Crypto</span>'); });
     var fz = document.querySelector('#bdCardRest .bd-cacts button[data-t="btnFreezeCard"] .bd-ci');
     if (fz && !fz.querySelector('.v4-snow')) fz.innerHTML = '<svg class="v4-snow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/><path d="m9.5 3.5 2.5 2 2.5-2M9.5 20.5l2.5-2 2.5 2M4.3 10.4l3.1-.6-1-3M19.7 13.6l-3.1.6 1 3M6.4 17.2l1-3-3.1-.6M17.6 6.8l-1 3 3.1.6"/></svg>';
-    var n = document.getElementById('cardNetwork1');
-    if (n) n.classList.toggle('v4-isvisa', /VISA/.test(n.innerHTML) && !/circle/.test(n.innerHTML));
+    [].forEach.call(document.querySelectorAll('.pay .card-network'), function (n) { var v = /VISA/.test(n.innerHTML) && !/circle/.test(n.innerHTML); if (n.classList.contains('v4-isvisa') !== v) n.classList.toggle('v4-isvisa', v); });
+  }
+
+  /* translations for the new v4 strings (added once the main dictionary of the language is in) */
+  var TR = {
+    da: { 'New card designs': 'Nye kortdesigns', 'New card designs ❄': 'Nye kortdesigns ❄', 'Fresh premium looks for your card.': 'Friske premium-looks til dit kort.', 'Five more holiday looks to try.': 'Fem flere julelooks at prøve.', 'Total Wealth': 'Samlet formue', 'Money Flow': 'Pengestrøm', 'Recent activity': 'Seneste aktivitet', 'Your assets': 'Dine aktiver', 'Protected': 'Beskyttet', 'Almost protected': 'Næsten beskyttet', 'All systems operational': 'Alle systemer kører', 'Connection problem': 'Forbindelsesproblem', 'Checking…': 'Kontrollerer…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort spærret', 'Available balance': 'Disponibel saldo', 'PERSONAL OVERVIEW': 'PERSONLIGT OVERBLIK', 'Holiday card skins': 'Juledesign til kort', 'Snow, lights and Santa for your card.': 'Sne, lys og julemand til dit kort.', 'See designs →': 'Se designs →', 'Invite friends, earn NC': 'Inviter venner, tjen NC', 'Share your link and collect bonus points.': 'Del dit link og saml bonuspoint.', 'Learn more →': 'Læs mere →', '{a} of {b} steps completed': '{a} af {b} trin fuldført' },
+    fi: { 'New card designs': 'Uudet korttien ulkoasut', 'New card designs ❄': 'Uudet korttien ulkoasut ❄', 'Fresh premium looks for your card.': 'Uusia premium-ulkoasuja korttiisi.', 'Five more holiday looks to try.': 'Viisi muuta jouluista ulkoasua kokeiltavaksi.', 'Total Wealth': 'Kokonaisvarallisuus', 'Money Flow': 'Rahavirta', 'Recent activity': 'Viimeaikainen toiminta', 'Your assets': 'Omaisuutesi', 'Protected': 'Suojattu', 'Almost protected': 'Melkein suojattu', 'All systems operational': 'Kaikki järjestelmät toimivat', 'Connection problem': 'Yhteysongelma', 'Checking…': 'Tarkistetaan…', 'Card active': 'Kortti aktiivinen', 'Card frozen': 'Kortti jäädytetty', 'Available balance': 'Käytettävissä oleva saldo', 'PERSONAL OVERVIEW': 'HENKILÖKOHTAINEN YLEISKATSAUS', 'Holiday card skins': 'Joulukorttien ulkoasut', 'Snow, lights and Santa for your card.': 'Lunta, valoja ja joulupukki korttiisi.', 'See designs →': 'Katso ulkoasut →', 'Invite friends, earn NC': 'Kutsu ystäviä, ansaitse NC', 'Share your link and collect bonus points.': 'Jaa linkkisi ja kerää bonuspisteitä.', 'Learn more →': 'Lue lisää →', '{a} of {b} steps completed': '{a}/{b} vaihetta tehty' },
+    es: { 'New card designs': 'Nuevos diseños de tarjeta', 'New card designs ❄': 'Nuevos diseños de tarjeta ❄', 'Fresh premium looks for your card.': 'Nuevos looks premium para tu tarjeta.', 'Five more holiday looks to try.': 'Cinco looks navideños más por probar.', 'Total Wealth': 'Patrimonio total', 'Money Flow': 'Flujo de dinero', 'Recent activity': 'Actividad reciente', 'Your assets': 'Tus activos', 'Protected': 'Protegida', 'Almost protected': 'Casi protegida', 'All systems operational': 'Todos los sistemas operativos', 'Connection problem': 'Problema de conexión', 'Checking…': 'Comprobando…', 'Card active': 'Tarjeta activa', 'Card frozen': 'Tarjeta congelada', 'Available balance': 'Saldo disponible', 'PERSONAL OVERVIEW': 'RESUMEN PERSONAL', 'Holiday card skins': 'Diseños navideños', 'Snow, lights and Santa for your card.': 'Nieve, luces y Papá Noel para tu tarjeta.', 'See designs →': 'Ver diseños →', 'Invite friends, earn NC': 'Invita amigos, gana NC', 'Share your link and collect bonus points.': 'Comparte tu enlace y gana puntos.', 'Learn more →': 'Más información →', '{a} of {b} steps completed': '{a} de {b} pasos completados' },
+    no: { 'New card designs': 'Nye kortdesign', 'New card designs ❄': 'Nye kortdesign ❄', 'Fresh premium looks for your card.': 'Nye premium-utseender for kortet ditt.', 'Five more holiday looks to try.': 'Fem flere julelooks å prøve.', 'Total Wealth': 'Samlet formue', 'Money Flow': 'Pengestrøm', 'Recent activity': 'Siste aktivitet', 'Your assets': 'Dine eiendeler', 'Protected': 'Beskyttet', 'Almost protected': 'Nesten beskyttet', 'All systems operational': 'Alle systemer fungerer', 'Connection problem': 'Tilkoblingsproblem', 'Checking…': 'Sjekker…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort sperret', 'Available balance': 'Disponibel saldo', 'PERSONAL OVERVIEW': 'PERSONLIG OVERSIKT', 'Holiday card skins': 'Julekortdesign', 'Snow, lights and Santa for your card.': 'Snø, lys og julenisse til kortet ditt.', 'See designs →': 'Se design →', 'Invite friends, earn NC': 'Inviter venner, tjen NC', 'Share your link and collect bonus points.': 'Del lenken din og samle bonuspoeng.', 'Learn more →': 'Les mer →', '{a} of {b} steps completed': '{a} av {b} trinn fullført' },
+    sv: { 'New card designs': 'Nya kortdesigner', 'New card designs ❄': 'Nya kortdesigner ❄', 'Fresh premium looks for your card.': 'Nya premiumlooker för ditt kort.', 'Five more holiday looks to try.': 'Fem fler jullooker att prova.', 'Total Wealth': 'Total förmögenhet', 'Money Flow': 'Pengaflöde', 'Recent activity': 'Senaste aktivitet', 'Your assets': 'Dina tillgångar', 'Protected': 'Skyddat', 'Almost protected': 'Nästan skyddat', 'All systems operational': 'Alla system fungerar', 'Connection problem': 'Anslutningsproblem', 'Checking…': 'Kontrollerar…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort fryst', 'Available balance': 'Tillgängligt saldo', 'PERSONAL OVERVIEW': 'PERSONLIG ÖVERSIKT', 'Holiday card skins': 'Juldesign för kort', 'Snow, lights and Santa for your card.': 'Snö, ljus och tomten till ditt kort.', 'See designs →': 'Se design →', 'Invite friends, earn NC': 'Bjud in vänner, tjäna NC', 'Share your link and collect bonus points.': 'Dela din länk och samla bonuspoäng.', 'Learn more →': 'Läs mer →', '{a} of {b} steps completed': '{a} av {b} steg klara' },
+    fr: { 'New card designs': 'Nouveaux designs de carte', 'New card designs ❄': 'Nouveaux designs de carte ❄', 'Fresh premium looks for your card.': 'De nouveaux looks premium pour votre carte.', 'Five more holiday looks to try.': 'Cinq autres looks de fêtes à essayer.', 'Total Wealth': 'Patrimoine total', 'Money Flow': 'Flux d’argent', 'Recent activity': 'Activité récente', 'Your assets': 'Vos actifs', 'Protected': 'Protégé', 'Almost protected': 'Presque protégé', 'All systems operational': 'Tous les systèmes opérationnels', 'Connection problem': 'Problème de connexion', 'Checking…': 'Vérification…', 'Card active': 'Carte active', 'Card frozen': 'Carte gelée', 'Available balance': 'Solde disponible', 'PERSONAL OVERVIEW': 'APERÇU PERSONNEL', 'Holiday card skins': 'Designs de fêtes', 'Snow, lights and Santa for your card.': 'Neige, lumières et Père Noël pour votre carte.', 'See designs →': 'Voir les designs →', 'Invite friends, earn NC': 'Invitez des amis, gagnez des NC', 'Share your link and collect bonus points.': 'Partagez votre lien et cumulez des points.', 'Learn more →': 'En savoir plus →', '{a} of {b} steps completed': '{a} sur {b} étapes terminées' },
+    de: { 'New card designs': 'Neue Kartendesigns', 'New card designs ❄': 'Neue Kartendesigns ❄', 'Fresh premium looks for your card.': 'Neue Premium-Looks für Ihre Karte.', 'Five more holiday looks to try.': 'Fünf weitere Festtagslooks zum Ausprobieren.', 'Total Wealth': 'Gesamtvermögen', 'Money Flow': 'Geldfluss', 'Recent activity': 'Letzte Aktivität', 'Your assets': 'Ihre Assets', 'Protected': 'Geschützt', 'Almost protected': 'Fast geschützt', 'All systems operational': 'Alle Systeme in Betrieb', 'Connection problem': 'Verbindungsproblem', 'Checking…': 'Wird geprüft…', 'Card active': 'Karte aktiv', 'Card frozen': 'Karte gesperrt', 'Available balance': 'Verfügbares Guthaben', 'PERSONAL OVERVIEW': 'PERSÖNLICHE ÜBERSICHT', 'Holiday card skins': 'Festtags-Kartendesigns', 'Snow, lights and Santa for your card.': 'Schnee, Lichter und Weihnachtsmann für Ihre Karte.', 'See designs →': 'Designs ansehen →', 'Invite friends, earn NC': 'Freunde einladen, NC verdienen', 'Share your link and collect bonus points.': 'Teilen Sie Ihren Link und sammeln Sie Bonuspunkte.', 'Learn more →': 'Mehr erfahren →', '{a} of {b} steps completed': '{a} von {b} Schritten erledigt' }
+  };
+  function regTr() { var N = window.NCI18N; if (!N || !N.add) return false; Object.keys(TR).forEach(function (l) { try { N.add(l, TR[l]); } catch (e) { } }); return true; }
+  if (!regTr()) { var rt = 0, ri = setInterval(function () { if (regTr() || ++rt > 40) clearInterval(ri); }, 250); }
+  window.addEventListener('nc-dict', function () { soon(); });
+  window.addEventListener('nc-lang', function () { soon(); });
+  /* My Cards action buttons: line icons instead of emoji, text still translated */
+  var CBI = {
+    pal: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.7-1.3-.7-2.2 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.2" r="1.2"/><circle cx="15" cy="7.6" r="1.2"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    eyeo: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+    snow: '<path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/><path d="m9.5 3.5 2.5 2 2.5-2M9.5 20.5l2.5-2 2.5 2M4.3 10.4l3.1-.6-1-3M19.7 13.6l-3.1.6 1 3M6.4 17.2l1-3-3.1-.6M17.6 6.8l-1 3 3.1.6"/>',
+    sun: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+    del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>'
+  };
+  function cardBtns() {
+    var N = window.NCI18N, L = N && N.lang || 'en';
+    function tt(en) { var t = N && N.t ? N.t(en) : en; return String(t).replace(/^[^\p{L}\p{N}]+/u, '').trim(); }
+    var frozen = false; try { frozen = String(st.card && st.card.status).toLowerCase() === 'frozen'; } catch (e) { }
+    [['btnChangeDesign', 'pal', '🎨 Change Design'], ['btnShowCvv', null, null], ['btnFreeze', frozen ? 'sun' : 'snow', frozen ? '🔥 Unfreeze Card' : '❄ Freeze Card'], ['btnDeleteCard', 'del', '🗑 Delete Card']].forEach(function (r) {
+      var b = document.getElementById(r[0]); if (!b) return;
+      var ic = r[1], en = r[2];
+      if (r[0] === 'btnShowCvv') { var hid = b.getAttribute('data-v4') === 'h'; if (/👁|🙈/.test(b.textContent)) hid = /🙈/.test(b.textContent); ic = hid ? 'eyeo' : 'eye'; en = hid ? '🙈 Hide CVV' : '👁 Show CVV'; b.setAttribute('data-v4', hid ? 'h' : 's'); }
+      var h = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CBI[ic] + '</svg><span class="nc-no-i18n">' + esc(tt(en)) + '</span>';
+      if (b.getAttribute('data-h') !== h + L || b.innerHTML !== h) { b.innerHTML = h; b.setAttribute('data-h', h + L); b.classList.add('v4-cb'); }
+    });
   }
   function tick() {
     if (staff() || !$('.bd')) return;
     de.classList.add('v4');
-    try { avail(); health(); pill(); heading(); tip(); titles(); curMore(); security(); cardLook(); checkSvc(); promo(); } catch (e) { }
+    [avail, health, pill, heading, tip, titles, curMore, security, cardLook, cardBtns, checkSvc, promo].forEach(function (f) { try { f(); } catch (e) { if (window.__v4dbg) console.warn('[v4]', f.name, e); } });
   }
-  var t = 0; function soon() { clearTimeout(t); t = setTimeout(tick, 120); }
+  var t = 0, runs = 0, rT = 0; function soon() { if (t) return; t = 1; var go = function () { t = 0; if (++runs > 40) return; tick(); }; if (window.Promise) Promise.resolve().then(go); else setTimeout(go, 0); if (!rT) rT = setTimeout(function () { rT = 0; runs = 0; }, 0); }
   new MutationObserver(soon).observe(document.body, { childList: true, subtree: true });
   setTimeout(tick, 600); setInterval(tick, 3000);
 })();
