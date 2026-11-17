@@ -22,8 +22,9 @@
     v = Number(v) || 0; if (sym === 'USD') return '$' + nfix(v, 2);
     var a = Math.abs(v), d = a >= 1000 ? 4 : a >= 1 ? 6 : 8; var s = v.toFixed(d).replace(/\.?0+$/, ''); var p = s.split('.'); p[0] = Number(p[0]).toLocaleString('en-US'); return p.join('.') + ' ' + sym;
   }
-  function pendingUsd() { return (S().withdrawals || []).filter(function (w) { return w && w.status === 'pending'; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0); }
-  function bal(sym) { var s = S(); return sym === 'USD' ? Math.max(0, (Number(s.usd) || 0) - pendingUsd()) : (Number(s[sym.toLowerCase()]) || 0); }
+  function pendingUsd() { return (S().withdrawals || []).filter(function (w) { return w && w.status === 'pending' && !w.asset; }).reduce(function (a, w) { return a + (Number(w.amount) || 0); }, 0); }
+  function pendAsset(sym) { return (S().withdrawals || []).filter(function (w) { return w && w.status === 'pending' && w.asset === sym; }).reduce(function (a, w) { return a + (Number(w.assetAmount) || 0); }, 0); }
+  function bal(sym) { var s = S(); return sym === 'USD' ? Math.max(0, (Number(s.usd) || 0) - pendingUsd()) : Math.max(0, (Number(s[sym.toLowerCase()]) || 0) - pendAsset(sym)); }
   function price(sym) { return sym === 'USD' ? 1 : P[sym] || 0; }
   function dec(sym) { return sym === 'USD' ? 2 : 8; }
   function quote() { var a = parseFloat(Z.amt) || 0, pf = price(Z.from), pt = price(Z.to); if (!(a > 0) || !pf || !pt) return 0; return a * pf / pt; }
