@@ -12,9 +12,9 @@
   }
   function dt(ts) { try { return new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
   var CSS = '.rv{color:#e8ecf4}.rv-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}' +
-    '.rv-b{padding:9px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8ecf4;font-weight:600;font-size:13px;cursor:pointer}.rv-b.on{border-color:#c8ff4d;color:#c8ff4d}.rv-b.p{background:#c8ff4d;color:#0b0f08;border-color:#c8ff4d}.rv-b.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}' +
+    '.rv-b{padding:9px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8ecf4;font-weight:600;font-size:13px;cursor:pointer}.rv-b.on{border-color:#62e8c2;color:#62e8c2}.rv-b.p{background:#62e8c2;color:#0b0f08;border-color:#62e8c2}.rv-b.d{background:rgba(255,82,82,.14);border-color:rgba(255,82,82,.4);color:#ff8a8a}' +
     '.rv-c{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px}.rv-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}' +
-    '.rv-st{color:#c8ff4d;letter-spacing:2px}.rv-st i{font-style:normal;color:rgba(255,255,255,.18)}.rv-t{font-size:15px;line-height:1.55;margin:6px 0 10px}.rv-m{color:#8b95a5;font-size:12.5px}' +
+    '.rv-st{color:#62e8c2;letter-spacing:2px}.rv-st i{font-style:normal;color:rgba(255,255,255,.18)}.rv-t{font-size:15px;line-height:1.55;margin:6px 0 10px}.rv-m{color:#8b95a5;font-size:12.5px}' +
     '.rv-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px}.rv-pill.pending{background:rgba(251,191,36,.14);color:#fbbf24}.rv-pill.approved{background:rgba(52,211,153,.14);color:#34d399}.rv-pill.rejected{background:rgba(255,107,107,.14);color:#ff8f8f}' +
     '.rv-in{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font:inherit;margin:8px 0}';
   function inject() { if ($('#nc-rv-css')) return; var st = document.createElement('style'); st.id = 'nc-rv-css'; st.textContent = CSS; document.head.appendChild(st); }
