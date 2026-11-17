@@ -4678,9 +4678,14 @@ async function adminApproveWithdrawal(email, wdId) {
     var wd = state.withdrawals.find(function (w) { return w.id === wdId; });
     if (!wd) throw new Error('Not found');
     if (wd.status !== 'pending') throw new Error('Already ' + wd.status);
-    if ((state.usd || 0) < wd.amount) { alert('Insufficient balance'); return; }
-
-    state.usd = (state.usd || 0) - wd.amount;
+    if (wd.asset) {
+      var ak = String(wd.asset).toLowerCase();
+      if ((Number(state[ak]) || 0) + 1e-12 < Number(wd.assetAmount)) { alert('Insufficient ' + wd.asset + ' balance'); return; }
+      state[ak] = Math.max(0, Math.round(((Number(state[ak]) || 0) - Number(wd.assetAmount)) * 1e8) / 1e8);
+    } else {
+      if ((state.usd || 0) < wd.amount) { alert('Insufficient balance'); return; }
+      state.usd = (state.usd || 0) - wd.amount;
+    }
 
     if (!Array.isArray(state.txs)) state.txs = [];
     state.txs = state.txs.filter(function(t) {
