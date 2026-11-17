@@ -1542,12 +1542,12 @@ function __wdPost(payload, done, fail) {
     var old = document.getElementById('wdOtpBox'); if (old) old.remove();
     var o = document.createElement('div'); o.id = 'wdOtpBox';
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px';
-    o.innerHTML = '<div style="width:100%;max-width:380px;background:#12140d;border:1px solid rgba(190,255,60,.25);border-radius:20px;padding:24px;color:#fff;font-family:inherit">' +
+    o.innerHTML = '<div style="width:100%;max-width:380px;background:#12140d;border:1px solid rgba(95,227,191,.25);border-radius:20px;padding:24px;color:#fff;font-family:inherit">' +
       '<div style="font-size:20px;font-weight:800;margin-bottom:6px">Confirm withdrawal</div>' +
       '<div id="wdOtpMsg" style="font-size:14px;opacity:.75;margin-bottom:14px;line-height:1.4"></div>' +
       '<input id="wdOtpIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" style="width:100%;box-sizing:border-box;text-align:center;font-size:28px;letter-spacing:10px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0a0b08;color:#fff;outline:none">' +
       '<div style="display:flex;gap:10px;margin-top:16px"><button id="wdOtpNo" type="button" style="flex:1;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;font-weight:700;cursor:pointer">Cancel</button>' +
-      '<button id="wdOtpOk" type="button" style="flex:1;padding:12px;border-radius:12px;border:0;background:#beff3c;color:#0a0b08;font-weight:800;cursor:pointer">Confirm</button></div></div>';
+      '<button id="wdOtpOk" type="button" style="flex:1;padding:12px;border-radius:12px;border:0;background:#5ae0bb;color:#0a0b08;font-weight:800;cursor:pointer">Confirm</button></div></div>';
     document.body.appendChild(o);
     document.getElementById('wdOtpMsg').textContent = msg || 'Enter the 6-digit code we emailed you.';
     var inp = document.getElementById('wdOtpIn'); inp.focus();
