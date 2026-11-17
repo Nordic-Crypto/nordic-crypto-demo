@@ -801,8 +801,8 @@
       var top = Y(Math.max(c.o, c.c)), bh = Math.max(1, Math.abs(Y(c.o) - Y(c.c))); x.fillRect(k * cw + cw * .15, top, cw * .7, bh);
     });
     var last = livePx(T.coin), ly = Y(last);
-    x.strokeStyle = 'rgba(200,255,77,.6)'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(0, ly); x.lineTo(w - padR, ly); x.stroke(); x.setLineDash([]);
-    x.fillStyle = '#c8ff4d'; x.fillRect(w - padR + 2, ly - 9, padR - 4, 18); x.fillStyle = '#071002'; x.font = 'bold 10px ui-monospace,monospace'; x.fillText(fP(last).slice(1), w - padR + 6, ly + 3);
+    x.strokeStyle = 'rgba(98,232,194,.6)'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(0, ly); x.lineTo(w - padR, ly); x.stroke(); x.setLineDash([]);
+    x.fillStyle = '#62e8c2'; x.fillRect(w - padR + 2, ly - 9, padR - 4, 18); x.fillStyle = '#071002'; x.font = 'bold 10px ui-monospace,monospace'; x.fillText(fP(last).slice(1), w - padR + 6, ly + 3);
   }
   window.addEventListener('resize', function () { if (T.open && !T.tvActive) fbDraw(); });
   setInterval(function () { if (T.open && !T.tvActive && !($('txFb') || {}).hidden) fbDraw(); }, 2500);
@@ -1115,5 +1115,5 @@
   window.renderOpenOrders = function () { renderBottom(true); };
   window.cancelOrder = cancelOrder;
   window.refreshOpenOrders = function () { return refreshOrders(true); };
-  try { console.log('%c[NordicCrypto] 📊 Trade Terminal v3.0 loaded', 'color:#c8ff4d;font-weight:bold;font-size:13px'); } catch (e) {}
+  try { console.log('%c[NordicCrypto] 📊 Trade Terminal v3.0 loaded', 'color:#62e8c2;font-weight:bold;font-size:13px'); } catch (e) {}
 })();
