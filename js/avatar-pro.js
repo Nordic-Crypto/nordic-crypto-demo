@@ -32,9 +32,9 @@
       w = document.createElement('div'); w.id = 'ncAvSetW';
       w.style.cssText = 'display:flex;flex-direction:column;align-items:center;margin:0 0 22px;cursor:pointer';
       w.innerHTML = '<div id="ncAvSet" style="width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 32px system-ui;color:#05070a;position:relative;background:linear-gradient(135deg,#8b5cf6,#38bdf8)">' +
-        '<span id="ncAvIni"></span><span style="position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;background:#c8ff3d;border:3px solid #12161d;display:flex;align-items:center;justify-content:center">' +
+        '<span id="ncAvIni"></span><span style="position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;background:#62e8c2;border:3px solid #12161d;display:flex;align-items:center;justify-content:center">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05070a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>' +
-        '<div style="margin-top:10px;font:600 13px system-ui;color:#c8ff3d">' + (RU ? 'Изменить фото' : 'Change photo') + '</div>';
+        '<div style="margin-top:10px;font:600 13px system-ui;color:#62e8c2">' + (RU ? 'Изменить фото' : 'Change photo') + '</div>';
       w.addEventListener('click', openSheet);
       var h = box.querySelector('p.d'); if (h && h.parentNode === box) h.parentNode.insertBefore(w, h.nextSibling); else box.insertBefore(w, box.firstChild);
     }
