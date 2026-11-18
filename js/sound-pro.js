@@ -40,7 +40,8 @@
       o.connect(g); g.connect(bus); o.start(t); o.stop(t + p[2] + .05);
     });
   }
-  function guard(ms) { var n = Date.now(); if (n - last < (ms || 120)) return false; last = n; return true; }
+  /* one sound per moment: many events call two sound functions in a row (chime + notification), so anything within 1.2 s of the last sound is skipped */
+  function guard() { var n = Date.now(); if (n - last < 1200) return false; last = n; return true; }
 
   var S = {
     /* new notification / success: two warm notes, a rising major sixth (G5 → E6) */
@@ -61,11 +62,7 @@
   /* old API → new sounds */
   window.playChime = function () { S.notify(); };
   window.playChatSound = function () { S.chat(); };
-  window.playTone = function (freq, duration) {
-    freq = Number(freq) || 880;
-    if (freq < 300) return S.error();
-    var c = ready(); if (!c || off()) return;
-    bell(Math.min(freq, 1600), 0, { vol: .1, decay: Math.max(.25, Math.min(1, (Number(duration) || .2) * 3)), parts: [[1, 1, Math.max(.25, Math.min(1, (Number(duration) || .2) * 3))], [2, .15, .3]] });
-  };
+  window.playTone = function (freq) { if ((Number(freq) || 880) < 300) S.error(); else S.notify(); };
+  window.playNotificationSound = function () { S.notify(); };
   try { window.getAudioCtx = function () { return ready(); }; } catch (e) { }
 })();
