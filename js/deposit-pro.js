@@ -71,6 +71,7 @@
 
   /* ───── data helpers ───── */
   function refCode() {
+    var dr = S().user && S().user.depositRef; if (dr) return String(dr);
     var e = (localStorage.getItem('user_email') || '').toLowerCase(), h = 5381; for (var i = 0; i < e.length; i++) h = ((h << 5) + h + e.charCodeAt(i)) >>> 0;
     var A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', o = ''; for (var k = 0; k < 6; k++) { o += A[h % A.length]; h = Math.floor(h / A.length) + 7 * (k + 1); } return 'NC-' + o;
   }
