@@ -498,15 +498,17 @@
         var data = await res.json();
         if (data && data.ok && data.coins) {
           window._exPricesCache = data.coins;
+          var chg = false;
           if (window.st) {
             data.coins.forEach(function (c) {
-              if (c.symbol === 'BTC') window.st.btcP = c.usd;
-              if (c.symbol === 'ETH') window.st.ethP = c.usd;
+              var v = Number(c.usd); if (!(v > 0)) return;
+              if (c.symbol === 'BTC') { if (window.st.btcP !== v) chg = true; window.st.btcP = v; window.__pxSrcTs = Date.now(); }
+              if (c.symbol === 'ETH') { if (window.st.ethP !== v) chg = true; window.st.ethP = v; }
             });
           }
           if (typeof window.renderExchangeCoins === 'function') window.renderExchangeCoins();
           if (typeof window.renderExchangeDash === 'function') window.renderExchangeDash();
-          if (typeof window.render === 'function') window.render();
+          if (chg && typeof window.render === 'function') window.render();
         }
       } catch (e) {}
     }, 3000);
