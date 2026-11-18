@@ -243,9 +243,9 @@
   setInterval(function () {
     var m = $('mask'); if (!m) return;
     var on = m.classList.contains('on') && modeAdd() && !window.adminViewingEmail;
-    if (on) { m.classList.add('dv-hide'); if (!isOpen()) open(); }
+    if (on) { if (!m.classList.contains('dv-hide')) m.classList.add('dv-hide'); if (!isOpen()) open(); }
     else if (!m.classList.contains('on')) { /* keep it hidden between openings so a later openModal('add') never shows the old box */ }
-    else { m.classList.remove('dv-hide'); if (isOpen() && step !== 3) close(true); }
+    else { if (m.classList.contains('dv-hide')) m.classList.remove('dv-hide'); if (isOpen() && step !== 3) close(true); }
   }, 120);
 
   /* ───────── render ───────── */
