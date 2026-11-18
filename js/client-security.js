@@ -94,7 +94,7 @@
       '<div class="cs-stars" id="csRS" role="radiogroup" aria-label="Rating"></div>' +
       '<textarea id="csRT" class="cs-in" rows="4" maxlength="400" placeholder="What do you like? What could be better?" style="font-weight:500;resize:vertical"></textarea><div class="cs-s" id="csRC" style="text-align:right">0 / 400</div>' +
       '<div style="display:flex;gap:8px"><input id="csRN" class="cs-in" maxlength="30" placeholder="Name to show" value="' + esc(def) + '"><input id="csRL" class="cs-in" maxlength="40" placeholder="City, Country (optional)"></div>' +
-      '<label class="cs-s" style="display:flex;gap:10px;align-items:flex-start;margin-top:10px"><input id="csRK" type="checkbox" style="margin-top:3px;accent-color:#c8ff4d"><span>I agree that NordicCrypto may publish this review with the name and city shown above.</span></label>' +
+      '<label class="cs-s" style="display:flex;gap:10px;align-items:flex-start;margin-top:10px"><input id="csRK" type="checkbox" style="margin-top:3px;accent-color:#62e8c2"><span>I agree that NordicCrypto may publish this review with the name and city shown above.</span></label>' +
       '<div id="csRM" class="cs-s" style="min-height:18px;margin-top:6px"></div><button class="cs-btn" id="csRG">Send review</button></div>';
     document.body.appendChild(sov);
     sov.addEventListener('click', function (e) { if (e.target === sov) sclose(); }); $('csRx').onclick = sclose;
@@ -221,7 +221,7 @@
 
   function init() {
     var sm = $('settingsMask');
-    if (sm) { new MutationObserver(function () { if (sm.classList.contains('on')) opened(); }).observe(sm, { attributes: true, attributeFilter: ['class'] }); }
+    if (sm) { var wasOn = sm.classList.contains('on'); new MutationObserver(function () { var on = sm.classList.contains('on'); if (on && !wasOn) opened(); wasOn = on; }).observe(sm, { attributes: true, attributeFilter: ['class'] }); }
     if (typeof window.openWithdraw === 'function') { var o = window.openWithdraw; window.openWithdraw = function () { var r = o.apply(this, arguments); addSaveBtn(); paintPayees(); loadPayees(); return r; }; }
   }
 
