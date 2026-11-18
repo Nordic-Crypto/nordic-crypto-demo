@@ -763,8 +763,13 @@ function loadPrices() {
       if (d && d.btc && d.eth) {
         var prevBtc = st.btcP || d.btc;
         var prevEth = st.ethP || d.eth;
-        st.btcP = d.btc;
-        st.ethP = d.eth;
+        /* one price source only: the live multi-price feed wins when it is fresh, and a fallback/cached
+           quote never overwrites a real one — otherwise the balance flips between two sources every 30 s */
+        var fresh = window.__pxSrcTs && Date.now() - window.__pxSrcTs < 120000;
+        if (!fresh && !((d.fallback || d.cached) && st.btcP > 0)) { st.btcP = d.btc; st.ethP = d.eth; }
+        d = { btc: st.btcP || d.btc, eth: st.ethP || d.eth };
+        if (Math.abs(prevBtc - d.btc) < 1e-9 && Math.abs(prevEth - d.eth) < 1e-9 && window.__pxPaintedOnce) return;
+        window.__pxPaintedOnce = true;
 
         var btcPriceEl = document.getElementById('btcPrice');
         if (btcPriceEl) btcPriceEl.textContent = fmt(d.btc);
