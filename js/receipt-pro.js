@@ -17,9 +17,9 @@
 
   var css = document.createElement('style');
   css.textContent =
-    '.rcp{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}.rcp-b{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:12px 16px;border-radius:14px;border:1px solid rgba(200,255,77,.4);background:rgba(200,255,77,.1);color:#d6ff5c;font:800 14px inherit;font-family:inherit;cursor:pointer;transition:.18s}' +
-    '.rcp-b:hover{background:rgba(200,255,77,.18);transform:translateY(-1px)}.rcp-b:active{transform:scale(.98)}.rcp-b svg{width:18px;height:18px;flex:none}.rcp-b[disabled]{opacity:.6;cursor:wait}.rcp-b.ld svg{animation:rcpSp .8s linear infinite}@keyframes rcpSp{to{transform:rotate(360deg)}}' +
-    'html[data-theme="light"] .rcp-b{background:#eef7d8;border-color:rgba(63,114,0,.45);color:#2f5a00}html[data-theme="light"] .rcp-b:hover{background:#e3f1c4}';
+    '.rcp{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}.rcp-b{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:12px 16px;border-radius:14px;border:1px solid rgba(98,232,194,.4);background:rgba(98,232,194,.1);color:#8ff3d6;font:800 14px inherit;font-family:inherit;cursor:pointer;transition:.18s}' +
+    '.rcp-b:hover{background:rgba(98,232,194,.18);transform:translateY(-1px)}.rcp-b:active{transform:scale(.98)}.rcp-b svg{width:18px;height:18px;flex:none}.rcp-b[disabled]{opacity:.6;cursor:wait}.rcp-b.ld svg{animation:rcpSp .8s linear infinite}@keyframes rcpSp{to{transform:rotate(360deg)}}' +
+    'html[data-theme="light"] .rcp-b{background:#e3f7f0;border-color:rgba(10,122,86,.45);color:#075c41}html[data-theme="light"] .rcp-b:hover{background:#e3f1c4}';
   document.head.appendChild(css);
   var DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>';
 
@@ -120,6 +120,19 @@
       try { kit.save(build(r.receipt, kit), 'NordicCrypto-receipt-' + r.receipt.no + '.pdf'); say(btn, 'Receipt downloaded ✓', false); } catch (e) { console.error(e); try { saveBlob(build(r.receipt, { Doc: MiniDoc, save: saveBlob, PW: PW0, PH: PH0, tw: tw0 }), 'NordicCrypto-receipt-' + r.receipt.no + '.pdf'); say(btn, 'Receipt downloaded ✓', false); } catch (e2) { say(btn, 'Could not create the PDF. Please try again.', true); } }
     });
   }
+
+  /* used by tx-card.js: issue a receipt and save the PDF, resolves {ok, error} */
+  window.NCReceipt = {
+    issue: function (req) {
+      return post('issueReceipt', req).then(function (r) {
+        if (!r || !r.ok) return { ok: false, error: (r && r.error) || 'Could not create the receipt.' };
+        var kit = getKit(), name = 'NordicCrypto-receipt-' + r.receipt.no + '.pdf';
+        try { kit.save(build(r.receipt, kit), name); return { ok: true }; } catch (e) {
+          try { saveBlob(build(r.receipt, { Doc: MiniDoc, save: saveBlob, PW: PW0, PH: PH0, tw: tw0 }), name); return { ok: true }; } catch (e2) { return { ok: false, error: 'Could not create the PDF. Please try again.' }; }
+        }
+      });
+    }
+  };
 
   /* ───── button inside the transaction window ───── */
   var _open = window.openTxDetails;
