@@ -42,7 +42,7 @@
 '#settingsMask.sv5 .sv-prof{display:flex;align-items:center;gap:14px;padding:14px;border-radius:22px;margin-bottom:14px;background:linear-gradient(135deg,#123129,#0c1a17 55%,#16130a);border:1px solid rgba(98,232,194,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}' +
 '#settingsMask.sv5 #ncAvSetW{margin:0!important;flex:none;display:flex!important;flex-direction:column;align-items:center;gap:4px}#settingsMask.sv5 #ncAvSet{width:68px!important;height:68px!important;margin:0!important}#settingsMask.sv5 #ncAvSetW>div:last-child{font-size:11.5px!important;margin:0!important}' +
 '#settingsMask.sv5 .sv-pk{min-width:0;flex:1}#settingsMask.sv5 .sv-pk .settings-row{padding:0!important;background:none!important;border:0!important;margin:0!important}#settingsMask.sv5 #settingsName{font-size:18px!important;font-weight:720!important}#settingsMask.sv5 #settingsEmail{font-size:12.5px!important;color:#9fb6ae!important;overflow-wrap:anywhere;margin-top:2px}#settingsMask.sv5 #settingsRole{margin-top:8px!important;display:inline-block;padding:3px 9px!important;border-radius:99px!important;background:rgba(98,232,194,.14)!important;color:#62e8c2!important;font-size:10.5px!important;font-weight:750!important}' +
-'#settingsMask.sv5 .sv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);margin-bottom:14px;position:sticky;top:-22px;z-index:4!important;backdrop-filter:blur(12px)}' +
+'#settingsMask.sv5 .sv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:16px;background:#131a1c;border:1px solid rgba(255,255,255,.07);margin-bottom:14px;position:sticky;top:-22px;z-index:4!important;backdrop-filter:blur(12px)}' +
 '#settingsMask.sv5 .sv-tab{height:40px;border-radius:12px;border:0;background:none;color:#a7b3ae;font:inherit;font-weight:650;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}#settingsMask.sv5 .sv-tab svg{width:16px;height:16px}#settingsMask.sv5 .sv-tab.on{background:rgba(98,232,194,.14);color:#62e8c2;box-shadow:inset 0 0 0 1px rgba(98,232,194,.35)}#settingsMask.sv5 .sv-tab em{width:8px;height:8px;border-radius:50%;background:#ffc24a;box-shadow:0 0 0 3px rgba(255,194,74,.18)}' +
 '#settingsMask.sv5.sv-acc [data-sv="sec"],#settingsMask.sv5.sv-sec [data-sv="acc"],#settingsMask.sv5 [data-sv="hide"]{display:none!important}' +
 '#settingsMask.sv5 #ncLangRow{padding:14px!important;border-radius:20px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;margin:0 0 12px!important}#settingsMask.sv5 #ncLangRowLabel,#settingsMask.sv5 .settings-label{font-size:11.5px!important;font-weight:700!important;letter-spacing:.06em!important;text-transform:uppercase;color:#86968f!important;margin:0 2px 10px!important}' +
@@ -82,9 +82,9 @@
   var tab = 'acc';
   function rowIcon(btn, icon) { if (btn.querySelector('.sv-ri')) return; var l = btn.lastElementChild; if (l && /^[→›>]$/.test(l.textContent.trim())) l.style.display = 'none'; var f = btn.firstElementChild; if (f) f.textContent = f.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); var i = document.createElement('span'); i.className = 'sv-ri'; i.innerHTML = SV[icon]; btn.insertBefore(i, btn.firstChild); var c = document.createElement('span'); c.className = 'sv-ch'; c.innerHTML = SV.chev; btn.appendChild(c); }
   function settings() {
-    var m = $('settingsMask'); if (!m || !m.classList.contains('on')) return;
+    var m = $('settingsMask'); if (!m) return;
     var box = m.querySelector('.box'); if (!box) return;
-    m.classList.add('sv5'); m.classList.toggle('sv-acc', tab === 'acc'); m.classList.toggle('sv-sec', tab === 'sec');
+    function cl(c, v) { if (m.classList.contains(c) !== v) m.classList.toggle(c, v); } cl('sv5', true); cl('sv-acc', tab === 'acc'); cl('sv-sec', tab === 'sec');
     if (!box.querySelector('.sv-au')) {
       var au = document.createElement('div'); au.className = 'sv-au'; au.innerHTML = '<i></i><i></i>'; box.insertBefore(au, box.firstChild);
       var g = document.createElement('div'); g.className = 'sv-grab'; box.insertBefore(g, au.nextSibling);
@@ -109,25 +109,28 @@
     }
     var tabs = box.querySelector('.sv-tabs');
     if (tabs) {
-      [].forEach.call(tabs.children, function (b) { b.classList.toggle('on', b.getAttribute('data-t') === tab); b.setAttribute('aria-selected', b.getAttribute('data-t') === tab); });
+      [].forEach.call(tabs.children, function (b) { b.classList.toggle('on', b.getAttribute('data-t') === tab); var as = String(b.getAttribute('data-t') === tab); if (b.getAttribute('aria-selected') !== as) b.setAttribute('aria-selected', as); });
       var off = !!box.querySelector('#csCard .cs-pill.off'), sb = tabs.querySelector('[data-t="sec"]'), em = sb && sb.querySelector('em');
       if (off && sb && !em) { em = document.createElement('em'); sb.appendChild(em); } else if (!off && em) em.remove();
     }
     /* which tab each block belongs to */
-    var lr = $('ncLangRow'); if (lr) lr.setAttribute('data-sv', 'acc');
+    var lr = $('ncLangRow'); if (lr && lr.getAttribute('data-sv') !== 'acc') lr.setAttribute('data-sv', 'acc');
     [].forEach.call(box.querySelectorAll('.settings-section'), function (sc) {
       if (sc.getAttribute('data-sv') === 'hide') return;
-      if (sc.querySelector('#btnChangePassword,#btnChangeEmail')) sc.setAttribute('data-sv', 'sec');
-      else if (sc.querySelector('#btnDeleteAccount')) sc.setAttribute('data-sv', 'acc');
+      var want = sc.querySelector('#btnChangePassword,#btnChangeEmail') ? 'sec' : sc.querySelector('#btnDeleteAccount') ? 'acc' : null; if (want && sc.getAttribute('data-sv') !== want) sc.setAttribute('data-sv', want);
     });
-    var cs = $('csCard'); if (cs) cs.setAttribute('data-sv', 'sec');
-    var inst = $('ncInstRow'); if (inst) { inst.setAttribute('data-sv', 'acc'); var mact = box.querySelector('.mact'); if (mact && inst.compareDocumentPosition(mact) & Node.DOCUMENT_POSITION_FOLLOWING) { } else if (mact) box.insertBefore(inst, mact); if (!inst.querySelector('.sv-ri')) { inst.textContent = inst.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); var ii = document.createElement('span'); ii.className = 'sv-ri'; ii.innerHTML = SV.app; inst.insertBefore(ii, inst.firstChild); } }
+    var cs = $('csCard'); if (cs && cs.getAttribute('data-sv') !== 'sec') cs.setAttribute('data-sv', 'sec');
+    var inst = $('ncInstRow'); if (inst) { if (inst.getAttribute('data-sv') !== 'acc') inst.setAttribute('data-sv', 'acc'); var mact = box.querySelector('.mact'); if (mact && inst.compareDocumentPosition(mact) & Node.DOCUMENT_POSITION_FOLLOWING) { } else if (mact) box.insertBefore(inst, mact); if (!inst.querySelector('.sv-ri')) { inst.textContent = inst.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); var ii = document.createElement('span'); ii.className = 'sv-ri'; ii.innerHTML = SV.app; inst.insertBefore(ii, inst.firstChild); } }
     var cp = $('btnChangePassword'); if (cp) rowIcon(cp, 'key');
     var ce = $('btnChangeEmail'); if (ce) rowIcon(ce, 'mail');
     var del = $('btnDeleteAccount'); if (del) rowIcon(del, 'trash');
     var lo = $('btnLogout'); if (lo && !lo.querySelector('svg')) { lo.textContent = lo.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); lo.insertAdjacentHTML('afterbegin', SV.out); }
   }
-  setInterval(settings, 300);
-  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#settingsBtn')) { tab = 'acc'; setTimeout(settings, 30); } }, true);
+  /* run synchronously (before paint) whenever the window opens or its content changes — no old-design flash */
+  var busy = false, wasOn = false, mo = null;
+  function run() { if (busy) return; busy = true; try { var m = $('settingsMask'); var on = !!(m && m.classList.contains('on')); if (on && !wasOn) tab = 'acc'; wasOn = on; settings(); } catch (e) {} if (mo) mo.takeRecords(); busy = false; }
+  function hook() { var m = $('settingsMask'); if (!m || mo) return !!mo; run(); mo = new MutationObserver(run); mo.observe(m, { attributes: true, attributeFilter: ['class', 'style'], childList: true, subtree: true }); return true; }
+  if (!hook()) { var bo = new MutationObserver(function () { if (hook()) bo.disconnect(); }); bo.observe(document.documentElement, { childList: true, subtree: true }); document.addEventListener('DOMContentLoaded', hook); }
+  setInterval(function () { hook(); var m = $('settingsMask'); if (m && m.classList.contains('on')) run(); }, 1000);
   window.addEventListener('nc-lang', function () { var tb = document.querySelector('#settingsMask .sv-tabs'); if (tb) { tb.querySelector('[data-t="acc"] span').textContent = T('acc'); tb.querySelector('[data-t="sec"] span').textContent = T('sec'); } });
 })();
