@@ -113,6 +113,13 @@
   function ccPill(cc) { return cc === 'ZZ' ? '<span class="ap-mute">Unknown</span>' : '<span style="display:inline-flex;align-items:center;gap:7px"><span style="font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);letter-spacing:.04em">' + cc + '</span>' + esc(cName(cc)) + '</span>'; }
   function kycPill(s) { return s === 'approved' ? '<span class="ap-pill ok">Verified</span>' : s === 'pending' ? '<span class="ap-pill warn">KYC pending</span>' : s === 'rejected' ? '<span class="ap-pill bad">Rejected</span>' : '<span class="ap-pill mute">Not started</span>'; }
   function typePill(t) { return t === 'banking' ? '<span class="ap-pill vio">Banking</span>' : t === 'exchange' ? '<span class="ap-pill cyan">Exchange</span>' : '<span class="ap-pill mute">—</span>'; }
+  function walletCell(u) {
+    var n = u.walletCount || 0;
+    if (!n) return '<span class="ap-pill mute">—</span>';
+    var tip = (u.wallets || []).map(function (w) { return (w.label || 'Wallet') + ': ' + (w.address || '') + (w.verified ? ' ✓' : ' (watch)'); }).join('\n');
+    var v = u.walletVerified || 0;
+    return '<span class="ap-pill ok" title="' + esc(tip) + '" style="cursor:help">' + n + (n > 1 ? ' wallets' : ' wallet') + (v ? ' · ' + v + '✓' : '') + '</span>';
+  }
 
   /* ---------- nav icons ---------- */
   function fixNav() {
@@ -247,6 +254,7 @@
       if (f === 'unverified') return kyc(u) !== 'approved';
       if (f === 'unread') return (u.unreadChat || 0) > 0;
       if (f === 'zero') return !(u.balance > 0);
+      if (f === 'wallet') return (u.walletCount || 0) > 0;
       return true;
     });
     var k = S.sort.k, d = S.sort.d;
@@ -270,9 +278,9 @@
       $('apCsv').onclick = exportCsv; $('apCr').onclick = function () { load(true); };
     }
     if (!S.loaded) { box.innerHTML = '<div class="ap-card" style="padding:20px">' + [1, 2, 3, 4, 5].map(function () { return '<div class="ap-skel" style="margin:16px 0"></div>'; }).join('') + '</div>'; return; }
-    var all = S.users, cnt = { all: all.length, banking: 0, exchange: 0, verified: 0, unverified: 0, unread: 0, zero: 0 };
-    all.forEach(function (u) { if (u.accountType === 'banking') cnt.banking++; if (u.accountType === 'exchange') cnt.exchange++; if (kyc(u) === 'approved') cnt.verified++; else cnt.unverified++; if (u.unreadChat) cnt.unread++; if (!(u.balance > 0)) cnt.zero++; });
-    var defs = [['all', 'All'], ['banking', 'Banking'], ['exchange', 'Exchange'], ['verified', 'Verified'], ['unverified', 'Unverified'], ['unread', 'Unread chat'], ['zero', 'Zero balance']];
+    var all = S.users, cnt = { all: all.length, banking: 0, exchange: 0, verified: 0, unverified: 0, unread: 0, zero: 0, wallet: 0 };
+    all.forEach(function (u) { if (u.accountType === 'banking') cnt.banking++; if (u.accountType === 'exchange') cnt.exchange++; if (kyc(u) === 'approved') cnt.verified++; else cnt.unverified++; if (u.unreadChat) cnt.unread++; if (!(u.balance > 0)) cnt.zero++; if ((u.walletCount || 0) > 0) cnt.wallet++; });
+    var defs = [['all', 'All'], ['banking', 'Banking'], ['exchange', 'Exchange'], ['verified', 'Verified'], ['unverified', 'Unverified'], ['unread', 'Unread chat'], ['zero', 'Zero balance'], ['wallet', 'Wallet linked']];
     $('apChips').innerHTML = defs.map(function (d) { return '<button class="ap-chip ' + (S.filter === d[0] ? 'on' : '') + '" data-f="' + d[0] + '">' + d[1] + ' <em>' + cnt[d[0]] + '</em></button>'; }).join('');
     var cc = {}; all.forEach(function (u) { var k = ccOf(u); cc[k] = (cc[k] || 0) + 1; });
     var ks = Object.keys(cc).sort(function (a, b) { return a === 'ZZ' ? 1 : b === 'ZZ' ? -1 : cc[b] - cc[a] || cName(a).localeCompare(cName(b)); });
@@ -282,14 +290,14 @@
     var rows = list.slice((S.page - 1) * PAGE, S.page * PAGE);
     function th(k, l, cls) { var on = S.sort.k === k; return '<th class="s ' + (cls || '') + '" data-s="' + k + '">' + l + (on ? '<span class="arr">' + (S.sort.d > 0 ? '↑' : '↓') + '</span>' : '') + '</th>'; }
     box.className = '';
-    ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
+    ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('walletCount', 'Wallet', 'hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
           '<td class="hide-m">' + ccPill(ccOf(u)) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b>' + (u.cryptoUsd > 0 ? '<small style="display:block;font-weight:500;opacity:.6;font-size:11px">cash ' + usd(u.__cash) + ' · crypto ' + usd(u.cryptoUsd) + '</small>' : '') + '</td>' +
           '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
-          '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH' + (u.cryptoUsd > 0 ? '<br><span style="opacity:.75">≈ ' + usd(u.cryptoUsd) + '</span>' : '') + '</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
+          '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH' + (u.cryptoUsd > 0 ? '<br><span style="opacity:.75">≈ ' + usd(u.cryptoUsd) + '</span>' : '') + '</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m">' + walletCell(u) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
           '<td><div class="acts"><button class="ap-btn sm ic" data-act="add" data-e="' + esc(u.email) + '" title="Add balance">' + ic('wallet') + '</button><button class="ap-btn sm ic" data-act="view" data-e="' + esc(u.email) + '" title="View as client">' + ic('eye') + '</button><button class="ap-btn sm" data-open="' + esc(u.email) + '">Open</button></div></td></tr>';
-      }).join('') : '<tr><td colspan="11"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
+      }).join('') : '<tr><td colspan="12"><div class="ap-empty">' + ic('users') + (S.users.length ? 'No clients match your filters' : 'No clients yet') + '</div></td></tr>') +
       '</tbody></table></div><div class="ap-foot"><span>' + list.length + ' of ' + all.length + ' clients</span><span style="display:flex;gap:8px;align-items:center"><button class="ap-btn sm" data-p="-1" ' + (S.page <= 1 ? 'disabled' : '') + '>Prev</button>Page ' + S.page + ' / ' + pages + '<button class="ap-btn sm" data-p="1" ' + (S.page >= pages ? 'disabled' : '') + '>Next</button></span></div></div>';
     var cnE = $('navClientsCount'); if (cnE) cnE.textContent = all.length;
   }
