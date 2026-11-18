@@ -65,6 +65,22 @@
     joined: ['Joined', 'Tilmeldt', 'Liittynyt', 'Registrado', 'Registrert', 'Registrerad', 'Inscrit', 'Beigetreten'],
     qualified: ['Qualified', 'Kvalificeret', 'Ehdot täytetty', 'Cumple requisitos', 'Kvalifisert', 'Kvalificerad', 'Éligible', 'Qualifiziert'],
     what: ['NC are loyalty points with no cash value. Collect them to reach higher levels.', 'NC er loyalitetspoint uden kontantværdi. Saml dem for at nå højere niveauer.', 'NC ovat kanta-asiakaspisteitä ilman rahallista arvoa. Kerää niitä noustaksesi tasoissa.', 'Los NC son puntos de fidelidad sin valor monetario. Acumúlalos para subir de nivel.', 'NC er lojalitetspoeng uten kontantverdi. Samle dem for å nå høyere nivåer.', 'NC är lojalitetspoäng utan kontantvärde. Samla dem för att nå högre nivåer.', 'Les NC sont des points de fidélité sans valeur monétaire. Cumulez-les pour monter de niveau.', 'NC sind Treuepunkte ohne Geldwert. Sammeln Sie sie, um höhere Stufen zu erreichen.'],
+    boxT: ['Lucky Box', 'Lykkeboks', 'Onnenlaatikko', 'Caja de la suerte', 'Lykkeboks', 'Lyckobox', 'Boîte chance', 'Glücksbox'],
+    boxS: ['A free surprise every day — tap the box to open it.', 'En gratis overraskelse hver dag — tryk på boksen for at åbne den.', 'Ilmainen yllätys joka päivä — avaa laatikko napauttamalla.', 'Una sorpresa gratis cada día: toca la caja para abrirla.', 'En gratis overraskelse hver dag — trykk på boksen for å åpne den.', 'En gratis överraskning varje dag — tryck på boxen för att öppna den.', 'Une surprise gratuite chaque jour — touchez la boîte pour l’ouvrir.', 'Jeden Tag eine Gratis-Überraschung — tippen Sie auf die Box.'],
+    golden: ['Golden box! Your 7-day streak gives better chances today.', 'Gyldne boks! Din 7-dages stime giver bedre chancer i dag.', 'Kultainen laatikko! 7 päivän putkesi antaa paremmat mahdollisuudet tänään.', '¡Caja dorada! Tu racha de 7 días te da mejores probabilidades hoy.', 'Gyllen boks! 7-dagersrekken din gir bedre sjanser i dag.', 'Gyllene box! Din 7-dagarssvit ger bättre chanser i dag.', 'Boîte dorée ! Votre série de 7 jours améliore vos chances aujourd’hui.', 'Goldene Box! Ihre 7-Tage-Serie bringt heute bessere Chancen.'],
+    tapOpen: ['Tap to open', 'Tryk for at åbne', 'Avaa napauttamalla', 'Toca para abrir', 'Trykk for å åpne', 'Tryck för att öppna', 'Touchez pour ouvrir', 'Zum Öffnen tippen'],
+    youWon: ['You won', 'Du vandt', 'Voitit', 'Has ganado', 'Du vant', 'Du vann', 'Vous gagnez', 'Gewonnen'],
+    r0: ['Common', 'Almindelig', 'Tavallinen', 'Común', 'Vanlig', 'Vanlig', 'Commun', 'Gewöhnlich'],
+    r1: ['Rare', 'Sjælden', 'Harvinainen', 'Rara', 'Sjelden', 'Sällsynt', 'Rare', 'Selten'],
+    r2: ['Epic', 'Episk', 'Eeppinen', 'Épica', 'Episk', 'Episk', 'Épique', 'Episch'],
+    r3: ['Legendary', 'Legendarisk', 'Legendaarinen', 'Legendaria', 'Legendarisk', 'Legendarisk', 'Légendaire', 'Legendär'],
+    nice: ['Nice!', 'Fedt!', 'Hienoa!', '¡Genial!', 'Kult!', 'Snyggt!', 'Super !', 'Super!'],
+    nextBox: ['Next box in {t}', 'Næste boks om {t}', 'Seuraava laatikko {t} kuluttua', 'Próxima caja en {t}', 'Neste boks om {t}', 'Nästa box om {t}', 'Prochaine boîte dans {t}', 'Nächste Box in {t}'],
+    todayWon: ['Today you won +{n} NC', 'I dag vandt du +{n} NC', 'Tänään voitit +{n} NC', 'Hoy has ganado +{n} NC', 'I dag vant du +{n} NC', 'I dag vann du +{n} NC', 'Aujourd’hui : +{n} NC', 'Heute gewonnen: +{n} NC'],
+    chances: ['Chances', 'Chancer', 'Todennäköisyydet', 'Probabilidades', 'Sjanser', 'Chanser', 'Probabilités', 'Chancen'],
+    myNC: ['My NC rewards', 'Mine NC-belønninger', 'NC-palkintoni', 'Mis recompensas NC', 'Mine NC-belønninger', 'Mina NC-belöningar', 'Mes récompenses NC', 'Meine NC-Prämien'],
+    openBox: ['Open the box', 'Åbn boksen', 'Avaa laatikko', 'Abrir la caja', 'Åpne boksen', 'Öppna boxen', 'Ouvrir la boîte', 'Box öffnen'],
+    h_box: ['Lucky Box', 'Lykkeboks', 'Onnenlaatikko', 'Caja de la suerte', 'Lykkeboks', 'Lyckobox', 'Boîte chance', 'Glücksbox'],
     close: ['Close', 'Luk', 'Sulje', 'Cerrar', 'Lukk', 'Stäng', 'Fermer', 'Schließen'],
     chipT: ['Your NC rewards', 'Dine NC-belønninger', 'NC-palkintosi', 'Tus recompensas NC', 'Dine NC-belønninger', 'Dina NC-belöningar', 'Vos récompenses NC', 'Ihre NC-Prämien'],
     ready: ['Ready to collect', 'Klar til at hente', 'Valmis lunastettavaksi', 'Listo para recoger', 'Klar til å hentes', 'Redo att hämtas', 'Prêt à récupérer', 'Bereit zum Abholen'],
@@ -171,6 +187,7 @@
 '#ncp .np-cta{width:100%;height:54px;border-radius:17px;border:0;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:750;font-size:15.5px;line-height:1;font-family:inherit;cursor:pointer;color:#2a1a02;background:linear-gradient(135deg,#ffe7a3,#f3c85a 45%,#d99a1c);box-shadow:0 14px 34px -10px rgba(243,200,90,.55),inset 0 1px 0 rgba(255,255,255,.6);transition:transform .15s,filter .15s;position:relative;overflow:hidden}' +
 '#ncp .np-cta:hover{filter:brightness(1.05);transform:translateY(-1px)}#ncp .np-cta:active{transform:scale(.98)}#ncp .np-cta[disabled]{cursor:default;filter:none;transform:none;background:rgba(255,255,255,.06);color:#a7b3ae;box-shadow:none;border:1px solid rgba(255,255,255,.08)}#ncp .np-cta .ncp-coin{width:24px;height:24px}' +
 '#ncp .np-cta:not([disabled]):before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 48%,transparent 62%);animation:ncpGl 3s ease-in-out infinite}' +
+'#ncp .np-lb{display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:12px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .15s}#ncp .np-lb:hover{transform:translateY(-1px)}#ncp .np-lb.np-lbr{border-color:rgba(98,232,194,.45);background:linear-gradient(135deg,rgba(98,232,194,.12),rgba(98,232,194,.03))}#ncp .np-lb.np-lbg{border-color:rgba(243,200,90,.55);background:linear-gradient(135deg,rgba(243,200,90,.18),rgba(243,200,90,.04))}#ncp .np-lbi{width:46px;height:46px;flex:none}#ncp .np-lbi svg{width:46px;height:46px}#ncp .np-lb .np-k{flex:1;min-width:0}#ncp .np-lb .np-k b{display:block;font-size:14px}#ncp .np-lb .np-k span{display:block;font-size:12px;color:#93a09a;margin-top:2px;line-height:1.35}html[data-theme="light"] #ncp .np-lb{background:#fff;border-color:rgba(15,23,42,.08)}' +
 '#ncp .np-note{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#93a09a;margin-top:12px;line-height:1.45}#ncp .np-note .ncp-i{width:15px;height:15px;margin-top:1px;color:#7d8c86}' +
 /* missions */
 '#ncp .np-mi{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);margin-bottom:8px}' +
@@ -220,7 +237,7 @@
     return loading;
   }
   function loadRef() { return post('getRewards', {}).then(function (r) { if (r && r.ok) { R = r; if (isOpen() && tab === 'invite') paint(); } return R; }); }
-  function readyCount() { if (!D) return 0; var n = D.daily && D.daily.ready ? 1 : 0; (D.missions || []).forEach(function (m) { if (m.ready) n++; }); return n; }
+  function readyCount() { if (!D) return 0; var n = (D.daily && D.daily.ready ? 1 : 0) + (D.box && D.box.ready ? 1 : 0); (D.missions || []).forEach(function (m) { if (m.ready) n++; }); return n; }
 
   /* ───────── header chip ───────── */
   function chip() {
@@ -299,7 +316,8 @@
       return '<h3>' + ic('gift') + esc(T('dailyT')) + (streak > 0 ? '<span class="np-fl">' + ic('fire') + esc(T('streak', { n: streak })) + '</span>' : '') + '</h3><p>' + esc(d.broken && ready ? T('broken') : T('dailyS')) + '</p>' +
         '<div class="np-days">' + tiles + '</div>' +
         (ready ? '<button type="button" class="np-cta" data-a="daily">' + coin(24) + esc(T('collect', { n: tbl[(d.next || 1) - 1] })) + '</button>' : '<button type="button" class="np-cta" disabled>' + ic('clock') + '<span data-cd>' + esc(T('nextIn', { t: left() })) + '</span></button>') +
-        '<div class="np-note">' + ic('fire') + '<span>' + esc(T('keep')) + '</span></div>';
+        '<div class="np-note">' + ic('fire') + '<span>' + esc(T('keep')) + '</span></div>' +
+        '<button type="button" class="np-lb' + (D.box && D.box.ready ? ' np-lbr' : '') + (D.box && D.box.golden ? ' np-lbg' : '') + '" data-a="box"><span class="np-lbi">' + boxSvg(D.box && D.box.golden, 'mini') + '</span><span class="np-k"><b>' + esc(T('boxT')) + '</b><span>' + esc(D.box && D.box.ready ? (D.box.golden ? T('golden') : T('boxS')) : (D.box && D.box.last ? T('todayWon', { n: D.box.last.a }) : T('boxS'))) + '</span></span>' + ic('chev') + '</button>';
     }
     if (tab === 'missions') {
       var ms = (D.missions || []).slice().sort(function (a, b) { return (b.ready - a.ready) || (a.done - b.done); });
@@ -314,8 +332,8 @@
       var hs = D.hist || [];
       if (!hs.length) return '<div class="np-empty">' + coin(54) + '<br>' + esc(T('noHist')) + '</div>';
       return hs.map(function (e) {
-        var lab = e.type === 'daily' ? T('h_daily', { n: e.d || 1 }) : e.type === 'welcome' ? T('h_welcome') : e.type === 'import' ? T('h_import') : e.type === 'invite' ? T('h_invite', { n: e.n || 1 }) : K['m_' + e.type] ? T('m_' + e.type) : e.type;
-        var icn = e.type === 'daily' ? 'fire' : e.type === 'welcome' || e.type === 'import' ? 'gift' : MIC[e.type] || 'star';
+        var lab = e.type === 'box' ? T('h_box') + (e.g ? ' ★' : '') : e.type === 'daily' ? T('h_daily', { n: e.d || 1 }) : e.type === 'welcome' ? T('h_welcome') : e.type === 'import' ? T('h_import') : e.type === 'invite' ? T('h_invite', { n: e.n || 1 }) : K['m_' + e.type] ? T('m_' + e.type) : e.type;
+        var icn = e.type === 'box' ? 'gift' : e.type === 'daily' ? 'fire' : e.type === 'welcome' || e.type === 'import' ? 'gift' : MIC[e.type] || 'star';
         return '<div class="np-hi"><div class="np-t">' + ic(icn) + '</div><div class="np-k"><b>' + esc(lab) + '</b><span>' + esc(dt(e.ts)) + '</span></div><div class="np-a">+' + num(e.a) + '</div></div>';
       }).join('');
     }
@@ -382,6 +400,7 @@
     var k = a.getAttribute('data-a');
     if (k === 'close') return close();
     if (k === 'retry') { D = null; paint(); load(); return; }
+    if (k === 'box') { close(); setTimeout(openBox, 330); return; }
     if (k === 'daily') return claim(a, { kind: 'daily' });
     if (k === 'mission') return claim(a, { kind: 'mission', id: a.getAttribute('data-id') });
     if (k === 'go') return go(a.getAttribute('data-id'));
@@ -396,6 +415,112 @@
     m.addEventListener('touchend', function () { if (y0 == null) return; m.style.transition = ''; if (dy > 110) close(); else m.style.transform = ''; y0 = null; });
   }
   window.addEventListener('nc-lang', function () { setTimeout(function () { var c = $('ncChip'); if (c) c._sig = ''; chip(); if (isOpen()) paint(); }, 60); });
+
+
+  /* ───────── Lucky Box (the "Bonus" button) ───────── */
+  function boxSvg(golden, mode) {
+    var i = ++cid, b1 = golden ? '#ffe39a' : '#2fbf8f', b2 = golden ? '#c8921a' : '#0d4a3a', b3 = golden ? '#8a5a0c' : '#06291f', r1 = golden ? '#bff7e6' : '#ffe7a3', r2 = golden ? '#45cfa8' : '#d99a1c';
+    return '<svg viewBox="0 0 200 200" class="lbx-svg" aria-hidden="true"><defs>' +
+      '<linearGradient id="lb' + i + 'a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + b1 + '"/><stop offset="1" stop-color="' + b2 + '"/></linearGradient>' +
+      '<linearGradient id="lb' + i + 'b" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="' + b3 + '"/><stop offset=".5" stop-color="' + b2 + '"/><stop offset="1" stop-color="' + b3 + '"/></linearGradient>' +
+      '<linearGradient id="lb' + i + 'c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + r1 + '"/><stop offset="1" stop-color="' + r2 + '"/></linearGradient></defs>' +
+      '<ellipse cx="100" cy="182" rx="62" ry="9" fill="#000" opacity=".35"/>' +
+      '<g class="lbx-body"><rect x="42" y="96" width="116" height="80" rx="10" fill="url(#lb' + i + 'a)"/><rect x="42" y="96" width="116" height="80" rx="10" fill="url(#lb' + i + 'b)" opacity=".35"/>' +
+      '<rect x="91" y="96" width="18" height="80" fill="url(#lb' + i + 'c)"/><rect x="42" y="96" width="116" height="10" fill="#000" opacity=".18"/>' +
+      '<path d="M54 112h10M54 122h6" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/></g>' +
+      '<g class="lbx-lid"><rect x="34" y="74" width="132" height="28" rx="8" fill="url(#lb' + i + 'a)"/><rect x="34" y="74" width="132" height="9" rx="6" fill="#fff" opacity=".22"/><rect x="91" y="74" width="18" height="28" fill="url(#lb' + i + 'c)"/>' +
+      '<path d="M100 74c-14-26-44-22-38-6 4 10 24 8 38 6z" fill="url(#lb' + i + 'c)"/><path d="M100 74c14-26 44-22 38-6-4 10-24 8-38 6z" fill="url(#lb' + i + 'c)"/><circle cx="100" cy="72" r="8" fill="' + r2 + '"/><circle cx="97" cy="69" r="3" fill="#fff" opacity=".6"/></g>' +
+      (mode === 'mini' ? '' : '<g class="lbx-spark" fill="#fff"><path d="M160 46l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/><path d="M36 58l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M170 120l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/></g>') + '</svg>';
+  }
+  function rarity(a) { return a >= 250 ? 3 : a >= 50 ? 2 : a >= 20 ? 1 : 0; }
+  var RC = [['#9fe9d2', '98,232,194'], ['#7db7ff', '111,178,255'], ['#c3a6ff', '180,156,255'], ['#ffd56b', '243,200,90']];
+  function boxCss() {
+    if ($('lbxCss')) return; var s = document.createElement('style'); s.id = 'lbxCss';
+    s.textContent =
+'#lbx{position:fixed;inset:0;z-index:100062;display:none;align-items:center;justify-content:center;font-family:inherit;color:#eef5f2}#lbx.on{display:flex}' +
+'#lbx .lbx-bd{position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 45%,rgba(16,52,42,.985),rgba(3,7,9,.99));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .3s}#lbx.in .lbx-bd{opacity:1}#lbx.g .lbx-bd{background:radial-gradient(60% 50% at 50% 45%,rgba(72,52,10,.985),rgba(6,5,2,.99))}' +
+'#lbx .lbx-st{position:relative;width:min(420px,calc(100vw - 32px));text-align:center;padding:20px 0 calc(16px + env(safe-area-inset-bottom));opacity:0;transform:scale(.94);transition:opacity .3s,transform .35s cubic-bezier(.2,.9,.25,1)}#lbx.in .lbx-st{opacity:1;transform:none}' +
+'#lbx .lbx-x{position:absolute;top:-6px;right:0;width:40px;height:40px;border-radius:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#dbe5e1;cursor:pointer;display:grid;place-items:center}#lbx .lbx-x svg{width:16px;height:16px}' +
+'#lbx h2{margin:0;font-size:24px;font-weight:780;letter-spacing:-.02em;background:linear-gradient(90deg,#ffe7a3,#62e8c2);-webkit-background-clip:text;background-clip:text;color:transparent}#lbx .lbx-sub{margin:6px auto 0;max-width:320px;font-size:13px;color:#a9bab4;line-height:1.45}' +
+'#lbx .lbx-stage{position:relative;width:260px;height:260px;margin:14px auto 8px;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+'#lbx .lbx-rays{position:absolute;inset:-40px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(var(--rc,98,232,194),.22) 0 8deg,transparent 8deg 22deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%);opacity:.45;animation:lbxSpin 14s linear infinite;transition:opacity .4s}' +
+'@keyframes lbxSpin{to{transform:rotate(360deg)}}' +
+'#lbx .lbx-glow{position:absolute;left:50%;top:55%;width:180px;height:180px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(var(--rc,98,232,194),.55),transparent 65%);filter:blur(6px);animation:lbxPulse 2.4s ease-in-out infinite}@keyframes lbxPulse{50%{transform:translate(-50%,-50%) scale(1.15);opacity:.7}}' +
+'#lbx .lbx-svg{position:relative;width:240px;height:240px;margin-top:6px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.45));animation:lbxFloat 3s ease-in-out infinite}@keyframes lbxFloat{50%{transform:translateY(-8px)}}' +
+'#lbx .lbx-lid{transform-box:fill-box;transform-origin:50% 100%;transition:transform .7s cubic-bezier(.3,1.4,.4,1),opacity .6s}#lbx .lbx-spark{animation:lbxTw 1.6s ease-in-out infinite}@keyframes lbxTw{50%{opacity:.3}}' +
+'#lbx.shake .lbx-svg{animation:lbxShake .9s cubic-bezier(.36,.07,.19,.97) both}@keyframes lbxShake{10%,90%{transform:translate(-1px,0) rotate(-1deg)}20%,80%{transform:translate(3px,0) rotate(3deg)}30%,50%,70%{transform:translate(-6px,0) rotate(-6deg)}40%,60%{transform:translate(6px,0) rotate(6deg)}}' +
+'#lbx.open .lbx-lid{transform:translate(-40px,-120px) rotate(-38deg);opacity:0}#lbx.open .lbx-rays{opacity:1;animation-duration:5s}#lbx.open .lbx-svg{animation:none}' +
+'#lbx .lbx-tap{white-space:nowrap;display:inline-flex;align-items:center;gap:8px;margin-top:2px;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:650;color:#e6efeb;animation:lbxPulse2 1.8s ease-in-out infinite}@keyframes lbxPulse2{50%{transform:scale(1.05)}}' +
+'#lbx .lbx-res{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.3);opacity:0;transition:transform .6s cubic-bezier(.2,1.5,.4,1),opacity .3s;pointer-events:none;width:100%}#lbx.won .lbx-res{transform:translate(-50%,-50%) scale(1);opacity:1}' +
+'#lbx .lbx-res .lbx-rr{display:inline-block;padding:5px 12px;border-radius:99px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#07110d;background:var(--rcol,#9fe9d2);box-shadow:0 8px 24px rgba(var(--rc),.5)}' +
+'#lbx .lbx-res .lbx-yw{display:block;margin-top:10px;font-size:13px;color:#cfdcd7}#lbx .lbx-res .lbx-am{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;font-size:54px;font-weight:820;letter-spacing:-.03em;line-height:1;color:#fff;text-shadow:0 6px 30px rgba(var(--rc),.6)}#lbx .lbx-res .lbx-am .ncp-coin{width:50px;height:50px}' +
+'#lbx.won .lbx-svg{opacity:.18;filter:blur(2px);transition:opacity .4s,filter .4s}' +
+'#lbx .lbx-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}#lbx .lbx-b{height:52px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#e6efeb;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}#lbx .lbx-b.lbx-p{border:0;color:#2a1a02;background:linear-gradient(135deg,#ffe7a3,#f3c85a 45%,#d99a1c);box-shadow:0 14px 34px -10px rgba(243,200,90,.55)}#lbx .lbx-b[disabled]{opacity:.6;cursor:default}' +
+'#lbx .lbx-cd{margin-top:6px;font-size:13px;color:#a9bab4}#lbx .lbx-msg{min-height:18px;margin-top:8px;font-size:12.5px;color:#ff8d9a}' +
+'#lbx details{margin-top:12px;text-align:left;font-size:12px;color:#93a39e}#lbx summary{cursor:pointer;text-align:center;list-style:none;font-weight:650}#lbx summary::-webkit-details-marker{display:none}#lbx .lbx-odds{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-top:8px}#lbx .lbx-odds div{padding:7px 8px;border-radius:10px;background:rgba(255,255,255,.05);text-align:center}#lbx .lbx-odds b{display:block;color:#fff;font-size:12.5px}' +
+'#lbx .lbx-part{position:absolute;left:50%;top:50%;width:22px;height:22px;pointer-events:none;transition:transform 1.1s cubic-bezier(.15,.7,.3,1),opacity 1.1s}#lbx .lbx-part .ncp-coin{width:22px;height:22px}#lbx .lbx-part.lbx-c{width:8px;height:12px;border-radius:2px}' +
+'@media (prefers-reduced-motion:reduce){#lbx *{animation:none!important;transition:none!important}}';
+    document.head.appendChild(s);
+  }
+  var lbx = null, lbBusy = false, lbT = null;
+  function boxLeft() { var d = new Date(); d.setHours(24, 0, 0, 0); var b = D && D.box ? (D.box.boxTs || 0) + 12 * 36e5 : 0, ms = Math.max(0, Math.max(d.getTime(), b) - Date.now()); var h = Math.floor(ms / 36e5), m = Math.floor(ms % 36e5 / 6e4), s = Math.floor(ms % 6e4 / 1e3); return h + ':' + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2); }
+  function openBox() {
+    if (!isClient()) return; boxCss();
+    if (!lbx) { lbx = document.createElement('div'); lbx.id = 'lbx'; lbx.className = 'nc-no-i18n'; lbx.setAttribute('data-nci18n', 'off'); lbx.setAttribute('role', 'dialog'); lbx.setAttribute('aria-modal', 'true'); document.body.appendChild(lbx); lbx.addEventListener('click', boxClick); }
+    var go = function () { paintBox(); lbx.classList.add('on'); requestAnimationFrame(function () { requestAnimationFrame(function () { lbx.classList.add('in'); }); }); };
+    if (D) go(); else { load().then(go); }
+    clearInterval(lbT); lbT = setInterval(function () { var c = lbx.querySelector('[data-bcd]'); if (c) c.textContent = T('nextBox', { t: boxLeft() }); }, 1000);
+  }
+  function closeBox() { if (!lbx) return; lbx.classList.remove('in'); clearInterval(lbT); setTimeout(function () { lbx.classList.remove('on', 'shake', 'open', 'won'); }, 300); }
+  function paintBox(res) {
+    var b = (D && D.box) || {}, golden = !!b.golden, ready = !!b.ready && !res;
+    lbx.classList.toggle('g', golden);
+    var r = res ? rarity(res.a) : 0, rc = RC[r];
+    lbx.style.setProperty('--rc', res ? rc[1] : golden ? '243,200,90' : '98,232,194'); lbx.style.setProperty('--rcol', rc[0]);
+    var odds = (b.odds || []).map(function (o) { return '<div><b>' + o[0] + ' NC</b>' + o[1] + '%</div>'; }).join('');
+    lbx.innerHTML = '<div class="lbx-bd" data-a="x"></div><div class="lbx-st"><button type="button" class="lbx-x" data-a="x" aria-label="' + esc(T('close')) + '">' + ic('x') + '</button>' +
+      '<h2>' + esc(T('boxT')) + (golden ? ' ★' : '') + '</h2><p class="lbx-sub">' + esc(golden ? T('golden') : T('boxS')) + '</p>' +
+      '<div class="lbx-stage" data-a="' + (ready ? 'open' : '') + '"><div class="lbx-rays"></div><div class="lbx-glow"></div>' + boxSvg(golden) +
+      '<div class="lbx-res"><span class="lbx-rr">' + esc(T('r' + r)) + '</span><span class="lbx-yw">' + esc(T('youWon')) + '</span><div class="lbx-am">' + coin(50) + '<span data-won>+0</span></div></div></div>' +
+      (ready ? '<div class="lbx-tap" data-a="open">' + ic('gift') + esc(T('tapOpen')) + '</div>' : res ? '' : '<div class="lbx-cd">' + (b.last ? esc(T('todayWon', { n: b.last.a })) + ' · ' : '') + '<span data-bcd>' + esc(T('nextBox', { t: boxLeft() })) + '</span></div>') +
+      '<div class="lbx-acts">' + (res ? '<button type="button" class="lbx-b" data-a="nc">' + esc(T('myNC')) + '</button><button type="button" class="lbx-b lbx-p" data-a="x">' + esc(T('nice')) + '</button>' : ready ? '<button type="button" class="lbx-b" data-a="nc">' + esc(T('myNC')) + '</button><button type="button" class="lbx-b lbx-p" data-a="open">' + esc(T('openBox')) + '</button>' : '<button type="button" class="lbx-b" data-a="x">' + esc(T('close')) + '</button><button type="button" class="lbx-b lbx-p" data-a="nc">' + esc(T('myNC')) + '</button>') + '</div>' +
+      '<div class="lbx-msg" aria-live="polite"></div>' + (odds ? '<details><summary>' + esc(T('chances')) + ' ▾</summary><div class="lbx-odds">' + odds + '</div></details>' : '') + '</div>';
+    if (res) lbx.classList.add('open', 'won');
+  }
+  function burst(a) {
+    var st = lbx.querySelector('.lbx-stage'); if (!st) return; var cols = ['#62e8c2', '#ffd56b', '#7db7ff', '#c3a6ff', '#ff9fb2'], n = 14 + rarity(a) * 8;
+    for (var i = 0; i < n; i++) (function (i) {
+      var p = document.createElement('div'), isCoin = i % 3 === 0; p.className = 'lbx-part' + (isCoin ? '' : ' lbx-c'); if (isCoin) p.innerHTML = coin(22); else p.style.background = cols[i % cols.length];
+      st.appendChild(p); var ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 120;
+      requestAnimationFrame(function () { requestAnimationFrame(function () { p.style.transform = 'translate(' + (Math.cos(ang) * dist - 11) + 'px,' + (Math.sin(ang) * dist - 60) + 'px) rotate(' + (Math.random() * 540) + 'deg)'; p.style.opacity = '0'; }); });
+      setTimeout(function () { p.remove(); }, 1300);
+    })(i);
+  }
+  function boxClick(e) {
+    var a = e.target.closest('[data-a]'); if (!a) return; var k = a.getAttribute('data-a');
+    if (k === 'x') return closeBox();
+    if (k === 'nc') { closeBox(); setTimeout(function () { open('daily'); }, 320); return; }
+    if (k === 'open') {
+      if (lbBusy || !(D && D.box && D.box.ready)) return; lbBusy = true;
+      lbx.classList.add('shake'); try { if (window.NCSound) window.NCSound.tick(); } catch (x) { }
+      var t0 = Date.now(), before = D.bal;
+      post('ncClaim', { kind: 'box', day: localDay() }).then(function (r) {
+        setTimeout(function () {
+          lbBusy = false; lbx.classList.remove('shake');
+          if (!r || !r.ok) { var m = lbx.querySelector('.lbx-msg'); if (m) m.textContent = (r && r.error) || T('err'); return; }
+          D = r.nc; chip(); var amt = r.claimed.a;
+          paintBox({ a: amt }); lbx.classList.remove('open', 'won'); void lbx.offsetWidth; lbx.classList.add('open');
+          setTimeout(function () { lbx.classList.add('won'); burst(amt); try { if (window.NCSound) (rarity(amt) >= 2 ? window.NCSound.success : window.NCSound.notify)(); } catch (x) { } var w = lbx.querySelector('[data-won]'), t1 = performance.now(); (function f(t) { var q = Math.min(1, (t - t1) / 900), ease = 1 - Math.pow(1 - q, 3); if (w) w.textContent = '+' + num(Math.round(amt * ease)); if (q < 1) requestAnimationFrame(f); })(t1); var c = $('ncChip'); if (c) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); } }, 450);
+          try { document.dispatchEvent(new CustomEvent('nc:bonus:granted', { detail: { amount: amt, type: 'box' } })); } catch (x) { }
+          void before;
+        }, Math.max(0, 950 - (Date.now() - t0)));
+      });
+    }
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lbx && lbx.classList.contains('on')) { e.stopPropagation(); closeBox(); } }, true);
+  /* the page's own inline script defines openClientBonus later (old "+$5" pop-up) — lock ours in so it can never appear */
+  try { Object.defineProperty(window, 'openClientBonus', { configurable: true, get: function () { return openBox; }, set: function () { } }); } catch (e) { window.openClientBonus = openBox; }
+  window.NCLuckyBox = { open: openBox, close: closeBox };
 
   /* ───────── old NC system: keep its API quiet so nothing pops up any more ───────── */
   window.NC_BONUS = {
