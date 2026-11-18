@@ -97,7 +97,7 @@
   function modeAdd() { try { return typeof mode !== 'undefined' && mode === 'add'; } catch (e) { return false; } }
 
   /* ───────── data ───────── */
-  function refCode() { var e = (localStorage.getItem('user_email') || '').toLowerCase(), h = 5381; for (var i = 0; i < e.length; i++) h = ((h << 5) + h + e.charCodeAt(i)) >>> 0; var A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', o = ''; for (var k = 0; k < 6; k++) { o += A[h % A.length]; h = Math.floor(h / A.length) + 7 * (k + 1); } return 'NC-' + o; }
+  function refCode() { var dr = S().user && S().user.depositRef; if (dr) return String(dr); var e = (localStorage.getItem('user_email') || '').toLowerCase(), h = 5381; for (var i = 0; i < e.length; i++) h = ((h << 5) + h + e.charCodeAt(i)) >>> 0; var A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', o = ''; for (var k = 0; k < 6; k++) { o += A[h % A.length]; h = Math.floor(h / A.length) + 7 * (k + 1); } return 'NC-' + o; }
   var CN = { SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', DE: 'Germany', FR: 'France', ES: 'Spain', IT: 'Italy', NL: 'Netherlands', GB: 'United Kingdom', US: 'United States', CA: 'Canada', AU: 'Australia', IE: 'Ireland', PL: 'Poland', LT: 'Lithuania', EE: 'Estonia', LV: 'Latvia' };
   function holderName() { var u = S().user || {}, c = S().card || {}; return u.name || localStorage.getItem('user_name') || c.name || c.holder || ''; }
   function groupIban(x) { return String(x || '').replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim(); }
@@ -222,11 +222,29 @@
   }
   window.NCDeposit = { open: function () { if (typeof window.openModal === 'function') window.openModal('add'); else open(); }, close: close };
 
+  /* open the new window in the same moment as openModal('add') — the old one must never flash first */
+  (function hook() {
+    var f = window.openModal;
+    if (typeof f === 'function' && !f.__dv) {
+      var w = function (m) {
+        var mk = $('mask'), take = m === 'add' && !window.adminViewingEmail;
+        if (take && mk) mk.classList.add('dv-hide');
+        var r = f.apply(this, arguments);
+        if (take) { if (mk) mk.classList.add('dv-hide'); if (!isOpen()) open(); }
+        return r;
+      };
+      w.__dv = 1; for (var k in f) { try { w[k] = f[k]; } catch (e) { } } window.openModal = w;
+    }
+    setTimeout(hook, 800);
+  })();
+  /* hidden from the very first paint while the new window is in charge */
+  (function () { var st = document.createElement('style'); st.textContent = '#mask.dv-hide,#mask.dv-hide *{transition:none!important;animation:none!important}'; document.head.appendChild(st); })();
   /* take over the "add" mode of #mask; "transfer" mode stays the old window */
   setInterval(function () {
     var m = $('mask'); if (!m) return;
     var on = m.classList.contains('on') && modeAdd() && !window.adminViewingEmail;
     if (on) { m.classList.add('dv-hide'); if (!isOpen()) open(); }
+    else if (!m.classList.contains('on')) { /* keep it hidden between openings so a later openModal('add') never shows the old box */ }
     else { m.classList.remove('dv-hide'); if (isOpen() && step !== 3) close(true); }
   }, 120);
 
