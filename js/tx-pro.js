@@ -142,7 +142,10 @@
     lastTable.forEach(function (t, i) {
       var ti = info(t), a = Number(t.amt) || 0, c = a >= 0 ? 'var(--ok)' : 'var(--bad)';
       var d = t.ts ? new Date(t.ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : (t.date || '');
-      h += '<tr style="cursor:pointer" data-tx-idx="' + i + '" onclick="openTxDetailsFromTable(' + i + ')"><td>' + esc(d) + '</td><td><span class="nc-type-chip">' + ti.icon + ' ' + esc(ti.label) + '</span></td><td>' + esc(t.desc || '') +
+      var nk = { deposit: 'in', crypto: 'coin', bank: 'in', card: 'in', bonus: 'gift', withdrawal: 'out', transfer: 'out', trade: 'swap', correction: 'fix', credit: 'in', payment: 'card' }[ti.key] || (a >= 0 ? 'in' : 'out');
+      if (ti.key === 'card' && a < 0) nk = 'card';
+      var ns = /reject|fail/i.test(t.status || '') ? 'rej' : /review|pending/i.test(t.status || '') ? 'rev' : /process/i.test(t.status || '') ? 'proc' : 'ok';
+      h += '<tr class="nxr nxr-' + nk + ' nxs-' + ns + '" tabindex="0" style="cursor:pointer" data-tx-idx="' + i + '" onclick="openTxDetailsFromTable(' + i + ')" onkeydown="if(event.key===\'Enter\')openTxDetailsFromTable(' + i + ')"><td>' + esc(d) + '</td><td><span class="nc-type-chip">' + ti.icon + ' ' + esc(ti.label) + '</span></td><td>' + esc(t.desc || '') +
         '</td><td style="color:' + c + ';font-weight:600">' + (a >= 0 ? '+' : '-') + money(Math.abs(a)) + '</td><td><span class="badge ' + badgeCls(t.status) + '">' + (t.status === 'Under Review' ? 'Under review' : esc(t.status || '')) + '</span></td></tr>';
     });
     b.innerHTML = h;
