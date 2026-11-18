@@ -92,7 +92,7 @@
 
   /* ---------- inbox ---------- */
   var knownUnread = null;
-  function beep() { if (!sound) return; try { var A = window.AudioContext || window.webkitAudioContext, c = new A(), o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(.12, c.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + .35); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .4); } catch (e) { } }
+  function beep() { if (!sound) return; if (window.NCSound) { window.NCSound.notify(); return; } try { var A = window.AudioContext || window.webkitAudioContext, c = new A(), o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(.12, c.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + .35); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .4); } catch (e) { } }
   function loadInbox() {
     return api('agentInbox').then(function (r) {
       var live = $('#agdLive'); if (live) live.classList.toggle('off', !(r && r.ok));
