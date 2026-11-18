@@ -1,4 +1,4 @@
-/* NordicCrypto: minimal service worker. Makes the site installable as an app; it never caches anything, so clients always get the latest version. */
+/* NordicCrypto: minimal service worker v2 (no system pop-up while the site is open). Makes the site installable as an app; it never caches anything, so clients always get the latest version. */
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 self.addEventListener('fetch', function () { /* network only */ });
@@ -16,7 +16,13 @@ self.addEventListener('push', function (e) {
         if (d && d.ok) { title = d.title; body = d.body; kind = d.kind || ''; }
       }
     } catch (x) {}
-    await self.registration.showNotification(title, { body: body, icon: '/logo-maskable-512.png', badge: '/logo-maskable-512.png', tag: 'nc-' + (kind || 'n'), renotify: true, data: { kind: kind } });
+    /* the site is open on screen: it already shows the notification and plays its own soft sound,
+       so no system pop-up (and no system "ding" arriving late on top of it) */
+    var wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (wins.some(function (w) { return w.visibilityState === 'visible' && w.focused; })) return;
+    /* the site is open in another tab: it plays its own sound, so the pop-up stays quiet */
+    var quiet = wins.some(function (w) { return /nordic|app\.html|\/app/i.test(w.url); });
+    await self.registration.showNotification(title, { body: body, icon: '/logo-maskable-512.png', badge: '/logo-maskable-512.png', tag: 'nc-' + (kind || 'n'), renotify: false, silent: quiet, data: { kind: kind } });
   })());
 });
 self.addEventListener('notificationclick', function (e) {
