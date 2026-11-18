@@ -43,6 +43,7 @@
   function ic(p, s) { return '<svg viewBox="0 0 24 24" width="' + (s || 18) + '" height="' + (s || 18) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
   var I = {
     add: '<path d="M12 5v14M5 12h14"/>', send: '<path d="M5 12h14m0 0l-6-6m6 6l-6 6"/>', swap: '<path d="M7 7h13m0 0l-4-4m4 4l-4 4"/><path d="M17 17H4m0 0l4-4m-4 4l4 4"/>',
+    wallet: '<path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none"/>',
     bank: '<path d="M3 21h18M5 21V10m4 11V10m6 11V10m4 11V10M3 10l9-6 9 6"/>', scan: '<path d="M4 7V5a1 1 0 011-1h2M17 4h2a1 1 0 011 1v2M20 17v2a1 1 0 01-1 1h-2M7 20H5a1 1 0 01-1-1v-2"/><path d="M4 12h16"/>',
     gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 001 1h12a1 1 0 001-1v-8M7.5 8a2.5 2.5 0 110-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 110 5"/>',
     eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A9.7 9.7 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6A17 17 0 002 12s3.6 7 10 7a9.7 9.7 0 004.2-1"/>',
@@ -201,6 +202,7 @@
         '<section class="bd-acts" id="bdActs">' +
           act('add', I.add, 'Add money', 'btnAdd', 'pri') + act('send', I.send, 'Withdraw', 'btnWithdrawV2') + act('swap', I.swap, 'Exchange', 'btnExchangeV2') +
           act('bank', I.bank, 'Details', 'btnReceiveMoney') + act('scan', I.scan, 'Scan deposits', 'btnScanDeposits') + act('gift', I.gift, 'Bonus', 'bonus') +
+          act('wallet', I.wallet, 'Wallets', 'navWallets') +
         '</section>' +
         '<section class="bd-card" id="bdIns"></section>' +
         '<section class="bd-card" id="bdTx"></section>' +
