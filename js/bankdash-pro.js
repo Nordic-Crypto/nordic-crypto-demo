@@ -10,6 +10,29 @@
 
   function $(id) { return document.getElementById(id); }
   function S() { return window.st || {}; }
+  /* patch the DOM in place instead of replacing it — no flicker when the dashboard refreshes */
+  function morphNode(a, b) {
+    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.parentNode.replaceChild(b.cloneNode(true), a); return; }
+    if (a.nodeType === 3 || a.nodeType === 8) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+    if (a.nodeType !== 1) return;
+    var i, at; for (i = a.attributes.length - 1; i >= 0; i--) { at = a.attributes[i]; if (!b.hasAttribute(at.name)) a.removeAttribute(at.name); }
+    for (i = 0; i < b.attributes.length; i++) { at = b.attributes[i]; if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value); }
+    if ((a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a === document.activeElement) return;
+    if (a.tagName === 'INPUT' && a.value !== (b.getAttribute('value') || '')) a.value = b.getAttribute('value') || '';
+    morphKids(a, b);
+  }
+  function morphKids(a, b) {
+    var ak = a.childNodes, bk = b.childNodes, n = bk.length, i;
+    for (i = 0; i < n; i++) { if (i < ak.length) morphNode(ak[i], bk[i]); else a.appendChild(bk[i].cloneNode(true)); }
+    while (ak.length > n) a.removeChild(a.lastChild);
+  }
+  function put(el, html) {
+    if (!el) return; if (el.__ph === html) return;
+    if (!el.firstChild || el.__ph === undefined && !el.childNodes.length) { el.innerHTML = html; el.__ph = html; return; }
+    var t = document.createElement(el.namespaceURI === 'http://www.w3.org/2000/svg' ? 'div' : el.tagName); t.innerHTML = html;
+    try { morphKids(el, t); } catch (e) { el.innerHTML = html; }
+    el.__ph = html;
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function U(v) { try { return window.fmtCurrency ? window.fmtCurrency(v) : '$' + Number(v).toFixed(2); } catch (e) { return '$' + Number(v).toFixed(2); } }
   function Us(v) { return U(v).replace(/\.00(?=\D*$)/, ''); }
@@ -235,11 +258,11 @@
     var up = pts[pts.length - 1].v >= pts[0].v, col = up ? '#22d3a0' : '#ff5470', last = pts[pts.length - 1];
     var area = d + 'L' + X(t1).toFixed(1) + ',' + (H - pb) + 'L' + X(t0).toFixed(1) + ',' + (H - pb) + 'Z';
     var xl = ''; for (var j = 0; j < 4; j++) { var tt = t0 + (t1 - t0) * (j / 3); xl += '<text x="' + X(tt).toFixed(1) + '" y="' + (H - 5) + '" text-anchor="' + (j === 0 ? 'start' : j === 3 ? 'end' : 'middle') + '" class="xl">' + esc(new Date(tt).toLocaleDateString(LOC(), { day: '2-digit', month: 'short' })) + '</text>'; }
-    box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Balance history">' +
+    put(box, '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Balance history">' +
       '<defs><linearGradient id="bdG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col + '" stop-opacity=".34"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></linearGradient></defs>' +
       '<path d="' + area + '" fill="url(#bdG)"/><path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' + xl +
       '<circle cx="' + X(last.t).toFixed(1) + '" cy="' + Y(last.v).toFixed(1) + '" r="4.5" fill="' + col + '"/><circle cx="' + X(last.t).toFixed(1) + '" cy="' + Y(last.v).toFixed(1) + '" r="9" fill="' + col + '" opacity=".2" class="pulse"/>' +
-      '<g class="hv" style="display:none"><line class="vl" y1="' + pt + '" y2="' + (H - pb) + '"/><circle r="5" fill="#fff" stroke="' + col + '" stroke-width="3"/></g></svg><div class="bd-tip" style="display:none"></div>';
+      '<g class="hv" style="display:none"><line class="vl" y1="' + pt + '" y2="' + (H - pb) + '"/><circle r="5" fill="#fff" stroke="' + col + '" stroke-width="3"/></g></svg><div class="bd-tip" style="display:none"></div>');
     var svg = box.firstChild, hv = svg.querySelector('.hv'), vl = hv.querySelector('.vl'), dot = hv.querySelector('circle'), tip = box.querySelector('.bd-tip');
     function mv(ev) {
       var rc = svg.getBoundingClientRect(), cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rc.left, f = Math.max(0, Math.min(1, (cx * (W / rc.width) - pl) / (W - pl - pr))), tt = t0 + f * (t1 - t0), lo = 0, hi = pts.length - 1;
@@ -250,7 +273,7 @@
       var tw = tip.offsetWidth, left = x * (rc.width / W) - tw / 2; tip.style.left = Math.max(2, Math.min(rc.width - tw - 2, left)) + 'px';
     }
     function lv() { hv.style.display = 'none'; tip.style.display = 'none'; }
-    svg.addEventListener('mousemove', mv); svg.addEventListener('mouseleave', lv); svg.addEventListener('touchstart', mv, { passive: true }); svg.addEventListener('touchmove', mv, { passive: true }); svg.addEventListener('touchend', lv);
+    svg.onmousemove = mv; svg.onmouseleave = lv; svg.ontouchstart = mv; svg.ontouchmove = mv; svg.ontouchend = lv; /* properties, not listeners: the svg is reused between refreshes */
   }
 
   function donut(parts, total) {
@@ -268,13 +291,13 @@
     var bw = 100 / 6, bars = '';
     data.forEach(function (s, i) { var x = i * bw + bw / 2, hi = s.inc / max * 78, ho = s.out / max * 78; bars += '<rect x="' + (x - 7.5) + '" y="' + (90 - hi) + '" width="6.5" height="' + Math.max(hi, s.inc ? 1.5 : 0) + '" rx="2" fill="#22d3a0"/><rect x="' + (x + 1) + '" y="' + (90 - ho) + '" width="6.5" height="' + Math.max(ho, s.out ? 1.5 : 0) + '" rx="2" fill="#8b5cf6"/>'; });
     var blab = data.map(function (s) { return '<span>' + esc(s.start.toLocaleDateString(LOC(), { month: 'short' })) + '</span>'; }).join('');
-    $('bdIns').innerHTML =
+    put($('bdIns'),
       '<div class="bd-ch"><div><div class="bd-k">Insights</div><h3>Money Flow</h3></div><div class="bd-mnav"><button type="button" data-a="mprev" aria-label="Previous month">' + ic(I.left, 16) + '</button><b>' + esc(name) + '</b><button type="button" data-a="mnext" aria-label="Next month"' + (B.month >= 0 ? ' disabled' : '') + '>' + ic(I.chev, 16) + '</button></div></div>' +
       '<div class="bd-kpis"><div><span>Income</span><b class="bd-sens up">+' + esc(U(m.inc)) + '</b></div><div><span>Spending</span><b class="bd-sens">' + esc(U(m.out)) + '</b></div><div><span>Net</span><b class="bd-sens ' + (net >= 0 ? 'up' : 'dn') + '">' + (net >= 0 ? '+' : '−') + esc(U(Math.abs(net))) + '</b></div><div><span>Avg / day</span><b class="bd-sens">' + esc(U(m.out / days)) + '</b></div></div>' +
       '<div class="bd-ins-g"><div class="bd-donut">' + (m.out > 0 ? donut(parts, m.out) : '<div class="bd-empty-d">' + ic(I.chart, 26) + '<span>No spending yet</span></div>') + (m.out > 0 ? '<div class="bd-dc"><small>Spent</small><b class="bd-sens">' + esc(Us(m.out)) + '</b></div>' : '') + '</div>' +
       '<ul class="bd-lg">' + (lg || '<li class="bd-none bd-mut">Your spending categories will appear here.</li>') + '</ul></div>' +
       '<div class="bd-bars"><div class="bd-bh"><span>Last 6 months</span><span class="bd-bl"><i style="background:#22d3a0"></i>In<i style="background:#8b5cf6"></i>Out</span></div><svg viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">' + bars + '</svg><div class="bd-bx">' + blab + '</div></div>' +
-      (m.biggest ? '<div class="bd-big"><span class="bd-bi" style="color:' + CAT[cat(m.biggest)].c + '">' + ic(CAT[cat(m.biggest)].i, 18) + '</span><div><small>Biggest expense</small><b>' + esc(m.biggest.desc || '—') + '</b></div><b class="bd-sens">' + esc(U(-m.biggest.amt)) + '</b></div>' : '');
+      (m.biggest ? '<div class="bd-big"><span class="bd-bi" style="color:' + CAT[cat(m.biggest)].c + '">' + ic(CAT[cat(m.biggest)].i, 18) + '</span><div><small>Biggest expense</small><b>' + esc(m.biggest.desc || '—') + '</b></div><b class="bd-sens">' + esc(U(-m.biggest.amt)) + '</b></div>' : ''));
   }
 
   function stBadge(t) {
@@ -302,9 +325,9 @@
     if (!h) h = '<div class="bd-empty">' + ic(I.clock, 28) + '<b>' + (all.length ? 'Nothing found' : 'No transactions yet') + '</b><span>' + (all.length ? 'Try another filter or search.' : 'Add money to get started — your activity will show up here.') + '</span>' + (all.length ? '' : '<button type="button" class="bd-btn pri" data-a="proxy" data-t="btnAdd">' + ic(I.add, 16) + ' Add money</button>') + '</div>';
     var chips = [['all', 'All'], ['in', 'Money in'], ['out', 'Money out'], ['pend', 'Pending']].map(function (x) { return '<button type="button" class="' + (B.filter === x[0] ? 'on' : '') + '" data-a="flt" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
     var keep = document.activeElement && document.activeElement.id === 'bdQ' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
-    $('bdTx').innerHTML = '<div class="bd-ch"><div><div class="bd-k">Activity</div><h3>Recent activity</h3></div><button type="button" class="bd-link" data-a="nav" data-v="tx">View all ' + ic(I.chev, 14) + '</button></div>' +
+    put($('bdTx'), '<div class="bd-ch"><div><div class="bd-k">Activity</div><h3>Recent activity</h3></div><button type="button" class="bd-link" data-a="nav" data-v="tx">View all ' + ic(I.chev, 14) + '</button></div>' +
       '<div class="bd-tools"><label class="bd-search">' + ic(I.search, 16) + '<input id="bdQ" type="search" placeholder="Search transactions" autocomplete="off" value="' + esc(B.q) + '"></label><div class="bd-chips">' + chips + '</div></div>' +
-      '<div class="bd-list">' + h + '</div>' + (f.length > lim ? '<button type="button" class="bd-more" data-a="more">Show more (' + (f.length - lim) + ')</button>' : (B.more && f.length > 8 ? '<button type="button" class="bd-more" data-a="less">Show less</button>' : ''));
+      '<div class="bd-list">' + h + '</div>' + (f.length > lim ? '<button type="button" class="bd-more" data-a="more">Show more (' + (f.length - lim) + ')</button>' : (B.more && f.length > 8 ? '<button type="button" class="bd-more" data-a="less">Show less</button>' : '')));
     if (keep) { var qi = $('bdQ'); if (qi) { qi.focus(); try { qi.setSelectionRange(keep[0], keep[1]); } catch (e) {} } }
   }
 
@@ -338,36 +361,36 @@
     var s = S(), iban = s.user && s.user.iban, ready = !!iban, box = $('bdAcc');
     function cell(id, def) { var e = $(id); return (e && e.textContent && e.textContent.trim() !== '—') ? e.textContent.trim() : def; }
     var rows = ready ? [['IBAN', String(iban).replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim(), String(iban).replace(/\s+/g, '')], ['SWIFT / BIC', cell('mySwift', '—')], ['Bank', cell('myBank', '—')], ['Country', cell('myCountry', '—')]] : [];
-    box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Bank details</div><h3>Receive by IBAN</h3></div><span class="bd-ib sm">' + ic(I.bank, 18) + '</span></div>' +
+    put(box, '<div class="bd-ch"><div><div class="bd-k">Bank details</div><h3>Receive by IBAN</h3></div><span class="bd-ib sm">' + ic(I.bank, 18) + '</span></div>' +
       (ready ? '<div class="bd-rows">' + rows.map(function (r) { return '<div class="bd-row"><span>' + esc(T(r[0])) + '</span><b class="bd-sens">' + esc(r[1]) + '</b>' + (r[0] === 'IBAN' || r[0] === 'SWIFT / BIC' ? '<button type="button" class="bd-cp" data-a="cp" data-v="' + esc(r[2] || r[1]) + '" aria-label="Copy ' + esc(r[0]) + '">' + ic(I.copy, 15) + '</button>' : '') + '</div>'; }).join('') + '</div><button type="button" class="bd-btn ghost full" data-a="cpall">' + ic(I.copy, 16) + ' Copy all details</button>'
-        : '<div class="bd-wait"><i class="bd-spin"></i><div><b>Your IBAN is being generated…</b><span>Our team is issuing it. This usually takes a few minutes.</span></div></div>');
+        : '<div class="bd-wait"><i class="bd-spin"></i><div><b>Your IBAN is being generated…</b><span>Our team is issuing it. This usually takes a few minutes.</span></div></div>'));
   }
 
   function rGoals() {
     var g = goals(), bal = Math.max(0, Number(S().usd) || 0), box = $('bdGoals');
     var list = g.map(function (x, i) { var pc = x.target > 0 ? Math.min(100, bal / x.target * 100) : 0, done = pc >= 100; return '<div class="bd-goal"><div class="bd-gh"><span class="bd-gi">' + ic(I.target, 16) + '</span><b>' + esc(x.name) + '</b><button type="button" class="bd-x" data-a="gdel" data-i="' + i + '" aria-label="Delete goal">' + ic(I.trash, 14) + '</button></div><div class="bd-gp"><i style="width:' + pc.toFixed(1) + '%"></i></div><div class="bd-gf"><span class="bd-sens">' + esc(U(Math.min(bal, x.target))) + ' / ' + esc(U(x.target)) + '</span><em class="' + (done ? 'up' : '') + '">' + (done ? '✓ ' + T('Reached') : Math.floor(pc) + '%') + '</em></div></div>'; }).join('');
     var form = B.goalForm ? '<div class="bd-gform"><input id="bdGName" type="text" maxlength="28" placeholder="Goal name (e.g. Vacation)" autocomplete="off"><input id="bdGAmt" type="number" min="1" step="any" inputmode="decimal" placeholder="Target amount"><div class="bd-gb"><button type="button" class="bd-btn ghost" data-a="gcancel">Cancel</button><button type="button" class="bd-btn pri" id="bdGSave" data-a="gsave">Save goal</button></div></div>' : '';
-    box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Savings</div><h3>Goals</h3></div><button type="button" class="bd-link" data-a="gnew">' + ic(I.plus, 14) + ' New goal</button></div>' + (list || (!B.goalForm ? '<div class="bd-empty sm">' + ic(I.target, 26) + '<b>Set a savings goal</b><span>Track your balance against something you are saving for.</span></div>' : '')) + form;
+    put(box, '<div class="bd-ch"><div><div class="bd-k">Savings</div><h3>Goals</h3></div><button type="button" class="bd-link" data-a="gnew">' + ic(I.plus, 14) + ' New goal</button></div>' + (list || (!B.goalForm ? '<div class="bd-empty sm">' + ic(I.target, 26) + '<b>Set a savings goal</b><span>Track your balance against something you are saving for.</span></div>' : '')) + form);
   }
   function rCrypto() {
     var s = S(), rows = [['BTC', 'Bitcoin', s.btc || 0, s.btcP || 0, 'btcChange', '#f7931a', '#ffb84d'], ['ETH', 'Ethereum', s.eth || 0, s.ethP || 0, 'ethChange', '#627eea', '#9db0ff']], tot = 0;
     rows.forEach(function (r) { r.v = r[2] * r[3]; tot += r.v; });
     var bar = tot > 0 ? '<div class="bd-xbar">' + rows.map(function (r) { return '<i style="width:' + (r.v / tot * 100).toFixed(1) + '%;background:' + r[5] + '"></i>'; }).join('') + '</div>' : '';
-    $('bdCrypto').innerHTML = '<div class="bd-ch"><div><div class="bd-k">Portfolio</div><h3>Your assets</h3></div><button type="button" class="bd-link" data-a="nav" data-v="assets">View ' + ic(I.chev, 14) + '</button></div>' +
+    put($('bdCrypto'), '<div class="bd-ch"><div><div class="bd-k">Portfolio</div><h3>Your assets</h3></div><button type="button" class="bd-link" data-a="nav" data-v="assets">View ' + ic(I.chev, 14) + '</button></div>' +
       '<div class="bd-xtot"><small>Total value</small><div class="bd-ct bd-sens">' + esc(U(tot)) + '</div>' + bar + '</div>' +
       rows.map(function (r) {
         var ch = $(r[4]), t = ch ? ch.textContent.trim() : '', dn = /^[-−]/.test(t), pc = tot > 0 ? Math.round(r.v / tot * 100) : 0;
         return '<div class="bd-xc" style="--c1:' + r[5] + ';--c2:' + r[6] + '"><span class="bd-xi">' + CG[r[0]] + '</span><span class="bd-cn"><b>' + r[1] + '</b><small class="bd-sens">' + (+r[2]).toFixed(6).replace(/\.?0+$/, '') + ' ' + r[0] + '</small></span><span class="bd-cv"><b class="bd-sens">' + esc(U(r.v)) + '</b><small>' + (t && t !== '—' ? '<i class="bd-xp ' + (dn ? 'dn' : 'up') + '">' + esc(t) + '</i>' : '') + '<i class="bd-xs">' + pc + '%</i></small></span></div>';
       }).join('') +
-      '<div class="bd-xa"><button type="button" data-a="proxy" data-t="btnExchangeV2">' + ic(I.swap, 16) + '<span>Buy / sell</span></button><button type="button" data-a="proxy" data-t="btnAdd">' + ic(I.down, 16) + '<span>Receive</span></button><button type="button" data-a="proxy" data-t="btnWithdrawV2">' + ic(I.up, 16) + '<span>Send</span></button></div>';
+      '<div class="bd-xa"><button type="button" data-a="proxy" data-t="btnExchangeV2">' + ic(I.swap, 16) + '<span>Buy / sell</span></button><button type="button" data-a="proxy" data-t="btnAdd">' + ic(I.down, 16) + '<span>Receive</span></button><button type="button" data-a="proxy" data-t="btnWithdrawV2">' + ic(I.up, 16) + '<span>Send</span></button></div>');
   }
   function rHealth() {
     var s = S(), v = s.verification && s.verification.status, deps = allTx().some(function (t) { return t.amt > 0 && cat(t) === 'dep' && okTx(t); });
     var items = [['Identity verified', v === 'approved' || (s.user && s.user.verified)], ['Card active', !!(s.card && s.card.status !== 'Frozen')], ['IBAN issued', !!(s.user && s.user.iban)], ['First deposit made', deps]];
     var done = items.filter(function (x) { return x[1]; }).length, pc = Math.round(done / items.length * 100), R = 26, C = 2 * Math.PI * R;
-    $('bdHealth').innerHTML = '<div class="bd-ch"><div><div class="bd-k">Security</div><h3>Account health</h3></div></div><div class="bd-hl"><div class="bd-ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + (pc === 100 ? '#22d3a0' : '#22d3ee') + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (C * pc / 100).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 32 32)"/></svg><b>' + pc + '%</b></div><div class="bd-hs"><b>' + (pc === 100 ? T('Everything is set up') : T('Finish setting up your account')) + '</b><span>' + done + '/' + items.length + ' ' + T('steps completed') + '</span></div></div>' +
+    put($('bdHealth'), '<div class="bd-ch"><div><div class="bd-k">Security</div><h3>Account health</h3></div></div><div class="bd-hl"><div class="bd-ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + (pc === 100 ? '#22d3a0' : '#22d3ee') + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (C * pc / 100).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 32 32)"/></svg><b>' + pc + '%</b></div><div class="bd-hs"><b>' + (pc === 100 ? T('Everything is set up') : T('Finish setting up your account')) + '</b><span>' + done + '/' + items.length + ' ' + T('steps completed') + '</span></div></div>' +
       '<ul class="bd-hli">' + items.map(function (x) { return '<li class="' + (x[1] ? 'ok' : '') + '"><i>' + ic(x[1] ? I.check : I.clock, 12) + '</i>' + esc(T(x[0])) + '</li>'; }).join('') + '</ul>' +
-      '<div class="bd-sec">' + ic(I.shield, 16) + '<span>Funds are protected by segregated accounts and 2-step verification.</span></div>';
+      '<div class="bd-sec">' + ic(I.shield, 16) + '<span>Funds are protected by segregated accounts and 2-step verification.</span></div>');
   }
 
   /* ---------- render ---------- */
