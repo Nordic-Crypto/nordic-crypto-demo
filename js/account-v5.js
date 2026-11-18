@@ -1,153 +1,315 @@
-/* NordicCrypto — account-v5.js v1
-   Settings and Limits in the new design.
-   Settings: profile card (photo, name, e-mail) on top, two tabs (Account · Security) instead of one long scroll,
-   icon rows, sticky Log out / Close, phone sheet / desktop window, dark + light. Every original element, id and
-   handler is kept (language chips, change password / e-mail, 2FA + devices card, delete account, install app).
-   Limits: same window and data (limits-pro.js), restyled: clear cards with a usage ring, segmented slots,
-   mint progress bar and buttons. Load after limits-pro.js, client-security.js and avatar-pro.js. */
+/* NordicCrypto — wallets-v5.js v1
+   "My wallets" — let a client link a self-custody wallet (MetaMask, Trust, Exodus, Coinbase, …).
+   Two honest connection paths, exactly like every real exchange:
+     1) Connect — the wallet itself approves (EIP-6963 / window.ethereum eth_requestAccounts, plus an
+        optional personal_sign to prove ownership). The seed phrase NEVER leaves the wallet; Nordic
+        only receives the public address.
+     2) Watch-only — the client pastes a public address (0x… or bitcoin). View balance/history only.
+   Optional WalletConnect QR for mobile wallets is enabled when window.NC_WC_PROJECT_ID is set.
+   We store ONLY the public address on the account. There is deliberately no field for a recovery
+   phrase or a wallet password, because no legitimate wallet connection ever needs one. */
 (function () {
   'use strict';
-  if (window.__ncAccV5) return; window.__ncAccV5 = 1;
+  if (window.__ncWallets) return; window.__ncWallets = 1;
+
   var LG = ['en', 'da', 'fi', 'es', 'no', 'sv', 'fr', 'de'];
   var K = {
-    acc: ['Account', 'Konto', 'Tili', 'Cuenta', 'Konto', 'Konto', 'Compte', 'Konto'],
-    sec: ['Security', 'Sikkerhed', 'Turvallisuus', 'Seguridad', 'Sikkerhet', 'Säkerhet', 'Sécurité', 'Sicherheit'],
-    photo: ['Change photo', 'Skift billede', 'Vaihda kuva', 'Cambiar foto', 'Bytt bilde', 'Byt bild', 'Changer la photo', 'Foto ändern'],
-    sub: ['Manage your account', 'Administrer din konto', 'Hallinnoi tiliäsi', 'Gestiona tu cuenta', 'Administrer kontoen din', 'Hantera ditt konto', 'Gérez votre compte', 'Konto verwalten'],
-    wallets: ['My wallets', 'Mine wallets', 'Omat lompakot', 'Mis monederos', 'Mine lommebøker', 'Mina plånböcker', 'Mes portefeuilles', 'Meine Wallets'],
-    walletsSub: ['Connect MetaMask, Trust, Exodus…', 'Tilknyt MetaMask, Trust, Exodus…', 'Linkitä MetaMask, Trust, Exodus…', 'Vincula MetaMask, Trust, Exodus…', 'Koble til MetaMask, Trust, Exodus…', 'Anslut MetaMask, Trust, Exodus…', 'Reliez MetaMask, Trust, Exodus…', 'MetaMask, Trust, Exodus verbinden…']
+    title: ['My wallets', 'Mine wallets', 'Omat lompakot', 'Mis monederos', 'Mine lommebøker', 'Mina plånböcker', 'Mes portefeuilles', 'Meine Wallets'],
+    sub: ['Link a wallet you own — the wallet approves it, your 12 words stay with you.', 'Tilknyt en wallet, du ejer — walletten godkender det, dine 12 ord bliver hos dig.', 'Linkitä omistamasi lompakko — lompakko hyväksyy sen, 12 sanaasi pysyvät sinulla.', 'Vincula un monedero tuyo: el monedero lo aprueba y tus 12 palabras se quedan contigo.', 'Koble til en lommebok du eier — lommeboken godkjenner det, de 12 ordene dine blir hos deg.', 'Länka en plånbok du äger — plånboken godkänner det, dina 12 ord stannar hos dig.', 'Reliez un portefeuille vous appartenant : le portefeuille approuve, vos 12 mots restent chez vous.', 'Verbinde eine eigene Wallet — die Wallet bestätigt, deine 12 Wörter bleiben bei dir.'],
+    connected: ['Connected wallets', 'Tilknyttede wallets', 'Linkitetyt lompakot', 'Monederos vinculados', 'Tilkoblede lommebøker', 'Anslutna plånböcker', 'Portefeuilles reliés', 'Verbundene Wallets'],
+    none: ['No wallets yet. Connect one below.', 'Ingen wallets endnu. Tilknyt en nedenfor.', 'Ei vielä lompakoita. Linkitä yksi alla.', 'Aún no hay monederos. Vincula uno abajo.', 'Ingen lommebøker ennå. Koble til en nedenfor.', 'Inga plånböcker ännu. Anslut en nedan.', 'Aucun portefeuille. Reliez-en un ci-dessous.', 'Noch keine Wallets. Verbinde unten eine.'],
+    connect: ['Connect a wallet', 'Tilknyt en wallet', 'Linkitä lompakko', 'Vincular un monedero', 'Koble til en lommebok', 'Anslut en plånbok', 'Relier un portefeuille', 'Wallet verbinden'],
+    detected: ['Detected in this browser', 'Fundet i denne browser', 'Havaittu tässä selaimessa', 'Detectado en este navegador', 'Funnet i denne nettleseren', 'Hittad i denna webbläsare', 'Détecté dans ce navigateur', 'In diesem Browser erkannt'],
+    popular: ['Mobile & other wallets', 'Mobile og andre wallets', 'Mobiili- ja muut lompakot', 'Móviles y otros monederos', 'Mobil og andre lommebøker', 'Mobila och andra plånböcker', 'Mobiles et autres portefeuilles', 'Mobile & andere Wallets'],
+    scan: ['Scan QR with your wallet app', 'Scan QR med din wallet-app', 'Skannaa QR lompakkosovelluksella', 'Escanea el QR con tu app de monedero', 'Skann QR med wallet-appen din', 'Skanna QR med din plånboksapp', 'Scannez le QR avec votre app', 'QR mit deiner Wallet-App scannen'],
+    watch: ['Add a watch-only address', 'Tilføj en se-kun-adresse', 'Lisää vain katseluun -osoite', 'Añadir una dirección solo lectura', 'Legg til en kun-visning-adresse', 'Lägg till en bevaknings­adress', 'Ajouter une adresse en lecture seule', 'Nur-Ansicht-Adresse hinzufügen'],
+    watchSub: ['Paste a public address to track its balance. View only — nothing can be moved.', 'Indsæt en offentlig adresse for at følge saldoen. Kun visning — intet kan flyttes.', 'Liitä julkinen osoite saldon seuraamiseksi. Vain katselu — mitään ei voi siirtää.', 'Pega una dirección pública para ver su saldo. Solo lectura: no se puede mover nada.', 'Lim inn en offentlig adresse for å følge saldoen. Kun visning — ingenting kan flyttes.', 'Klistra in en publik adress för att se saldot. Endast visning — inget kan flyttas.', 'Collez une adresse publique pour suivre le solde. Lecture seule — rien ne peut bouger.', 'Füge eine öffentliche Adresse ein, um den Saldo zu sehen. Nur Ansicht — nichts bewegbar.'],
+    addrPh: ['Public address (0x… or bc1…)', 'Offentlig adresse (0x… eller bc1…)', 'Julkinen osoite (0x… tai bc1…)', 'Dirección pública (0x… o bc1…)', 'Offentlig adresse (0x… eller bc1…)', 'Publik adress (0x… eller bc1…)', 'Adresse publique (0x… ou bc1…)', 'Öffentliche Adresse (0x… oder bc1…)'],
+    labelPh: ['Name (optional)', 'Navn (valgfrit)', 'Nimi (valinnainen)', 'Nombre (opcional)', 'Navn (valgfritt)', 'Namn (valfritt)', 'Nom (facultatif)', 'Name (optional)'],
+    add: ['Add', 'Tilføj', 'Lisää', 'Añadir', 'Legg til', 'Lägg till', 'Ajouter', 'Hinzufügen'],
+    remove: ['Remove', 'Fjern', 'Poista', 'Quitar', 'Fjern', 'Ta bort', 'Retirer', 'Entfernen'],
+    removeQ: ['Remove this wallet from your account?', 'Fjern denne wallet fra din konto?', 'Poistetaanko tämä lompakko tililtäsi?', '¿Quitar este monedero de tu cuenta?', 'Fjerne denne lommeboken fra kontoen din?', 'Ta bort denna plånbok från ditt konto?', 'Retirer ce portefeuille de votre compte ?', 'Diese Wallet aus deinem Konto entfernen?'],
+    verified: ['Verified', 'Verificeret', 'Vahvistettu', 'Verificado', 'Verifisert', 'Verifierad', 'Vérifié', 'Verifiziert'],
+    watchTag: ['Watch-only', 'Se-kun', 'Vain katselu', 'Solo lectura', 'Kun visning', 'Bevakning', 'Lecture seule', 'Nur Ansicht'],
+    connecting: ['Connecting…', 'Tilknytter…', 'Yhdistetään…', 'Conectando…', 'Kobler til…', 'Ansluter…', 'Connexion…', 'Verbinde…'],
+    approve: ['Approve the connection in your wallet…', 'Godkend forbindelsen i din wallet…', 'Hyväksy yhteys lompakossasi…', 'Aprueba la conexión en tu monedero…', 'Godkjenn tilkoblingen i lommeboken…', 'Godkänn anslutningen i din plånbok…', 'Approuvez la connexion dans votre portefeuille…', 'Bestätige die Verbindung in deiner Wallet…'],
+    signMsg: ['Nordic — prove you own this wallet', 'Nordic — bevis at du ejer denne wallet', 'Nordic — todista omistavasi tämä lompakko', 'Nordic — demuestra que posees este monedero', 'Nordic — bevis at du eier denne lommeboken', 'Nordic — bevisa att du äger denna plånbok', 'Nordic — prouvez que ce portefeuille est le vôtre', 'Nordic — beweise, dass dir diese Wallet gehört'],
+    done: ['Wallet connected', 'Wallet tilknyttet', 'Lompakko linkitetty', 'Monedero vinculado', 'Lommebok tilkoblet', 'Plånbok ansluten', 'Portefeuille relié', 'Wallet verbunden'],
+    noInj: ['No wallet extension found in this browser. Use a mobile wallet (QR) or add a watch-only address.', 'Ingen wallet-udvidelse fundet. Brug en mobil wallet (QR) eller tilføj en se-kun-adresse.', 'Lompakkolaajennusta ei löytynyt. Käytä mobiililompakkoa (QR) tai lisää katseluosoite.', 'No se encontró extensión de monedero. Usa un monedero móvil (QR) o una dirección solo lectura.', 'Ingen wallet-utvidelse funnet. Bruk en mobil lommebok (QR) eller legg til en kun-visning-adresse.', 'Ingen plånbokstillägg hittades. Använd en mobil plånbok (QR) eller en bevakningsadress.', 'Aucune extension trouvée. Utilisez un portefeuille mobile (QR) ou une adresse en lecture seule.', 'Keine Wallet-Erweiterung gefunden. Nutze eine mobile Wallet (QR) oder eine Nur-Ansicht-Adresse.'],
+    rejected: ['Connection cancelled in the wallet.', 'Forbindelse annulleret i walletten.', 'Yhteys peruttiin lompakossa.', 'Conexión cancelada en el monedero.', 'Tilkobling avbrutt i lommeboken.', 'Anslutning avbröts i plånboken.', 'Connexion annulée dans le portefeuille.', 'Verbindung in der Wallet abgebrochen.'],
+    safe: ['Nordic will never ask for your 12/24-word recovery phrase or wallet password. Anyone who asks for them is trying to steal your funds.', 'Nordic beder aldrig om din 12/24-ords genoprettelsessætning eller wallet-adgangskode. Enhver, der gør, forsøger at stjæle dine penge.', 'Nordic ei koskaan kysy 12/24 sanan palautuslausetta tai lompakon salasanaa. Jokainen joka kysyy, yrittää varastaa varasi.', 'Nordic nunca pedirá tu frase de recuperación de 12/24 palabras ni la contraseña del monedero. Quien las pida intenta robarte.', 'Nordic ber aldri om gjenopprettingsfrasen på 12/24 ord eller wallet-passordet. Alle som spør, prøver å stjele pengene dine.', 'Nordic ber aldrig om din återställningsfras på 12/24 ord eller plånbokslösenord. Den som frågar försöker stjäla dina pengar.', 'Nordic ne demandera jamais votre phrase de récupération de 12/24 mots ni le mot de passe du portefeuille. Quiconque les demande veut vous voler.', 'Nordic fragt niemals nach deiner 12/24-Wörter-Wiederherstellungsphrase oder dem Wallet-Passwort. Wer danach fragt, will dich bestehlen.'],
+    close: ['Close', 'Luk', 'Sulje', 'Cerrar', 'Lukk', 'Stäng', 'Fermer', 'Schließen'],
+    wcSoon: ['Mobile QR connection isn’t configured yet. For now, connect a browser extension or add a watch-only address.', 'Mobil QR-forbindelse er ikke konfigureret endnu. Tilknyt en browserudvidelse eller tilføj en se-kun-adresse.', 'Mobiili-QR-yhteyttä ei ole vielä määritetty. Yhdistä selainlaajennus tai lisää katseluosoite.', 'La conexión por QR móvil aún no está configurada. Conecta una extensión o añade una dirección solo lectura.', 'Mobil QR-tilkobling er ikke konfigurert ennå. Koble til en nettleserutvidelse eller legg til en kun-visning-adresse.', 'Mobil QR-anslutning är inte konfigurerad ännu. Anslut ett webbläsartillägg eller lägg till en bevakningsadress.', 'La connexion QR mobile n’est pas encore configurée. Reliez une extension ou ajoutez une adresse en lecture seule.', 'Mobile QR-Verbindung ist noch nicht eingerichtet. Verbinde eine Browser-Erweiterung oder füge eine Nur-Ansicht-Adresse hinzu.'],
+    entry: ['My wallets', 'Mine wallets', 'Omat lompakot', 'Mis monederos', 'Mine lommebøker', 'Mina plånböcker', 'Mes portefeuilles', 'Meine Wallets'],
+    entrySub: ['Connect MetaMask, Trust, Exodus…', 'Tilknyt MetaMask, Trust, Exodus…', 'Linkitä MetaMask, Trust, Exodus…', 'Vincula MetaMask, Trust, Exodus…', 'Koble til MetaMask, Trust, Exodus…', 'Anslut MetaMask, Trust, Exodus…', 'Reliez MetaMask, Trust, Exodus…', 'MetaMask, Trust, Exodus verbinden…']
   };
   function lang() { try { var l = window.NCI18N && window.NCI18N.lang; return LG.indexOf(l) > -1 ? l : 'en'; } catch (e) { return 'en'; } }
-  function T(k) { var a = K[k]; return a ? a[LG.indexOf(lang())] || a[0] : k; }
+  function T(k, v) { var a = K[k]; if (!a) return k; var s = a[LG.indexOf(lang())] || a[0]; if (v) for (var x in v) s = s.split('{' + x + '}').join(v[x]); return s; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(id) { return document.getElementById(id); }
-  var SV = {
-    key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
-    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg>',
-    out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>',
-    app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/></svg>',
-    chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>',
-    user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c1.2-3.6 3.8-5.4 7-5.4s5.8 1.8 7 5.4"/></svg>',
-    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg>',
-    wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.4" fill="currentColor" stroke="none"/></svg>'
+  function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
+  function isClient() { try { return !!tok() && localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail; } catch (e) { return false; } }
+  function wurl() { return window.WORKER_URL || window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev'; }
+  function post(action, body) { return fetch(wurl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok() }, body || {})) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'Connection error' }; }); }
+  function toast(t) { try { if (typeof window.toast === 'function') return window.toast(t); } catch (e) { } }
+  function short(a) { a = String(a || ''); return a.length > 14 ? a.slice(0, 7) + '…' + a.slice(-5) : a; }
+
+  var I = {
+    wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.4" fill="currentColor" stroke="none"/></svg>',
+    qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3m4 0v4m-4 0h4m-7 0h0"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v5c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>'
   };
+  /* generic, non-logo tiles for popular wallets (brand marks are avoided; names shown as text) */
+  var POP = [
+    { id: 'metamask', name: 'MetaMask', c1: '#f6851b', c2: '#e2761b', g: 'M' },
+    { id: 'trust', name: 'Trust Wallet', c1: '#3375bb', c2: '#2a62a0', g: 'T' },
+    { id: 'exodus', name: 'Exodus', c1: '#8b5cf6', c2: '#6d28d9', g: 'E' },
+    { id: 'coinbase', name: 'Coinbase Wallet', c1: '#2158f6', c2: '#1545c6', g: 'C' }
+  ];
 
-  var s = document.createElement('style'); s.id = 'accV5Css';
-  s.textContent =
-/* ---------- settings ---------- */
-'#settingsMask.sv5{z-index:100052!important;background:rgba(2,5,7,.62)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}' +
-'#settingsMask.sv5 .box{position:relative;width:min(520px,calc(100vw - 32px))!important;max-width:none!important;max-height:calc(100vh - 40px)!important;padding:22px 24px 0!important;border-radius:30px!important;overflow-x:hidden!important;overflow-y:auto!important;color:#eef5f2;background:linear-gradient(180deg,#161d1f,#0a0e10)!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 60px 140px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.1)!important;scrollbar-width:thin}' +
-'#settingsMask.sv5 .sv-au{position:absolute;left:0;right:0;top:0;height:200px;pointer-events:none;overflow:hidden;-webkit-mask:linear-gradient(#000 30%,transparent);mask:linear-gradient(#000 30%,transparent)}#settingsMask.sv5 .sv-au i{position:absolute;border-radius:50%;filter:blur(44px)}#settingsMask.sv5 .sv-au i:nth-child(1){width:300px;height:190px;left:-70px;top:-100px;background:#62e8c2;opacity:.18}#settingsMask.sv5 .sv-au i:nth-child(2){width:260px;height:170px;right:-70px;top:-90px;background:#b49cff;opacity:.12}' +
-'#settingsMask.sv5 .box>*:not(.sv-au):not(.sv-x){position:relative;z-index:1}' +
-'#settingsMask.sv5 .sv-grab{display:none;width:40px;height:5px;border-radius:9px;background:rgba(255,255,255,.22);margin:-8px auto 12px}' +
-'#settingsMask.sv5 .box>h2{margin:0!important;font-size:22px!important;font-weight:760!important;letter-spacing:-.02em}#settingsMask.sv5 .box>p.d{margin:2px 0 14px!important;font-size:12.5px!important;color:#93a39e!important}' +
-'#settingsMask.sv5 .sv-x{position:absolute;right:20px;top:20px;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#c6d2ce;cursor:pointer;z-index:2;font-size:18px;line-height:1}' +
-'#settingsMask.sv5 .sv-prof{display:flex;align-items:center;gap:14px;padding:14px;border-radius:22px;margin-bottom:14px;background:linear-gradient(135deg,#123129,#0c1a17 55%,#16130a);border:1px solid rgba(98,232,194,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}' +
-'#settingsMask.sv5 #ncAvSetW{margin:0!important;flex:none;display:flex!important;flex-direction:column;align-items:center;gap:4px}#settingsMask.sv5 #ncAvSet{width:68px!important;height:68px!important;margin:0!important}#settingsMask.sv5 #ncAvSetW>div:last-child{font-size:11.5px!important;margin:0!important}' +
-'#settingsMask.sv5 .sv-pk{min-width:0;flex:1}#settingsMask.sv5 .sv-pk .settings-row{padding:0!important;background:none!important;border:0!important;margin:0!important}#settingsMask.sv5 #settingsName{font-size:18px!important;font-weight:720!important}#settingsMask.sv5 #settingsEmail{font-size:12.5px!important;color:#9fb6ae!important;overflow-wrap:anywhere;margin-top:2px}#settingsMask.sv5 #settingsRole{margin-top:8px!important;display:inline-block;padding:3px 9px!important;border-radius:99px!important;background:rgba(98,232,194,.14)!important;color:#62e8c2!important;font-size:10.5px!important;font-weight:750!important}' +
-'#settingsMask.sv5 .sv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:16px;background:#131a1c;border:1px solid rgba(255,255,255,.07);margin-bottom:14px;position:sticky;top:-22px;z-index:4!important;backdrop-filter:blur(12px)}' +
-'#settingsMask.sv5 .sv-tab{height:40px;border-radius:12px;border:0;background:none;color:#a7b3ae;font:inherit;font-weight:650;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}#settingsMask.sv5 .sv-tab svg{width:16px;height:16px}#settingsMask.sv5 .sv-tab.on{background:rgba(98,232,194,.14);color:#62e8c2;box-shadow:inset 0 0 0 1px rgba(98,232,194,.35)}#settingsMask.sv5 .sv-tab em{width:8px;height:8px;border-radius:50%;background:#ffc24a;box-shadow:0 0 0 3px rgba(255,194,74,.18)}' +
-'#settingsMask.sv5.sv-acc [data-sv="sec"],#settingsMask.sv5.sv-sec [data-sv="acc"],#settingsMask.sv5 [data-sv="hide"]{display:none!important}' +
-'#settingsMask.sv5 #ncLangRow{padding:14px!important;border-radius:20px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;margin:0 0 12px!important}#settingsMask.sv5 #ncLangRowLabel,#settingsMask.sv5 .settings-label{font-size:11.5px!important;font-weight:700!important;letter-spacing:.06em!important;text-transform:uppercase;color:#86968f!important;margin:0 2px 10px!important}' +
-'#settingsMask.sv5 .nc-lang-chip{border-radius:12px!important;padding:8px 11px!important}#settingsMask.sv5 .nc-lang-chip.on{background:rgba(98,232,194,.14)!important;border-color:rgba(98,232,194,.5)!important;color:#62e8c2!important}' +
-'#settingsMask.sv5 .settings-section{border:0!important;padding:0!important;margin:0 0 12px!important}' +
-'#settingsMask.sv5 .settings-btn-row{display:flex!important;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 14px!important;margin:0 0 8px!important;border-radius:18px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;color:#eef5f2!important;font:inherit!important;font-weight:620!important;font-size:14.5px!important;text-align:left;transition:transform .15s,border-color .15s}#settingsMask.sv5 .settings-btn-row:hover{transform:translateY(-1px);border-color:rgba(98,232,194,.35)!important}' +
-'#settingsMask.sv5 .settings-btn-row>span:not(.sv-ri):not(.sv-ch){flex:1;min-width:0}#settingsMask.sv5 #csCard .cs-btn{white-space:nowrap}#settingsMask.sv5 .sv-ri{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:rgba(98,232,194,.1);color:#62e8c2;flex:none}#settingsMask.sv5 .sv-ri svg{width:18px;height:18px}#settingsMask.sv5 .sv-ch{width:16px;height:16px;color:#6f807a;flex:none}' +
-'#settingsMask.sv5 .settings-btn-row.danger{color:#ff8d9a!important}#settingsMask.sv5 .settings-btn-row.danger .sv-ri{background:rgba(255,107,122,.12);color:#ff6b7a}' +
-'#settingsMask.sv5 #csCard{border-radius:20px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;padding:16px!important;margin:0 0 12px!important}#settingsMask.sv5 #csCard .cs-btn{border-radius:13px!important}#settingsMask.sv5 #csCard .cs-btn:not(.ghost){background:linear-gradient(135deg,#a6fbe2,#45cfa8)!important;color:#03251b!important}#settingsMask.sv5 #csCard .cs-btn.ghost{width:100%!important;padding:12px!important}#settingsMask.sv5 #csCard .cs-sess{border-radius:14px}#settingsMask.sv5 #csCard .cs-ic{border-radius:12px!important}' +
-'#settingsMask.sv5 #ncInstRow{display:flex!important;align-items:center;gap:12px;width:100%!important;min-height:58px;margin:0 0 12px!important;padding:10px 14px!important;border-radius:18px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;color:#eef5f2!important;font:inherit!important;font-weight:620!important;font-size:14.5px!important;justify-content:flex-start!important}' +
-'#settingsMask.sv5 .mact{position:sticky!important;bottom:0;z-index:5!important;margin:4px -24px 0!important;padding:14px 24px calc(18px + env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(10,14,16,0),#0b0f11 32%)!important;display:grid!important;grid-template-columns:1fr 1.4fr;gap:8px!important;border:0!important}' +
-'#settingsMask.sv5 .mact .btn{height:52px!important;border-radius:16px!important;justify-content:center!important;font-weight:700!important;font-size:15px!important;gap:8px}#settingsMask.sv5 #btnLogout{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.09)!important;color:#ffb4bf!important}#settingsMask.sv5 #btnLogout svg{width:17px;height:17px}#settingsMask.sv5 #btnSettingsClose{background:linear-gradient(135deg,#a6fbe2,#45cfa8)!important;color:#03251b!important;border:0!important}' +
-'@media (max-width:760px){#settingsMask.sv5{align-items:flex-end!important;padding:0!important}#settingsMask.sv5 .box{width:100%!important;max-height:94vh!important;max-height:94dvh!important;border-radius:28px 28px 0 0!important;border-bottom:0!important;padding:18px 16px 0!important;animation:svSheet .38s cubic-bezier(.2,.9,.25,1) both}#settingsMask.sv5 .sv-grab{display:block}#settingsMask.sv5 .sv-x{right:14px;top:16px}#settingsMask.sv5 .mact{margin:4px -16px 0!important;padding:14px 16px calc(16px + env(safe-area-inset-bottom))!important}#settingsMask.sv5 .sv-tabs{top:-18px}}' +
-'@keyframes svSheet{from{transform:translateY(100%)}to{transform:none}}' +
-'html[data-theme="light"] #settingsMask.sv5 .box{background:linear-gradient(180deg,#fff,#f4f7f3)!important;color:#0c111b;border-color:rgba(15,23,42,.1)!important;box-shadow:0 40px 100px rgba(15,23,42,.25)!important}html[data-theme="light"] #settingsMask.sv5 .sv-prof{background:linear-gradient(135deg,#e9f8f1,#f7fbf8 60%,#fdf8ea);border-color:rgba(10,122,86,.2)}html[data-theme="light"] #settingsMask.sv5 #settingsEmail{color:#475569!important}html[data-theme="light"] #settingsMask.sv5 #settingsRole{background:#e3f7f0!important;color:#0a7a56!important}' +
-'html[data-theme="light"] #settingsMask.sv5 .sv-tabs{background:#f1f4f2;border-color:rgba(15,23,42,.08)}html[data-theme="light"] #settingsMask.sv5 .sv-tab{color:#475569}html[data-theme="light"] #settingsMask.sv5 .sv-tab.on{background:#fff;color:#0a7a56;box-shadow:0 1px 3px rgba(15,23,42,.12),inset 0 0 0 1px rgba(10,122,86,.3)}' +
-'html[data-theme="light"] #settingsMask.sv5 #ncLangRow,html[data-theme="light"] #settingsMask.sv5 .settings-btn-row,html[data-theme="light"] #settingsMask.sv5 #csCard,html[data-theme="light"] #settingsMask.sv5 #ncInstRow{background:#fff!important;border-color:rgba(15,23,42,.09)!important;color:#0c111b!important}html[data-theme="light"] #settingsMask.sv5 .settings-btn-row.danger{color:#c42a44!important}html[data-theme="light"] #settingsMask.sv5 .sv-ri{background:#e9f8f2;color:#0a7a56}' +
-'html[data-theme="light"] #settingsMask.sv5 .mact{background:linear-gradient(180deg,rgba(244,247,243,0),#f4f7f3 32%)!important}html[data-theme="light"] #settingsMask.sv5 #btnLogout{background:#fff!important;border-color:rgba(15,23,42,.12)!important;color:#c42a44!important}html[data-theme="light"] #settingsMask.sv5 #btnSettingsClose{background:linear-gradient(135deg,#14a37a,#0a7a56)!important;color:#fff!important}html[data-theme="light"] #settingsMask.sv5 .sv-x{background:#fff;border-color:rgba(15,23,42,.12);color:#1e293b}' +
-/* ---------- limits (client window only, not the admin editor) ---------- */
-'.ncl-ov:not(:has(.ncl-adm)){z-index:100052!important;background:rgba(2,5,7,.62)!important}' +
-'.ncl-ov .ncl-box{position:relative;max-width:500px!important;padding:22px 24px 22px!important;border-radius:30px!important;font-family:inherit!important;color:#eef5f2!important;background:linear-gradient(180deg,#161d1f,#0a0e10)!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 60px 140px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.1)!important;overflow-x:hidden!important}' +
-'.ncl-ov .ncl-box:before{content:"";position:absolute;left:-70px;top:-100px;width:300px;height:190px;border-radius:50%;background:#62e8c2;opacity:.16;filter:blur(44px);pointer-events:none}.ncl-ov .ncl-box>*{position:relative}' +
-'.ncl-ov .ncl-h h2{font-size:22px!important;font-weight:760!important;letter-spacing:-.02em}.ncl-ov .ncl-x{width:36px!important;height:36px!important;border-radius:12px!important;border:1px solid rgba(255,255,255,.08)!important}.ncl-ov .ncl-sub{color:#93a39e!important;font-size:12.5px!important}' +
-'.ncl-ov .ncl-card{position:relative;border-radius:22px!important;background:rgba(255,255,255,.035)!important;border:1px solid rgba(255,255,255,.07)!important;padding:14px 16px!important;margin-bottom:10px!important}' +
-'.ncl-ov .ncl-top{display:flex;align-items:center;gap:11px;margin-bottom:8px}.ncl-ov .ncl-top b{font-size:15px;font-weight:680}.ncl-ov .ncx-ic{width:40px!important;height:40px!important;border-radius:13px!important;background:rgba(98,232,194,.1)!important;color:#62e8c2!important;border:0!important}' +
-'.ncl-ov .ncl-chip{margin-left:auto;padding:4px 10px!important;border-radius:99px!important;font-size:11px!important;font-weight:750!important;background:rgba(98,232,194,.14)!important;color:#62e8c2!important}.ncl-ov .ncl-chip.bad{background:rgba(255,107,122,.14)!important;color:#ff8d9a!important}' +
-'.ncl-ov .ncl-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0!important;font-size:13px}.ncl-ov .ncl-row span{color:#93a39e}.ncl-ov .ncl-row b{font-weight:650;font-variant-numeric:tabular-nums}' +
-'.ncl-ov .ncl-dots{display:flex;gap:5px;margin:2px 0 6px}.ncl-ov .ncl-dots i{flex:1;height:8px!important;border-radius:9px!important;background:rgba(255,255,255,.08)!important}.ncl-ov .ncl-dots i.on{background:linear-gradient(90deg,#45cfa8,#62e8c2)!important}.ncl-ov .ncl-dots i.full{background:#ff6b7a!important}' +
-'.ncl-ov .ncl-bar{height:8px!important;border-radius:9px!important;background:rgba(255,255,255,.08)!important;overflow:hidden;margin:2px 0 4px}.ncl-ov .ncl-bar span{display:block;height:100%;min-width:3px;border-radius:9px;background:linear-gradient(90deg,#45cfa8,#62e8c2)!important}' +
-'.ncl-ov .ncl-note{font-size:12px!important;color:#93a39e!important;line-height:1.5;padding:11px 13px;border-radius:16px;background:rgba(98,232,194,.05);border:1px solid rgba(98,232,194,.14)}' +
-'.ncl-ov .ncl-btn{height:52px!important;border-radius:16px!important;font-family:inherit!important;font-weight:700!important;font-size:15px!important;background:linear-gradient(135deg,#a6fbe2,#45cfa8)!important;color:#03251b!important;border:0!important;box-shadow:0 12px 30px -10px rgba(69,207,168,.45)!important}.ncl-ov .ncl-btn[style*="255,255,255"],.ncl-ov #nclSup,.ncl-ov #nrBack{background:rgba(255,255,255,.06)!important;color:#e6efeb!important;border:1px solid rgba(255,255,255,.1)!important;box-shadow:none!important}' +
-'.ncl-ov .ncl-in{border-radius:14px!important;height:48px;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.1)!important;color:#fff!important;font-family:inherit!important}.ncl-ov textarea.ncl-in{height:auto}' +
-'@media (max-width:760px){.ncl-ov:not(:has(.ncl-adm)){align-items:flex-end!important;padding:0!important}.ncl-ov .ncl-box{max-width:none!important;max-height:94vh!important;border-radius:28px 28px 0 0!important;border-bottom:0!important;padding:20px 16px calc(18px + env(safe-area-inset-bottom))!important;animation:svSheet .38s cubic-bezier(.2,.9,.25,1) both}}' +
-'html[data-theme="light"] .ncl-ov .ncl-box{background:linear-gradient(180deg,#fff,#f4f7f3)!important;color:#0c111b!important;border-color:rgba(15,23,42,.1)!important}html[data-theme="light"] .ncl-ov .ncl-card{background:#fff!important;border-color:rgba(15,23,42,.09)!important}html[data-theme="light"] .ncl-ov .ncl-row b,html[data-theme="light"] .ncl-ov .ncl-top b,html[data-theme="light"] .ncl-ov .ncl-h h2{color:#0c111b!important}html[data-theme="light"] .ncl-ov .ncx-ic{background:#e9f8f2!important;color:#0a7a56!important}html[data-theme="light"] .ncl-ov .ncl-chip{background:#e3f7f0!important;color:#0a7a56!important}html[data-theme="light"] .ncl-ov .ncl-row span,html[data-theme="light"] .ncl-ov .ncl-sub,html[data-theme="light"] .ncl-ov .ncl-note{color:#475569!important}html[data-theme="light"] .ncl-ov .ncl-btn{background:linear-gradient(135deg,#14a37a,#0a7a56)!important;color:#fff!important}html[data-theme="light"] .ncl-ov #nclSup{background:#fff!important;color:#1e293b!important;border-color:rgba(15,23,42,.12)!important}html[data-theme="light"] .ncl-ov .ncl-x{background:#fff!important;color:#1e293b!important}html[data-theme="light"] .ncl-ov .ncl-dots i,html[data-theme="light"] .ncl-ov .ncl-bar{background:#e6ece8!important}';
-  document.head.appendChild(s);
-
-  var tab = 'acc';
-  function rowIcon(btn, icon) { if (btn.querySelector('.sv-ri')) return; var l = btn.lastElementChild; if (l && /^[→›>]$/.test(l.textContent.trim())) l.style.display = 'none'; var f = btn.firstElementChild; if (f) f.textContent = f.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); var i = document.createElement('span'); i.className = 'sv-ri'; i.innerHTML = SV[icon]; btn.insertBefore(i, btn.firstChild); var c = document.createElement('span'); c.className = 'sv-ch'; c.innerHTML = SV.chev; btn.appendChild(c); }
-  function settings() {
-    var m = $('settingsMask'); if (!m) return;
-    var box = m.querySelector('.box'); if (!box) return;
-    function cl(c, v) { if (m.classList.contains(c) !== v) m.classList.toggle(c, v); } cl('sv5', true); cl('sv-acc', tab === 'acc'); cl('sv-sec', tab === 'sec');
-    if (!box.querySelector('.sv-au')) {
-      var au = document.createElement('div'); au.className = 'sv-au'; au.innerHTML = '<i></i><i></i>'; box.insertBefore(au, box.firstChild);
-      var g = document.createElement('div'); g.className = 'sv-grab'; box.insertBefore(g, au.nextSibling);
-      var x = document.createElement('button'); x.type = 'button'; x.className = 'sv-x'; x.setAttribute('aria-label', 'Close'); x.innerHTML = '×'; x.onclick = function () { var c = $('btnSettingsClose'); if (c) c.click(); else m.classList.remove('on'); }; box.appendChild(x);
-    }
-    var av = $('ncAvSetW'), name = $('settingsName'), prof = box.querySelector('.sv-prof');
-    if (!prof && name) {
-      prof = document.createElement('div'); prof.className = 'sv-prof';
-      var pk = document.createElement('div'); pk.className = 'sv-pk';
-      var row = name.closest('.settings-row') || name.parentNode; var sec = row.closest('.settings-section');
-      var h2 = box.querySelector('p.d') || box.querySelector('h2');
-      h2.parentNode.insertBefore(prof, h2.nextSibling);
-      if (av) prof.appendChild(av);
-      pk.appendChild(row); prof.appendChild(pk);
-      if (sec) sec.setAttribute('data-sv', 'hide');
-    } else if (prof && av && av.parentNode !== prof) prof.insertBefore(av, prof.firstChild);
-    if (!box.querySelector('.sv-tabs') && prof) {
-      var t = document.createElement('div'); t.className = 'sv-tabs'; t.setAttribute('role', 'tablist');
-      t.innerHTML = '<button type="button" class="sv-tab" data-t="acc" role="tab">' + SV.user + '<span>' + T('acc') + '</span></button><button type="button" class="sv-tab" data-t="sec" role="tab">' + SV.shield + '<span>' + T('sec') + '</span></button>';
-      prof.parentNode.insertBefore(t, prof.nextSibling);
-      t.addEventListener('click', function (e) { var b = e.target.closest('.sv-tab'); if (!b) return; tab = b.getAttribute('data-t'); settings(); box.scrollTop = 0; });
-    }
-    var tabs = box.querySelector('.sv-tabs');
-    if (tabs) {
-      [].forEach.call(tabs.children, function (b) { b.classList.toggle('on', b.getAttribute('data-t') === tab); var as = String(b.getAttribute('data-t') === tab); if (b.getAttribute('aria-selected') !== as) b.setAttribute('aria-selected', as); });
-      var off = !!box.querySelector('#csCard .cs-pill.off'), sb = tabs.querySelector('[data-t="sec"]'), em = sb && sb.querySelector('em');
-      if (off && sb && !em) { em = document.createElement('em'); sb.appendChild(em); } else if (!off && em) em.remove();
-    }
-    /* which tab each block belongs to */
-    var lr = $('ncLangRow'); if (lr && lr.getAttribute('data-sv') !== 'acc') lr.setAttribute('data-sv', 'acc');
-    [].forEach.call(box.querySelectorAll('.settings-section'), function (sc) {
-      if (sc.getAttribute('data-sv') === 'hide') return;
-      var want = sc.querySelector('#btnChangePassword,#btnChangeEmail') ? 'sec' : sc.querySelector('#btnDeleteAccount') ? 'acc' : null; if (want && sc.getAttribute('data-sv') !== want) sc.setAttribute('data-sv', want);
-    });
-    var cs = $('csCard'); if (cs && cs.getAttribute('data-sv') !== 'sec') cs.setAttribute('data-sv', 'sec');
-    var inst = $('ncInstRow'); if (inst) { if (inst.getAttribute('data-sv') !== 'acc') inst.setAttribute('data-sv', 'acc'); var mact = box.querySelector('.mact'); if (mact && inst.compareDocumentPosition(mact) & Node.DOCUMENT_POSITION_FOLLOWING) { } else if (mact) box.insertBefore(inst, mact); if (!inst.querySelector('.sv-ri')) { inst.textContent = inst.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); var ii = document.createElement('span'); ii.className = 'sv-ri'; ii.innerHTML = SV.app; inst.insertBefore(ii, inst.firstChild); } }
-    /* "My wallets" entry — opens the connect-wallet screen (account tab) */
-    if (window.NCWallets) {
-      var wr = $('ncWalletRow');
-      if (!wr) {
-        wr = document.createElement('button'); wr.type = 'button'; wr.id = 'ncWalletRow'; wr.className = 'settings-btn-row';
-        wr.onclick = function () { try { window.NCWallets.open(); } catch (e) {} };
-        var mact2 = box.querySelector('.mact'); var anchor = $('ncInstRow') || mact2;
-        if (anchor) box.insertBefore(wr, anchor); else box.appendChild(wr);
-      }
-      wr.setAttribute('data-sv', 'acc');
-      var wlab = T('wallets'), wsub = T('walletsSub');
-      var wh = '<span class="sv-ri">' + SV.wallet + '</span><span><b style="display:block;font-weight:650">' + wlab + '</b><small style="display:block;font-size:12px;color:#93a39e;font-weight:500">' + wsub + '</small></span><span class="sv-ch">' + SV.chev + '</span>';
-      if (wr.__h !== wh) { wr.innerHTML = wh; wr.__h = wh; }
-    }
-    var cp = $('btnChangePassword'); if (cp) rowIcon(cp, 'key');
-    var ce = $('btnChangeEmail'); if (ce) rowIcon(ce, 'mail');
-    var del = $('btnDeleteAccount'); if (del) rowIcon(del, 'trash');
-    var lo = $('btnLogout'); if (lo && !lo.querySelector('svg')) { lo.textContent = lo.textContent.replace(/^[^A-Za-zÀ-ÿ0-9]+/, ''); lo.insertAdjacentHTML('afterbegin', SV.out); }
+  function css() {
+    if ($('nwCss')) return; var s = document.createElement('style'); s.id = 'nwCss';
+    s.textContent = [
+      '#nw{position:fixed;inset:0;z-index:100052;display:none;align-items:center;justify-content:center;padding:16px;font-family:inherit;color:#eef5f2}#nw.on{display:flex}',
+      '#nw .nw-ov{position:absolute;inset:0;background:rgba(2,5,7,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}',
+      '#nw .nw-w{position:relative;width:min(540px,100%);max-height:calc(100vh - 32px);overflow:hidden auto;border-radius:28px;background:linear-gradient(180deg,#161d1f,#0a0e10);border:1px solid rgba(255,255,255,.08);box-shadow:0 60px 140px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.1);padding:22px 22px 20px;scrollbar-width:thin}',
+      '#nw .nw-w:before{content:"";position:absolute;left:-70px;top:-100px;width:300px;height:190px;border-radius:50%;background:#62e8c2;opacity:.16;filter:blur(44px);pointer-events:none}#nw .nw-w>*{position:relative}',
+      '#nw .nw-x{position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#c6d2ce;cursor:pointer;font-size:18px;line-height:1;z-index:3}',
+      '#nw .nw-hi{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(140deg,#a3fbe3,#45cfa8);color:#03251b;margin-bottom:12px}#nw .nw-hi svg{width:24px;height:24px}',
+      '#nw h2{margin:0;font-size:21px;font-weight:760;letter-spacing:-.02em}#nw .nw-sub{margin:4px 0 16px;font-size:12.5px;color:#93a39e;line-height:1.5;max-width:92%}',
+      '#nw .nw-lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#86968f;margin:16px 2px 9px}',
+      '#nw .nw-card{border-radius:20px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);padding:7px}',
+      '#nw .nw-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px}',
+      '#nw .nw-ava{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff;overflow:hidden}#nw .nw-ava img{width:100%;height:100%;object-fit:cover}',
+      '#nw .nw-m{min-width:0;flex:1}#nw .nw-m b{display:block;font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nw .nw-m small{display:block;font-size:12px;color:#93a39e;font-family:ui-monospace,Menlo,monospace;margin-top:1px}',
+      '#nw .nw-tag{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:750}#nw .nw-tag.v{background:rgba(98,232,194,.14);color:#62e8c2}#nw .nw-tag.w{background:rgba(255,255,255,.07);color:#a7b3ae}#nw .nw-tag svg{width:11px;height:11px}',
+      '#nw .nw-del{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.14);color:#ff8d9a;cursor:pointer}#nw .nw-del svg{width:15px;height:15px}',
+      '#nw .nw-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
+      '#nw button.nw-tile{display:flex;align-items:center;gap:11px;padding:12px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);color:#eef5f2;font:inherit;font-weight:620;font-size:13.5px;cursor:pointer;text-align:left;transition:transform .14s,border-color .14s}#nw button.nw-tile:hover{transform:translateY(-1px);border-color:rgba(98,232,194,.4)}',
+      '#nw .nw-tile .nw-ava{width:36px;height:36px;border-radius:11px;font-size:15px}#nw .nw-tile span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#nw .nw-ava.br{position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 4px rgba(0,0,0,.25),0 4px 12px var(--glow,rgba(0,0,0,.3));border:1px solid rgba(255,255,255,.14)}',
+      '#nw .nw-ava.br:after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(120% 80% at 30% 20%,rgba(255,255,255,.4),transparent 60%);opacity:.5;pointer-events:none}',
+      '#nw .nw-tile .nw-ava img{border-radius:9px}',
+      '#nw .nw-tile.on{border-color:rgba(98,232,194,.5);box-shadow:0 0 0 1px rgba(98,232,194,.25)}',
+      '#nw .nw-wa{margin-top:9px;display:flex;gap:8px}#nw .nw-wa input{flex:1;min-width:0;height:46px;padding:0 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#fff;font:inherit;font-size:13.5px;outline:none}#nw .nw-wa input:focus{border-color:rgba(98,232,194,.55);box-shadow:0 0 0 4px rgba(98,232,194,.1)}#nw .nw-wa input.bad{border-color:#ff6b7a}',
+      '#nw .nw-wl{margin-top:8px}#nw .nw-wl input{width:100%;box-sizing:border-box;height:42px;padding:0 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#fff;font:inherit;font-size:13.5px;outline:none}',
+      '#nw .nw-addbtn{flex:none;padding:0 18px;height:46px;border-radius:13px;border:0;background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b;font:inherit;font-weight:720;font-size:14px;cursor:pointer}#nw .nw-addbtn[disabled]{opacity:.55;cursor:default}',
+      '#nw .nw-note{margin:10px 2px 0;font-size:12px;color:#93a39e;line-height:1.5}',
+      '#nw .nw-safe{margin-top:16px;display:flex;gap:10px;padding:12px 13px;border-radius:16px;background:rgba(255,194,74,.07);border:1px solid rgba(255,194,74,.22);font-size:12px;line-height:1.5;color:#e8d9b4}#nw .nw-safe svg{width:18px;height:18px;flex:none;color:#ffc24a;margin-top:1px}',
+      '#nw .nw-busy{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(8,12,14,.86);border-radius:28px;z-index:4;text-align:center;padding:30px}#nw.busy .nw-busy{display:flex}',
+      '#nw .nw-spin{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:#62e8c2;animation:nwSp 1s linear infinite}@keyframes nwSp{to{transform:rotate(360deg)}}',
+      '#nw .nw-busy b{font-size:15px;font-weight:650}#nw .nw-busy small{font-size:12.5px;color:#9fb6ae;max-width:280px}',
+      '#nw .nw-close{width:100%;height:50px;margin-top:16px;border-radius:15px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#e6efeb;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer}',
+      '@media(max-width:760px){#nw{align-items:flex-end;padding:0}#nw .nw-w{width:100%;max-height:94dvh;border-radius:26px 26px 0 0;border-bottom:0}#nw .nw-tiles{grid-template-columns:1fr}}',
+      /* light theme */
+      'html[data-theme="light"] #nw .nw-w{background:linear-gradient(180deg,#fff,#f4f7f3);color:#0c111b;border-color:rgba(15,23,42,.1)}',
+      'html[data-theme="light"] #nw h2{color:#0c111b}html[data-theme="light"] #nw .nw-card,html[data-theme="light"] #nw button.nw-tile,html[data-theme="light"] #nw .nw-wa input,html[data-theme="light"] #nw .nw-wl input{background:#fff;border-color:rgba(15,23,42,.1);color:#0c111b}',
+      'html[data-theme="light"] #nw .nw-m small,html[data-theme="light"] #nw .nw-sub,html[data-theme="light"] #nw .nw-note{color:#475569}html[data-theme="light"] #nw .nw-x{background:#fff;border-color:rgba(15,23,42,.12);color:#1e293b}',
+      'html[data-theme="light"] #nw .nw-busy{background:rgba(255,255,255,.92)}html[data-theme="light"] #nw .nw-busy b{color:#0c111b}html[data-theme="light"] #nw .nw-close{background:#fff;border-color:rgba(15,23,42,.12);color:#1e293b}'
+    ].join('');
+    document.head.appendChild(s);
   }
-  /* run synchronously (before paint) whenever the window opens or its content changes — no old-design flash */
-  var busy = false, wasOn = false, mo = null;
-  function run() { if (busy) return; busy = true; try { var m = $('settingsMask'); var on = !!(m && m.classList.contains('on')); if (on && !wasOn) tab = 'acc'; wasOn = on; settings(); } catch (e) {} if (mo) mo.takeRecords(); busy = false; }
-  function hook() { var m = $('settingsMask'); if (!m || mo) return !!mo; run(); mo = new MutationObserver(run); mo.observe(m, { attributes: true, attributeFilter: ['class', 'style'], childList: true, subtree: true }); return true; }
-  if (!hook()) { var bo = new MutationObserver(function () { if (hook()) bo.disconnect(); }); bo.observe(document.documentElement, { childList: true, subtree: true }); document.addEventListener('DOMContentLoaded', hook); }
-  setInterval(function () { hook(); var m = $('settingsMask'); if (m && m.classList.contains('on')) run(); }, 1000);
-  window.addEventListener('nc-lang', function () { var tb = document.querySelector('#settingsMask .sv-tabs'); if (tb) { tb.querySelector('[data-t="acc"] span').textContent = T('acc'); tb.querySelector('[data-t="sec"] span').textContent = T('sec'); } });
+
+  /* ───────── EIP-6963 provider discovery ───────── */
+  var providers = [];
+  function onAnnounce(e) {
+    try {
+      var d = e.detail; if (!d || !d.provider || !d.info) return;
+      if (!providers.some(function (p) { return p.info.uuid === d.info.uuid; })) providers.push(d);
+      if (isOpen()) renderConnect();
+    } catch (x) { }
+  }
+  window.addEventListener('eip6963:announceProvider', onAnnounce);
+  function discover() { providers = []; try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (x) { } }
+  function injectedList() {
+    var list = providers.slice();
+    if (!list.length && window.ethereum) {
+      var name = window.ethereum.isMetaMask ? 'MetaMask' : window.ethereum.isTrust ? 'Trust Wallet' : window.ethereum.isCoinbaseWallet ? 'Coinbase Wallet' : 'Browser wallet';
+      list = [{ info: { name: name, icon: '', uuid: 'legacy' }, provider: window.ethereum }];
+    }
+    return list;
+  }
+
+  /* if a popular wallet is actually installed, reuse the OFFICIAL icon it supplies via EIP-6963
+     (the wallet distributes its own logo for exactly this) — we never hand-draw a brand mark */
+  function injMatch(id) {
+    return injectedList().filter(function (p) {
+      var n = (p.info.name || '').toLowerCase(), pr = p.provider || {};
+      return (id === 'metamask' && (pr.isMetaMask || /metamask/.test(n))) ||
+        (id === 'trust' && (pr.isTrust || pr.isTrustWallet || /trust/.test(n))) ||
+        (id === 'coinbase' && (pr.isCoinbaseWallet || /coinbase/.test(n))) ||
+        (id === 'exodus' && (pr.isExodus || /exodus/.test(n)));
+    })[0];
+  }
+
+  function hexMsg(s) { var o = '0x'; for (var i = 0; i < s.length; i++) { var h = s.charCodeAt(i).toString(16); o += h.length < 2 ? '0' + h : h; } return o; }
+
+  function connectInjected(entry) {
+    var prov = entry.provider, nm = entry.info.name;
+    busy(T('approve'));
+    prov.request({ method: 'eth_requestAccounts' }).then(function (accs) {
+      var addr = (accs && accs[0] || '').toLowerCase();
+      if (!/^0x[0-9a-f]{40}$/.test(addr)) throw { code: 0 };
+      var msg = T('signMsg') + '\nAddress: ' + addr + '\n' + new Date().toISOString();
+      return prov.request({ method: 'personal_sign', params: [hexMsg(msg), addr] })
+        .then(function () { return { addr: addr, verified: true }; }, function () { return { addr: addr, verified: false }; });
+    }).then(function (r) {
+      return post('wallets', { op: 'save', type: 'evm', chain: 'ethereum', label: nm, address: r.addr, verified: r.verified });
+    }).then(function (d) {
+      unbusy();
+      if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); }
+      else toast((d && d.error) || T('rejected'));
+    }).catch(function (err) {
+      unbusy();
+      toast(err && (err.code === 4001 || err.code === 0) ? T('rejected') : T('rejected'));
+    });
+  }
+
+  function popularClick(id) {
+    /* if the wallet injects a provider, use it; otherwise it's a mobile wallet → QR (or guidance) */
+    var inj = injectedList(), match = inj.filter(function (p) {
+      var n = (p.info.name || '').toLowerCase();
+      return (id === 'metamask' && (p.provider.isMetaMask || /metamask/.test(n))) ||
+        (id === 'trust' && (p.provider.isTrust || /trust/.test(n))) ||
+        (id === 'coinbase' && (p.provider.isCoinbaseWallet || /coinbase/.test(n))) ||
+        (id === 'exodus' && /exodus/.test(n));
+    })[0];
+    if (match) return connectInjected(match);
+    openWC();
+  }
+
+  function openWC() {
+    if (window.NC_WC_PROJECT_ID && window.NCWalletConnect && typeof window.NCWalletConnect.open === 'function') {
+      try { return window.NCWalletConnect.open({ onAddress: saveWatched }); } catch (x) { }
+    }
+    toast(T('wcSoon'));
+  }
+  function saveWatched(addr, label) {
+    var a = String(addr || '').trim(); var type = /^0x/i.test(a) ? 'evm' : 'btc';
+    return post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: label || 'Wallet', address: a, verified: false })
+      .then(function (d) { if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); } else toast((d && d.error) || 'Error'); return d; });
+  }
+
+  function addWatch() {
+    var inp = $('nwAddr'), lab = $('nwLabel'); if (!inp) return;
+    var a = inp.value.trim();
+    var evm = /^0x[0-9a-fA-F]{40}$/.test(a), btc = /^(bc1[a-z0-9]{20,62}|[13][a-km-zA-HJ-NP-Z1-9]{25,39})$/.test(a);
+    if (!evm && !btc) { inp.classList.add('bad'); inp.focus(); return; }
+    var btn = $('nwAddBtn'); if (btn) { btn.disabled = true; }
+    var type = evm ? 'evm' : 'btc';
+    post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: (lab && lab.value.trim()) || (evm ? 'Ethereum wallet' : 'Bitcoin wallet'), address: a, verified: false })
+      .then(function (d) { if (btn) btn.disabled = false; if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); } else { toast((d && d.error) || 'Error'); } });
+  }
+
+  function removeWallet(id) {
+    if (!window.confirm(T('removeQ'))) return;
+    post('wallets', { op: 'remove', id: id }).then(function (d) { if (d && d.ok) { WALLETS = d.wallets || WALLETS; render(); } });
+  }
+
+  /* ───────── rendering ───────── */
+  var WALLETS = [], el = null;
+  function isOpen() { return !!el && el.classList.contains('on'); }
+  function busy(msg) { if (!el) return; var b = el.querySelector('.nw-busy small'); if (b) b.textContent = msg || ''; el.classList.add('busy'); }
+  function unbusy() { if (el) el.classList.remove('busy'); }
+
+  function avatar(info, fallbackGlyph, c1, c2) {
+    var glow = (c1 || '#45cfa8') + '55';
+    if (info && info.icon) return '<span class="nw-ava br" style="--glow:' + glow + '"><img src="' + esc(info.icon) + '" alt=""></span>';
+    return '<span class="nw-ava br" style="background:linear-gradient(145deg,' + (c1 || '#45cfa8') + ',' + (c2 || '#2a9d7c') + ');--glow:' + glow + '">' + esc(fallbackGlyph || '•') + '</span>';
+  }
+
+  function renderConnect() {
+    var inj = injectedList(), host = el && el.querySelector('#nwInj'); if (!host) return;
+    if (inj.length) {
+      host.parentNode.style.display = '';
+      host.innerHTML = inj.map(function (p, i) {
+        var g = (p.info.name || 'W').charAt(0).toUpperCase();
+        return '<button type="button" class="nw-tile" data-nw="inj" data-i="' + i + '">' + avatar(p.info, g, '#45cfa8', '#2a9d7c') + '<span>' + esc(p.info.name || 'Wallet') + '</span></button>';
+      }).join('');
+    } else { host.parentNode.style.display = 'none'; }
+  }
+
+  function render() {
+    if (!el) return;
+    var wl = WALLETS.map(function (w) {
+      var g = (w.label || 'W').charAt(0).toUpperCase();
+      var pop = POP.filter(function (p) { return (w.label || '').toLowerCase().indexOf(p.id) > -1 || (w.label || '').toLowerCase() === p.name.toLowerCase(); })[0];
+      return '<div class="nw-item">' + avatar(null, g, pop ? pop.c1 : '#3a4a52', pop ? pop.c2 : '#222c32') +
+        '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(short(w.address)) + '</small></div>' +
+        '<span class="nw-tag ' + (w.verified ? 'v' : 'w') + '">' + (w.verified ? I.check + T('verified') : I.eye + T('watchTag')) + '</span>' +
+        '<button type="button" class="nw-del" data-nw="del" data-id="' + esc(w.id) + '" aria-label="' + esc(T('remove')) + '">' + I.trash + '</button></div>';
+    }).join('');
+
+    var popTiles = POP.map(function (p) {
+      var m = injMatch(p.id), ava;
+      if (m && m.info && m.info.icon) ava = '<span class="nw-ava br" style="--glow:' + p.c1 + '55"><img src="' + esc(m.info.icon) + '" alt=""></span>';
+      else ava = '<span class="nw-ava br" style="background:linear-gradient(145deg,' + p.c1 + ',' + p.c2 + ');--glow:' + p.c1 + '55">' + p.g + '</span>';
+      return '<button type="button" class="nw-tile" data-nw="pop" data-id="' + p.id + '">' + ava + '<span>' + esc(p.name) + '</span></button>';
+    }).join('') + '<button type="button" class="nw-tile" data-nw="wc"><span class="nw-ava br" style="background:linear-gradient(145deg,#3b99fc,#1a6fe0);--glow:#3b99fc55">' + I.qr + '</span><span>' + esc(T('scan')) + '</span></button>';
+
+    el.querySelector('.nw-w').innerHTML =
+      '<button type="button" class="nw-x" data-nw="x" aria-label="' + esc(T('close')) + '">×</button>' +
+      '<div class="nw-hi">' + I.wallet + '</div>' +
+      '<h2>' + esc(T('title')) + '</h2><p class="nw-sub">' + esc(T('sub')) + '</p>' +
+      (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>' : '') +
+      '<div class="nw-lbl">' + esc(T('connect')) + '</div>' +
+      '<div id="nwInjWrap"><div class="nw-lbl" style="margin-top:0;color:#62e8c2">' + esc(T('detected')) + '</div><div class="nw-tiles" id="nwInj"></div></div>' +
+      '<div class="nw-lbl">' + esc(T('popular')) + '</div><div class="nw-tiles">' + popTiles + '</div>' +
+      '<div class="nw-lbl">' + esc(T('watch')) + '</div><p class="nw-note" style="margin-top:-2px">' + esc(T('watchSub')) + '</p>' +
+      '<div class="nw-wl"><input id="nwLabel" maxlength="32" placeholder="' + esc(T('labelPh')) + '"></div>' +
+      '<div class="nw-wa"><input id="nwAddr" autocomplete="off" spellcheck="false" placeholder="' + esc(T('addrPh')) + '"><button type="button" class="nw-addbtn" id="nwAddBtn" data-nw="add">' + esc(T('add')) + '</button></div>' +
+      '<div class="nw-safe">' + I.shield + '<span>' + esc(T('safe')) + '</span></div>' +
+      '<button type="button" class="nw-close" data-nw="x">' + esc(T('close')) + '</button>' +
+      '<div class="nw-busy"><div class="nw-spin"></div><b>' + esc(T('connecting')) + '</b><small></small></div>';
+    renderConnect();
+  }
+
+  function open() {
+    if (!isClient()) return;
+    css();
+    if (!el) {
+      el = document.createElement('div'); el.id = 'nw'; el.className = 'nc-no-i18n'; el.setAttribute('data-nci18n', 'off'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+      el.innerHTML = '<div class="nw-ov" data-nw="x"></div><div class="nw-w"></div>';
+      document.body.appendChild(el);
+      el.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-nw]'); if (!b) return;
+        var k = b.getAttribute('data-nw');
+        if (k === 'x') return close();
+        if (k === 'add') return addWatch();
+        if (k === 'wc') return openWC();
+        if (k === 'pop') return popularClick(b.getAttribute('data-id'));
+        if (k === 'del') return removeWallet(b.getAttribute('data-id'));
+        if (k === 'inj') { var i = +b.getAttribute('data-i'); var inj = injectedList(); if (inj[i]) connectInjected(inj[i]); return; }
+      });
+      el.addEventListener('input', function (e) { if (e.target && e.target.id === 'nwAddr') e.target.classList.remove('bad'); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) close(); });
+    }
+    render();
+    el.classList.add('on'); document.documentElement.style.overflow = 'hidden';
+    discover();
+    post('wallets', { op: 'list' }).then(function (d) { if (d && d.ok) { WALLETS = d.wallets || []; if (isOpen()) render(); } });
+  }
+  function close() { if (!el) return; el.classList.remove('on', 'busy'); document.documentElement.style.overflow = ''; }
+
+  window.NCWallets = { open: open, close: close };
+  window.openWallets = open;
+
+  /* sidebar entry "My wallets": intercept in the capture phase so the legacy page-switcher's own
+     onclick never runs (which would blank the page) — we just open the overlay instead. */
+  function navLabel() { var li = $('navWallets'); if (!li) return; var tx = li.querySelector('.tx'); if (tx && tx.textContent !== T('entry')) tx.textContent = T('entry'); li.setAttribute('title', T('entry')); }
+  document.addEventListener('click', function (e) {
+    var li = e.target.closest && e.target.closest('#navWallets');
+    if (!li) return;
+    e.stopPropagation(); e.preventDefault();
+    try { var ms = document.querySelectorAll('.mi'); for (var i = 0; i < ms.length; i++) ms[i].classList.remove('on'); } catch (x) { }
+    open();
+  }, true);
+  navLabel();
+  window.addEventListener('nc-lang', function () { navLabel(); if (isOpen()) render(); });
+  document.addEventListener('DOMContentLoaded', navLabel);
+  setTimeout(navLabel, 1500);
 })();
