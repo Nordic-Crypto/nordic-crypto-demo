@@ -35,17 +35,19 @@
     if (nx) { var span = nx.min - t.min, got = Math.max(0, d.volume - t.min); prog = '<div class="bar"><i style="width:' + Math.min(100, Math.round(got / span * 100)) + '%"></i></div><p>Deposit ' + usd(nx.min - (d.volume != null ? d.volume : d.realDeposits)) + ' more to reach ' + esc(nx.name) + ' (' + pct(nx.rate) + ' cashback)</p>'; }
     else prog = '<p>You are on the top tier</p>';
     var link = location.origin + '/index.html?ref=' + d.code;
-    el.innerHTML =
+    var html =
       '<div class="hd" data-rw="toggle" role="button" tabindex="0"><span>🎁</span><b><span>Rewards</span></b><span class="b">' + esc(t.name) + '</span><span class="cb">' + pct(t.rate) + ' cashback</span><i class="chev">›</i></div>' +
       '<div class="bd">' + prog +
       '<p>Cashback this month: ' + usd(d.cashbackMonth) + ' of ' + usd(t.cap) + '</p>' +
       '<div class="r"><p>' + (d.welcomeDone ? '✓ Welcome bonus received' : 'Get ' + usd(c.welcome.amount) + ' on your first deposit of ' + usd(c.welcome.minDeposit) + ' or more') + '</p></div>' +
-      '<div class="r"><button type="button" class="nc-dailybtn" data-rw="daily"><span class="ic">🎁</span><span><b>Premium Bonus</b><small>Claim daily $5 reward</small></span></button></div>' +
+      '<div class="r"><button type="button" class="nc-dailybtn" data-rw="daily"><span class="ic">🎁</span><span><b>Lucky Box</b><small>Open today’s surprise</small></span></button></div>' +
       '<div class="r"><p>Invite a friend: you both get ' + usd(c.referral.referrer) + ' after their first deposit of ' + usd(c.referral.minDeposit) + ' or more</p>' +
       '<small>Your referral code</small><div class="code nc-no-i18n" data-nci18n="off"><b>' + esc(d.code) + '</b></div>' +
       '<div class="code"><button type="button" class="p" data-rw="copy"><span>Copy link</span></button>' + (navigator.share ? '<button type="button" data-rw="share"><span>Share</span></button>' : '') + '</div>' +
       '<small>Friends joined: ' + (d.referral.invited || []).length + ' · Rewards earned: ' + usd(d.referral.earned) + '</small></div></div>';
     el.__link = link;
+    if (el.__h === html && el.firstChild) return; /* nothing changed — don't rebuild (stops the once-a-minute blink) */
+    el.__h = html; el.innerHTML = html;
   }
   function ensure() {
     if (role() !== 'user' && role() !== '') return;
