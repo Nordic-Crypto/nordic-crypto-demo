@@ -207,6 +207,7 @@
   }
   function isOpen() { return !!(el && el.classList.contains('on')); }
   function open() {
+    try { console.log('[NordicCrypto] Add money UI v5 active'); } catch (e) {}
     root(); lastFocus = document.activeElement; step = 1; sent = null; amount = ''; busy = false;
     var st0 = S(); if (!(st0.user && st0.user.iban) && (wallet('BTC') || wallet('ETH'))) method = 'crypto';
     paint(); el.classList.add('on'); document.documentElement.style.overflow = 'hidden';
@@ -227,7 +228,7 @@
     var f = window.openModal;
     if (typeof f === 'function' && !f.__dv) {
       var w = function (m) {
-        var mk = $('mask'), take = m === 'add' && !window.adminViewingEmail;
+        var mk = $('mask'), take = m === 'add';
         if (take && mk) mk.classList.add('dv-hide');
         var r = f.apply(this, arguments);
         if (take) { if (mk) mk.classList.add('dv-hide'); if (!isOpen()) open(); }
@@ -242,7 +243,7 @@
   /* take over the "add" mode of #mask; "transfer" mode stays the old window */
   setInterval(function () {
     var m = $('mask'); if (!m) return;
-    var on = m.classList.contains('on') && modeAdd() && !window.adminViewingEmail;
+    var on = m.classList.contains('on') && modeAdd();
     if (on) { if (!m.classList.contains('dv-hide')) m.classList.add('dv-hide'); if (!isOpen()) open(); }
     else if (!m.classList.contains('on')) { /* keep it hidden between openings so a later openModal('add') never shows the old box */ }
     else { if (m.classList.contains('dv-hide')) m.classList.remove('dv-hide'); if (isOpen() && step !== 3) close(true); }
