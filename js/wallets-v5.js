@@ -187,16 +187,29 @@
   }
 
   function openWC() {
+    if (isViewer()) return;
     if (window.NC_WC_PROJECT_ID && window.NCWalletConnect && typeof window.NCWalletConnect.open === 'function') {
-      try { return window.NCWalletConnect.open({ onAddress: saveWatched }); } catch (x) { }
+      try {
+        return window.NCWalletConnect.open({
+          projectId: window.NC_WC_PROJECT_ID,
+          signMsg: T('signMsg'),
+          busy: function (m) { busy(m == null ? T('connecting') : m); },
+          unbusy: unbusy,
+          toast: toast,
+          save: saveConnected,
+          strings: { approve: T('approve'), rejected: T('rejected'), connecting: T('connecting'), done: T('done') }
+        });
+      } catch (x) { }
     }
     toast(T('wcSoon'));
   }
-  function saveWatched(addr, label) {
+  /* save a wallet that a real wallet app has approved (verified when a signature was produced) */
+  function saveConnected(addr, label, verified) {
     var a = String(addr || '').trim(); var type = /^0x/i.test(a) ? 'evm' : 'btc';
-    return post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: label || 'Wallet', address: a, verified: false })
+    return post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: label || 'Wallet', address: a, verified: !!verified })
       .then(function (d) { if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); } else toast((d && d.error) || 'Error'); return d; });
   }
+  function saveWatched(addr, label) { return saveConnected(addr, label, false); }
 
   function addWatch() {
     var inp = $('nwAddr'), lab = $('nwLabel'); if (!inp) return;
