@@ -438,7 +438,7 @@ select.fc option{background:#0f1420;color:#e8f4ff}
 .ex-tx-section{margin-bottom:24px}
 .ex-tx-list{display:flex;flex-direction:column;gap:8px}
 .ex-empty{text-align:center;padding:50px 20px;color:#7a8a9e;font-size:.9rem;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);border-radius:16px}
-.onboard{position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,212,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(124,58,237,.14),transparent 60%),var(--bg);display:none;justify-content:center;align-items:center;z-index:3000;overflow-y:auto;padding:40px 20px}
+.onboard{position:fixed;inset:0;background:radial-gradient(900px 500px at 30% 10%,rgba(0,212,255,.12),transparent 60%),radial-gradient(800px 500px at 70% 90%,rgba(124,58,237,.14),transparent 60%),var(--bg);display:none;justify-content:center;align-items:safe center;z-index:3000;overflow-y:auto;padding:40px 20px}
 .onboard.on{display:flex}
 .onb-box{background:linear-gradient(180deg,rgba(22,30,42,.95),rgba(13,18,25,.95));border:1px solid var(--bd2);border-radius:20px;padding:38px;width:100%;max-width:520px;box-shadow:var(--shadow-lg)}
 .onb-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;font-size:1.4rem;font-weight:800}
@@ -487,8 +487,9 @@ select.fc option{background:#0f1420;color:#e8f4ff}
   z-index:99999 !important;
   position:fixed !important;
   inset:0 !important;
-  align-items:center !important;
+  align-items:safe center !important;
   justify-content:center !important;
+  overflow-y:auto !important;
 }
 #pendingScreen.on *,
 #rejectedScreen.on *,
@@ -504,6 +505,11 @@ select.fc option{background:#0f1420;color:#e8f4ff}
 }
 .verify-step{display:none;width:100%;max-width:520px;animation:verifyFadeIn .45s ease}
 .verify-step.on{display:block}
+/* full-screen onboarding & verify flows: hide floating toasts/snow so nothing overlaps (face of the brand) */
+body:has(.onboard.on) #ncPush, body:has(.onboard.on) #holChip, body:has(.onboard.on) #holPill,
+body:has(#verifyScreen.on) #ncPush, body:has(#verifyScreen.on) #holChip, body:has(#verifyScreen.on) #holPill,
+body:has(#pendingScreen.on) #ncPush, body:has(#pendingScreen.on) #holChip, body:has(#pendingScreen.on) #holPill,
+body:has(#rejectedScreen.on) #ncPush, body:has(#rejectedScreen.on) #holChip, body:has(#rejectedScreen.on) #holPill{display:none!important}
 @keyframes verifyFadeIn{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .verify-box{background:linear-gradient(180deg,rgba(22,30,42,.95),rgba(13,18,25,.95));border:1px solid var(--bd2);border-radius:20px;padding:38px;box-shadow:var(--shadow-lg);text-align:center}
 .verify-icon{font-size:3rem;margin-bottom:16px}
@@ -2765,7 +2771,7 @@ body:not(.has-order) .progress-steps {
 
 .vshell{position:relative;display:grid;grid-template-columns:1fr;min-height:100vh;min-height:100dvh}
 @media (min-width:920px){.vshell{grid-template-columns:minmax(340px,460px) 1fr}}
-.vmain{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:28px 18px}
+.vmain{position:relative;display:flex;flex-direction:column;justify-content:safe center;align-items:center;padding:28px 18px;min-height:100vh;min-height:100dvh;overflow-y:auto}
 .vmain::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask:radial-gradient(70% 60% at 50% 40%,#000,transparent);mask:radial-gradient(70% 60% at 50% 40%,#000,transparent)}
 .vmain>*{position:relative}
 .vmain .verify-step{width:100%}
@@ -3810,10 +3816,12 @@ body:not(.has-order) .progress-steps {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   align-items: center;
   padding: 28px 18px;
   overflow-y: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 #onboard .onb-main::before {
   content: "";
@@ -6228,7 +6236,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 <script src="js/trade-terminal.js?v=20261117mint1"></script>
 <!-- <script src="js/polling-hub.js?v=20261017"></script> -->
-<script src="js/nc-pro.js?v=7"></script>
+<script src="js/nc-pro.js?v=8"></script>
 <script src="js/current-user-fix.js?v=20261017"></script>
 <!-- <script src="js/maintenance-mode.js?v=20261017"></script> -->
 <script src="js/maintenance-pro.js?v=2mint1"></script>
@@ -7202,9 +7210,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/admin-crypto.js?v=2"></script>
 <script src="js/wd-status.js?v=3mint1"></script>
 <script src="js/receipt-pro.js?v=4"></script>
-<script src="js/tx-card.js?v=2"></script>
+<script src="js/tx-card.js?v=3"></script>
 <script src="js/sound-pro.js?v=2"></script>
-<script src="js/deposit-v5.js?v=6"></script>
+<script src="js/deposit-v5.js?v=8"></script>
 <script src="js/admin-iban.js?v=1"></script>
 <script src="js/flows-v5.js?v=2"></script>
 <script src="js/account-v5.js?v=4"></script>
