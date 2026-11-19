@@ -165,7 +165,7 @@
       return post('wallets', { op: 'save', type: 'evm', chain: 'ethereum', label: nm, address: r.addr, verified: r.verified });
     }).then(function (d) {
       unbusy();
-      if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); }
+      if (d && d.ok) { setW(d.wallets); toast('✓ ' + T('done')); render(); }
       else toast((d && d.error) || T('rejected'));
     }).catch(function (err) {
       unbusy();
@@ -207,7 +207,7 @@
   function saveConnected(addr, label, verified) {
     var a = String(addr || '').trim(); var type = /^0x/i.test(a) ? 'evm' : 'btc';
     return post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: label || 'Wallet', address: a, verified: !!verified })
-      .then(function (d) { if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); } else toast((d && d.error) || 'Error'); return d; });
+      .then(function (d) { if (d && d.ok) { setW(d.wallets); toast('✓ ' + T('done')); render(); } else toast((d && d.error) || 'Error'); return d; });
   }
   function saveWatched(addr, label) { return saveConnected(addr, label, false); }
 
@@ -219,16 +219,17 @@
     var btn = $('nwAddBtn'); if (btn) { btn.disabled = true; }
     var type = evm ? 'evm' : 'btc';
     post('wallets', { op: 'save', type: type, chain: type === 'btc' ? 'bitcoin' : 'ethereum', label: (lab && lab.value.trim()) || (evm ? 'Ethereum wallet' : 'Bitcoin wallet'), address: a, verified: false })
-      .then(function (d) { if (btn) btn.disabled = false; if (d && d.ok) { WALLETS = d.wallets || WALLETS; toast('✓ ' + T('done')); render(); } else { toast((d && d.error) || 'Error'); } });
+      .then(function (d) { if (btn) btn.disabled = false; if (d && d.ok) { setW(d.wallets); toast('✓ ' + T('done')); render(); } else { toast((d && d.error) || 'Error'); } });
   }
 
   function removeWallet(id) {
     if (!window.confirm(T('removeQ'))) return;
-    post('wallets', { op: 'remove', id: id }).then(function (d) { if (d && d.ok) { WALLETS = d.wallets || WALLETS; render(); } });
+    post('wallets', { op: 'remove', id: id }).then(function (d) { if (d && d.ok) { setW(d.wallets); render(); } });
   }
 
   /* ───────── rendering ───────── */
   var WALLETS = [], el = null;
+  function setW(a) { if (Array.isArray(a)) WALLETS = a; try { window.__ncWalletCount = WALLETS.length; window.dispatchEvent(new CustomEvent('nc:wallets', { detail: { count: WALLETS.length } })); } catch (e) {} }
   function isOpen() { return !!el && el.classList.contains('on'); }
   function busy(msg) { if (!el) return; var b = el.querySelector('.nw-busy small'); if (b) b.textContent = msg || ''; el.classList.add('busy'); }
   function unbusy() { if (el) el.classList.remove('busy'); }
@@ -314,7 +315,7 @@
     render();
     el.classList.add('on'); document.documentElement.style.overflow = 'hidden';
     discover();
-    post('wallets', { op: 'list' }).then(function (d) { if (d && d.ok) { WALLETS = d.wallets || []; if (isOpen()) render(); } });
+    post('wallets', { op: 'list' }).then(function (d) { if (d && d.ok) { setW(d.wallets); if (isOpen()) render(); } });
   }
   function close() { if (!el) return; el.classList.remove('on', 'busy'); document.documentElement.style.overflow = ''; }
 
