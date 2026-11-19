@@ -64,6 +64,12 @@
     copied: ['Copied ✓', 'Kopieret ✓', 'Kopioitu ✓', 'Copiado ✓', 'Kopiert ✓', 'Kopierat ✓', 'Copié ✓', 'Kopiert ✓'],
     share: ['Share', 'Del', 'Jaa', 'Compartir', 'Del', 'Dela', 'Partager', 'Teilen'],
     sentIt: ['I’ve sent it', 'Jeg har sendt det', 'Olen lähettänyt', 'Ya lo he enviado', 'Jeg har sendt det', 'Jag har skickat', 'C’est envoyé', 'Gesendet'],
+    payWallet: ['Pay from my wallet', 'Betal fra min wallet', 'Maksa lompakostani', 'Pagar desde mi monedero', 'Betal fra lommeboken min', 'Betala från min plånbok', 'Payer depuis mon portefeuille', 'Aus meiner Wallet zahlen'],
+    paySub: ['Send {e} ETH from MetaMask, Trust…', 'Send {e} ETH fra MetaMask, Trust…', 'Lähetä {e} ETH MetaMaskista, Trustista…', 'Envía {e} ETH desde MetaMask, Trust…', 'Send {e} ETH fra MetaMask, Trust…', 'Skicka {e} ETH från MetaMask, Trust…', 'Envoyez {e} ETH depuis MetaMask, Trust…', 'Sende {e} ETH aus MetaMask, Trust…'],
+    payConfirm: ['Confirm the transaction in your wallet…', 'Bekræft transaktionen i din wallet…', 'Vahvista tapahtuma lompakossasi…', 'Confirma la transacción en tu monedero…', 'Bekreft transaksjonen i lommeboken…', 'Bekräfta transaktionen i din plånbok…', 'Confirmez la transaction dans votre portefeuille…', 'Bestätige die Transaktion in deiner Wallet…'],
+    payNeedAmt: ['Enter an amount first', 'Indtast et beløb først', 'Anna ensin summa', 'Introduce un importe primero', 'Skriv inn et beløp først', 'Ange ett belopp först', 'Saisissez d’abord un montant', 'Zuerst einen Betrag eingeben'],
+    paySent: ['Transaction sent — confirming on the network', 'Transaktion sendt — bekræfter på netværket', 'Tapahtuma lähetetty — vahvistetaan verkossa', 'Transacción enviada: confirmando en la red', 'Transaksjon sendt — bekrefter på nettverket', 'Transaktion skickad — bekräftar i nätverket', 'Transaction envoyée — confirmation sur le réseau', 'Transaktion gesendet — wird im Netzwerk bestätigt'],
+    payRejected: ['Transaction cancelled in the wallet', 'Transaktion annulleret i walletten', 'Tapahtuma peruttu lompakossa', 'Transacción cancelada en el monedero', 'Transaksjon avbrutt i lommeboken', 'Transaktion avbröts i plånboken', 'Transaction annulée dans le portefeuille', 'Transaktion in der Wallet abgebrochen'],
     waitBank: ['We’re waiting for your transfer', 'Vi venter på din overførsel', 'Odotamme siirtoasi', 'Esperamos tu transferencia', 'Vi venter på overføringen din', 'Vi väntar på din överföring', 'Nous attendons votre virement', 'Wir warten auf Ihre Überweisung'],
     waitCard: ['Card deposit received', 'Kortindbetaling modtaget', 'Korttitalletus vastaanotettu', 'Depósito con tarjeta recibido', 'Kortinnskudd mottatt', 'Kortinsättning mottagen', 'Dépôt par carte reçu', 'Kartenzahlung erhalten'],
     waitCry: ['We’re watching the network', 'Vi holder øje med netværket', 'Seuraamme verkkoa', 'Estamos vigilando la red', 'Vi følger med på nettverket', 'Vi bevakar nätverket', 'Nous surveillons le réseau', 'Wir beobachten das Netzwerk'],
@@ -109,7 +115,7 @@
   function expOk(v) { var m = /^(\d{2})\/(\d{2})$/.exec(v); if (!m) return false; var mm = +m[1], yy = 2000 + +m[2], now = new Date(); return mm >= 1 && mm <= 12 && (yy > now.getFullYear() || (yy === now.getFullYear() && mm >= now.getMonth() + 1)) && yy < now.getFullYear() + 20; }
 
   /* ───────── icons ───────── */
-  var P = { x: '<path d="M6 6l12 12M18 6 6 18"/>', back: '<path d="M15 5l-7 7 7 7"/>', chev: '<path d="m9 6 6 6-6 6"/>', ok: '<path d="m5 12.5 4.5 4.5L19 7.5"/>', bank: '<path d="M4 10h16L12 4zM6 10v7m4-7v7m4-7v7m4-7v7M4 20h16"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/>', card: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h4"/>', coin: '<circle cx="12" cy="12" r="8.5"/><path d="M10 8.5h3a1.8 1.8 0 0 1 0 3.5h-3zm0 3.5h3.5a1.9 1.9 0 0 1 0 3.8H10zM10 8.5v7.3"/>', cp: '<rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>', share: '<path d="M12 15V4m0 0L8 8m4-4 4 4M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>', warn: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.3v.2"/>', lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', sh: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/>', net: '<circle cx="12" cy="5" r="2"/><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/><path d="M11 7 6 15m7-8 5 8M7 17h10"/>', chat: '<path d="M5 18.5V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H8.5z"/>', in: '<path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/>' };
+  var P = { x: '<path d="M6 6l12 12M18 6 6 18"/>', back: '<path d="M15 5l-7 7 7 7"/>', chev: '<path d="m9 6 6 6-6 6"/>', ok: '<path d="m5 12.5 4.5 4.5L19 7.5"/>', bank: '<path d="M4 10h16L12 4zM6 10v7m4-7v7m4-7v7m4-7v7M4 20h16"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 2.6 15.2 0 18M12 3c-2.6 2.8-2.6 15.2 0 18"/>', card: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h4"/>', coin: '<circle cx="12" cy="12" r="8.5"/><path d="M10 8.5h3a1.8 1.8 0 0 1 0 3.5h-3zm0 3.5h3.5a1.9 1.9 0 0 1 0 3.8H10zM10 8.5v7.3"/>', cp: '<rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>', share: '<path d="M12 15V4m0 0L8 8m4-4 4 4M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>', warn: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.3v.2"/>', lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', sh: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/>', net: '<circle cx="12" cy="5" r="2"/><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/><path d="M11 7 6 15m7-8 5 8M7 17h10"/>', chat: '<path d="M5 18.5V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H8.5z"/>', in: '<path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/>', wallet: '<path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none"/>' };
   function ic(n, c) { return '<svg class="' + (c || 'dv-i') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[n] || '') + '</svg>'; }
   var COIN = {
     BTC: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f7931a"/><path fill="#fff" d="M22.4 14.1c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.7-.4-.7 2.6-1.3-.3.7-2.6-1.7-.4-.7 2.7-2.6-.6-.4 1.8s1.2.3 1.2.3c.7.2.8.6.8 1l-1.9 7.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 2 2.5.6-.7 2.8 1.7.4.7-2.7 1.3.3-.7 2.7 1.7.4.7-2.8c2.9.5 5.1.3 6-2.3.7-2.1 0-3.3-1.5-4.1 1.1-.3 2-1 2.2-2.5zm-3.8 5.4c-.5 2.1-4 1-5.2.7l.9-3.7c1.2.3 4.9.9 4.3 3zm.5-5.4c-.5 1.9-3.4.9-4.3.7l.8-3.4c1 .2 4 .7 3.5 2.7z"/></svg>',
@@ -148,6 +154,7 @@
 '#dv .dv-pills{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}#dv .dv-pill{padding:7px 13px;border-radius:99px;font:600 12.5px/1 inherit;font-family:inherit;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#cbd7d3;cursor:pointer}#dv .dv-pill:hover{border-color:rgba(98,232,194,.4)}#dv .dv-pill.on{background:rgba(98,232,194,.14);border-color:rgba(98,232,194,.45);color:#62e8c2}' +
 '#dv .dv-btn{height:54px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#dbe5e1;padding:0 14px;transition:transform .15s,filter .15s;min-width:0}#dv .dv-btn:hover{transform:translateY(-1px)}#dv .dv-btn:active{transform:scale(.98)}' +
 '#dv .dv-btn.pri{background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b;border:0;box-shadow:0 12px 32px -8px rgba(69,207,168,.45),inset 0 1px 0 rgba(255,255,255,.55)}#dv .dv-btn[disabled]{opacity:.55;cursor:default;transform:none}#dv .dv-btn.full{width:100%}#dv .dv-btn .dv-i{width:18px;height:18px}' +
+'#dv .dv-pay{width:100%;justify-content:flex-start;gap:12px;text-align:left;margin-bottom:10px;height:auto;padding:13px 16px}#dv .dv-pay>svg{width:22px;height:22px;flex:none}#dv .dv-pay .dv-pt{display:flex;flex-direction:column;line-height:1.25;min-width:0}#dv .dv-pay .dv-pt b{font-size:14.5px;font-weight:680}#dv .dv-pay .dv-pt em{font-style:normal;font-size:11.5px;opacity:.82;font-weight:500;margin-top:1px}',
 '#dv .dv-acts{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;margin-top:4px}#dv .dv-btn{white-space:nowrap}#dv .dv-btn span{overflow:hidden;text-overflow:ellipsis}@media (max-width:420px){#dv .dv-steps{display:none}#dv .dv-acts .dv-btn:not(.pri){font-size:13.5px;padding:0 10px}}' +
 '#dv .dv-big{text-align:center;margin:2px 0 14px}#dv .dv-big small{font-size:12px;color:#93a39e}#dv .dv-big b{display:block;font-size:36px;font-weight:770;letter-spacing:-.03em;margin-top:4px;background:linear-gradient(180deg,#fff,#c9d6d1);-webkit-background-clip:text;background-clip:text;color:transparent}' +
 '#dv .dv-bc{position:relative;border-radius:22px;padding:15px 16px;margin-bottom:12px;overflow:hidden;background:linear-gradient(135deg,#123129,#0c1a17 55%,#16130a);border:1px solid rgba(98,232,194,.18);box-shadow:0 18px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08)}#dv .dv-bc:before{content:"";position:absolute;right:-40px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(98,232,194,.2),transparent 65%);pointer-events:none}' +
@@ -305,6 +312,7 @@
     var addr = wallet(coin);
     var body = addr ? '<div class="dv-qrw"><div class="dv-qr" id="dvQr"><div class="lg">' + COIN[coin] + '</div></div><div style="min-width:0;flex:1"><span class="dv-lbl">' + esc(T('depAddr', { c: coin })) + '</span><div class="dv-addr">' + esc(addr.slice(0, 6)) + '<span>' + esc(addr.slice(6, -6)) + '</span>' + esc(addr.slice(-6)) + '</div><button type="button" class="dv-cp" data-cp="' + esc(addr) + '">' + ic('cp') + esc(T('copy')) + '</button></div></div>' +
       '<div class="dv-note w">' + ic('warn') + '<span><b class="h">' + esc(T('sendOnly', { c: coin, n: NETN[coin] })) + '</b>' + esc(T('otherLost')) + '</span></div><div class="dv-note">' + ic('clock') + '<span>' + esc(T('confNote')) + '</span></div>' +
+      (coin === 'ETH' && window.NCWalletPay && window.NCWalletPay.available() ? walletPayBtn() : '') +
       '<div class="dv-acts"><button type="button" class="dv-btn" data-a="share" data-v="' + esc(addr) + '">' + ic('share') + esc(T('share')) + '</button><button type="button" class="dv-btn pri" data-a="send">' + esc(T('sentIt')) + '</button></div>'
       : '<div class="dv-wait"><div class="sp"></div><div><b>' + esc(T('noAddr', { c: coin })) + '</b><span>' + esc(T('noAddrS')) + '</span></div></div><button type="button" class="dv-btn full" data-a="chat">' + ic('chat') + esc(T('chat')) + '</button>';
     return '<div class="dv-pane">' + hdr(true, true) + '<div class="dv-coinsel">' + ['BTC', 'ETH'].map(function (c) { return '<button type="button" data-c="' + c + '" class="' + (coin === c ? 'on' : '') + '">' + COIN[c] + c + '</button>'; }).join('') + '</div>' + body + '<div class="dv-msg" aria-live="polite"></div></div>';
@@ -348,6 +356,38 @@
   }
   function bad(id, text) { var i = $(id); if (i) { i.classList.add('bad'); try { i.focus(); } catch (e) { } } msg(text, true); }
   function legacySet() { try { var m = $('mMethod'), a = $('mAmount'); if (m) { m.value = MLEG[method === 'crypto' ? coin : method]; try { if (typeof window.refreshDest === 'function') window.refreshDest(); } catch (e) { } } if (a) a.value = String(Number(amount) > 0 ? Number(amount) : 1); } catch (e) { } }
+  function ethEst() { var usd = Number(amount) || 0; var ep = (window.st && Number(window.st.ethP)) || 0; return (usd > 0 && ep > 0) ? usd / ep : 0; }
+  function walletPayBtn() {
+    var e = ethEst();
+    var sub = e > 0 ? T('paySub', { e: e.toLocaleString(undefined, { maximumFractionDigits: 5 }) }) : T('payNeedAmt');
+    return '<button type="button" class="dv-btn pri dv-pay" data-a="walletpay">' + ic('wallet') + '<span class="dv-pt"><b>' + esc(T('payWallet')) + '</b><em>' + esc(sub) + '</em></span></button>';
+  }
+  function walletPay() {
+    if (busy) return;
+    if (window.adminViewingEmail || localStorage.getItem('user_role') === 'admin') return msg(T('admin'), true);
+    if (!window.NCWalletPay || !window.NCWalletPay.available()) return;
+    var addr = wallet('ETH'); if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) return;
+    var e = ethEst();
+    if (!(e > 0)) return msg(T('payNeedAmt'), true);
+    busy = true; msg(T('payConfirm'));
+    window.NCWalletPay.sendETH({ to: addr, amountEth: e }).then(function (r) {
+      var tk = typeof window.getSessionToken === 'function' ? window.getSessionToken() : localStorage.getItem('session_token');
+      var usd = Number(amount) || 0;
+      return fetch(WORKER + '?action=requestDeposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tk, amount: usd, method: MLEG['ETH'], meta: { via: 'wallet', coin: 'ETH', txHash: r.txHash, from: r.from } }) }).then(function (x) { return x.json(); }).then(function (resp) {
+        busy = false;
+        try { if (window.NCSound) window.NCSound.notify(); } catch (x) {}
+        try { if (typeof window.addNotification === 'function') window.addNotification('Deposit sent from wallet: ' + e.toFixed(5) + ' ETH — confirming on network', '⏳'); } catch (x) {}
+        if (resp && resp.ok && resp.request) { var w = window.st; if (w) { if (!Array.isArray(w.depositRequests)) w.depositRequests = []; w.depositRequests.unshift(resp.request); } sent = resp.request; }
+        try { if (typeof window.renderTx === 'function') window.renderTx(); if (typeof window.renderRecentTx === 'function') window.renderRecentTx(); } catch (x) {}
+        step = 3; paint();
+      });
+    }).catch(function (err) {
+      busy = false;
+      var m = (err && err.message) || '';
+      if ((err && err.code === 4001) || /reject|cancel|denied|4001/i.test(m)) msg(T('payRejected'), true);
+      else msg(T('conn'), true);
+    });
+  }
   function submit(btn) {
     if (busy) return;
     if (window.adminViewingEmail || localStorage.getItem('user_role') === 'admin') return msg(T('admin'), true);
@@ -386,6 +426,7 @@
     if (a === 'close') return close();
     if (a === 'back') { step = 1; paint(); return; }
     if (a === 'next') { if (method !== 'crypto' && !(Number(amount) > 0)) { var ai2 = $('dvAmt'); if (ai2) { ai2.focus(); } msg(T('enterAmt'), true); return; } step = 2; legacySet(); paint(); return; }
+    if (a === 'walletpay') return walletPay();
     if (a === 'send') return submit(b);
     if (a === 'share') { var v = b.getAttribute('data-v'); try { if (navigator.share) { navigator.share({ text: v }).catch(function () { }); return; } } catch (x) { } copy(v, b); return; }
     if (a === 'chat') { close(); setTimeout(function () { try { if (typeof window.toggleChat === 'function') window.toggleChat(); } catch (x) { } }, 340); return; }
