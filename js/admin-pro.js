@@ -189,6 +189,9 @@
     var sumToday = sign[13].v, sumYest = sign[12].v;
     var banking = us.filter(function (u) { return u.accountType === 'banking'; }).length, exch = us.filter(function (u) { return u.accountType === 'exchange'; }).length, none = us.length - banking - exch;
     var kv = { approved: 0, pending: 0, rejected: 0, none: 0 }; us.forEach(function (u) { kv[kyc(u)]++; });
+    var walletUsers = us.filter(function (u) { return (u.walletCount || 0) > 0; }).length;
+    var walletVerified = us.reduce(function (a, u) { return a + (u.walletVerified || 0); }, 0);
+    var walletPct = us.length ? Math.round(walletUsers / us.length * 100) : 0;
     var top = us.slice().sort(function (a, b) { return (b.balance || 0) - (a.balance || 0); }).slice(0, 5), mx = (top[0] && top[0].balance) || 1;
     var oldKyc = pv.filter(function (v) { return v.submittedAt && Date.now() - parseT(v.submittedAt) > 86400000; });
     var maxSign = Math.max.apply(null, sign.map(function (x) { return x.v; }).concat([1]));
@@ -211,7 +214,19 @@
       kpi('wallet', 'Admin credits', usdC(st.adminCredits || 0), 'added from the admin panel (not real money)', spark([0, st.adminCredits || 0], '#fbbf24'), '#fbbf24', 'rgba(245,158,11,.14)') +
       kpi('inn', 'Total deposits', usdC(st.totalDeposits || 0), '<b>+' + usdC(st.depositsToday || 0) + '</b> today · +' + usdC(st.depositsYesterday || 0) + ' yesterday', spark([st.depositsYesterday || 0, st.depositsToday || 0, st.totalDeposits ? st.totalDeposits / Math.max(1, us.length) : 0].sort(function (a, b) { return a - b; }), '#f59e0b'), '#fbbf24', 'rgba(245,158,11,.14)') +
       kpi('pulse', 'Transactions', num(st.totalTx != null ? st.totalTx : S.txs.length), 'last 14 days: <b>' + tx14.reduce(function (a, x) { return a + x.v; }, 0) + '</b>', spark(tx14.map(function (x) { return x.v; }), '#a78bfa'), '#a78bfa', 'rgba(139,92,246,.14)') +
+      kpi('wallet', 'Connected wallets', num(walletUsers), walletUsers ? '<b>' + walletPct + '%</b> of clients · ' + walletVerified + ' verified' : 'no wallets linked yet', spark([0, walletUsers].sort(function (a, b) { return a - b; }), '#62e8c2'), '#62e8c2', 'rgba(98,232,194,.14)') +
       '</div>' +
+      (function () {
+        var totalW = us.reduce(function (a, u) { return a + (u.walletCount || 0); }, 0);
+        var watch = Math.max(0, totalW - walletVerified);
+        function c(l, v, col) { return '<div class="ap-stat"><small>' + l + '</small><b' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</b></div>'; }
+        return '<div class="ap-grid2 ap-fade">' +
+          '<div class="ap-card"><div class="ap-card-h"><div><h3>Wallet adoption</h3><small>Clients who linked an external wallet</small></div><span class="ap-pill" style="background:rgba(98,232,194,.14);color:#62e8c2">' + walletPct + '%</span></div><div class="ap-donut">' + donut([{ v: walletUsers, c: '#62e8c2' }, { v: Math.max(0, us.length - walletUsers), c: '#475569' }]) +
+          '<div class="ap-legend"><div><i style="background:#62e8c2"></i>Linked<b>' + walletUsers + '</b></div><div><i style="background:#475569"></i>Not linked<b>' + Math.max(0, us.length - walletUsers) + '</b></div></div></div></div>' +
+          '<div class="ap-card"><div class="ap-card-h"><div><h3>Wallets</h3><small>What clients have linked</small></div></div><div class="ap-stats" style="padding:16px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">' +
+          c('Total linked', num(totalW), '#62e8c2') + c('Verified', num(walletVerified), '#34d399') + c('Watch-only', num(watch)) + c('Avg / client', walletUsers ? (totalW / walletUsers).toFixed(1) : '0') + '</div></div>' +
+          '</div>';
+      })() +
       (function () {
         var td = st.today || null; if (!td) return '';
         function c(l, v, col) { return '<div class="ap-stat"><small>' + l + '</small><b' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</b></div>'; }
