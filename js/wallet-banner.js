@@ -14,7 +14,9 @@
     cta: ['Connect wallet', 'Tilknyt wallet', 'Yhdistä lompakko', 'Vincular monedero', 'Koble til lommebok', 'Anslut plånbok', 'Relier le portefeuille', 'Wallet verbinden'],
     reward: ['+50 NC', '+50 NC', '+50 NC', '+50 NC', '+50 NC', '+50 NC', '+50 NC', '+50 NC'],
     earn: ['Earn 50 NC', 'Tjen 50 NC', 'Ansaitse 50 NC', 'Gana 50 NC', 'Tjen 50 NC', 'Tjäna 50 NC', 'Gagnez 50 NC', 'Verdiene 50 NC'],
-    dismiss: ['Dismiss', 'Afvis', 'Hylkää', 'Descartar', 'Avvis', 'Avfärda', 'Ignorer', 'Schließen']
+    dismiss: ['Dismiss', 'Afvis', 'Hylkää', 'Descartar', 'Avvis', 'Avfärda', 'Ignorer', 'Schließen'],
+    later: ['Later', 'Senere', 'Myöhemmin', 'Más tarde', 'Senere', 'Senare', 'Plus tard', 'Später'],
+    help: ['No wallet yet? Get help', 'Ingen wallet endnu? Få hjælp', 'Ei vielä lompakkoa? Pyydä apua', '¿Aún sin monedero? Pide ayuda', 'Ingen lommebok ennå? Få hjelp', 'Ingen plånbok ännu? Få hjälp', 'Pas encore de portefeuille ? Obtenez de l’aide', 'Noch keine Wallet? Hilfe holen']
   };
   function lang() { try { var l = window.NCI18N && window.NCI18N.lang; return LG.indexOf(l) > -1 ? l : 'en'; } catch (e) { return 'en'; } }
   function T(k) { var a = K[k]; return a ? (a[LG.indexOf(lang())] || a[0]) : k; }
@@ -23,6 +25,19 @@
   function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
   function isClient() { try { return !!tok() && localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail; } catch (e) { return false; } }
   function dismissed() { try { return localStorage.getItem('nc_wbnr_x') === '1'; } catch (e) { return false; } }
+  var SNOOZE_MS = 2 * 24 * 60 * 60 * 1000; /* "Later" hides the banner for 2 days */
+  function snoozed() { try { var t = +localStorage.getItem('nc_wbnr_snz') || 0; return Date.now() < t; } catch (e) { return false; } }
+  function snooze() { try { localStorage.setItem('nc_wbnr_snz', String(Date.now() + SNOOZE_MS)); } catch (e) {} }
+  function openHelp() {
+    try {
+      var p = $('chatPanel');
+      var open = p && (p.style.display === 'flex' || document.documentElement.classList.contains('nc-chat-open'));
+      if (open) return;
+      if (typeof window.openChat === 'function') window.openChat();
+      else if (typeof window.toggleChat === 'function') window.toggleChat();
+      else { var fab = $('chatToggle') || document.querySelector('[data-a="chat"],.chat-fab'); if (fab) fab.click(); }
+    } catch (e) {}
+  }
   function wurl() { return window.WORKER_URL || window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev'; }
 
   var hasWallet = null; /* null = unknown yet */
@@ -45,6 +60,10 @@
       '#ncwb .ncwb-tag b{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(98,232,194,.14);color:#8ff0d6;font-weight:800;letter-spacing:.02em}',
       '#ncwb h3{margin:0;font-size:19px;font-weight:760;letter-spacing:-.02em;line-height:1.15}',
       '#ncwb p{margin:5px 0 0;font-size:12.5px;line-height:1.5;color:#9fb3ad;max-width:62ch}',
+      '#ncwb .ncwb-foot{display:flex;align-items:center;gap:8px;margin-top:11px;flex-wrap:wrap}',
+      '#ncwb .ncwb-later{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#c6d2ce;font:inherit;font-weight:600;font-size:12.5px;padding:7px 15px;border-radius:10px;cursor:pointer;transition:background .14s}#ncwb .ncwb-later:hover{background:rgba(255,255,255,.1)}',
+      '#ncwb .ncwb-help{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:#8ff0d6;font:inherit;font-weight:600;font-size:12.5px;padding:7px 6px;border-radius:10px;cursor:pointer}#ncwb .ncwb-help:hover{text-decoration:underline}#ncwb .ncwb-help svg{width:14px;height:14px}',
+      'html[data-theme="light"] #ncwb .ncwb-later{background:#fff;border-color:rgba(15,23,42,.12);color:#3f5a52}html[data-theme="light"] #ncwb .ncwb-help{color:#2bb58e}',
       '#ncwb .ncwb-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:10px}',
       '#ncwb .ncwb-coin{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-weight:800;font-size:15px;color:#ffe9a8}',
       '#ncwb .ncwb-coin svg{width:19px;height:19px}',
@@ -63,6 +82,7 @@
   var WALLET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor" stroke="none"/></svg>';
   var COIN = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#ffd36b"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="#b9820f" stroke-width="1.3"/><path d="M12 7.5v9M9.5 10h4a1.6 1.6 0 0 1 0 3.2h-4m0 0h4.3" stroke="#8a5e08" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
   var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg>';
+  var HELPIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.6L3 21l1.9-5.8A8.5 8.5 0 1 1 21 11.5z"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5M12 16.2v.2"/></svg>';
 
   function build() {
     var b = document.createElement('div'); b.id = 'ncwb'; b.className = 'nc-no-i18n'; b.setAttribute('data-nci18n', 'off'); b.setAttribute('role', 'region');
@@ -70,20 +90,25 @@
       '<button type="button" class="ncwb-x" data-wb="x" aria-label="' + esc(T('dismiss')) + '">×</button>' +
       '<div class="ncwb-ic">' + WALLET + '<i></i><i></i><i></i></div>' +
       '<div class="ncwb-m"><div class="ncwb-tag">' + esc(T('tag')) + ' <b>' + COIN + esc(T('earn')) + '</b></div>' +
-      '<h3>' + esc(T('title')) + '</h3><p>' + esc(T('sub')) + '</p></div>' +
+      '<h3>' + esc(T('title')) + '</h3><p>' + esc(T('sub')) + '</p>' +
+      '<div class="ncwb-foot"><button type="button" class="ncwb-later" data-wb="later">' + esc(T('later')) + '</button>' +
+      '<button type="button" class="ncwb-help" data-wb="help">' + HELPIC + esc(T('help')) + '</button></div></div>' +
       '<div class="ncwb-r"><span class="ncwb-coin">' + COIN + esc(T('reward')) + '</span>' +
       '<button type="button" class="ncwb-cta" data-wb="go">' + esc(T('cta')) + ARROW + '</button></div>';
     b.addEventListener('click', function (e) {
       var t = e.target.closest && e.target.closest('[data-wb]'); if (!t) return;
-      if (t.getAttribute('data-wb') === 'x') { try { localStorage.setItem('nc_wbnr_x', '1'); } catch (x) {} remove(); return; }
-      if (t.getAttribute('data-wb') === 'go') { try { if (typeof window.openWallets === 'function') window.openWallets(); } catch (x) {} }
+      var k = t.getAttribute('data-wb');
+      if (k === 'x') { try { localStorage.setItem('nc_wbnr_x', '1'); } catch (x) {} remove(); return; }
+      if (k === 'later') { snooze(); remove(); return; }
+      if (k === 'help') { openHelp(); return; }
+      if (k === 'go') { try { if (typeof window.openWallets === 'function') window.openWallets(); } catch (x) {} }
     });
     return b;
   }
 
   function remove() { var b = $('ncwb'); if (b && b.parentNode) b.parentNode.removeChild(b); }
 
-  function shouldShow() { return isClient() && !dismissed() && hasWallet === false; }
+  function shouldShow() { return isClient() && !dismissed() && !snoozed() && hasWallet === false; }
 
   function place() {
     if (!shouldShow()) { remove(); return; }
