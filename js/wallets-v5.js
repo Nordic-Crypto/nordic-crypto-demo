@@ -89,6 +89,9 @@
       '#nw .nw-card{border-radius:20px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);padding:7px}',
       '#nw .nw-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px}',
       '#nw .nw-ava{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff;overflow:hidden}#nw .nw-ava img{width:100%;height:100%;object-fit:cover}',
+      '#nw .nw-bal{display:block;font-size:11.5px;font-weight:600;color:#7fe6cc;margin-top:2px}#nw .nw-bal.load{color:#6b7a75}',
+      '#nw .nw-total{font-size:12.5px;font-weight:700;color:#8ff0d6}',
+      'html[data-theme="light"] #nw .nw-bal{color:#17a07e}html[data-theme="light"] #nw .nw-total{color:#17a07e}',
       '#nw .nw-m{min-width:0;flex:1}#nw .nw-m b{display:block;font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nw .nw-m small{display:block;font-size:12px;color:#93a39e;font-family:ui-monospace,Menlo,monospace;margin-top:1px}',
       '#nw .nw-tag{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:750}#nw .nw-tag.v{background:rgba(98,232,194,.14);color:#62e8c2}#nw .nw-tag.w{background:rgba(255,255,255,.07);color:#a7b3ae}#nw .nw-tag svg{width:11px;height:11px}',
       '#nw .nw-del{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.14);color:#ff8d9a;cursor:pointer}#nw .nw-del svg{width:15px;height:15px}',
@@ -258,10 +261,12 @@
       var g = (w.label || 'W').charAt(0).toUpperCase();
       var pop = POP.filter(function (p) { return (w.label || '').toLowerCase().indexOf(p.id) > -1 || (w.label || '').toLowerCase() === p.name.toLowerCase(); })[0];
       return '<div class="nw-item">' + avatar(null, g, pop ? pop.c1 : '#3a4a52', pop ? pop.c2 : '#222c32') +
-        '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(ro ? w.address : short(w.address)) + '</small></div>' +
+        '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(ro ? w.address : short(w.address)) + '</small>' +
+        (window.NCWalletBalance ? '<small class="nw-bal" data-wb-bal="' + esc(w.id) + '"></small>' : '') + '</div>' +
         '<span class="nw-tag ' + (w.verified ? 'v' : 'w') + '">' + (w.verified ? I.check + T('verified') : I.eye + T('watchTag')) + '</span>' +
         (ro ? '' : '<button type="button" class="nw-del" data-nw="del" data-id="' + esc(w.id) + '" aria-label="' + esc(T('remove')) + '">' + I.trash + '</button>') + '</div>';
     }).join('');
+    var connHdr = '<div class="nw-lbl" style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' + esc(T('connected')) + '<span id="nwTotal" class="nw-total"></span></div>';
 
     var popTiles = POP.map(function (p) {
       var m = injMatch(p.id), ava;
@@ -275,10 +280,10 @@
       '<div class="nw-hi">' + I.wallet + '</div>' +
       '<h2>' + esc(T('title')) + '</h2><p class="nw-sub">' + esc(ro ? T('roNote') : T('sub')) + '</p>' +
       (ro
-        ? (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>'
+        ? (WALLETS.length ? connHdr + '<div class="nw-card">' + wl + '</div>'
           : '<div class="nw-card" style="padding:18px 14px;text-align:center;color:#93a39e;font-size:13.5px">' + esc(T('none')) + '</div>')
         : (
-          (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>' : '') +
+          (WALLETS.length ? connHdr + '<div class="nw-card">' + wl + '</div>' : '') +
           '<div class="nw-lbl">' + esc(T('connect')) + '</div>' +
           '<div id="nwInjWrap"><div class="nw-lbl" style="margin-top:0;color:#62e8c2">' + esc(T('detected')) + '</div><div class="nw-tiles" id="nwInj"></div></div>' +
           '<div class="nw-lbl">' + esc(T('popular')) + '</div><div class="nw-tiles">' + popTiles + '</div>' +
@@ -290,6 +295,30 @@
       '<button type="button" class="nw-close" data-nw="x">' + esc(T('close')) + '</button>' +
       '<div class="nw-busy"><div class="nw-spin"></div><b>' + esc(T('connecting')) + '</b><small></small></div>';
     if (!ro) renderConnect();
+    fillBalances();
+  }
+
+  /* read the public on-chain balance of each linked address and show it under the address */
+  function fmtCrypto(n) { if (n === 0) return '0'; var d = n < 1 ? 6 : n < 1000 ? 4 : 2; return n.toLocaleString(undefined, { maximumFractionDigits: d }); }
+  function fmtUsd(n) { try { return '$' + n.toLocaleString(undefined, { maximumFractionDigits: 2 }); } catch (e) { return '$' + Math.round(n); } }
+  function fillBalances() {
+    if (!el || !window.NCWalletBalance) return;
+    var total = 0, anyUsd = false, pend = WALLETS.length;
+    function updTotal() { var t = $('nwTotal'); if (t) t.textContent = anyUsd ? '≈ ' + fmtUsd(total) : ''; }
+    WALLETS.forEach(function (w) {
+      var sel = '[data-wb-bal="' + w.id + '"]';
+      var node = el.querySelector(sel); if (!node) { pend--; return; }
+      if (!node.textContent) { node.textContent = '…'; node.className = 'nw-bal load'; }
+      window.NCWalletBalance.get(w.address, w.type).then(function (b) {
+        var n = el.querySelector(sel); pend--;
+        if (!n) return;
+        if (b && typeof b.native === 'number') {
+          n.className = 'nw-bal';
+          n.textContent = fmtCrypto(b.native) + ' ' + b.symbol + (b.usd ? ' · ' + fmtUsd(b.usd) : '');
+          if (b.usd) { total += b.usd; anyUsd = true; updTotal(); }
+        } else { n.textContent = ''; n.className = 'nw-bal'; }
+      });
+    });
   }
 
   function open() {
