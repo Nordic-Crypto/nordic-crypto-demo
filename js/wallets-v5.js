@@ -40,6 +40,7 @@
     safe: ['Nordic will never ask for your 12/24-word recovery phrase or wallet password. Anyone who asks for them is trying to steal your funds.', 'Nordic beder aldrig om din 12/24-ords genoprettelsessætning eller wallet-adgangskode. Enhver, der gør, forsøger at stjæle dine penge.', 'Nordic ei koskaan kysy 12/24 sanan palautuslausetta tai lompakon salasanaa. Jokainen joka kysyy, yrittää varastaa varasi.', 'Nordic nunca pedirá tu frase de recuperación de 12/24 palabras ni la contraseña del monedero. Quien las pida intenta robarte.', 'Nordic ber aldri om gjenopprettingsfrasen på 12/24 ord eller wallet-passordet. Alle som spør, prøver å stjele pengene dine.', 'Nordic ber aldrig om din återställningsfras på 12/24 ord eller plånbokslösenord. Den som frågar försöker stjäla dina pengar.', 'Nordic ne demandera jamais votre phrase de récupération de 12/24 mots ni le mot de passe du portefeuille. Quiconque les demande veut vous voler.', 'Nordic fragt niemals nach deiner 12/24-Wörter-Wiederherstellungsphrase oder dem Wallet-Passwort. Wer danach fragt, will dich bestehlen.'],
     close: ['Close', 'Luk', 'Sulje', 'Cerrar', 'Lukk', 'Stäng', 'Fermer', 'Schließen'],
     wcSoon: ['Mobile QR connection isn’t configured yet. For now, connect a browser extension or add a watch-only address.', 'Mobil QR-forbindelse er ikke konfigureret endnu. Tilknyt en browserudvidelse eller tilføj en se-kun-adresse.', 'Mobiili-QR-yhteyttä ei ole vielä määritetty. Yhdistä selainlaajennus tai lisää katseluosoite.', 'La conexión por QR móvil aún no está configurada. Conecta una extensión o añade una dirección solo lectura.', 'Mobil QR-tilkobling er ikke konfigurert ennå. Koble til en nettleserutvidelse eller legg til en kun-visning-adresse.', 'Mobil QR-anslutning är inte konfigurerad ännu. Anslut ett webbläsartillägg eller lägg till en bevakningsadress.', 'La connexion QR mobile n’est pas encore configurée. Reliez une extension ou ajoutez une adresse en lecture seule.', 'Mobile QR-Verbindung ist noch nicht eingerichtet. Verbinde eine Browser-Erweiterung oder füge eine Nur-Ansicht-Adresse hinzu.'],
+    roNote: ['Read-only — wallets this client has linked.', 'Skrivebeskyttet — wallets denne klient har tilknyttet.', 'Vain luku — tämän asiakkaan linkittämät lompakot.', 'Solo lectura: monederos que este cliente ha vinculado.', 'Skrivebeskyttet — lommebøker denne klienten har koblet til.', 'Skrivskyddat — plånböcker denna klient har länkat.', 'Lecture seule — portefeuilles reliés par ce client.', 'Nur Ansicht — von diesem Kunden verknüpfte Wallets.'],
     entry: ['My wallets', 'Mine wallets', 'Omat lompakot', 'Mis monederos', 'Mine lommebøker', 'Mina plånböcker', 'Mes portefeuilles', 'Meine Wallets'],
     entrySub: ['Connect MetaMask, Trust, Exodus…', 'Tilknyt MetaMask, Trust, Exodus…', 'Linkitä MetaMask, Trust, Exodus…', 'Vincula MetaMask, Trust, Exodus…', 'Koble til MetaMask, Trust, Exodus…', 'Anslut MetaMask, Trust, Exodus…', 'Reliez MetaMask, Trust, Exodus…', 'MetaMask, Trust, Exodus verbinden…']
   };
@@ -49,8 +50,11 @@
   function $(id) { return document.getElementById(id); }
   function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
   function isClient() { try { return !!tok() && localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail; } catch (e) { return false; } }
+  /* admin "viewing as client": allow opening the screen READ-ONLY to see that client's linked wallets */
+  function isViewer() { try { return !!window.adminViewingEmail; } catch (e) { return false; } }
+  function canOpen() { return isClient() || isViewer(); }
   function wurl() { return window.WORKER_URL || window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev'; }
-  function post(action, body) { return fetch(wurl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok() }, body || {})) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'Connection error' }; }); }
+  function post(action, body) { var b = Object.assign({ token: tok() }, body || {}); if (isViewer()) b.email = window.adminViewingEmail; return fetch(wurl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'Connection error' }; }); }
   function toast(t) { try { if (typeof window.toast === 'function') return window.toast(t); } catch (e) { } }
   function short(a) { a = String(a || ''); return a.length > 14 ? a.slice(0, 7) + '…' + a.slice(-5) : a; }
 
@@ -90,7 +94,11 @@
       '#nw .nw-del{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.14);color:#ff8d9a;cursor:pointer}#nw .nw-del svg{width:15px;height:15px}',
       '#nw .nw-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
       '#nw button.nw-tile{display:flex;align-items:center;gap:11px;padding:12px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);color:#eef5f2;font:inherit;font-weight:620;font-size:13.5px;cursor:pointer;text-align:left;transition:transform .14s,border-color .14s}#nw button.nw-tile:hover{transform:translateY(-1px);border-color:rgba(98,232,194,.4)}',
-      '#nw .nw-tile .nw-ava{width:34px;height:34px;border-radius:10px;font-size:14px}#nw .nw-tile span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#nw .nw-tile .nw-ava{width:36px;height:36px;border-radius:11px;font-size:15px}#nw .nw-tile span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#nw .nw-ava.br{position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 4px rgba(0,0,0,.25),0 4px 12px var(--glow,rgba(0,0,0,.3));border:1px solid rgba(255,255,255,.14)}',
+      '#nw .nw-ava.br:after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(120% 80% at 30% 20%,rgba(255,255,255,.4),transparent 60%);opacity:.5;pointer-events:none}',
+      '#nw .nw-tile .nw-ava img{border-radius:9px}',
+      '#nw .nw-tile.on{border-color:rgba(98,232,194,.5);box-shadow:0 0 0 1px rgba(98,232,194,.25)}',
       '#nw .nw-wa{margin-top:9px;display:flex;gap:8px}#nw .nw-wa input{flex:1;min-width:0;height:46px;padding:0 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#fff;font:inherit;font-size:13.5px;outline:none}#nw .nw-wa input:focus{border-color:rgba(98,232,194,.55);box-shadow:0 0 0 4px rgba(98,232,194,.1)}#nw .nw-wa input.bad{border-color:#ff6b7a}',
       '#nw .nw-wl{margin-top:8px}#nw .nw-wl input{width:100%;box-sizing:border-box;height:42px;padding:0 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#fff;font:inherit;font-size:13.5px;outline:none}',
       '#nw .nw-addbtn{flex:none;padding:0 18px;height:46px;border-radius:13px;border:0;background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b;font:inherit;font-weight:720;font-size:14px;cursor:pointer}#nw .nw-addbtn[disabled]{opacity:.55;cursor:default}',
@@ -128,6 +136,18 @@
       list = [{ info: { name: name, icon: '', uuid: 'legacy' }, provider: window.ethereum }];
     }
     return list;
+  }
+
+  /* if a popular wallet is actually installed, reuse the OFFICIAL icon it supplies via EIP-6963
+     (the wallet distributes its own logo for exactly this) — we never hand-draw a brand mark */
+  function injMatch(id) {
+    return injectedList().filter(function (p) {
+      var n = (p.info.name || '').toLowerCase(), pr = p.provider || {};
+      return (id === 'metamask' && (pr.isMetaMask || /metamask/.test(n))) ||
+        (id === 'trust' && (pr.isTrust || pr.isTrustWallet || /trust/.test(n))) ||
+        (id === 'coinbase' && (pr.isCoinbaseWallet || /coinbase/.test(n))) ||
+        (id === 'exodus' && (pr.isExodus || /exodus/.test(n)));
+    })[0];
   }
 
   function hexMsg(s) { var o = '0x'; for (var i = 0; i < s.length; i++) { var h = s.charCodeAt(i).toString(16); o += h.length < 2 ? '0' + h : h; } return o; }
@@ -201,8 +221,9 @@
   function unbusy() { if (el) el.classList.remove('busy'); }
 
   function avatar(info, fallbackGlyph, c1, c2) {
-    if (info && info.icon) return '<span class="nw-ava"><img src="' + esc(info.icon) + '" alt=""></span>';
-    return '<span class="nw-ava" style="background:linear-gradient(140deg,' + (c1 || '#45cfa8') + ',' + (c2 || '#2a9d7c') + ')">' + esc(fallbackGlyph || '•') + '</span>';
+    var glow = (c1 || '#45cfa8') + '55';
+    if (info && info.icon) return '<span class="nw-ava br" style="--glow:' + glow + '"><img src="' + esc(info.icon) + '" alt=""></span>';
+    return '<span class="nw-ava br" style="background:linear-gradient(145deg,' + (c1 || '#45cfa8') + ',' + (c2 || '#2a9d7c') + ');--glow:' + glow + '">' + esc(fallbackGlyph || '•') + '</span>';
   }
 
   function renderConnect() {
@@ -218,38 +239,47 @@
 
   function render() {
     if (!el) return;
+    var ro = isViewer(); /* admin preview = read-only */
     var wl = WALLETS.map(function (w) {
       var g = (w.label || 'W').charAt(0).toUpperCase();
       var pop = POP.filter(function (p) { return (w.label || '').toLowerCase().indexOf(p.id) > -1 || (w.label || '').toLowerCase() === p.name.toLowerCase(); })[0];
       return '<div class="nw-item">' + avatar(null, g, pop ? pop.c1 : '#3a4a52', pop ? pop.c2 : '#222c32') +
-        '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(short(w.address)) + '</small></div>' +
+        '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(ro ? w.address : short(w.address)) + '</small></div>' +
         '<span class="nw-tag ' + (w.verified ? 'v' : 'w') + '">' + (w.verified ? I.check + T('verified') : I.eye + T('watchTag')) + '</span>' +
-        '<button type="button" class="nw-del" data-nw="del" data-id="' + esc(w.id) + '" aria-label="' + esc(T('remove')) + '">' + I.trash + '</button></div>';
+        (ro ? '' : '<button type="button" class="nw-del" data-nw="del" data-id="' + esc(w.id) + '" aria-label="' + esc(T('remove')) + '">' + I.trash + '</button>') + '</div>';
     }).join('');
 
     var popTiles = POP.map(function (p) {
-      return '<button type="button" class="nw-tile" data-nw="pop" data-id="' + p.id + '"><span class="nw-ava" style="width:34px;height:34px;border-radius:10px;font-size:14px;background:linear-gradient(140deg,' + p.c1 + ',' + p.c2 + ')">' + p.g + '</span><span>' + esc(p.name) + '</span></button>';
-    }).join('') + '<button type="button" class="nw-tile" data-nw="wc"><span class="nw-ava" style="width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,#3b99fc,#1a6fe0)">' + I.qr + '</span><span>' + esc(T('scan')) + '</span></button>';
+      var m = injMatch(p.id), ava;
+      if (m && m.info && m.info.icon) ava = '<span class="nw-ava br" style="--glow:' + p.c1 + '55"><img src="' + esc(m.info.icon) + '" alt=""></span>';
+      else ava = '<span class="nw-ava br" style="background:linear-gradient(145deg,' + p.c1 + ',' + p.c2 + ');--glow:' + p.c1 + '55">' + p.g + '</span>';
+      return '<button type="button" class="nw-tile" data-nw="pop" data-id="' + p.id + '">' + ava + '<span>' + esc(p.name) + '</span></button>';
+    }).join('') + '<button type="button" class="nw-tile" data-nw="wc"><span class="nw-ava br" style="background:linear-gradient(145deg,#3b99fc,#1a6fe0);--glow:#3b99fc55">' + I.qr + '</span><span>' + esc(T('scan')) + '</span></button>';
 
     el.querySelector('.nw-w').innerHTML =
       '<button type="button" class="nw-x" data-nw="x" aria-label="' + esc(T('close')) + '">×</button>' +
       '<div class="nw-hi">' + I.wallet + '</div>' +
-      '<h2>' + esc(T('title')) + '</h2><p class="nw-sub">' + esc(T('sub')) + '</p>' +
-      (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>' : '') +
-      '<div class="nw-lbl">' + esc(T('connect')) + '</div>' +
-      '<div id="nwInjWrap"><div class="nw-lbl" style="margin-top:0;color:#62e8c2">' + esc(T('detected')) + '</div><div class="nw-tiles" id="nwInj"></div></div>' +
-      '<div class="nw-lbl">' + esc(T('popular')) + '</div><div class="nw-tiles">' + popTiles + '</div>' +
-      '<div class="nw-lbl">' + esc(T('watch')) + '</div><p class="nw-note" style="margin-top:-2px">' + esc(T('watchSub')) + '</p>' +
-      '<div class="nw-wl"><input id="nwLabel" maxlength="32" placeholder="' + esc(T('labelPh')) + '"></div>' +
-      '<div class="nw-wa"><input id="nwAddr" autocomplete="off" spellcheck="false" placeholder="' + esc(T('addrPh')) + '"><button type="button" class="nw-addbtn" id="nwAddBtn" data-nw="add">' + esc(T('add')) + '</button></div>' +
-      '<div class="nw-safe">' + I.shield + '<span>' + esc(T('safe')) + '</span></div>' +
+      '<h2>' + esc(T('title')) + '</h2><p class="nw-sub">' + esc(ro ? T('roNote') : T('sub')) + '</p>' +
+      (ro
+        ? (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>'
+          : '<div class="nw-card" style="padding:18px 14px;text-align:center;color:#93a39e;font-size:13.5px">' + esc(T('none')) + '</div>')
+        : (
+          (WALLETS.length ? '<div class="nw-lbl">' + esc(T('connected')) + '</div><div class="nw-card">' + wl + '</div>' : '') +
+          '<div class="nw-lbl">' + esc(T('connect')) + '</div>' +
+          '<div id="nwInjWrap"><div class="nw-lbl" style="margin-top:0;color:#62e8c2">' + esc(T('detected')) + '</div><div class="nw-tiles" id="nwInj"></div></div>' +
+          '<div class="nw-lbl">' + esc(T('popular')) + '</div><div class="nw-tiles">' + popTiles + '</div>' +
+          '<div class="nw-lbl">' + esc(T('watch')) + '</div><p class="nw-note" style="margin-top:-2px">' + esc(T('watchSub')) + '</p>' +
+          '<div class="nw-wl"><input id="nwLabel" maxlength="32" placeholder="' + esc(T('labelPh')) + '"></div>' +
+          '<div class="nw-wa"><input id="nwAddr" autocomplete="off" spellcheck="false" placeholder="' + esc(T('addrPh')) + '"><button type="button" class="nw-addbtn" id="nwAddBtn" data-nw="add">' + esc(T('add')) + '</button></div>' +
+          '<div class="nw-safe">' + I.shield + '<span>' + esc(T('safe')) + '</span></div>'
+        )) +
       '<button type="button" class="nw-close" data-nw="x">' + esc(T('close')) + '</button>' +
       '<div class="nw-busy"><div class="nw-spin"></div><b>' + esc(T('connecting')) + '</b><small></small></div>';
-    renderConnect();
+    if (!ro) renderConnect();
   }
 
   function open() {
-    if (!isClient()) return;
+    if (!canOpen()) return;
     css();
     if (!el) {
       el = document.createElement('div'); el.id = 'nw'; el.className = 'nc-no-i18n'; el.setAttribute('data-nci18n', 'off'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
