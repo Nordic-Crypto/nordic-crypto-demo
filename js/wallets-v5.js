@@ -131,7 +131,7 @@
     } catch (x) { }
   }
   window.addEventListener('eip6963:announceProvider', onAnnounce);
-  function discover() { providers = []; try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (x) { } }
+  function discover() { try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (x) { } }
   function injectedList() {
     var list = providers.slice();
     if (!list.length && window.ethereum) {
@@ -293,7 +293,7 @@
           '<div class="nw-safe">' + I.shield + '<span>' + esc(T('safe')) + '</span></div>'
         )) +
       '<button type="button" class="nw-close" data-nw="x">' + esc(T('close')) + '</button>' +
-      '<div class="nw-busy"><div class="nw-spin"></div><b>' + esc(T('connecting')) + '</b><small></small></div>';
+      '<div class="nw-busy"><div class="nw-spin"></div><b>' + esc(T('connecting')) + '</b><small></small><button type="button" class="nw-close" data-nw="cancel" style="width:auto;padding:0 22px;height:42px;margin-top:4px">' + esc(T('close')) + '</button></div>';
     if (!ro) renderConnect();
     fillBalances();
   }
@@ -332,6 +332,7 @@
         var b = e.target.closest && e.target.closest('[data-nw]'); if (!b) return;
         var k = b.getAttribute('data-nw');
         if (k === 'x') return close();
+        if (k === 'cancel') return unbusy();
         if (k === 'add') return addWatch();
         if (k === 'wc') return openWC();
         if (k === 'pop') return popularClick(b.getAttribute('data-id'));
@@ -348,6 +349,8 @@
   }
   function close() { if (!el) return; el.classList.remove('on', 'busy'); document.documentElement.style.overflow = ''; }
 
+  /* discover injected wallets early so the "Detected" tile is ready on first open (no re-click) */
+  try { if (document.readyState !== 'loading') setTimeout(discover, 300); else document.addEventListener('DOMContentLoaded', function () { setTimeout(discover, 300); }); } catch (e) {}
   window.NCWallets = { open: open, close: close };
   window.openWallets = open;
 
