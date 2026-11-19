@@ -243,7 +243,7 @@
   function load() {
     if (!canShow()) return Promise.resolve(null);
     if (loading) return loading;
-    loading = post('ncState', { day: localDay(), legacy: legacy() }).then(function (r) { loading = null; if (r && r.ok) { D = r.nc; try { localStorage.removeItem('nc_bonus_history'); } catch (e) { } chip(); if (isOpen()) paint(); } return D; });
+    loading = post('ncState', { day: localDay(), legacy: legacy() }).then(function (r) { loading = null; if (r && r.ok) { D = r.nc; try { localStorage.removeItem('nc_bonus_history'); } catch (e) { } chip(); if (isOpen()) paint(); try { window.dispatchEvent(new CustomEvent('nc:rewards', { detail: { missions: D && D.missions } })); } catch (e2) { } } return D; });
     return loading;
   }
   function loadRef() { return post('getRewards', {}).then(function (r) { if (r && r.ok) { R = r; if (isOpen() && tab === 'invite') paint(); } return R; }); }
@@ -292,7 +292,7 @@
     document.documentElement.style.overflow = '';
     try { if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); } catch (e) { }
   }
-  window.NCRewards = { open: open, close: close, refresh: load, coin: coin };
+  window.NCRewards = { open: open, close: close, refresh: load, coin: coin, data: function () { return D || null; }, missions: function () { return D && D.missions ? D.missions : null; } };
   /* older buttons that open the rewards window */
   window.__ncOpenRewards = open;
 
