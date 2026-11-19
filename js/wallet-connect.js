@@ -14,20 +14,34 @@
   'use strict';
   if (window.NCWalletConnect) return;
 
-  var SDK_URL = 'https://unpkg.com/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js';
+  var VER = '2.17.0';
+  /* ESM is the reliable path (named export, no UMD-global guessing); UMD is the fallback. */
+  var ESM_URLS = ['https://esm.sh/@walletconnect/ethereum-provider@' + VER, 'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@' + VER + '/+esm'];
+  var UMD_URLS = ['https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@' + VER + '/dist/index.umd.js', 'https://unpkg.com/@walletconnect/ethereum-provider@' + VER + '/dist/index.umd.js'];
   var sdkPromise = null, provider = null;
 
-  function loadSDK() {
-    if (window.EthereumProvider) return Promise.resolve(window.EthereumProvider);
-    if (sdkPromise) return sdkPromise;
-    sdkPromise = new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = SDK_URL; s.async = true;
-      s.onload = function () { window.EthereumProvider ? resolve(window.EthereumProvider) : reject(new Error('SDK missing')); };
-      s.onerror = function () { sdkPromise = null; reject(new Error('Could not load WalletConnect')); };
+  function pickEP(m) { if (!m) return null; if (m.init) return m; if (m.EthereumProvider && m.EthereumProvider.init) return m.EthereumProvider; if (m.default && m.default.init) return m.default; return null; }
+
+  function loadScript(url) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script'); s.src = url; s.async = true;
+      s.onload = function () { resolve(); }; s.onerror = function () { reject(new Error('load')); };
       document.head.appendChild(s);
-      setTimeout(function () { if (!window.EthereumProvider) { sdkPromise = null; reject(new Error('WalletConnect timed out')); } }, 15000);
+      setTimeout(function () { reject(new Error('timed out')); }, 15000);
     });
+  }
+
+  function loadSDK() {
+    if (window.__wcEP) return Promise.resolve(window.__wcEP);
+    if (sdkPromise) return sdkPromise;
+    sdkPromise = (function () {
+      /* 1) try ES-module imports first */
+      var chain = Promise.reject();
+      ESM_URLS.forEach(function (u) { chain = chain.catch(function () { return import(/* @vite-ignore */ u).then(function (m) { var EP = pickEP(m); if (!EP) throw new Error('SDK missing'); return EP; }); }); });
+      /* 2) fall back to UMD script tags */
+      UMD_URLS.forEach(function (u) { chain = chain.catch(function () { return loadScript(u).then(function () { var EP = pickEP(window.EthereumProvider) || pickEP(window.WalletConnectEthereumProvider); if (!EP) throw new Error('SDK missing'); return EP; }); }); });
+      return chain.then(function (EP) { window.__wcEP = EP; return EP; }, function (e) { sdkPromise = null; throw new Error('load'); });
+    })();
     return sdkPromise;
   }
 
