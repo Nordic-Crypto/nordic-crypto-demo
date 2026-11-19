@@ -85,6 +85,7 @@
     chipT: ['Your NC rewards', 'Dine NC-belønninger', 'NC-palkintosi', 'Tus recompensas NC', 'Dine NC-belønninger', 'Dina NC-belöningar', 'Vos récompenses NC', 'Ihre NC-Prämien'],
     ready: ['Ready to collect', 'Klar til at hente', 'Valmis lunastettavaksi', 'Listo para recoger', 'Klar til å hentes', 'Redo att hämtas', 'Prêt à récupérer', 'Bereit zum Abholen'],
     err: ['Could not load your rewards. Please try again.', 'Kunne ikke hente dine belønninger. Prøv igen.', 'Palkintoja ei voitu ladata. Yritä uudelleen.', 'No se pudieron cargar tus recompensas. Inténtalo de nuevo.', 'Kunne ikke laste belønningene. Prøv igjen.', 'Det gick inte att läsa in dina belöningar. Försök igen.', 'Impossible de charger vos récompenses. Réessayez.', 'Prämien konnten nicht geladen werden. Bitte erneut versuchen.'],
+    roNote: ['Read-only — this client’s rewards. Nothing can be claimed here.', 'Skrivebeskyttet — denne klients belønninger. Intet kan hentes her.', 'Vain luku — tämän asiakkaan palkinnot. Mitään ei voi lunastaa.', 'Solo lectura: recompensas de este cliente. No se puede reclamar nada.', 'Skrivebeskyttet — denne klientens belønninger. Ingenting kan hentes her.', 'Skrivskyddat — denna klients belöningar. Inget kan hämtas här.', 'Lecture seule — récompenses de ce client. Rien ne peut être réclamé.', 'Nur Ansicht — Prämien dieses Kunden. Hier kann nichts eingelöst werden.'],
     retry: ['Try again', 'Prøv igen', 'Yritä uudelleen', 'Reintentar', 'Prøv igjen', 'Försök igen', 'Réessayer', 'Erneut versuchen']
   };
   function lang() { try { var l = window.NCI18N && window.NCI18N.lang; return LG.indexOf(l) > -1 ? l : 'en'; } catch (e) { return 'en'; } }
@@ -96,9 +97,14 @@
   function $(id) { return document.getElementById(id); }
   function tok() { try { return localStorage.getItem('session_token') || ''; } catch (e) { return ''; } }
   function isClient() { try { return !!tok() && localStorage.getItem('user_role') !== 'admin' && !window.adminViewingEmail; } catch (e) { return false; } }
+  /* admin "viewing as client": show the rewards snapshot READ-ONLY (nothing claimable) */
+  function isViewer() { try { return !!window.adminViewingEmail; } catch (e) { return false; } }
+  function canShow() { return isClient() || isViewer(); }
+  function readOnly() { return isViewer() || !!(D && D.readOnly); }
   function wurl() { return window.WORKER_URL || window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev'; }
-  function post(action, body) { return fetch(wurl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok() }, body || {})) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; }); }
+  function post(action, body) { var b = Object.assign({ token: tok() }, body || {}); if (isViewer()) b.email = window.adminViewingEmail; return fetch(wurl() + '?action=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; }); }
   function localDay(d) { d = d || new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function toast(t) { try { if (typeof window.toast === 'function') return window.toast(t); } catch (e) { } }
 
   /* ───────── levels ───────── */
   var LV = [{ k: 'L0', min: 0, c1: '#f0b68a', c2: '#a8653a' }, { k: 'L1', min: 500, c1: '#eef2f6', c2: '#8a96a4' }, { k: 'L2', min: 2000, c1: '#ffe39a', c2: '#c8921a' }, { k: 'L3', min: 5000, c1: '#e8fff8', c2: '#7fd8c0' }];
@@ -206,6 +212,7 @@
 '#ncp .np-fr{display:flex;align-items:center;gap:10px;padding:9px 2px}#ncp .np-fr .np-av{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:12px;line-height:1;font-family:inherit;color:#03251b;background:linear-gradient(140deg,#a3fbe3,#45cfa8)}#ncp .np-fr b{flex:1;font-size:13.5px;font-weight:600}#ncp .np-fr span{font-size:11.5px;font-weight:700;color:#93a09a}#ncp .np-fr span.np-q{color:#62e8c2}' +
 '#ncp .np-msg{min-height:18px;text-align:center;font-size:12.5px;margin-top:8px;color:#62e8c2}#ncp .np-msg.np-bad{color:#ff8d9a}' +
 '#ncp .np-what{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;color:#7e8b86;line-height:1.45;margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.08)}#ncp .np-what .ncp-i{width:14px;height:14px;margin-top:1px}' +
+'#ncp .np-ro{display:flex;gap:9px;align-items:center;font-size:12px;font-weight:600;color:#ffc24a;line-height:1.4;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(255,194,74,.09);border:1px solid rgba(255,194,74,.22)}#ncp .np-ro .ncp-i{width:15px;height:15px;flex:none}' +
 '#ncp .np-skel{height:64px;border-radius:18px;margin-bottom:8px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.08),rgba(255,255,255,.04));background-size:200% 100%;animation:ncpSk 1.2s linear infinite}@keyframes ncpSk{to{background-position:-200% 0}}' +
 /* flying coins */
 '.ncp-fly{position:fixed;z-index:100070;width:26px;height:26px;pointer-events:none;transition:transform .85s cubic-bezier(.45,-0.2,.3,1),opacity .85s}.ncp-fly .ncp-coin{width:26px;height:26px}' +
@@ -231,7 +238,7 @@
   var D = null, R = null, loading = null, tab = 'daily';
   function legacy() { try { var h = JSON.parse(localStorage.getItem('nc_bonus_history') || '[]'); return Array.isArray(h) ? h.map(function (e) { return { type: e.type }; }) : []; } catch (e) { return []; } }
   function load() {
-    if (!isClient()) return Promise.resolve(null);
+    if (!canShow()) return Promise.resolve(null);
     if (loading) return loading;
     loading = post('ncState', { day: localDay(), legacy: legacy() }).then(function (r) { loading = null; if (r && r.ok) { D = r.nc; try { localStorage.removeItem('nc_bonus_history'); } catch (e) { } chip(); if (isOpen()) paint(); } return D; });
     return loading;
@@ -241,7 +248,7 @@
 
   /* ───────── header chip ───────── */
   function chip() {
-    if (!isClient()) { var o = $('ncChip'); if (o) o.remove(); return; }
+    if (!canShow()) { var o = $('ncChip'); if (o) o.remove(); return; }
     var bell = $('notifBell'); if (!bell || !bell.parentNode) return;
     css();
     var old = $('ncBadge'); if (old) old.remove();
@@ -269,7 +276,7 @@
     return el;
   }
   function open(t) {
-    if (!isClient()) return;
+    if (!canShow()) return;
     root(); if (t) tab = t; lastFocus = document.activeElement;
     paint(); el.classList.add('on'); document.documentElement.style.overflow = 'hidden';
     requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add('in'); try { el.querySelector('.np-m').focus({ preventScroll: true }); } catch (e) { } }); });
@@ -298,6 +305,7 @@
       '<div class="np-hero" style="--l1:' + lv.cur.c1 + ';--l2:' + lv.cur.c2 + '"><div class="np-big">' + coin(78) + '</div><div class="np-hv"><div class="np-l">' + esc(T('bal')) + '</div><div class="np-n"><span data-bal>' + (D ? num(bal) : '—') + '</span><small>NC</small></div>' +
       '<div class="np-lvr"><span class="np-lvb">' + ic('star') + esc(T(lv.cur.k)) + '</span><span class="np-lvn">' + esc(lv.next ? T('toLvl', { n: num(lv.next.min - life), l: T(lv.next.k) }) : T('topLvl')) + '</span></div>' +
       '<div class="np-bar"><i style="width:' + pct + '%"></i></div></div></div>' +
+      (readOnly() ? '<div class="np-ro">' + ic('info') + '<span>' + esc(T('roNote')) + '</span></div>' : '') +
       '<div class="np-tabs" role="tablist">' + [['daily', 'tDaily', D && D.daily && D.daily.ready ? 1 : 0], ['missions', 'tMis', misReady], ['history', 'tHist', 0], ['invite', 'tInv', 0]].map(function (t) { return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" class="np-tab' + (tab === t[0] ? ' np-on' : '') + '" data-tab="' + t[0] + '">' + esc(T(t[1])) + (t[2] ? '<em>' + t[2] + '</em>' : '') + '</button>'; }).join('') + '</div>' +
       '<div class="np-sec">' + (D ? body() : (D === false ? '<div class="np-empty">' + esc(T('err')) + '<br><br><button type="button" class="np-mb" data-a="retry">' + esc(T('retry')) + '</button></div>' : '<div class="np-skel"></div><div class="np-skel"></div><div class="np-skel"></div>')) + '</div>' +
       '<div class="np-msg" aria-live="polite"></div><div class="np-what">' + ic('info') + '<span>' + esc(T('what')) + '</span></div>';
@@ -374,6 +382,7 @@
     (function f(t) { var k = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - k, 3); s.textContent = num(Math.round(from + (to - from) * e)); if (k < 1) requestAnimationFrame(f); })(t0);
   }
   function claim(btn, body) {
+    if (readOnly()) { try { toast(T('roNote')); } catch(e){} return; }
     if (btn.disabled) return; btn.disabled = true; var before = D ? D.bal : 0;
     post('ncClaim', Object.assign({ day: localDay() }, body)).then(function (r) {
       btn.disabled = false;
@@ -465,7 +474,7 @@
   var lbx = null, lbBusy = false, lbT = null;
   function boxLeft() { var d = new Date(); d.setHours(24, 0, 0, 0); var b = D && D.box ? (D.box.boxTs || 0) + 12 * 36e5 : 0, ms = Math.max(0, Math.max(d.getTime(), b) - Date.now()); var h = Math.floor(ms / 36e5), m = Math.floor(ms % 36e5 / 6e4), s = Math.floor(ms % 6e4 / 1e3); return h + ':' + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2); }
   function openBox() {
-    if (!isClient()) return; boxCss();
+    if (!canShow()) return; if (readOnly()) { try { toast(T('roNote')); } catch(e){} return; } boxCss();
     if (!lbx) { lbx = document.createElement('div'); lbx.id = 'lbx'; lbx.className = 'nc-no-i18n'; lbx.setAttribute('data-nci18n', 'off'); lbx.setAttribute('role', 'dialog'); lbx.setAttribute('aria-modal', 'true'); document.body.appendChild(lbx); lbx.addEventListener('click', boxClick); }
     var go = function () { paintBox(); lbx.classList.add('on'); requestAnimationFrame(function () { requestAnimationFrame(function () { lbx.classList.add('in'); }); }); };
     if (D) go(); else { load().then(go); }
@@ -535,10 +544,10 @@
   ['nc:trade:executed', 'nc:deposit:confirmed', 'nc:withdrawal:submitted', 'nc:2fa:enabled', 'nc:kyc:approved'].forEach(function (ev) { document.addEventListener(ev, function () { setTimeout(load, 2500); }); });
 
   /* ───────── start ───────── */
-  function boot() { if (!isClient()) return; chip(); load(); }
+  function boot() { if (!canShow()) return; chip(); load(); }
   document.addEventListener('nc:auth:login', function () { setTimeout(boot, 600); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 400); }); else setTimeout(boot, 400);
-  setInterval(function () { if (isClient()) { chip(); } else { var o = $('ncChip'); if (o) o.remove(); } }, 2000);
-  setInterval(function () { if (isClient() && !document.hidden) load(); }, 5 * 60e3);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && isClient() && D && D.day !== localDay()) load(); });
+  setInterval(function () { if (canShow()) { chip(); } else { var o = $('ncChip'); if (o) o.remove(); } }, 2000);
+  setInterval(function () { if (canShow() && !document.hidden) load(); }, 5 * 60e3);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && canShow() && D && D.day !== localDay()) load(); });
 })();
