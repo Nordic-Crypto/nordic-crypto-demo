@@ -47,6 +47,8 @@
     d_kyc: ['Unlock every feature', 'Lås op for alle funktioner', 'Avaa kaikki ominaisuudet', 'Desbloquea todas las funciones', 'Lås opp alle funksjoner', 'Lås upp alla funktioner', 'Débloquez toutes les fonctions', 'Alle Funktionen freischalten'],
     m_avatar: ['Add a profile photo', 'Tilføj et profilbillede', 'Lisää profiilikuva', 'Añade una foto de perfil', 'Legg til et profilbilde', 'Lägg till en profilbild', 'Ajoutez une photo de profil', 'Profilfoto hinzufügen'],
     d_avatar: ['Make the account feel like yours', 'Gør kontoen til din egen', 'Tee tilistä omannäköisesi', 'Haz que la cuenta sea tuya', 'Gjør kontoen til din egen', 'Gör kontot till ditt eget', 'Personnalisez votre compte', 'Machen Sie das Konto zu Ihrem'],
+    m_wallet: ['Connect your wallet', 'Tilknyt din wallet', 'Yhdistä lompakkosi', 'Vincula tu monedero', 'Koble til lommeboken din', 'Anslut din plånbok', 'Reliez votre portefeuille', 'Verbinde deine Wallet'],
+    d_wallet: ['Link MetaMask, Trust or Exodus', 'Tilknyt MetaMask, Trust eller Exodus', 'Linkitä MetaMask, Trust tai Exodus', 'Vincula MetaMask, Trust o Exodus', 'Koble til MetaMask, Trust eller Exodus', 'Anslut MetaMask, Trust eller Exodus', 'Reliez MetaMask, Trust ou Exodus', 'Verbinde MetaMask, Trust oder Exodus'],
     m_invite: ['Invite a friend', 'Inviter en ven', 'Kutsu ystävä', 'Invita a un amigo', 'Inviter en venn', 'Bjud in en vän', 'Invitez un ami', 'Freund einladen'],
     d_invite: ['{n} NC for every friend who joins and qualifies', '{n} NC for hver ven, der tilmelder sig og kvalificerer sig', '{n} NC jokaisesta liittyvästä ja ehdot täyttävästä ystävästä', '{n} NC por cada amigo que se une y cumple los requisitos', '{n} NC for hver venn som blir med og kvalifiserer seg', '{n} NC för varje vän som går med och kvalificerar sig', '{n} NC par ami inscrit et éligible', '{n} NC für jeden Freund, der beitritt und sich qualifiziert'],
     h_daily: ['Daily reward · day {n}', 'Daglig belønning · dag {n}', 'Päivän palkinto · päivä {n}', 'Recompensa diaria · día {n}', 'Daglig belønning · dag {n}', 'Daglig belöning · dag {n}', 'Récompense du jour · jour {n}', 'Tagesprämie · Tag {n}'],
@@ -139,10 +141,11 @@
     lock: '<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', id: '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.3"/><path d="M5.8 16.5c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14 10h4M14 13.5h3"/>',
     user: '<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c1.2-3.6 3.8-5.4 7-5.4s5.8 1.8 7 5.4"/>', inv: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.9-3.1 3.2-4.7 6-4.7s5.1 1.6 6 4.7M17 8v6M14 11h6"/>',
     chev: '<path d="m9 6 6 6-6 6"/>', cp: '<rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>', share: '<path d="M12 15V4m0 0L8 8m4-4 4 4M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/>',
-    star: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/>'
+    star: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/>',
+    wallet: '<path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.1"/>'
   };
   function ic(n, c) { return '<svg class="' + (c || 'ncp-i') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[n] || '') + '</svg>'; }
-  var MIC = { deposit: 'dep', trade: 'trade', withdraw: 'wd', twofa: 'lock', kyc: 'id', avatar: 'user', invite: 'inv' };
+  var MIC = { deposit: 'dep', trade: 'trade', withdraw: 'wd', twofa: 'lock', kyc: 'id', avatar: 'user', wallet: 'wallet', invite: 'inv' };
 
   /* ───────── styles ───────── */
   function css() {
@@ -400,6 +403,7 @@
       else if (id === 'trade') click('#btnExchangeV2');
       else if (id === 'withdraw') click('#btnWithdrawV2');
       else if (id === 'invite') open('invite');
+      else if (id === 'wallet') { if (typeof window.openWallets === 'function') window.openWallets(); else click('#navWallets'); }
       else click('#settingsBtn');
     }, 340);
   }
