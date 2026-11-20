@@ -70,6 +70,8 @@
     payNeedAmt: ['Enter an amount first', 'Indtast et beløb først', 'Anna ensin summa', 'Introduce un importe primero', 'Skriv inn et beløp først', 'Ange ett belopp först', 'Saisissez d’abord un montant', 'Zuerst einen Betrag eingeben'],
     paySent: ['Transaction sent — confirming on the network', 'Transaktion sendt — bekræfter på netværket', 'Tapahtuma lähetetty — vahvistetaan verkossa', 'Transacción enviada: confirmando en la red', 'Transaksjon sendt — bekrefter på nettverket', 'Transaktion skickad — bekräftar i nätverket', 'Transaction envoyée — confirmation sur le réseau', 'Transaktion gesendet — wird im Netzwerk bestätigt'],
     payRejected: ['Transaction cancelled in the wallet', 'Transaktion annulleret i walletten', 'Tapahtuma peruttu lompakossa', 'Transacción cancelada en el monedero', 'Transaksjon avbrutt i lommeboken', 'Transaktion avbröts i plånboken', 'Transaction annulée dans le portefeuille', 'Transaktion in der Wallet abgebrochen'],
+    payTok: ['Pay with {t}', 'Betal med {t}', 'Maksa {t}', 'Pagar con {t}', 'Betal med {t}', 'Betala med {t}', 'Payer en {t}', 'Mit {t} zahlen'],
+    paySubTok: ['Send {a} {t} from MetaMask, Trust…', 'Send {a} {t} fra MetaMask, Trust…', 'Lähetä {a} {t} MetaMaskista, Trustista…', 'Envía {a} {t} desde MetaMask, Trust…', 'Send {a} {t} fra MetaMask, Trust…', 'Skicka {a} {t} från MetaMask, Trust…', 'Envoyez {a} {t} depuis MetaMask, Trust…', 'Sende {a} {t} aus MetaMask, Trust…'],
     waitBank: ['We’re waiting for your transfer', 'Vi venter på din overførsel', 'Odotamme siirtoasi', 'Esperamos tu transferencia', 'Vi venter på overføringen din', 'Vi väntar på din överföring', 'Nous attendons votre virement', 'Wir warten auf Ihre Überweisung'],
     waitCard: ['Card deposit received', 'Kortindbetaling modtaget', 'Korttitalletus vastaanotettu', 'Depósito con tarjeta recibido', 'Kortinnskudd mottatt', 'Kortinsättning mottagen', 'Dépôt par carte reçu', 'Kartenzahlung erhalten'],
     waitCry: ['We’re watching the network', 'Vi holder øje med netværket', 'Seuraamme verkkoa', 'Estamos vigilando la red', 'Vi følger med på nettverket', 'Vi bevakar nätverket', 'Nous surveillons le réseau', 'Wir beobachten das Netzwerk'],
@@ -122,7 +124,7 @@
     ETH: '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627eea"/><path d="M16 5v8.1l6.9 3.1z" fill="#fff" fill-opacity=".6"/><path d="M16 5 9.1 16.2l6.9-3.1z" fill="#fff"/><path d="M16 21.5v5.5l6.9-9.6z" fill="#fff" fill-opacity=".6"/><path d="M16 27v-5.5l-6.9-4.1z" fill="#fff"/><path d="m16 20.2 6.9-4-6.9-3.1z" fill="#fff" fill-opacity=".2"/><path d="m9.1 16.2 6.9 4v-7.1z" fill="#fff" fill-opacity=".6"/></svg>'
   };
   var NETN = { BTC: 'Bitcoin', ETH: 'Ethereum (ERC-20)' };
-  var MLEG = { sepa: 'Bank Transfer (SEPA)', swift: 'Bank Transfer (SWIFT)', card: 'Credit Card', BTC: 'Bitcoin (BTC)', ETH: 'Ethereum (ETH)' };
+  var MLEG = { sepa: 'Bank Transfer (SEPA)', swift: 'Bank Transfer (SWIFT)', card: 'Credit Card', BTC: 'Bitcoin (BTC)', ETH: 'Ethereum (ETH)', USDT: 'Tether (USDT)', USDC: 'USD Coin (USDC)' };
 
   /* ───────── styles ───────── */
   function css() {
@@ -312,7 +314,7 @@
     var addr = wallet(coin);
     var body = addr ? '<div class="dv-qrw"><div class="dv-qr" id="dvQr"><div class="lg">' + COIN[coin] + '</div></div><div style="min-width:0;flex:1"><span class="dv-lbl">' + esc(T('depAddr', { c: coin })) + '</span><div class="dv-addr">' + esc(addr.slice(0, 6)) + '<span>' + esc(addr.slice(6, -6)) + '</span>' + esc(addr.slice(-6)) + '</div><button type="button" class="dv-cp" data-cp="' + esc(addr) + '">' + ic('cp') + esc(T('copy')) + '</button></div></div>' +
       '<div class="dv-note w">' + ic('warn') + '<span><b class="h">' + esc(T('sendOnly', { c: coin, n: NETN[coin] })) + '</b>' + esc(T('otherLost')) + '</span></div><div class="dv-note">' + ic('clock') + '<span>' + esc(T('confNote')) + '</span></div>' +
-      (coin === 'ETH' && window.NCWalletPay && window.NCWalletPay.available() ? walletPayBtn() : '') +
+      (coin === 'ETH' && window.NCWalletPay && window.NCWalletPay.available() ? walletPayBtns() : '') +
       '<div class="dv-acts"><button type="button" class="dv-btn" data-a="share" data-v="' + esc(addr) + '">' + ic('share') + esc(T('share')) + '</button><button type="button" class="dv-btn pri" data-a="send">' + esc(T('sentIt')) + '</button></div>'
       : '<div class="dv-wait"><div class="sp"></div><div><b>' + esc(T('noAddr', { c: coin })) + '</b><span>' + esc(T('noAddrS')) + '</span></div></div><button type="button" class="dv-btn full" data-a="chat">' + ic('chat') + esc(T('chat')) + '</button>';
     return '<div class="dv-pane">' + hdr(true, true) + '<div class="dv-coinsel">' + ['BTC', 'ETH'].map(function (c) { return '<button type="button" data-c="' + c + '" class="' + (coin === c ? 'on' : '') + '">' + COIN[c] + c + '</button>'; }).join('') + '</div>' + body + '<div class="dv-msg" aria-live="polite"></div></div>';
@@ -361,6 +363,43 @@
     var e = ethEst();
     var sub = e > 0 ? T('paySub', { e: e.toLocaleString(undefined, { maximumFractionDigits: 5 }) }) : T('payNeedAmt');
     return '<button type="button" class="dv-btn pri dv-pay" data-a="walletpay">' + ic('wallet') + '<span class="dv-pt"><b>' + esc(T('payWallet')) + '</b><em>' + esc(sub) + '</em></span></button>';
+  }
+  /* ETH + stablecoin (USDT/USDC) pay-from-wallet buttons. Stablecoins are 1:1 with USD, so the token amount = the USD amount. */
+  function walletPayBtns() {
+    var out = walletPayBtn();
+    var usd = Number(amount) || 0;
+    var toks = (window.NCWalletPay && window.NCWalletPay.tokens) || [];
+    toks.forEach(function (tk) {
+      var sub = usd > 0 ? T('paySubTok', { a: usd.toLocaleString(undefined, { maximumFractionDigits: 2 }), t: tk }) : T('payNeedAmt');
+      out += '<button type="button" class="dv-btn dv-pay dv-paytok" data-a="walletpaytok" data-tok="' + esc(tk) + '">' + ic('wallet') +
+        '<span class="dv-pt"><b>' + esc(T('payTok', { t: tk })) + '</b><em>' + esc(sub) + '</em></span></button>';
+    });
+    return out;
+  }
+  function walletPayTok(tk) {
+    if (busy) return;
+    if (window.adminViewingEmail || localStorage.getItem('user_role') === 'admin') return msg(T('admin'), true);
+    if (!window.NCWalletPay || !window.NCWalletPay.sendToken) return;
+    var addr = wallet('ETH'); if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) return;
+    var usd = Number(amount) || 0;
+    if (!(usd > 0)) return msg(T('payNeedAmt'), true);
+    busy = true; msg(T('payConfirm'));
+    window.NCWalletPay.sendToken({ token: tk, to: addr, amount: usd }).then(function (r) {
+      var sess = typeof window.getSessionToken === 'function' ? window.getSessionToken() : localStorage.getItem('session_token');
+      return fetch(WORKER + '?action=requestDeposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: sess, amount: usd, method: MLEG[tk] || tk, meta: { via: 'wallet', coin: tk, txHash: r.txHash, from: r.from } }) }).then(function (x) { return x.json(); }).then(function (resp) {
+        busy = false;
+        try { if (window.NCSound) window.NCSound.notify(); } catch (x) {}
+        try { if (typeof window.addNotification === 'function') window.addNotification('Deposit sent from wallet: ' + usd.toFixed(2) + ' ' + tk + ' — confirming on network', '⏳'); } catch (x) {}
+        if (resp && resp.ok && resp.request) { var w = window.st; if (w) { if (!Array.isArray(w.depositRequests)) w.depositRequests = []; w.depositRequests.unshift(resp.request); } sent = resp.request; }
+        try { if (typeof window.renderTx === 'function') window.renderTx(); if (typeof window.renderRecentTx === 'function') window.renderRecentTx(); } catch (x) {}
+        step = 3; paint();
+      });
+    }).catch(function (err) {
+      busy = false;
+      var m = (err && err.message) || '';
+      if ((err && err.code === 4001) || /reject|cancel|denied|4001/i.test(m)) msg(T('payRejected'), true);
+      else msg(T('conn'), true);
+    });
   }
   function walletPay() {
     if (busy) return;
@@ -427,6 +466,7 @@
     if (a === 'back') { step = 1; paint(); return; }
     if (a === 'next') { if (method !== 'crypto' && !(Number(amount) > 0)) { var ai2 = $('dvAmt'); if (ai2) { ai2.focus(); } msg(T('enterAmt'), true); return; } step = 2; legacySet(); paint(); return; }
     if (a === 'walletpay') return walletPay();
+    if (a === 'walletpaytok') return walletPayTok(b.getAttribute('data-tok'));
     if (a === 'send') return submit(b);
     if (a === 'share') { var v = b.getAttribute('data-v'); try { if (navigator.share) { navigator.share({ text: v }).catch(function () { }); return; } } catch (x) { } copy(v, b); return; }
     if (a === 'chat') { close(); setTimeout(function () { try { if (typeof window.toggleChat === 'function') window.toggleChat(); } catch (x) { } }, 340); return; }
