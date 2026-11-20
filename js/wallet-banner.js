@@ -1,4 +1,4 @@
-/* NordicCrypto — wallet-banner.js v2
+/* NordicCrypto — wallet-banner.js v3
    Smart "next best action" promo on the dashboard. It shows ONE card for the single most important
    thing the client hasn't done yet (verify identity → connect wallet → turn on 2FA), with the NC
    reward for it. It switches to the next task when one is done, and hides when all are done,
@@ -149,6 +149,7 @@
 
   function place() {
     if (!isClient() || dismissed() || snoozed()) { remove(); return; }
+    if (window.__ncGSsuppress) { remove(); return; } /* the Getting-started checklist is showing all tasks — don't stack a second card */
     var dash = $('dash');
     var dashOn = dash && dash.classList.contains('on') && getComputedStyle(dash).display !== 'none';
     if (!dashOn) { remove(); return; }
