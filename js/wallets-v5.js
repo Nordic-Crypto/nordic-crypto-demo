@@ -90,8 +90,11 @@
       '#nw .nw-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px}',
       '#nw .nw-ava{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff;overflow:hidden}#nw .nw-ava img{width:100%;height:100%;object-fit:cover}',
       '#nw .nw-bal{display:block;font-size:11.5px;font-weight:600;color:#7fe6cc;margin-top:2px}#nw .nw-bal.load{color:#6b7a75}',
+      '#nw .nw-tok{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}#nw .nw-tok:empty{display:none}',
+      '#nw .nw-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#cdd8d3}#nw .nw-chip b{font-weight:800;color:#8ff0d6}',
       '#nw .nw-total{font-size:12.5px;font-weight:700;color:#8ff0d6}',
       'html[data-theme="light"] #nw .nw-bal{color:#17a07e}html[data-theme="light"] #nw .nw-total{color:#17a07e}',
+      'html[data-theme="light"] #nw .nw-chip{background:rgba(10,30,24,.05);border-color:rgba(10,30,24,.09);color:#2a4038}html[data-theme="light"] #nw .nw-chip b{color:#17a07e}',
       '#nw .nw-m{min-width:0;flex:1}#nw .nw-m b{display:block;font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#nw .nw-m small{display:block;font-size:12px;color:#93a39e;font-family:ui-monospace,Menlo,monospace;margin-top:1px}',
       '#nw .nw-tag{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:750}#nw .nw-tag.v{background:rgba(98,232,194,.14);color:#62e8c2}#nw .nw-tag.w{background:rgba(255,255,255,.07);color:#a7b3ae}#nw .nw-tag svg{width:11px;height:11px}',
       '#nw .nw-del{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.14);color:#ff8d9a;cursor:pointer}#nw .nw-del svg{width:15px;height:15px}',
@@ -262,7 +265,7 @@
       var pop = POP.filter(function (p) { return (w.label || '').toLowerCase().indexOf(p.id) > -1 || (w.label || '').toLowerCase() === p.name.toLowerCase(); })[0];
       return '<div class="nw-item">' + avatar(null, g, pop ? pop.c1 : '#3a4a52', pop ? pop.c2 : '#222c32') +
         '<div class="nw-m"><b>' + esc(w.label || 'Wallet') + '</b><small>' + esc(ro ? w.address : short(w.address)) + '</small>' +
-        (window.NCWalletBalance ? '<small class="nw-bal" data-wb-bal="' + esc(w.id) + '"></small>' : '') + '</div>' +
+        (window.NCWalletBalance ? '<small class="nw-bal" data-wb-bal="' + esc(w.id) + '"></small><span class="nw-tok" data-wb-tok="' + esc(w.id) + '"></span>' : '') + '</div>' +
         '<span class="nw-tag ' + (w.verified ? 'v' : 'w') + '">' + (w.verified ? I.check + T('verified') : I.eye + T('watchTag')) + '</span>' +
         (ro ? '' : '<button type="button" class="nw-del" data-nw="del" data-id="' + esc(w.id) + '" aria-label="' + esc(T('remove')) + '">' + I.trash + '</button>') + '</div>';
     }).join('');
@@ -318,6 +321,18 @@
           if (b.usd) { total += b.usd; anyUsd = true; updTotal(); }
         } else { n.textContent = ''; n.className = 'nw-bal'; }
       });
+      /* ERC-20 tokens (EVM only) rendered as chips; stablecoin USD adds to the total */
+      if (window.NCWalletBalance.getTokens && w.type !== 'btc') {
+        window.NCWalletBalance.getTokens(w.address, w.type).then(function (list) {
+          var tn = el.querySelector('[data-wb-tok="' + w.id + '"]'); if (!tn) return;
+          if (!list || !list.length) { tn.innerHTML = ''; return; }
+          tn.innerHTML = list.map(function (t) {
+            return '<span class="nw-chip"><b>' + fmtCrypto(t.amount) + '</b> ' + esc(t.symbol) + '</span>';
+          }).join('');
+          var add = list.reduce(function (s, t) { return s + (Number(t.usd) || 0); }, 0);
+          if (add > 0) { total += add; anyUsd = true; updTotal(); }
+        });
+      }
     });
   }
 
