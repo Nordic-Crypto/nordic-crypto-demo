@@ -205,6 +205,8 @@
 
   /* ───────── state ───────── */
   var el = null, step = 1, method = 'sepa', coin = 'BTC', amount = '', card = { n: '', h: '', x: '' }, sent = null, busy = false, lastFocus = null;
+  /* admin can disable bank details for a client — then no SEPA/SWIFT deposit, card/crypto only */
+  function bankOff() { try { var u = S().user; return !!(u && u.bankHidden); } catch (e) { return false; } }
   function root() {
     if (el) return el; css();
     el = document.createElement('div'); el.id = 'dv'; el.className = 'nc-no-i18n'; el.setAttribute('data-nci18n', 'off');
@@ -219,6 +221,7 @@
     try { console.log('[NordicCrypto] Add money UI v5 active'); } catch (e) {}
     root(); lastFocus = document.activeElement; step = 1; sent = null; amount = ''; busy = false;
     var st0 = S(); if (!(st0.user && st0.user.iban) && (wallet('BTC') || wallet('ETH'))) method = 'crypto';
+    if (bankOff() && (method === 'sepa' || method === 'swift')) method = 'card';
     paint(); el.classList.add('on'); document.documentElement.style.overflow = 'hidden';
     requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add('in'); try { el.querySelector('.dv-m').focus({ preventScroll: true }); } catch (e) { } }); });
   }
@@ -280,7 +283,7 @@
   function s1() {
     var cry = method === 'crypto';
     return '<div class="dv-pane">' + hdr(false, true) + '<h2>' + esc(T('how')) + '</h2><div class="dv-p">' + ic('lock') + esc(T('secured')) + '</div>' +
-      tile('sepa', 'bank', T('bank'), T('bankS'), ' <span class="dv-tag">' + esc(T('popular')) + '</span>') + tile('swift', 'globe', T('swift'), T('swiftS')) + tile('card', 'card', T('card'), T('cardS')) + tile('crypto', 'coin', T('crypto'), T('cryptoS')) +
+      (bankOff() ? '' : tile('sepa', 'bank', T('bank'), T('bankS'), ' <span class="dv-tag">' + esc(T('popular')) + '</span>') + tile('swift', 'globe', T('swift'), T('swiftS'))) + tile('card', 'card', T('card'), T('cardS')) + tile('crypto', 'coin', T('crypto'), T('cryptoS')) +
       '<div class="dv-amt"><label for="dvAmt">' + esc(T('amount')) + ' (USD)' + (cry ? ' · ' + esc(T('optional')) : '') + '</label><div class="row"><span class="cur">$</span><input id="dvAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="0" value="' + esc(amount) + '" aria-label="' + esc(T('amount')) + '"></div>' +
       '<div class="dv-pills">' + [100, 500, 1000, 5000].map(function (v) { return '<button type="button" class="dv-pill' + (Number(amount) === v ? ' on' : '') + '" data-q="' + v + '">' + esc(usd(v, 0)) + '</button>'; }).join('') + '</div></div>' +
       '<button type="button" class="dv-btn pri full" data-a="next">' + esc(T('cont')) + ic('chev') + '</button><div class="dv-msg" aria-live="polite"></div></div>';
