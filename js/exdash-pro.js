@@ -418,6 +418,7 @@
     if (!build()) return;
     var cur = compute();
     renderTop(cur); renderKpis(cur); renderMarkets(); renderAlloc(cur); renderHold(cur); renderAct();
+    var __bank = document.querySelector('#exchangeDash .dp-bank'); if (__bank) __bank.style.display = (S().user && S().user.bankHidden) ? 'none' : '';   // admin can disable bank details per client
     qa('#dpRange button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-r') === D.rng); });
     var fsig = D.rng + '|' + (S().txs || []).length + '|' + Math.round((Number(S().usd) || 0) * 100), force = fsig !== D.fsig; D.fsig = fsig;
     var cached = D.series[D.rng], box = $('dpChart');
