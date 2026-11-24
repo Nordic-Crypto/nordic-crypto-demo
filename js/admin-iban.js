@@ -34,6 +34,9 @@
 '#aib .note{margin-top:12px;font-size:12px;color:#93a39e;line-height:1.5}' +
 '#aib .err{display:none;margin:0 22px;padding:9px 12px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;font-size:12.5px}' +
 '#aib .ft{display:flex;gap:10px;padding:0 22px 22px;margin-top:4px}#aib .ft button{flex:1;height:48px;border-radius:14px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#c6d2ce}#aib .ft .p{border:0;background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b}#aib .ft .p[disabled]{opacity:.6;cursor:wait}' +
+'#aib .tgl{display:flex;align-items:center;gap:12px;margin-top:16px;padding:13px 14px;border-radius:14px;background:rgba(255,120,120,.06);border:1px solid rgba(255,120,120,.18)}' +
+'#aib .tgl.on{background:rgba(255,120,120,.1);border-color:rgba(255,120,120,.32)}#aib .tgl>div{flex:1;min-width:0}#aib .tgl b{display:block;font-size:13px;color:#e7edf5}#aib .tgl small{display:block;color:#93a39e;font-size:11.5px;margin-top:2px;line-height:1.4}' +
+'#aib .sw{flex:none;width:46px;height:27px;border-radius:99px;border:0;cursor:pointer;background:rgba(255,255,255,.14);position:relative;transition:background .18s}#aib .sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s}#aib .sw.on{background:#ff6b7a}#aib .sw.on::after{transform:translateX(19px)}' +
 '#aib .ld{padding:40px;text-align:center;color:#8b95a5}';
     document.head.appendChild(s);
   }
@@ -62,6 +65,7 @@
       '<label for="aibBank">Bank name</label><input id="aibBank" value="' + esc(u.bank || 'NordicCrypto Bank AB') + '" autocomplete="off">' +
       '<label for="aibRef">Payment reference</label><div class="ref"><input id="aibRef" class="m" maxlength="24" placeholder="' + esc(auto) + '" value="' + esc(ref) + '" autocomplete="off"><button type="button" data-a="auto" class="' + (isAuto ? 'on' : '') + '">Auto</button></div>' +
       '<div class="hint">The client must put this reference in their bank transfer so you can match the payment. Leave it empty (Auto) to use <b>' + esc(auto) + '</b>. 3–24 characters: letters, digits, space, - or /.</div>' +
+      '<div class="tgl' + (u.bankHidden ? ' on' : '') + '" id="aibTgl"><div><b>Hide bank details from the client</b><small>The client won’t see the IBAN card, and bank deposits &amp; withdrawals are turned off. Crypto is unaffected.</small></div><button type="button" class="sw' + (u.bankHidden ? ' on' : '') + '" data-a="togbank" role="switch" aria-checked="' + (u.bankHidden ? 'true' : 'false') + '"></button></div>' +
       '</div><div><div class="pv"><h4>What the client sees</h4>' +
       '<div class="r"><span>Beneficiary</span><b id="aibPn">' + esc(u.name || 'Client name') + '</b></div><div class="r"><span>IBAN</span><b class="m" id="aibPi">—</b></div><div class="r"><span>BIC / SWIFT</span><b class="m" id="aibPs">—</b></div><div class="r"><span>Bank</span><b id="aibPb">—</b></div>' +
       '<div class="rf"><small>Reference — add it to the transfer</small><b id="aibPr">—</b></div></div>' +
@@ -82,9 +86,22 @@
       var a = e.target.closest && e.target.closest('[data-a]'); if (!a) return; var k = a.getAttribute('data-a');
       if (k === 'x') return m.remove();
       if (k === 'auto') { $('aibRef').value = ''; sync(); return; }
+      if (k === 'togbank') return togBank(a);
       if (k === 'save') save(a);
     });
     function err(t) { var e = $('aibErr'); e.textContent = t; e.style.display = t ? 'block' : 'none'; }
+    function togBank(btn) {
+      var next = !btn.classList.contains('on'); btn.disabled = true;
+      post('setBankVisibility', { email: email, hidden: next }).then(function (d) {
+        btn.disabled = false;
+        if (d && d.ok) {
+          btn.classList.toggle('on', next); btn.setAttribute('aria-checked', next ? 'true' : 'false');
+          var tgl = $('aibTgl'); if (tgl) tgl.classList.toggle('on', next);
+          if (typeof window.toast === 'function') window.toast(next ? '✓ Bank details hidden from client' : '✓ Bank details visible to client');
+          if (typeof window.loadAdminUsers === 'function') try { window.loadAdminUsers(); } catch (x) { }
+        } else { err((d && d.error) || 'Could not change bank visibility'); }
+      });
+    }
     function save(btn) {
       var iban = $('aibIban').value.replace(/\s/g, '').toUpperCase(), ref = $('aibRef').value.trim().toUpperCase().replace(/\s+/g, ' ');
       if (iban.length < 15) return err('Enter a valid IBAN (at least 15 characters).');
