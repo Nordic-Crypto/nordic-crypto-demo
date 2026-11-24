@@ -297,8 +297,17 @@
     if (rng !== '1') getSeries('1').then(function () { renderKpis(compute()); });
   }
   function fmtT(ts, rng) { var d = new Date(ts); return rng === '1' ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }); }
+  /* a brand-new account has no cash and no holdings — show a clean prompt instead of a flat phantom line */
+  function emptyAccount() {
+    try {
+      var s = S(); if ((Number(s.usd) || 0) > 0.009) return false;
+      var ps = prices(); for (var i = 0; i < ps.length; i++) { if ((Number(s[String(ps[i].symbol).toLowerCase()]) || 0) > 0) return false; }
+      return true;
+    } catch (e) { return false; }
+  }
   function drawChart(r) {
     var box = $('dpChart'); if (!box) return;
+    if (emptyAccount()) { box.innerHTML = '<div class="dp-empty-chart"><span class="dp-ec-ic">' + ic('<path d="M3 17l6-6 4 4 7-7M15 8h5v5"/>', 24) + '</span><b>No portfolio history yet</b><em>Make your first deposit to start tracking your balance over time.</em></div>'; return; }
     if (!r || !r.pts || r.pts.length < 2) { box.innerHTML = '<div class="dp-empty-c">Chart unavailable right now</div>'; return; }
     var pts = r.pts, W = box.clientWidth || 640, H = box.clientHeight || 260, pl = 6, pr = 62, pt = 16, pb = 26;
     var mn = Infinity, mx = -Infinity; pts.forEach(function (p) { if (p.v < mn) mn = p.v; if (p.v > mx) mx = p.v; });
