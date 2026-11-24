@@ -64,6 +64,10 @@
 .dp-note { position: absolute; left: 8px; bottom: 28px; font-size: 11px; color: #e9b44c; }
 .dp-skel, .dp-empty-c { height: 100%; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.07), rgba(255,255,255,.03)); background-size: 200% 100%; animation: dpSk 1.4s linear infinite; display: grid; place-items: center; color: var(--dp-mut); font-size: 13px; }
 @keyframes dpSk { to { background-position: -200% 0; } }
+.dp-empty-chart { height: 100%; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 20px; border-radius: 16px; background: var(--dp-s1); border: 1px dashed var(--dp-bd2); }
+.dp-empty-chart .dp-ec-ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: rgba(36,214,142,.1); color: var(--dp-up); margin-bottom: 2px; }
+.dp-empty-chart b { font-size: 15px; font-weight: 800; color: var(--dp-tx); }
+.dp-empty-chart em { font-style: normal; font-size: 12.5px; color: var(--dp-mut); max-width: 300px; line-height: 1.5; }
 .dp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 .dp-kpi { display: flex; gap: 12px; align-items: center; padding: 14px; background: var(--dp-s1); border: 1px solid var(--dp-bd); border-radius: 16px; min-width: 0; }
 .dp-kico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--dp-s2); color: var(--dp-mut); flex: none; }
