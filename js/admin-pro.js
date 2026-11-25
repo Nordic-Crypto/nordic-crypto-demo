@@ -125,6 +125,16 @@
     var sub = u.geoIP ? '<small style="display:block;font:500 10.5px ui-monospace,monospace;opacity:.5;margin-top:3px">' + esc(u.geoIP) + (u.geoCity ? ' · ' + esc(u.geoCity) : '') + '</small>' : '';
     return ccPill(cc) + tag + sub;
   }
+  /* online status + last-seen for the client cell */
+  function seenHtml(u) {
+    var t = u.lastSeenAt; if (!t) return '';
+    var online = (Date.now() - t) < 3 * 60 * 1000;
+    var dt = new Date(t), clock = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    var label = online ? 'Online now' : ('Last seen ' + ago(t) + ' · ' + clock);
+    var col = online ? '#34d399' : '#8a96a8';
+    var dot = online ? ';box-shadow:0 0 0 3px rgba(52,211,153,.18)' : '';
+    return '<small style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:11px;font-weight:600;color:' + col + '" title="' + esc(dt.toLocaleString('en-GB')) + '"><span style="width:7px;height:7px;border-radius:50%;flex:none;background:' + col + dot + '"></span>' + esc(label) + '</small>';
+  }
   function kycPill(s) { return s === 'approved' ? '<span class="ap-pill ok">Verified</span>' : s === 'pending' ? '<span class="ap-pill warn">KYC pending</span>' : s === 'rejected' ? '<span class="ap-pill bad">Rejected</span>' : '<span class="ap-pill mute">Not started</span>'; }
   function typePill(t) { return t === 'banking' ? '<span class="ap-pill vio">Banking</span>' : t === 'exchange' ? '<span class="ap-pill cyan">Exchange</span>' : '<span class="ap-pill mute">—</span>'; }
   function walletCell(u) {
@@ -321,7 +331,7 @@
     box.className = '';
     ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('walletCount', 'Wallet', 'hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
-        return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
+        return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small>' + seenHtml(u) + '</div></div></td>' +
           '<td class="hide-m">' + countryCell(u) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b>' + (u.cryptoUsd > 0 ? '<small style="display:block;font-weight:500;opacity:.6;font-size:11px">cash ' + usd(u.__cash) + ' · crypto ' + usd(u.cryptoUsd) + '</small>' : '') + '</td>' +
           '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
           '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH' + (u.cryptoUsd > 0 ? '<br><span style="opacity:.75">≈ ' + usd(u.cryptoUsd) + '</span>' : '') + '</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m">' + walletCell(u) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
