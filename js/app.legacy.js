@@ -958,6 +958,9 @@ function playNotificationSound() {
 
 function addNotification(text, icon) {
   if (!st.notifications) st.notifications = [];
+  // de-dupe: skip an identical notification added in the last 5 minutes (prevents refresh/retry spam)
+  var dupe = st.notifications.filter(function (n) { return n && n.text === text && (Date.now() - (n.ts || 0)) < 5 * 60 * 1000; })[0];
+  if (dupe) { try { renderNotifications(); } catch (e) {} return; }
   st.notifications.unshift({
     id: Date.now() + Math.random(), text, icon: icon || '🔔',
     ts: Date.now(), read: false
