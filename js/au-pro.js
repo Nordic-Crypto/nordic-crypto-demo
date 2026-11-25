@@ -12,7 +12,7 @@
   function isAdmin() { return ls('user_role') === 'admin' && !window.adminViewingEmail; }
   function country() {
     var v = S().verification, c = v && v.personalInfo && v.personalInfo.country;
-    c = String(c || (S().user && S().user.country) || '').trim().toUpperCase();
+    c = String(c || (S().user && S().user.country) || (S().user && S().user.geoCountry) || '').trim().toUpperCase();
     return c === 'AUSTRALIA' ? 'AU' : c;
   }
   function isAU() { return country() === 'AU' || S().currency === 'AUD'; }
@@ -44,7 +44,8 @@
   /* ── 2. dashboard welcome card ── */
   var CSS = '.au-welcome-card{position:relative;overflow:hidden;margin:0 0 18px;padding:18px 20px;border-radius:22px;border:1px solid rgba(255,205,0,.28);background:linear-gradient(120deg,rgba(0,132,61,.20),rgba(255,205,0,.08) 60%,transparent),var(--card-solid,#12151d);color:var(--tx,#fff)}' +
     '.au-welcome-card .au-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}' +
-    '.au-welcome-card .au-flag{flex:none;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#00843d,#0a9d4f)}' +
+    '.au-welcome-card .au-flag{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;overflow:hidden;background:linear-gradient(135deg,#00843d,#0a9d4f)}' +
+    '.au-welcome-card .au-flag .au-flagimg{width:100%;height:100%;border-radius:0;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}' +
     '.au-welcome-card .au-tx{flex:1;min-width:200px}.au-welcome-card .au-tx b{display:block;font-size:1.02rem;letter-spacing:-.01em}.au-welcome-card .au-tx span{font-size:.82rem;opacity:.72}' +
     '.au-welcome-card .au-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}' +
     '.au-welcome-card button{font:inherit;cursor:pointer;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.8rem;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}' +
@@ -57,6 +58,7 @@
   function addCss() { if ($('auCss')) return; var s = document.createElement('style'); s.id = 'auCss'; s.textContent = CSS; document.head.appendChild(s); }
   function sydney() { try { return new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(new Date()); } catch (e) { return ''; } }
   function first() { var n = ls('user_name') || ''; if (!n || n === 'User') return ''; n = n.split(' ')[0]; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); }
+  function auFlag() { try { if (window.NCFlags && window.NCFlags.has('AU')) return window.NCFlags.html('AU', 'au-flagimg'); } catch (e) {} return '🇦🇺'; }
   /* where the welcome card is placed — the banking dashboard AND the exchanger, each with its own id */
   function hosts() {
     var out = [];
@@ -93,13 +95,13 @@
     var subAud = inAud ? 'Your balances and rates are shown in Australian dollars (A$).' : 'Prefer to see everything in Australian dollars?';
     if (crypto) {
       el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
-        '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! This is your crypto hub.</b>' +
+        '<div class="au-row"><div class="au-flag">' + auFlag() + '</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! This is your crypto hub.</b>' +
         '<span>Receive Bitcoin, Ethereum and USDT, and convert A$ ↔ crypto in a tap. ' + subAud + ' · Sydney ' + esc(sydney()) + '</span></div>' +
         '<div class="au-btns">' + aud + '<button data-a="how">How to receive crypto?</button></div></div>' +
         '<div class="au-how"><b>How to receive crypto into your account</b><ol><li>Tap <b>Deposit</b> and choose the coin (BTC, ETH or USDT).</li><li>Copy your wallet address or scan the QR code shown.</li><li>Send from your other exchange or wallet to that address — it lands here once the network confirms it.</li></ol><small>Always send the matching coin to the matching address, and keep in mind the sending network’s fee. Values are shown in A$ at the live rate.</small></div>';
     } else {
       el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
-        '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! Welcome to NordicCrypto.</b>' +
+        '<div class="au-row"><div class="au-flag">' + auFlag() + '</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! Welcome to NordicCrypto.</b>' +
         '<span>' + subAud + ' · Sydney ' + esc(sydney()) + '</span></div>' +
         '<div class="au-btns">' + aud + '<button data-a="how">Sending from an Australian bank?</button></div></div>' +
         '<div class="au-how"><b>How to add money from your Australian bank</b><ol><li>In your bank app choose <b>International transfer</b> (SWIFT).</li><li>Open <b>Deposit</b> on your dashboard and copy the IBAN, SWIFT/BIC and account holder name.</li><li>Send it and keep your transfer receipt. It helps our team if you ever need support.</li></ol><small>Your Australian bank may charge its own international transfer fee and convert A$ at its own rate.</small></div>';
