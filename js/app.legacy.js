@@ -3261,6 +3261,7 @@ function initEvents() {
 
   var btnCopyIban = document.getElementById('btnCopyIban');
   if (btnCopyIban) btnCopyIban.onclick = function () {
+    if (st.user && st.user.bankHidden) return;   // bank details disabled for this client — never expose the IBAN
     if (st.user && st.user.iban) { copyText(st.user.iban, 'IBAN copied'); }
     else { toast('IBAN is not ready yet', true); }
   };
@@ -3811,6 +3812,7 @@ async function startTicket() {
     var btnCopyExIban = document.getElementById('exCopyIban');
     if (btnCopyExIban) {
       btnCopyExIban.onclick = function () {
+        if (st.user && st.user.bankHidden) return;   // bank details disabled for this client
         if (st.user && st.user.iban) {
           navigator.clipboard.writeText(st.user.iban).then(function () { toast('IBAN copied'); });
         } else { toast('IBAN not ready yet', true); }
