@@ -52,6 +52,15 @@
   function byId(id) { for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i]; return SKINS[0]; }
 
   function regionSkin() {
+    // 1) the country the server detected from the client's IP (most reliable)
+    try {
+      var gc = (window.st && window.st.user && window.st.user.geoCountry) || '';
+      gc = String(gc).toUpperCase().slice(0, 2);
+      if (gc === 'AU') return 'reef';
+      if (gc === 'CA') return 'borealis';
+      if (gc) return 'aurora';   // any other known country (incl. Europe) → the default Nordic look
+    } catch (e) {}
+    // 2) fallback: browser timezone / locale
     try {
       var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
       var l = (navigator.language || '').toLowerCase();
@@ -67,21 +76,21 @@
   function injectCss() {
     if (document.getElementById('ncSkinCss')) return;
     var rows = [
-      '#ncSkinFab{position:fixed;left:16px;bottom:16px;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:44px;height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.12);cursor:pointer;z-index:90000;display:grid;place-items:center;color:#eaf3ef;background:linear-gradient(140deg,#13201d,#0d1518);box-shadow:0 10px 26px rgba(0,0,0,.4);transition:transform .15s}',
+      // Uses the app's own design tokens (--glass/--pan2/--bd/--txt/--mut/--pri) so it matches the live theme automatically.
+      '#ncSkinBtn.nc-skin-top svg{width:20px;height:20px}',
+      '#ncSkinFab{position:fixed;right:18px;bottom:92px;right:max(18px,env(safe-area-inset-right));width:44px;height:44px;border-radius:14px;border:1px solid var(--bd,rgba(255,255,255,.12));cursor:pointer;z-index:90000;display:grid;place-items:center;color:var(--txt,#eaf3ef);background:var(--pan2,#151822);box-shadow:var(--nc-shadow,0 10px 26px rgba(0,0,0,.4));transition:transform .15s}',
       '#ncSkinFab:hover{transform:translateY(-2px)}#ncSkinFab svg{width:21px;height:21px}',
-      'html[data-theme="light"] #ncSkinFab{background:#fff;border-color:rgba(15,23,42,.1);color:#0c2a22;box-shadow:0 10px 26px rgba(43,181,142,.16)}',
-      '#ncSkinPop{position:fixed;left:16px;bottom:70px;left:max(16px,env(safe-area-inset-left));z-index:90001;width:270px;max-width:calc(100vw - 32px);border-radius:18px;padding:14px;color:#eef5f2;background:linear-gradient(150deg,#0f1a18,#0b1316);border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 60px rgba(0,0,0,.5);transform-origin:bottom left;animation:ncSkinIn .16s ease}',
-      '@keyframes ncSkinIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}',
-      'html[data-theme="light"] #ncSkinPop{background:linear-gradient(150deg,#fff,#f4f7f5);border-color:rgba(15,23,42,.08);color:#0c2a22;box-shadow:0 24px 60px rgba(43,181,142,.16)}',
-      '#ncSkinPop h4{margin:0;font-size:14.5px;font-weight:740}#ncSkinPop p{margin:2px 0 11px;font-size:11.5px;color:#90a49c}html[data-theme="light"] #ncSkinPop p{color:#5a736a}',
+      '#ncSkinPop{position:fixed;z-index:90001;width:270px;max-width:calc(100vw - 32px);border-radius:18px;padding:14px;color:var(--txt,#eef5f2);background:var(--glass,rgba(14,16,22,.92));-webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%);border:1px solid var(--bd,rgba(255,255,255,.09));box-shadow:var(--nc-shadow,0 24px 60px rgba(0,0,0,.5));animation:ncSkinIn .16s ease}',
+      '@keyframes ncSkinIn{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}',
+      '#ncSkinPop h4{margin:0;font-size:14.5px;font-weight:740}#ncSkinPop p{margin:2px 0 11px;font-size:11.5px;color:var(--mut,#90a49c)}',
       '#ncSkinGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}',
       '#ncSkinPop .sk{position:relative;cursor:pointer;border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px}',
       '#ncSkinPop .sk i{display:block;width:100%;aspect-ratio:1;border-radius:12px;border:2px solid transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}',
-      '#ncSkinPop .sk.on i{border-color:#8ff0d6;box-shadow:0 0 0 2px rgba(143,240,214,.3),inset 0 1px 0 rgba(255,255,255,.3)}',
-      '#ncSkinPop .sk span{font-size:9.5px;font-weight:650;color:#aebcb6;line-height:1}html[data-theme="light"] #ncSkinPop .sk span{color:#5a736a}',
+      '#ncSkinPop .sk.on i{border-color:var(--pri,#62e8c2);box-shadow:0 0 0 2px var(--lime-soft,rgba(98,232,194,.3)),inset 0 1px 0 rgba(255,255,255,.3)}',
+      '#ncSkinPop .sk span{font-size:9.5px;font-weight:650;color:var(--mut,#aebcb6);line-height:1}',
       '#ncSkinPop .sk b{position:absolute;top:-4px;right:-2px;font-size:10px}',
-      '#ncSkinPop .sk-auto{margin-top:12px;width:100%;border:1px solid rgba(255,255,255,.12);background:transparent;color:#cdd8d3;font:inherit;font-weight:650;font-size:12px;padding:9px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}',
-      '#ncSkinPop .sk-auto.on{border-color:#8ff0d6;color:#8ff0d6}html[data-theme="light"] #ncSkinPop .sk-auto{border-color:rgba(15,23,42,.14);color:#2a4038}',
+      '#ncSkinPop .sk-auto{margin-top:12px;width:100%;border:1px solid var(--bd,rgba(255,255,255,.12));background:transparent;color:var(--mut,#cdd8d3);font:inherit;font-weight:650;font-size:12px;padding:9px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}',
+      '#ncSkinPop .sk-auto.on{border-color:var(--pri,#62e8c2);color:var(--pri,#62e8c2)}',
       '#ncSkinPop .sk-auto svg{width:14px;height:14px}'
     ];
     // one background rule per skin, for dark and light
@@ -102,6 +111,18 @@
   var PALETTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.1 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="11" r="1.1" fill="currentColor" stroke="none"/></svg>';
   var AUTOIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="3.5"/></svg>';
 
+  function positionPop(pop) {
+    var trig = document.getElementById('ncSkinBtn') || document.getElementById('ncSkinFab');
+    if (!trig) { pop.style.right = '16px'; pop.style.top = '64px'; return; }
+    var r = trig.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight, pw = 270;
+    var right = Math.max(10, vw - r.right);
+    if (right + pw > vw - 10) right = Math.max(10, vw - 10 - pw);
+    pop.style.right = right + 'px';
+    // below the trigger if it sits in the top half, otherwise above it (floating fallback)
+    if (r.top < vh / 2) { pop.style.top = (r.bottom + 8) + 'px'; pop.style.bottom = 'auto'; pop.style.transformOrigin = 'top right'; }
+    else { pop.style.bottom = (vh - r.top + 8) + 'px'; pop.style.top = 'auto'; pop.style.transformOrigin = 'bottom right'; }
+  }
+
   function buildPop() {
     var pop = document.getElementById('ncSkinPop');
     if (pop) { pop.parentNode.removeChild(pop); return null; }
@@ -115,6 +136,7 @@
       '<div id="ncSkinGrid">' + grid + '</div>' +
       '<button type="button" class="sk-auto' + (auto ? ' on' : '') + '" data-skin="__auto">' + AUTOIC + esc(T('auto')) + '</button>';
     document.body.appendChild(pop);
+    positionPop(pop);
     return pop;
   }
 
@@ -127,21 +149,59 @@
   }
 
   function mountFab() {
-    if (document.getElementById('ncSkinFab')) return;
-    var b = document.createElement('button'); b.id = 'ncSkinFab'; b.type = 'button'; b.setAttribute('aria-label', T('title')); b.innerHTML = PALETTE;
+    if (document.getElementById('ncSkinBtn') || document.getElementById('ncSkinFab')) return;
+    var host = document.getElementById('settingsBtn');
+    var b;
+    if (host && host.parentNode) {
+      // dock into the top bar, right before the settings gear, matching the other icon buttons
+      b = document.createElement('button'); b.id = 'ncSkinBtn'; b.type = 'button';
+      b.className = (host.className || 'top-icon') + ' nc-skin-top';
+      b.setAttribute('title', T('title')); b.setAttribute('aria-label', T('title')); b.innerHTML = PALETTE;
+      host.parentNode.insertBefore(b, host);
+    } else {
+      // fallback: floating button (bottom-right, above the chat bubble)
+      b = document.createElement('button'); b.id = 'ncSkinFab'; b.type = 'button'; b.setAttribute('aria-label', T('title')); b.innerHTML = PALETTE;
+      document.body.appendChild(b);
+    }
     b.addEventListener('click', function (e) { e.stopPropagation(); buildPop(); });
-    document.body.appendChild(b);
     document.addEventListener('click', function (e) {
       var pop = document.getElementById('ncSkinPop'); if (!pop) return;
       var hit = e.target.closest && e.target.closest('[data-skin]');
       if (hit) { onPick(hit.getAttribute('data-skin')); return; }
-      if (!pop.contains(e.target) && e.target.id !== 'ncSkinFab' && !(e.target.closest && e.target.closest('#ncSkinFab'))) pop.parentNode.removeChild(pop);
+      var trig = e.target.closest && e.target.closest('#ncSkinBtn,#ncSkinFab');
+      if (!pop.contains(e.target) && !trig) pop.parentNode.removeChild(pop);
     });
-    window.addEventListener('nc-lang', function () { var b2 = document.getElementById('ncSkinFab'); if (b2) b2.setAttribute('aria-label', T('title')); var p = document.getElementById('ncSkinPop'); if (p) { p.parentNode.removeChild(p); } });
+    window.addEventListener('resize', function () { var p = document.getElementById('ncSkinPop'); if (p) positionPop(p); });
+    window.addEventListener('nc-lang', function () { var b2 = document.getElementById('ncSkinBtn') || document.getElementById('ncSkinFab'); if (b2) b2.setAttribute('aria-label', T('title')); var p = document.getElementById('ncSkinPop'); if (p) p.parentNode.removeChild(p); });
   }
 
-  function boot() { injectCss(); apply(current()); mountFab(); }
+  function boot() {
+    injectCss(); apply(current()); mountFab();
+    // if the top bar mounts a moment later (SPA), make sure the button lands there
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      if (!document.getElementById('ncSkinBtn') && document.getElementById('settingsBtn')) {
+        var f = document.getElementById('ncSkinFab'); if (f && f.parentNode) f.parentNode.removeChild(f);
+        mountFab();
+      }
+      if (document.getElementById('ncSkinBtn') || tries > 12) clearInterval(iv);
+    }, 600);
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+
+  /* In auto mode the IP country arrives after boot (state loads async), so re-apply the region skin
+     once it's known. A manual pick (nc_skin_auto=0) is never overridden. */
+  var _lastAuto = '';
+  function autoReapply() {
+    try {
+      if (!isAuto()) return;
+      var want = regionSkin();
+      if (want && want !== _lastAuto) { _lastAuto = want; apply(want); }
+    } catch (e) {}
+  }
+  window.addEventListener('nc:state', autoReapply);
+  setInterval(autoReapply, 2500);
 
   window.NCThemes = { apply: function (id) { onPick(id); }, list: function () { return SKINS.map(function (s) { return { id: s.id, name: s.name }; }); }, current: current };
 })();
