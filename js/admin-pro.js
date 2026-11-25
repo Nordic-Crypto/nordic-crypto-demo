@@ -109,8 +109,16 @@
     if (!CRev) { CRev = {}; for (var a = 65; a < 91; a++) for (var b = 65; b < 91; b++) { var c = String.fromCharCode(a, b), n = cName(c); if (n && n !== c) CRev[n.toLowerCase()] = c; } CRev['usa'] = 'US'; CRev['united kingdom'] = 'GB'; CRev['uk'] = 'GB'; }
     return CRev[raw.toLowerCase()] || '';
   }
-  function ccOf(u) { return cCode(u.country) || 'ZZ'; }
+  function ccOf(u) { return cCode(u.country) || (u.geoCountry ? String(u.geoCountry).toUpperCase().slice(0, 2) : '') || 'ZZ'; }
   function ccPill(cc) { return cc === 'ZZ' ? '<span class="ap-mute">Unknown</span>' : '<span style="display:inline-flex;align-items:center;gap:7px"><span style="font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);letter-spacing:.04em">' + cc + '</span>' + esc(cName(cc)) + '</span>'; }
+  /* country cell: KYC country if known, otherwise the IP country, plus the client's IP + city underneath */
+  function countryCell(u) {
+    var cc = ccOf(u);
+    var fromIp = !cCode(u.country) && u.geoCountry;
+    var tag = fromIp ? ' <span title="Detected from IP" style="font:700 8.5px ui-monospace,monospace;opacity:.5;border:1px solid rgba(255,255,255,.18);border-radius:4px;padding:1px 3px;vertical-align:middle">IP</span>' : '';
+    var sub = u.geoIP ? '<small style="display:block;font:500 10.5px ui-monospace,monospace;opacity:.5;margin-top:3px">' + esc(u.geoIP) + (u.geoCity ? ' · ' + esc(u.geoCity) : '') + '</small>' : '';
+    return ccPill(cc) + tag + sub;
+  }
   function kycPill(s) { return s === 'approved' ? '<span class="ap-pill ok">Verified</span>' : s === 'pending' ? '<span class="ap-pill warn">KYC pending</span>' : s === 'rejected' ? '<span class="ap-pill bad">Rejected</span>' : '<span class="ap-pill mute">Not started</span>'; }
   function typePill(t) { return t === 'banking' ? '<span class="ap-pill vio">Banking</span>' : t === 'exchange' ? '<span class="ap-pill cyan">Exchange</span>' : '<span class="ap-pill mute">—</span>'; }
   function walletCell(u) {
@@ -308,7 +316,7 @@
     ncSet(box).innerHTML = '<div class="ap-card"><div class="ap-tw"><table class="ap-t"><thead><tr>' + th('name', 'Client') + th('country', 'Country', 'hide-m') + th('accountType', 'Account', 'hide-m') + th('kyc', 'KYC', 'hide-m') + th('balance', 'Balance', 'num') + th('realDeposits', 'Real deposits', 'num hide-m') + th('adminCredits', 'Admin credits', 'num hide-m') + th('btc', 'Crypto', 'num hide-m') + th('txCount', 'Tx', 'num hide-m') + th('walletCount', 'Wallet', 'hide-m') + th('createdAt', 'Joined', 'hide-m') + '<th></th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (u) {
         return '<tr class="row" data-open="' + esc(u.email) + '"><td><div class="who">' + av(u.name, u.email) + '<div><b>' + esc(u.name || '—') + (u.unreadChat ? '<span class="ap-unread" title="Unread messages">' + u.unreadChat + '</span>' : '') + '</b><small>' + esc(u.email) + '</small></div></div></td>' +
-          '<td class="hide-m">' + ccPill(ccOf(u)) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b>' + (u.cryptoUsd > 0 ? '<small style="display:block;font-weight:500;opacity:.6;font-size:11px">cash ' + usd(u.__cash) + ' · crypto ' + usd(u.cryptoUsd) + '</small>' : '') + '</td>' +
+          '<td class="hide-m">' + countryCell(u) + '</td><td class="hide-m">' + typePill(u.accountType) + '</td><td class="hide-m">' + kycPill(kyc(u)) + '</td><td class="num"><b>' + usd(u.balance) + '</b>' + (u.cryptoUsd > 0 ? '<small style="display:block;font-weight:500;opacity:.6;font-size:11px">cash ' + usd(u.__cash) + ' · crypto ' + usd(u.cryptoUsd) + '</small>' : '') + '</td>' +
           '<td class="num hide-m" style="color:#34d399">' + usd(u.realDeposits) + '</td><td class="num hide-m" style="color:#fbbf24">' + (u.adminCredits ? usd(u.adminCredits) : '<span class="ap-mute">—</span>') + '</td>' +
           '<td class="num hide-m ap-mute">' + crypto(u.btc) + ' BTC<br>' + crypto(u.eth) + ' ETH' + (u.cryptoUsd > 0 ? '<br><span style="opacity:.75">≈ ' + usd(u.cryptoUsd) + '</span>' : '') + '</td><td class="num hide-m">' + num(u.txCount) + '</td><td class="hide-m">' + walletCell(u) + '</td><td class="hide-m ap-mute">' + ago(u.createdAt) + '</td>' +
           '<td><div class="acts"><button class="ap-btn sm ic" data-act="add" data-e="' + esc(u.email) + '" title="Add balance">' + ic('wallet') + '</button><button class="ap-btn sm ic" data-act="view" data-e="' + esc(u.email) + '" title="View as client">' + ic('eye') + '</button><button class="ap-btn sm" data-open="' + esc(u.email) + '">Open</button></div></td></tr>';
