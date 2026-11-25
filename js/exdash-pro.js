@@ -257,6 +257,7 @@
   /* ---------- render: hero / balance / KPIs ---------- */
   function greet() {
     var h = new Date().getHours(), g = (h >= 5 && h < 12) ? 'Good morning' : (h >= 12 && h < 18) ? 'Good afternoon' : (h >= 18 && h < 23) ? 'Good evening' : 'Good night';
+    try { var s = S(); var c = s.verification && s.verification.personalInfo && s.verification.personalInfo.country; if (String(c || '').toUpperCase() === 'AUSTRALIA' || s.currency === 'AUD') g = "G’day"; } catch (e) {}   // Australian clients
     var n = lsGet('user_name') || ''; if (n && n !== 'User') { n = n.split(' ')[0]; n = n.charAt(0).toUpperCase() + n.slice(1); } else n = '';
     return g + (n ? ', <span class="dp-grad">' + esc(n) + '</span>' : '');
   }
