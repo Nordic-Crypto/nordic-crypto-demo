@@ -78,6 +78,7 @@
     var ha = bal('USD') > 0; Z.from = ha ? 'USD' : (bal('BTC') > 0 ? 'BTC' : (ASSETS.filter(function (a) { return bal(a) > 0; })[0] || 'USD')); Z.to = Z.from === 'BTC' ? 'USD' : (Z.from === 'USD' ? 'BTC' : 'USD');
     root = document.createElement('div'); root.className = 'sw-ov'; root.id = 'swOv';
     root.addEventListener('mousedown', function (e) { if (e.target === root) close(); });
+    root.addEventListener('click', onSwClick);   // scoped to the modal: no other script can intercept these taps
     document.body.appendChild(root); document.body.style.overflow = 'hidden'; draw(true);
     loadPrices().then(function () { if (root) update(); });
     pTimer = setInterval(function () { loadPrices().then(function () { if (root) update(); }); }, 15000); tick = setInterval(function () { if (root) liveBadge(); }, 1000);
@@ -141,7 +142,7 @@
   }
 
   /* ───── actions ───── */
-  document.addEventListener('click', function (e) {
+  function onSwClick(e) {
     var t = e.target; if (!root || !root.contains(t)) return;
     var b = t.closest('[data-sw],[data-p],[data-pick]'); if (!b) return;
     if (b.hasAttribute('data-pick')) { var a = b.getAttribute('data-pick'); if (Z.picking === 'from') { if (a === Z.to) Z.to = Z.from; Z.from = a; } else { if (a === Z.from) Z.from = Z.to; Z.to = a; } Z.picking = null; Z.filt = ''; Z.amt = ''; draw(); return; }
@@ -152,7 +153,7 @@
     else if (k === 'pickFrom' || k === 'pickTo') { Z.picking = k === 'pickFrom' ? 'from' : 'to'; Z.filt = ''; pickDraw(); }
     else if (k === 'pickClose') { Z.picking = null; draw(); }
     else if (k === 'go') go(); else if (k === 'again') { Z.amt = ''; draw(true); } else if (k === 'done') close();
-  });
+  }
 
   function setErr(m) { var e = $('swErr'); if (e) e.textContent = m || ''; }
   function go(retry) {
