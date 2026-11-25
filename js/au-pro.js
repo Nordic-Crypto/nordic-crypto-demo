@@ -42,48 +42,60 @@
   }
 
   /* ── 2. dashboard welcome card ── */
-  var CSS = '#auWelcome{position:relative;overflow:hidden;margin:0 0 18px;padding:18px 20px;border-radius:22px;border:1px solid rgba(255,205,0,.28);background:linear-gradient(120deg,rgba(0,132,61,.20),rgba(255,205,0,.08) 60%,transparent),var(--card-solid,#12151d);color:var(--tx,#fff)}' +
-    '#auWelcome .au-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}' +
-    '#auWelcome .au-flag{flex:none;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#00843d,#0a9d4f)}' +
-    '#auWelcome .au-tx{flex:1;min-width:200px}#auWelcome .au-tx b{display:block;font-size:1.02rem;letter-spacing:-.01em}#auWelcome .au-tx span{font-size:.82rem;opacity:.72}' +
-    '#auWelcome .au-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}' +
-    '#auWelcome button{font:inherit;cursor:pointer;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.8rem;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}' +
-    '#auWelcome button.au-go{background:#ffcd00;border-color:#ffcd00;color:#1a1400}' +
-    '#auWelcome .au-x{position:absolute;right:10px;top:8px;border:0!important;background:none!important;opacity:.55;font-size:1rem!important;padding:4px 8px!important}' +
-    '#auWelcome .au-how{display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:.84rem;line-height:1.6}#auWelcome.open .au-how{display:block}' +
-    '#auWelcome .au-how ol{margin:6px 0 8px 18px}#auWelcome .au-how small{opacity:.65}' +
-    'html[data-theme="light"] #auWelcome{color:#0b0d14;background:linear-gradient(120deg,rgba(0,132,61,.13),rgba(255,205,0,.14) 60%,transparent),#fff}html[data-theme="light"] #auWelcome button{border-color:rgba(10,12,20,.18);background:rgba(10,12,20,.05)}' +
-    '@media(max-width:600px){#auWelcome{padding:16px 14px;border-radius:18px}#auWelcome .au-btns{width:100%}}';
+  var CSS = '.au-welcome-card{position:relative;overflow:hidden;margin:0 0 18px;padding:18px 20px;border-radius:22px;border:1px solid rgba(255,205,0,.28);background:linear-gradient(120deg,rgba(0,132,61,.20),rgba(255,205,0,.08) 60%,transparent),var(--card-solid,#12151d);color:var(--tx,#fff)}' +
+    '.au-welcome-card .au-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}' +
+    '.au-welcome-card .au-flag{flex:none;width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#00843d,#0a9d4f)}' +
+    '.au-welcome-card .au-tx{flex:1;min-width:200px}.au-welcome-card .au-tx b{display:block;font-size:1.02rem;letter-spacing:-.01em}.au-welcome-card .au-tx span{font-size:.82rem;opacity:.72}' +
+    '.au-welcome-card .au-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}' +
+    '.au-welcome-card button{font:inherit;cursor:pointer;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.8rem;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:inherit}' +
+    '.au-welcome-card button.au-go{background:#ffcd00;border-color:#ffcd00;color:#1a1400}' +
+    '.au-welcome-card .au-x{position:absolute;right:10px;top:8px;border:0!important;background:none!important;opacity:.55;font-size:1rem!important;padding:4px 8px!important}' +
+    '.au-welcome-card .au-how{display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:.84rem;line-height:1.6}.au-welcome-card.open .au-how{display:block}' +
+    '.au-welcome-card .au-how ol{margin:6px 0 8px 18px}.au-welcome-card .au-how small{opacity:.65}' +
+    'html[data-theme="light"] .au-welcome-card{color:#0b0d14;background:linear-gradient(120deg,rgba(0,132,61,.13),rgba(255,205,0,.14) 60%,transparent),#fff}html[data-theme="light"] .au-welcome-card button{border-color:rgba(10,12,20,.18);background:rgba(10,12,20,.05)}' +
+    '@media(max-width:600px){.au-welcome-card{padding:16px 14px;border-radius:18px}.au-welcome-card .au-btns{width:100%}}';
   function addCss() { if ($('auCss')) return; var s = document.createElement('style'); s.id = 'auCss'; s.textContent = CSS; document.head.appendChild(s); }
   function sydney() { try { return new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(new Date()); } catch (e) { return ''; } }
   function first() { var n = ls('user_name') || ''; if (!n || n === 'User') return ''; n = n.split(' ')[0]; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); }
+  /* where the welcome card is placed — the banking dashboard AND the exchanger, each with its own id */
+  function hosts() {
+    var out = [];
+    var d = $('dash'); if (d) out.push({ host: d, id: 'auWelcome', before: d.querySelector('#bd') || d.querySelector('.nc3-dashboard') || d.firstChild });
+    var ex = document.querySelector('#exchangeDash .dp') || $('exchangeDash'); if (ex) out.push({ host: ex, id: 'auWelcomeEx', before: ex.firstChild });
+    return out;
+  }
+  function wire(el, key) {
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.a === 'x') { ls(key, 'x'); ['auWelcome', 'auWelcomeEx'].forEach(function (id) { var c = $(id); if (c) c.remove(); }); }
+      else if (b.dataset.a === 'how') el.classList.toggle('open');
+      else if (b.dataset.a === 'aud') { var o = document.querySelector('#currMenu .curr-opt[data-cur="AUD"]'); if (o) o.click(); setTimeout(render, 200); }
+    });
+  }
   function card() {
-    var dash = $('dash'); if (!dash || isAdmin() || !isAU()) return;
+    if (isAdmin() || !isAU()) return;
     var key = 'nc_au_welcome_' + email(); if (ls(key) === 'x') return;
-    var inAud = S().currency === 'AUD', el = $('auWelcome');
-    if (!el) {
-      addCss(); el = document.createElement('div'); el.id = 'auWelcome';
-      var host = dash.querySelector('#bd') || dash.querySelector('.nc3-dashboard') || dash.firstChild; dash.insertBefore(el, host);
-      el.addEventListener('click', function (e) {
-        var b = e.target.closest('button'); if (!b) return;
-        if (b.dataset.a === 'x') { ls(key, 'x'); el.remove(); }
-        else if (b.dataset.a === 'how') el.classList.toggle('open');
-        else if (b.dataset.a === 'aud') { var o = document.querySelector('#currMenu .curr-opt[data-cur="AUD"]'); if (o) o.click(); setTimeout(render, 200); }
-      });
-    }
+    hosts().forEach(function (h) {
+      if (!h.host || $(h.id)) return;
+      addCss(); var el = document.createElement('div'); el.id = h.id; el.className = 'au-welcome-card nc-no-i18n'; el.setAttribute('data-nci18n', 'off');
+      h.host.insertBefore(el, h.before || h.host.firstChild);
+      wire(el, key);
+    });
     render();
   }
   function render() {
-    var el = $('auWelcome'); if (!el) return; var inAud = S().currency === 'AUD', open = el.classList.contains('open');
+    ['auWelcome', 'auWelcomeEx'].forEach(function (id) {
+    var el = $(id); if (!el) return; var inAud = S().currency === 'AUD', open = el.classList.contains('open');
     var sig = (inAud ? 1 : 0) + '|' + first() + '|' + sydney();
     if (el.dataset.sig === sig) return; el.dataset.sig = sig;
     el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
       '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! Welcome to NordicCrypto.</b>' +
       '<span>' + (inAud ? 'Your balances and rates are shown in Australian dollars (A$).' : 'Prefer to see everything in Australian dollars?') + ' · Sydney ' + esc(sydney()) + '</span></div>' +
       '<div class="au-btns">' + (inAud ? '' : '<button class="au-go" data-a="aud">Show in A$</button>') + '<button data-a="how">Sending from an Australian bank?</button></div></div>' +
-      '<div class="au-how"><b>How to add money from your Australian bank</b><ol><li>In your bank app choose <b>International transfer</b> (SWIFT).</li><li>Open <b>Details</b> on your dashboard and copy the IBAN, SWIFT/BIC and account holder name.</li><li>Send it and keep your transfer receipt. It helps our team if you ever need support.</li></ol><small>Your Australian bank may charge its own international transfer fee and convert A$ at its own rate.</small></div>';
+      '<div class="au-how"><b>How to add money from your Australian bank</b><ol><li>In your bank app choose <b>International transfer</b> (SWIFT).</li><li>Open <b>Deposit</b> on your dashboard and copy the IBAN, SWIFT/BIC and account holder name.</li><li>Send it and keep your transfer receipt. It helps our team if you ever need support.</li></ol><small>Your Australian bank may charge its own international transfer fee and convert A$ at its own rate.</small></div>';
     if (open) el.classList.add('open');
+    });
   }
-  function tick() { try { bind(); card(); if ($('auWelcome')) render(); } catch (e) {} }
+  function tick() { try { bind(); card(); render(); } catch (e) {} }
   setInterval(tick, 5000); setTimeout(tick, 1200);
 })();
