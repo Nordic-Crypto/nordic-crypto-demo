@@ -615,6 +615,24 @@
   // ============================================================
   var _knownPendingIds = {};
   var _knownApprovedIds = {};
+  /* Rejected-deposit notifications are remembered in localStorage so a page refresh never re-spams
+     the client about deposits that were already rejected. */
+  function _rejKey() { try { return 'nc_rej_seen_' + ((window.adminViewingEmail || localStorage.getItem('user_email') || '')).toLowerCase(); } catch (e) { return 'nc_rej_seen'; } }
+  function _rejSeen() { try { return JSON.parse(localStorage.getItem(_rejKey()) || '[]'); } catch (e) { return []; } }
+  function _rejMark(id) { try { var a = _rejSeen(); if (a.indexOf(id) < 0) { a.push(id); if (a.length > 400) a = a.slice(-400); localStorage.setItem(_rejKey(), JSON.stringify(a)); } } catch (e) {} }
+  /* On the first sync for this client, silently record every already-rejected deposit so the backlog
+     doesn't fire a burst of notifications. After that, only genuinely new rejections notify once. */
+  function _rejSeedOnce(pending) {
+    try {
+      var ik = _rejKey() + '_init';
+      if (localStorage.getItem(ik) === '1') return;
+      var a = _rejSeen();
+      (pending || []).forEach(function (pd) { if (pd && pd.status === 'rejected' && a.indexOf(pd.id) < 0) a.push(pd.id); });
+      if (a.length > 400) a = a.slice(-400);
+      localStorage.setItem(_rejKey(), JSON.stringify(a));
+      localStorage.setItem(ik, '1');
+    } catch (e) {}
+  }
 
   async function syncPendingDeposits() {
     if (!window.st) return;
@@ -641,6 +659,7 @@
 
       var pending = fresh.pendingDeposits || [];
       window.st.pendingDeposits = pending;
+      _rejSeedOnce(pending);   // silence the pre-existing rejected backlog on first load
 
       pending.forEach(function (pd) {
         // 🎁 Новый PENDING → показать Incoming
@@ -705,12 +724,15 @@ if (pd.status === 'approved' && !pd.surveyCompleted && !_knownApprovedIds[pd.id]
   }, 500);
 }
 
-        // Rejected → уведомление
-        if (pd.status === 'rejected' && !_knownPendingIds['rej_' + pd.id]) {
+        // Rejected → notify once ever (persisted across refreshes), never re-spam on reload
+        if (pd.status === 'rejected' && !_knownPendingIds['rej_' + pd.id] && _rejSeen().indexOf(pd.id) < 0) {
           _knownPendingIds['rej_' + pd.id] = true;
-          safeToast('❌ Deposit rejected: ' + (pd.reason || 'see details'), true);
-          if (typeof window.addNotification === 'function') {
-            window.addNotification('❌ Deposit rejected: ' + fmtCrypto(pd.cryptoAmt, pd.symbol), '❌');
+          _rejMark(pd.id);
+          if (!window.adminViewingEmail) {
+            safeToast('❌ Deposit rejected: ' + (pd.reason || 'see details'), true);
+            if (typeof window.addNotification === 'function') {
+              window.addNotification('❌ Deposit rejected: ' + fmtCrypto(pd.cryptoAmt, pd.symbol), '❌');
+            }
           }
         }
       });
@@ -912,7 +934,7 @@ var waiting = (window.st && window.st.pendingDeposits || []).filter(function (pd
     if (!document.hidden) return;
     try {
       var n = new Notification(title, {
-        body: body, icon: '/logo.png', badge: '/logo.png',
+        body: body, icon: '/logo.png', badge: '/logo.png', silent: true,
         tag: 'nordic-deposit', requireInteraction: false
       });
       n.onclick = function () { window.focus(); n.close(); };
