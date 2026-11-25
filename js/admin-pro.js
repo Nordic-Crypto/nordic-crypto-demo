@@ -110,7 +110,13 @@
     return CRev[raw.toLowerCase()] || '';
   }
   function ccOf(u) { return cCode(u.country) || (u.geoCountry ? String(u.geoCountry).toUpperCase().slice(0, 2) : '') || 'ZZ'; }
-  function ccPill(cc) { return cc === 'ZZ' ? '<span class="ap-mute">Unknown</span>' : '<span style="display:inline-flex;align-items:center;gap:7px"><span style="font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);letter-spacing:.04em">' + cc + '</span>' + esc(cName(cc)) + '</span>'; }
+  function ccPill(cc) {
+    if (cc === 'ZZ') return '<span class="ap-mute">Unknown</span>';
+    var mark = (window.NCFlags && window.NCFlags.has(cc))
+      ? '<span class="ncflag" role="img" aria-label="' + cc + '" style="width:21px;height:14px;display:inline-block;border-radius:3px;background-size:100% 100%;box-shadow:0 0 0 1px rgba(128,128,128,.35);background-image:url(\'' + window.NCFlags.uri(cc) + '\')"></span>'
+      : '<span style="font:700 10px ui-monospace,monospace;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);letter-spacing:.04em">' + cc + '</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:8px">' + mark + esc(cName(cc)) + '</span>';
+  }
   /* country cell: KYC country if known, otherwise the IP country, plus the client's IP + city underneath */
   function countryCell(u) {
     var cc = ccOf(u);
