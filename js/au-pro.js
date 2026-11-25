@@ -86,13 +86,24 @@
   function render() {
     ['auWelcome', 'auWelcomeEx'].forEach(function (id) {
     var el = $(id); if (!el) return; var inAud = S().currency === 'AUD', open = el.classList.contains('open');
-    var sig = (inAud ? 1 : 0) + '|' + first() + '|' + sydney();
+    var crypto = (id === 'auWelcomeEx');   // the exchanger card speaks crypto; the banking card speaks SWIFT
+    var sig = (crypto ? 'c' : 'b') + (inAud ? 1 : 0) + '|' + first() + '|' + sydney();
     if (el.dataset.sig === sig) return; el.dataset.sig = sig;
-    el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
-      '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! Welcome to NordicCrypto.</b>' +
-      '<span>' + (inAud ? 'Your balances and rates are shown in Australian dollars (A$).' : 'Prefer to see everything in Australian dollars?') + ' · Sydney ' + esc(sydney()) + '</span></div>' +
-      '<div class="au-btns">' + (inAud ? '' : '<button class="au-go" data-a="aud">Show in A$</button>') + '<button data-a="how">Sending from an Australian bank?</button></div></div>' +
-      '<div class="au-how"><b>How to add money from your Australian bank</b><ol><li>In your bank app choose <b>International transfer</b> (SWIFT).</li><li>Open <b>Deposit</b> on your dashboard and copy the IBAN, SWIFT/BIC and account holder name.</li><li>Send it and keep your transfer receipt. It helps our team if you ever need support.</li></ol><small>Your Australian bank may charge its own international transfer fee and convert A$ at its own rate.</small></div>';
+    var aud = inAud ? '' : '<button class="au-go" data-a="aud">Show in A$</button>';
+    var subAud = inAud ? 'Your balances and rates are shown in Australian dollars (A$).' : 'Prefer to see everything in Australian dollars?';
+    if (crypto) {
+      el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
+        '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! This is your crypto hub.</b>' +
+        '<span>Receive Bitcoin, Ethereum and USDT, and convert A$ ↔ crypto in a tap. ' + subAud + ' · Sydney ' + esc(sydney()) + '</span></div>' +
+        '<div class="au-btns">' + aud + '<button data-a="how">How to receive crypto?</button></div></div>' +
+        '<div class="au-how"><b>How to receive crypto into your account</b><ol><li>Tap <b>Deposit</b> and choose the coin (BTC, ETH or USDT).</li><li>Copy your wallet address or scan the QR code shown.</li><li>Send from your other exchange or wallet to that address — it lands here once the network confirms it.</li></ol><small>Always send the matching coin to the matching address, and keep in mind the sending network’s fee. Values are shown in A$ at the live rate.</small></div>';
+    } else {
+      el.innerHTML = '<button class="au-x" data-a="x" aria-label="Close">✕</button>' +
+        '<div class="au-row"><div class="au-flag">🇦🇺</div><div class="au-tx"><b>G’day' + (first() ? ', ' + esc(first()) : '') + '! Welcome to NordicCrypto.</b>' +
+        '<span>' + subAud + ' · Sydney ' + esc(sydney()) + '</span></div>' +
+        '<div class="au-btns">' + aud + '<button data-a="how">Sending from an Australian bank?</button></div></div>' +
+        '<div class="au-how"><b>How to add money from your Australian bank</b><ol><li>In your bank app choose <b>International transfer</b> (SWIFT).</li><li>Open <b>Deposit</b> on your dashboard and copy the IBAN, SWIFT/BIC and account holder name.</li><li>Send it and keep your transfer receipt. It helps our team if you ever need support.</li></ol><small>Your Australian bank may charge its own international transfer fee and convert A$ at its own rate.</small></div>';
+    }
     if (open) el.classList.add('open');
     });
   }
