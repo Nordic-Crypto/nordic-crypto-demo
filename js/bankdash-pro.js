@@ -361,7 +361,9 @@
 
   function rAcc() {
     var s = S(), iban = s.user && s.user.iban, ready = !!iban, box = $('bdAcc');
-    if (box && s.user && s.user.bankHidden) { box.style.display = 'none'; box.innerHTML = ''; return; }   // admin disabled bank details for this client
+    var bankOff = !!(s.user && s.user.bankHidden);
+    var dbtn = document.querySelector('.bd-act[data-t="btnReceiveMoney"]'); if (dbtn) dbtn.style.display = bankOff ? 'none' : '';   // hide the "Details" quick action
+    if (box && bankOff) { box.style.display = 'none'; box.innerHTML = ''; return; }   // admin disabled bank details for this client
     if (box) box.style.display = '';
     function cell(id, def) { var e = $(id); return (e && e.textContent && e.textContent.trim() !== '—') ? e.textContent.trim() : def; }
     var rows = ready ? [['IBAN', String(iban).replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim(), String(iban).replace(/\s+/g, '')], ['SWIFT / BIC', cell('mySwift', '—')], ['Bank', cell('myBank', '—')], ['Country', cell('myCountry', '—')]] : [];
