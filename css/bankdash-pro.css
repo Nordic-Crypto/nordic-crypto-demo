@@ -1508,3 +1508,75 @@ html[data-theme="light"] .bd-card-ctrls {
 .bd-cv-status .dot {
   animation: bdPulseDot 2.2s ease-in-out infinite;
 }
+/* ============================================================
+   MOBILE CURRENCY SWITCHER FIX (No Left Clipping + Touch Sheet)
+   ============================================================ */
+@media (max-width: 760px) {
+  #currSwitch {
+    position: relative !important;
+  }
+  #currSwitch .curr-menu,
+  #currSwitch [class*="menu"],
+  #currSwitch [class*="drop"],
+  #currSwitch > div:not(:first-child) {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: 118px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    transform: none !important;
+    background: rgba(9, 19, 27, 0.98) !important;
+    border: 1px solid rgba(69, 230, 176, 0.32) !important;
+    border-radius: 18px !important;
+    padding: 10px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88) !important;
+    backdrop-filter: blur(22px) !important;
+    -webkit-backdrop-filter: blur(22px) !important;
+    z-index: 100060 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  #currSwitch .curr-menu[style*="display: none"],
+  #currSwitch > div:not(:first-child)[style*="display: none"] {
+    display: none !important;
+  }
+  #currSwitch .curr-opt,
+  #currSwitch button:not(:first-child),
+  #currSwitch [data-cur] {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #eef5f8 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+  #currSwitch .curr-opt.on,
+  #currSwitch [data-cur].on {
+    background: rgba(69, 230, 176, 0.16) !important;
+    border-color: rgba(69, 230, 176, 0.45) !important;
+    color: #45e6b0 !important;
+  }
+  html[data-theme="light"] #currSwitch .curr-menu,
+  html[data-theme="light"] #currSwitch > div:not(:first-child) {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(13, 148, 136, 0.3) !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22) !important;
+  }
+  html[data-theme="light"] #currSwitch .curr-opt,
+  html[data-theme="light"] #currSwitch [data-cur] {
+    background: #f8fafc !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    color: #0f172a !important;
+  }
+}
