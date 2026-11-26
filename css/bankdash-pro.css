@@ -455,30 +455,72 @@ body {
 /* ============================================================
    BANK CARD PANEL (Col 2 Top) — Integrates 1:1 with card-skins.js (.pay)
    ============================================================ */
+/* 3D Perspective Stage for the Bank Card */
+#bdCardPanel {
+  perspective: 1100px;
+}
+
 html body .bd-card-visual.pay {
+  --rx: 0deg;
+  --ry: 0deg;
+  --gx: 75%;
+  --gy: 20%;
   position: relative !important;
-  border-radius: 16px !important;
-  padding: 14px 18px !important;
+  border-radius: 18px !important;
+  padding: 16px 19px !important;
   aspect-ratio: auto !important;
-  height: 176px !important;
-  min-height: 176px !important;
-  max-height: 176px !important;
   width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
+  max-width: 326px !important;
+  height: 194px !important;
+  min-height: 194px !important;
+  max-height: 194px !important;
+  margin: 2px auto 4px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
   background:
-    radial-gradient(240px 130px at 88% 20%, rgba(69, 230, 176, 0.34), transparent 68%),
+    radial-gradient(220px 130px at 88% 20%, rgba(69, 230, 176, 0.34), transparent 68%),
     linear-gradient(135deg, #0b1821 0%, #060f16 55%, #0c292c 100%);
-  border: 1px solid rgba(69, 230, 176, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.18),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.5),
-    0 16px 30px -14px rgba(0, 0, 0, 0.85);
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.65),
+    0 22px 38px -16px rgba(0, 0, 0, 0.92),
+    0 10px 24px -12px rgba(69, 230, 176, 0.22) !important;
   overflow: hidden !important;
   color: #ffffff;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease;
+  will-change: transform;
+}
+
+html body .bd-card-visual.pay.bd-3d-active {
+  transition: transform 0.06s linear;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.65),
+    0 28px 46px -14px rgba(0, 0, 0, 0.95),
+    0 14px 30px -10px rgba(69, 230, 176, 0.34) !important;
+}
+
+/* Dynamic 3D Specular Glare Overlay */
+html body .bd-card-visual.pay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 38%, transparent 65%);
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+  transition: opacity 0.25s ease;
+}
+
+/* Subtle 3D depth pop on card elements */
+html body .bd-card-visual.pay .bd-cv-top,
+html body .bd-card-visual.pay .bd-cv-chip-row,
+html body .bd-card-visual.pay .bd-cv-num-row {
+  transform: translateZ(14px);
 }
 
 /* Override card-pro2.css child margins inside our dashboard card */
