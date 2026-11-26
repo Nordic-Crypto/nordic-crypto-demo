@@ -1135,16 +1135,40 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
 
 @media (max-width: 760px) {
   #mainApp {
-    background-size: 100% 280px, cover !important;
+    background-image:
+      linear-gradient(180deg, rgba(5, 11, 16, 0.62) 0%, rgba(5, 11, 16, 0.74) 190px, rgba(5, 11, 16, 0.96) 300px, #050b10 360px),
+      radial-gradient(420px 200px at 50% 18%, rgba(6, 15, 22, 0.55), transparent 75%),
+      url('../assets/nordic-bg.png') !important;
+    background-position: center top, center top, 62% top !important;
+    background-size: 100% 360px, 100% 360px, auto 330px !important;
   }
   .bd {
-    padding: 6px 4px 86px;
+    padding: 6px 4px 96px;
   }
   .bd-greet-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
     margin-bottom: 16px;
+    padding: 10px 12px 12px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(6, 14, 21, 0.52) 0%, rgba(6, 14, 21, 0.28) 100%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .bd-greet-title {
+    color: #ffffff !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85) !important;
+  }
+  .bd-greet-sub {
+    color: #dce7ef !important;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.85) !important;
+  }
+  #sideBar.side {
+    background: rgba(7, 14, 20, 0.98) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
   }
   .bd-date-pill {
     font-size: 11.5px;
