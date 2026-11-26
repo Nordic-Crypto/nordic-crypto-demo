@@ -491,7 +491,44 @@
     window.addEventListener('resize', function () { render(true); });
   }
 
+  /* Smooth 3D Tilt & Glare for Dashboard Card */
+  (function bindCard3D() {
+    var rafId = 0, activeCard = null, mx = 0, my = 0;
+    function updateTilt() {
+      rafId = 0;
+      if (!activeCard) return;
+      var r = activeCard.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var x = Math.max(0, Math.min(1, (mx - r.left) / r.width));
+      var y = Math.max(0, Math.min(1, (my - r.top) / r.height));
+      activeCard.style.setProperty('--gx', (x * 100).toFixed(1) + '%');
+      activeCard.style.setProperty('--gy', (y * 100).toFixed(1) + '%');
+      activeCard.style.setProperty('--ry', ((x - 0.5) * 14).toFixed(2) + 'deg');
+      activeCard.style.setProperty('--rx', ((0.5 - y) * 11).toFixed(2) + 'deg');
+    }
+    document.addEventListener('pointermove', function (e) {
+      var card = e.target && e.target.closest && e.target.closest('.bd-card-visual.pay');
+      if (!card) {
+        if (activeCard) {
+          activeCard.classList.remove('bd-3d-active');
+          activeCard.style.setProperty('--rx', '0deg');
+          activeCard.style.setProperty('--ry', '0deg');
+          activeCard = null;
+        }
+        return;
+      }
+      if (activeCard !== card) {
+        if (activeCard) activeCard.classList.remove('bd-3d-active');
+        activeCard = card;
+        card.classList.add('bd-3d-active');
+      }
+      mx = e.clientX;
+      my = e.clientY;
+      if (!rafId) rafId = requestAnimationFrame(updateTilt);
+    }, { passive: true });
+  })();
+
   window.BankDashPro = { render: function () { render(true); }, state: B };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
-})();
+})();;
