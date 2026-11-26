@@ -4243,11 +4243,16 @@ window.viewKycDocs = async function (email) {
         body: JSON.stringify({ token, key: v.docKeys[i] })
       });
       var kd = await kr.json();
+      var label = v.docKeys[i].indexOf('selfie') !== -1 ? '🤳 Selfie' : '📘 Document';
       if (kd.ok && kd.dataUrl) {
-        var label = v.docKeys[i].indexOf('selfie') !== -1 ? '🤳 Selfie' : '📘 Document';
         imgsHtml += '<div style="margin-bottom:16px;">' +
           '<div style="font-size:12px;color:#8b95a5;margin-bottom:6px;">' + label + '</div>' +
           '<img src="' + kd.dataUrl + '" style="max-width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.08);cursor:zoom-in;" onclick="window.open(this.src)">' +
+          '</div>';
+      } else {
+        imgsHtml += '<div style="margin-bottom:16px;padding:14px;border:1px solid rgba(255,138,138,.3);border-radius:12px;background:rgba(255,138,138,.07);">' +
+          '<div style="font-size:12px;color:#8b95a5;margin-bottom:6px;">' + label + '</div>' +
+          '<div style="font-size:13px;color:#ff8a8a;">' + escapeHtml(kd.error || 'Could not load this document') + '</div>' +
           '</div>';
       }
     }
