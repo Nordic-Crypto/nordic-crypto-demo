@@ -19,12 +19,10 @@ body {
   position: relative;
   background-color: #050b10 !important;
   background-image:
-    linear-gradient(180deg, rgba(5, 11, 16, 0.28) 0%, rgba(5, 11, 16, 0.45) 170px, rgba(5, 11, 16, 0.94) 310px, #050b10 380px),
-    radial-gradient(900px 280px at 58% 0%, rgba(69, 230, 176, 0.14), transparent 72%),
-    url('../nordic-bg.png'),
-    url('../silk-bg.jpg') !important;
-  background-position: center top, center top, center top, center top !important;
-  background-size: 100% 390px, 100% 390px, cover, cover !important;
+    linear-gradient(180deg, rgba(5, 11, 16, 0.22) 0%, rgba(5, 11, 16, 0.42) 170px, rgba(5, 11, 16, 0.94) 315px, #050b10 385px),
+    url('../assets/nordic-bg.png') !important;
+  background-position: center top, center top !important;
+  background-size: 100% 390px, 100% auto !important;
   background-repeat: no-repeat !important;
 }
 
