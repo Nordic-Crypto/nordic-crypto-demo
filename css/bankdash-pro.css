@@ -458,9 +458,11 @@ body {
 html body .bd-card-visual.pay {
   position: relative !important;
   border-radius: 16px !important;
-  padding: 15px 18px !important;
-  aspect-ratio: 1.65 / 1 !important;
-  max-height: 204px !important;
+  padding: 14px 18px !important;
+  aspect-ratio: auto !important;
+  height: 176px !important;
+  min-height: 176px !important;
+  max-height: 176px !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
@@ -1103,7 +1105,9 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
     justify-content: center;
   }
   html body .bd-card-visual.pay {
-    max-height: 196px !important;
+    height: 172px !important;
+    min-height: 172px !important;
+    max-height: 172px !important;
   }
   .bd-qstack {
     grid-column: auto;
