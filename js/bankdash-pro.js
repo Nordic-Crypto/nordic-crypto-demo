@@ -1,6 +1,9 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v6.0
-   1:1 Reference Layout + Exact Card Skins (.pay) + Fixed Donut & Sidebar Actions
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v7.0 (Audit & Polish Edition)
+   - Fixed 3D tilt conflict with card-skins.js
+   - Added live interactive hover/touch tooltip on Balance chart
+   - Added direct fallback for Copy Card & Card Settings
+   - Fixed currency/price reactivity in render signature
    ============================================================ */
 (function () {
   'use strict';
@@ -29,7 +32,6 @@
   function nav(p) { var m = document.querySelector('.mi[data-p="' + p + '"]'); if (m) m.click(); }
   function toast(m) { try { if (typeof window.toast === 'function') window.toast(m); } catch (e) {} }
 
-  /* Elite Vector SVG Icons + Multi-faceted Crypto Logos */
   var ICO = {
     cal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     walletSm: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 14h.01"/><path d="M2 9l14-4v2"/></svg>',
@@ -53,7 +55,6 @@
     check: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     arrowDownLeft: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>',
     chevDown: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-    /* Jewelled Multi-Faceted Crypto & Fiat Icons */
     coinUsd: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
     coinBtc: '<svg width="17" height="17" viewBox="0 0 24 24" fill="#ffffff"><path d="M16.6 10.7c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2l-2.3-.6-.4 1.7s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c.1 0 .2.1.3.1l-.3-.1-1.1 4.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.1.5c.4.1.8.2 1.2.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.8.5 4.9.3 5.8-2.2.7-2-.1-3.2-1.5-3.9 1.1-.3 1.9-1 2.1-2.5zm-3.7 5.2c-.5 2-3.9.9-5 .7l.9-3.6c1.1.3 4.6.8 4.1 2.9zm.5-5.3c-.5 1.8-3.3.9-4.2.7l.8-3.2c.9.2 3.9.7 3.4 2.5z"/></svg>',
     coinEth: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="12,2 6,12.2 12,15.7" fill="#ffffff"/><polygon points="12,2 18,12.2 12,15.7" fill="#c7d2fe"/><polygon points="12,9.6 6,12.2 12,15.7" fill="#e0e7ff"/><polygon points="12,9.6 18,12.2 12,15.7" fill="#a5b4fc"/><polygon points="12,17.1 6,13.6 12,22" fill="#ffffff"/><polygon points="12,17.1 18,13.6 12,22" fill="#c7d2fe"/></svg>',
@@ -102,7 +103,6 @@
     return { usd: usd, btc: btcVal, eth: ethVal, usdt: usdtVal, others: othersVal, total: total };
   }
 
-  /* Fix sidebar My Accounts, Settings & Support clicks so they never open an empty screen */
   function wireSidebarLinks() {
     var side = $('sideBar');
     if (!side || side.__bdWired) return;
@@ -217,12 +217,21 @@
     var W = wrap.clientWidth || 540;
     var H = 152;
     var base = currentVal > 0 ? currentVal : 1000;
-    var factors = [0.92, 0.945, 0.935, 0.96, 0.975, 0.955, 0.97, 0.99, 0.982, 1.0];
+    var curves = {
+      '1': [0.92, 0.945, 0.935, 0.96, 0.975, 0.955, 0.97, 0.99, 0.982, 1.0],
+      '7': [0.88, 0.90, 0.89, 0.93, 0.95, 0.94, 0.97, 0.965, 0.99, 1.0],
+      '30': [0.81, 0.84, 0.83, 0.87, 0.91, 0.89, 0.94, 0.96, 0.985, 1.0],
+      '90': [0.74, 0.78, 0.82, 0.80, 0.86, 0.90, 0.93, 0.95, 0.98, 1.0],
+      '365': [0.62, 0.68, 0.72, 0.70, 0.79, 0.84, 0.88, 0.93, 0.97, 1.0]
+    };
+    var factors = curves[B.rng] || curves['1'];
+    var times = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '20:00', '22:00', '24:00'];
+    var plotW = W - 44;
     var pts = factors.map(function (f, i) {
-      return { x: (i / (factors.length - 1)) * (W - 44), y: base * f };
+      return { x: (i / (factors.length - 1)) * plotW, y: base * f, tm: times[i] };
     });
 
-    var minV = base * 0.90;
+    var minV = base * (Math.min.apply(null, factors) - 0.02);
     var maxV = base * 1.02;
     function mapY(v) { return 12 + (1 - (v - minV) / (maxV - minV)) * (H - 32); }
 
@@ -236,9 +245,9 @@
     var last = pts[pts.length - 1];
     var area = d + ' L ' + last.x.toFixed(1) + ' ' + (H - 20) + ' L 0 ' + (H - 20) + ' Z';
 
-    var times = ['00:00', '06:00', '12:00', '18:00', '24:00'];
-    var xLabels = times.map(function (tm, idx) {
-      var tx = (idx / (times.length - 1)) * (W - 44);
+    var axisTimes = ['00:00', '06:00', '12:00', '18:00', '24:00'];
+    var xLabels = axisTimes.map(function (tm, idx) {
+      var tx = (idx / (axisTimes.length - 1)) * plotW;
       return '<text x="' + tx.toFixed(1) + '" y="' + (H - 3) + '" class="ax-txt" text-anchor="' + (idx === 0 ? 'start' : idx === 4 ? 'end' : 'middle') + '">' + tm + '</text>';
     }).join('');
 
@@ -250,6 +259,7 @@
     }).join('');
 
     wrap.innerHTML =
+      '<div class="bd-tip" id="bdChartTip" style="display:none"></div>' +
       '<svg viewBox="0 0 ' + W + ' ' + H + '">' +
         '<defs>' +
           '<linearGradient id="ncAreaGrad" x1="0" y1="0" x2="0" y2="1">' +
@@ -259,10 +269,46 @@
         '</defs>' +
         '<path d="' + area + '" fill="url(#ncAreaGrad)"/>' +
         '<path d="' + d + '" fill="none" stroke="#45e6b0" stroke-width="2.5" stroke-linecap="round"/>' +
-        '<circle cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="4.5" fill="#45e6b0"/>' +
-        '<circle cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="9" fill="#45e6b0" opacity="0.22"/>' +
+        '<line id="bdHoverLine" x1="0" y1="10" x2="0" y2="' + (H - 20) + '" stroke="rgba(69,230,176,0.35)" stroke-dasharray="3 3" style="display:none"/>' +
+        '<circle id="bdHoverDot" cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="4.5" fill="#45e6b0" stroke="#050b10" stroke-width="2"/>' +
+        '<circle id="bdHoverHalo" cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="9" fill="#45e6b0" opacity="0.24"/>' +
         xLabels + yLabels +
       '</svg>';
+
+    var svgEl = wrap.querySelector('svg');
+    var tip = $('bdChartTip');
+    var hLine = $('bdHoverLine');
+    var hDot = $('bdHoverDot');
+    var hHalo = $('bdHoverHalo');
+
+    function onMove(ev) {
+      var rect = svgEl.getBoundingClientRect();
+      var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      var relX = Math.max(0, Math.min(plotW, clientX - rect.left));
+      var idx = Math.round((relX / plotW) * (pts.length - 1));
+      var p = pts[idx] || last;
+      var py = mapY(p.y);
+      hLine.setAttribute('x1', p.x.toFixed(1));
+      hLine.setAttribute('x2', p.x.toFixed(1));
+      hLine.style.display = 'block';
+      hDot.setAttribute('cx', p.x.toFixed(1));
+      hDot.setAttribute('cy', py.toFixed(1));
+      hHalo.setAttribute('cx', p.x.toFixed(1));
+      hHalo.setAttribute('cy', py.toFixed(1));
+      tip.innerHTML = '<b class="bd-sens">' + esc(U(p.y)) + '</b><small>' + p.tm + '</small>';
+      tip.style.display = 'block';
+      tip.style.left = Math.min(Math.max(4, p.x - 42), Math.max(4, plotW - 88)) + 'px';
+    }
+    function onLeave() {
+      hLine.style.display = 'none';
+      hDot.setAttribute('cx', last.x.toFixed(1));
+      hDot.setAttribute('cy', mapY(last.y).toFixed(1));
+      hHalo.setAttribute('cx', last.x.toFixed(1));
+      hHalo.setAttribute('cy', mapY(last.y).toFixed(1));
+      tip.style.display = 'none';
+    }
+    svgEl.addEventListener('pointermove', onMove, { passive: true });
+    svgEl.addEventListener('pointerleave', onLeave);
   }
 
   function renderCard() {
@@ -274,7 +320,6 @@
     var last4 = rawNum.slice(-4) || '4827';
     var usd = Number(s.usd) || 0;
 
-    /* Use exact .pay + design-<skin> classes so card-skins.js renders fur trim, snowflakes, gold ribbon, etc. 1:1 */
     var rawDesign = (s.card && s.card.design) ? String(s.card.design).toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
     var designCls = rawDesign ? (' design-' + rawDesign) : '';
     var showDefaultWave = !rawDesign;
@@ -312,11 +357,10 @@
       '<div class="bd-card-ctrls">' +
         '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnFreezeCard"><span class="bd-cctrl-ic">' + ICO.freeze + '</span><span>' + (frozen ? 'Unfreeze' : 'Freeze') + '</span></button>' +
         '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnLimitsCard"><span class="bd-cctrl-ic">' + ICO.limits + '</span><span>Limits</span></button>' +
-        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-cctrl-ic">' + ICO.copy + '</span><span>Copy</span></button>' +
-        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnSettingsCard"><span class="bd-cctrl-ic">' + ICO.gear + '</span><span>Settings</span></button>' +
+        '<button type="button" class="bd-cctrl" data-a="copyCard"><span class="bd-cctrl-ic">' + ICO.copy + '</span><span>Copy</span></button>' +
+        '<button type="button" class="bd-cctrl" data-a="cardSettings"><span class="bd-cctrl-ic">' + ICO.gear + '</span><span>Settings</span></button>' +
       '</div>';
 
-    /* Trigger card-skins.js decorator so falling snow and custom SVG layers appear on the dashboard card too */
     try { if (window.__cardSkins && typeof window.__cardSkins.decorate === 'function') window.__cardSkins.decorate(); } catch (e) {}
   }
 
@@ -440,7 +484,10 @@
     if (!dash || dash.offsetParent === null) return;
 
     var s = S();
-    var sig = [s.usd, s.btc, s.eth, s.usdt, s.currency, (s.txs || []).length, s.card && s.card.status, s.card && s.card.design, B.rng, B.hide].join('|');
+    var sig = [
+      s.usd, s.btc, s.eth, s.usdt, s.btcP, s.ethP, s.currency, s.eurR, s.sekR,
+      (s.txs || []).length, s.card && s.card.status, s.card && s.card.design, B.rng, B.hide
+    ].join('|');
     if (!force && sig === B.sig) return;
     B.sig = sig;
 
@@ -469,6 +516,17 @@
     } else if (act === 'rng') {
       B.rng = btn.getAttribute('data-v') || '1';
       render(true);
+    } else if (act === 'copyCard') {
+      if (!px('btnCopyCardV2')) {
+        var num = (S().card && S().card.num) ? String(S().card.num).replace(/\s+/g, '') : '';
+        if (num && navigator.clipboard) {
+          navigator.clipboard.writeText(num).then(function () { toast('Card number copied'); }).catch(function () {});
+        } else {
+          nav('cards');
+        }
+      }
+    } else if (act === 'cardSettings') {
+      if (!px('btnSettingsCard')) nav('cards');
     } else if (act === 'proxy') {
       var target = btn.getAttribute('data-t');
       if (!px(target)) toast('Action unavailable right now');
@@ -491,7 +549,7 @@
     window.addEventListener('resize', function () { render(true); });
   }
 
-  /* Smooth 3D Tilt & Glare for Dashboard Card */
+  /* Smooth 3D Tilt & Glare only for default skin (custom skins with data-hk use card-skins.js tilt) */
   (function bindCard3D() {
     var rafId = 0, activeCard = null, mx = 0, my = 0;
     function updateTilt() {
@@ -507,7 +565,7 @@
       activeCard.style.setProperty('--rx', ((0.5 - y) * 11).toFixed(2) + 'deg');
     }
     document.addEventListener('pointermove', function (e) {
-      var card = e.target && e.target.closest && e.target.closest('.bd-card-visual.pay');
+      var card = e.target && e.target.closest && e.target.closest('.bd-card-visual.pay:not([data-hk])');
       if (!card) {
         if (activeCard) {
           activeCard.classList.remove('bd-3d-active');
@@ -531,4 +589,4 @@
   window.BankDashPro = { render: function () { render(true); }, state: B };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
-})();;
+})();
