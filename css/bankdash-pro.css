@@ -1147,9 +1147,10 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
     justify-content: center;
   }
   html body .bd-card-visual.pay {
-    height: 172px !important;
-    min-height: 172px !important;
-    max-height: 172px !important;
+    max-width: 310px !important;
+    height: 184px !important;
+    min-height: 184px !important;
+    max-height: 184px !important;
   }
   .bd-qstack {
     grid-column: auto;
