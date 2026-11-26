@@ -230,8 +230,13 @@
     var usd = Number(s.usd) || 0;
 
     box.innerHTML =
-      '<div class="bd-card-visual">' +
-        '<div class="bd-cv-top">' +
+  '<div class="bd-card-visual">' +
+    '<svg class="bd-card-wave" viewBox="0 0 400 220" preserveAspectRatio="none">' +
+      '<defs><linearGradient id="ncSilk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#2dd4bf" stop-opacity="0"/><stop offset="50%" stop-color="#45e6b0" stop-opacity="0.22"/><stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.04"/></linearGradient></defs>' +
+      '<path d="M-20,190 C90,175 180,95 420,40 L420,115 C220,150 120,210 -20,225 Z" fill="url(#ncSilk)"/>' +
+      '<path d="M40,220 C160,185 250,115 430,75 L430,145 C270,175 180,220 40,235 Z" fill="url(#ncSilk)" opacity="0.7"/>' +
+    '</svg>' +
+    '<div class="bd-cv-top">' +
           '<div class="bd-cv-brand"><span class="bd-cv-logo-badge">N</span> NordicCrypto</div>' +
           '<span class="bd-cv-status ' + (frozen ? 'frozen' : '') + '"><i class="dot"></i> ' + (frozen ? 'Frozen' : 'Active') + '</span>' +
         '</div>' +
@@ -308,17 +313,17 @@
     if (!box) return;
     var t = totals();
     var cryptoSum = t.btc + t.eth + t.usdt + t.others;
-    var items = cryptoSum > 0 ? [
-      { name: 'BTC', val: t.btc, color: '#2dd4bf' },
-      { name: 'ETH', val: t.eth, color: '#6366f1' },
-      { name: 'USDT', val: t.usdt, color: '#38bdf8' },
-      { name: 'Others', val: t.others, color: '#94a3b8' }
-    ] : [
-      { name: 'BTC', val: 42.8, color: '#2dd4bf' },
-      { name: 'ETH', val: 28.1, color: '#6366f1' },
-      { name: 'USDT', val: 18.3, color: '#38bdf8' },
-      { name: 'Others', val: 10.8, color: '#94a3b8' }
-    ];
+  var items = cryptoSum > 0 ? [
+  { name: 'BTC', val: t.btc, color: '#2dd4bf' },
+  { name: 'ETH', val: t.eth, color: '#f59e0b' },
+  { name: 'USDT', val: t.usdt, color: '#3b82f6' },
+  { name: 'Others', val: t.others, color: '#8b5cf6' }
+] : [
+  { name: 'BTC', val: 42.8, color: '#2dd4bf' },
+  { name: 'ETH', val: 28.1, color: '#f59e0b' },
+  { name: 'USDT', val: 18.3, color: '#3b82f6' },
+  { name: 'Others', val: 10.8, color: '#8b5cf6' }
+];
     var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0) || 1;
     var R = 52;
     var C = 2 * Math.PI * R;
