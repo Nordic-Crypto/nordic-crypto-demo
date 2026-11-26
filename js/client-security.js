@@ -122,7 +122,10 @@
     var b = $('csPayees'); if (b) return b;
     var amt = $('wdAmount'); if (!amt) return null;
     b = document.createElement('div'); b.id = 'csPayees'; b.className = 'cs-payees';
-    var lab = amt.previousElementSibling || amt; lab.parentNode.insertBefore(b, lab);
+    // Anchor above the whole amount block (.wv-amt from flows-v5) — never inside the input row,
+    // otherwise the tip/chips sit on top of #wdAmount and you can't type the amount.
+    var anchor = amt.closest('.wv-amt') || amt.previousElementSibling || amt;
+    anchor.parentNode.insertBefore(b, anchor);
     return b;
   }
   function paintPayees() {
