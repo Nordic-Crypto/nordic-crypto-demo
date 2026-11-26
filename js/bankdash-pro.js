@@ -619,8 +619,121 @@
     } catch (e) {}
   }
 
+  function setupMobileHub() {
+    if (window.__bdMobHub) return;
+    window.__bdMobHub = true;
+
+    /* Закрытие меню валют при клике по валюте или вне списка */
+    document.addEventListener('click', function (e) {
+      var sw = $('currSwitch');
+      if (!sw) return;
+      var menu = sw.querySelector('.curr-menu') || sw.children[1];
+      if (!menu) return;
+      var clickedBtn = e.target.closest('#currSwitch > button, #currSwitch > div:first-child');
+      if (clickedBtn) {
+        var isOpen = sw.classList.contains('open') || menu.classList.contains('open');
+        sw.classList.toggle('open', !isOpen);
+        menu.classList.toggle('open', !isOpen);
+        return;
+      }
+      if (e.target.closest('#currSwitch .curr-opt, #currSwitch [data-cur]') || !e.target.closest('#currSwitch')) {
+        sw.classList.remove('open', 'on');
+        menu.classList.remove('open', 'on');
+      }
+    }, true);
+
+    /* Создаём полнофункциональную мобильную панель для кнопки ☰ */
+    var hub = document.createElement('div');
+    hub.id = 'bdMobHub';
+    hub.className = 'bd-mob-hub';
+    hub.innerHTML =
+      '<div class="bd-mh-sheet">' +
+        '<div class="bd-mh-hdr">' +
+          '<div class="bd-mh-user">' +
+            '<div class="bd-mh-av" id="bdMhAv">NC</div>' +
+            '<div><b id="bdMhName">Account</b><span>Premium Member 👑</span></div>' +
+          '</div>' +
+          '<button type="button" class="bd-mh-close" id="bdMhClose">✕</button>' +
+        '</div>' +
+        '<div class="bd-mh-grid">' +
+          '<button type="button" class="bd-mh-tile" data-mh="wallets"><span class="bd-mh-tile-ic">' + ICO.wallet + '</span><span>My Wallets</span></button>' +
+          '<button type="button" class="bd-mh-tile" data-mh="receive"><span class="bd-mh-tile-ic">' + ICO.arrowDownLeft + '</span><span>Receive Crypto</span></button>' +
+          '<button type="button" class="bd-mh-tile" data-mh="accounts"><span class="bd-mh-tile-ic">' + ICO.cardPlus + '</span><span>My Accounts</span></button>' +
+          '<button type="button" class="bd-mh-tile" data-mh="settings"><span class="bd-mh-tile-ic">' + ICO.gear + '</span><span>Settings & 2FA</span></button>' +
+          '<button type="button" class="bd-mh-tile" data-mh="support"><span class="bd-mh-tile-ic">' + ICO.shield + '</span><span>Live Support</span></button>' +
+          '<button type="button" class="bd-mh-tile" data-mh="bonus"><span class="bd-mh-tile-ic">' + ICO.gift + '</span><span>Bonus & Rewards</span></button>' +
+        '</div>' +
+        '<div class="bd-mh-row">' +
+          '<button type="button" class="bd-mh-pill" id="bdMhSnow">❄ Snow on</button>' +
+          '<button type="button" class="bd-mh-pill danger" id="bdMhLogout">Log out</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(hub);
+
+    function openHub() {
+      var nm = lsGet('user_name') || (S().user && S().user.name) || 'Client';
+      var av = $('bdMhAv'), un = $('bdMhName'), sn = $('bdMhSnow');
+      if (un) un.textContent = nm;
+      if (av) av.textContent = nm.slice(0, 2).toUpperCase();
+      if (sn) {
+        var off = lsGet('nc_hol_off') === '1' || document.documentElement.classList.contains('hk-nosnow');
+        sn.textContent = off ? '❄ Holiday mode off' : '❄ Snow on';
+      }
+      hub.classList.add('on');
+    }
+    function closeHub() { hub.classList.remove('on'); }
+
+    /* Перехватываем клик по кнопке ☰ в мобильной шапке */
+    document.addEventListener('click', function (e) {
+      var burger = e.target.closest('#mobMenuBtn, .mob-menu-btn, .top button');
+      if (burger && burger.querySelector('svg') && burger.closest('.top') && burger.getBoundingClientRect().left < 90 && burger.getBoundingClientRect().top > 45) {
+        e.preventDefault();
+        e.stopPropagation();
+        openHub();
+      }
+    }, true);
+
+    hub.addEventListener('click', function (e) {
+      if (e.target === hub || e.target.closest('#bdMhClose')) { closeHub(); return; }
+      var tile = e.target.closest('[data-mh]');
+      if (tile) {
+        var act = tile.getAttribute('data-mh');
+        closeHub();
+        if (act === 'wallets') nav('wallets');
+        else if (act === 'receive') nav('receive');
+        else if (act === 'accounts') {
+          var acc = document.querySelector('[data-p="accounts"], #navAccounts, .top-acc-btn');
+          if (acc) acc.click(); else px('settingsBtn');
+        } else if (act === 'settings') {
+          if (!px('settingsBtn') && typeof window.openSettings === 'function') window.openSettings();
+        } else if (act === 'support') {
+          if (!px('chatToggle') && typeof window.toggleChat === 'function') window.toggleChat();
+        } else if (act === 'bonus') {
+          if (typeof window.openClientBonus === 'function') window.openClientBonus();
+        }
+        return;
+      }
+      if (e.target.closest('#bdMhSnow')) {
+        var sp = $('bdSnowPill');
+        if (sp) sp.click();
+        else {
+          var nextOff = !(lsGet('nc_hol_off') === '1');
+          lsSet('nc_hol_off', nextOff ? '1' : '0');
+          document.documentElement.classList.toggle('hk-nosnow', nextOff);
+        }
+        openHub();
+        return;
+      }
+      if (e.target.closest('#bdMhLogout')) {
+        closeHub();
+        if (typeof window.doLogout === 'function') window.doLogout();
+      }
+    });
+  }
+
   function init() {
     if (!build()) { setTimeout(init, 350); return; }
+    setupMobileHub();
     autoLocalCurrency();
     syncLivePrices();
     render(true);
