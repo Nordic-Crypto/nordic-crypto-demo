@@ -78,7 +78,7 @@ body:has(#mainApp[style*="flex"]) #holChip {
 }
 #holChip {
   pointer-events: auto !important;
-  z-index: 100050 !important;
+  z-index: 9000 !important;
   position: fixed !important;
   left: 16px !important;
   bottom: 74px !important;
