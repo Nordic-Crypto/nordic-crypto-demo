@@ -1,6 +1,6 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v5.0
-   1:1 Reference Layout + Custom Client Card Designs + Elite Coin SVGs
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v6.0
+   1:1 Reference Layout + Exact Card Skins (.pay) + Fixed Donut & Sidebar Actions
    ============================================================ */
 (function () {
   'use strict';
@@ -18,19 +18,24 @@
     try { return window.fmtCurrency ? window.fmtCurrency(v) : '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     catch (e) { return '$' + Number(v || 0).toFixed(2); }
   }
+  function compactUsd(v) {
+    var n = Number(v) || 0;
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(2).replace(/\.00$/, '') + 'M';
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function px(id) { var e = $(id); if (e && !e.disabled) { try { e.click(); } catch (x) {} return true; } return false; }
   function nav(p) { var m = document.querySelector('.mi[data-p="' + p + '"]'); if (m) m.click(); }
   function toast(m) { try { if (typeof window.toast === 'function') window.toast(m); } catch (e) {} }
 
-  /* Elite Vector SVG Icons + Authentic Crypto Logos */
+  /* Elite Vector SVG Icons + Multi-faceted Crypto Logos */
   var ICO = {
     cal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     walletSm: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 14h.01"/><path d="M2 9l14-4v2"/></svg>',
     eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>',
-    nfc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.75"><path d="M6 8.5a6.5 6.5 0 0 1 0 7"/><path d="M9.5 6a10.5 10.5 0 0 1 0 12"/><path d="M13 3.5a14.5 14.5 0 0 1 0 17"/></svg>',
+    nfc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.8"><path d="M6 8.5a6.5 6.5 0 0 1 0 7"/><path d="M9.5 6a10.5 10.5 0 0 1 0 12"/><path d="M13 3.5a14.5 14.5 0 0 1 0 17"/></svg>',
     freeze: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></svg>',
     limits: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg>',
     copy: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
@@ -48,11 +53,11 @@
     check: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     arrowDownLeft: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>',
     chevDown: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-    /* Authentic Luxury Crypto & Fiat Badges */
-    coinUsd: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    coinBtc: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff"><path d="M16.6 10.7c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2l-2.3-.6-.4 1.7s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c.1 0 .2.1.3.1l-.3-.1-1.1 4.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.1.5c.4.1.8.2 1.2.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.8.5 4.9.3 5.8-2.2.7-2-.1-3.2-1.5-3.9 1.1-.3 1.9-1 2.1-2.5zm-3.7 5.2c-.5 2-3.9.9-5 .7l.9-3.6c1.1.3 4.6.8 4.1 2.9zm.5-5.3c-.5 1.8-3.3.9-4.2.7l.8-3.2c.9.2 3.9.7 3.4 2.5z"/></svg>',
-    coinEth: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L5.5 12.2L12 16L18.5 12.2L12 2Z" fill="#ffffff"/><path d="M12 2V16L18.5 12.2L12 2Z" fill="#e0e7ff" fill-opacity="0.75"/><path d="M12 17.5L5.5 13.7L12 22L18.5 13.7L12 17.5Z" fill="#ffffff"/><path d="M12 17.5V22L18.5 13.7L12 17.5Z" fill="#e0e7ff" fill-opacity="0.75"/></svg>',
-    coinUsdt: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 5H19V8.2H13.6V11.1C16.7 11.3 19 11.9 19 12.7C19 13.5 16.7 14.1 13.6 14.3V19.5H10.4V14.3C7.3 14.1 5 13.5 5 12.7C5 11.9 7.3 11.3 10.4 11.1V8.2H5V5ZM12 13.6C15.1 13.6 17.6 13.2 17.6 12.7C17.6 12.2 15.1 11.8 12 11.8C8.9 11.8 6.4 12.2 6.4 12.7C6.4 13.2 8.9 13.6 12 13.6Z" fill="#ffffff"/></svg>'
+    /* Jewelled Multi-Faceted Crypto & Fiat Icons */
+    coinUsd: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    coinBtc: '<svg width="17" height="17" viewBox="0 0 24 24" fill="#ffffff"><path d="M16.6 10.7c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2l-2.3-.6-.4 1.7s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c.1 0 .2.1.3.1l-.3-.1-1.1 4.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.1.5c.4.1.8.2 1.2.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.8.5 4.9.3 5.8-2.2.7-2-.1-3.2-1.5-3.9 1.1-.3 1.9-1 2.1-2.5zm-3.7 5.2c-.5 2-3.9.9-5 .7l.9-3.6c1.1.3 4.6.8 4.1 2.9zm.5-5.3c-.5 1.8-3.3.9-4.2.7l.8-3.2c.9.2 3.9.7 3.4 2.5z"/></svg>',
+    coinEth: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="12,2 6,12.2 12,15.7" fill="#ffffff"/><polygon points="12,2 18,12.2 12,15.7" fill="#c7d2fe"/><polygon points="12,9.6 6,12.2 12,15.7" fill="#e0e7ff"/><polygon points="12,9.6 18,12.2 12,15.7" fill="#a5b4fc"/><polygon points="12,17.1 6,13.6 12,22" fill="#ffffff"/><polygon points="12,17.1 18,13.6 12,22" fill="#c7d2fe"/></svg>',
+    coinUsdt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5.5 5.2H18.5V8.1H13.5V10.6C16.8 10.8 19.2 11.4 19.2 12.2C19.2 13 16.8 13.6 13.5 13.8V19.2H10.5V13.8C7.2 13.6 4.8 13 4.8 12.2C4.8 11.4 7.2 10.8 10.5 10.6V8.1H5.5V5.2Z" fill="#ffffff"/><ellipse cx="12" cy="12.2" rx="6.6" ry="1.35" fill="#0f766e" fill-opacity="0.45"/></svg>'
   };
 
   var B = { rng: '1', hide: lsGet('bd_hide') === '1', built: false, sig: '' };
@@ -97,9 +102,44 @@
     return { usd: usd, btc: btcVal, eth: ethVal, usdt: usdtVal, others: othersVal, total: total };
   }
 
+  /* Fix sidebar My Accounts, Settings & Support clicks so they never open an empty screen */
+  function wireSidebarLinks() {
+    var side = $('sideBar');
+    if (!side || side.__bdWired) return;
+    side.__bdWired = true;
+    side.addEventListener('click', function (e) {
+      var item = e.target.closest('.mi');
+      if (!item) return;
+      var txt = (item.textContent || '').trim().toLowerCase();
+      if (txt === 'my accounts') {
+        e.preventDefault();
+        e.stopPropagation();
+        var accBtn = document.querySelector('[data-p="accounts"], #navAccounts, .top-acc-btn');
+        if (accBtn && accBtn !== item) { accBtn.click(); return; }
+        var sb = $('settingsBtn');
+        if (sb) sb.click();
+      } else if (txt === 'settings') {
+        e.preventDefault();
+        e.stopPropagation();
+        var sb2 = $('settingsBtn');
+        if (sb2) sb2.click();
+        else if (typeof window.openSettings === 'function') window.openSettings();
+      } else if (txt === 'support') {
+        e.preventDefault();
+        e.stopPropagation();
+        var chatToggle = $('chatToggle');
+        var chatPanel = $('chatPanel');
+        if (chatPanel && (chatPanel.classList.contains('on') || chatPanel.style.display === 'flex')) return;
+        if (chatToggle) chatToggle.click();
+        else if (typeof window.toggleChat === 'function') window.toggleChat();
+      }
+    }, true);
+  }
+
   function build() {
     var dash = $('dash');
     if (!dash) return false;
+    wireSidebarLinks();
     if ($('bd')) { B.built = true; return true; }
 
     var root = document.createElement('div');
@@ -205,7 +245,7 @@
     var ySteps = [1.0, 0.97, 0.94, 0.91];
     var yLabels = ySteps.map(function (k) {
       var val = base * k;
-      var lbl = val >= 1000 ? '$' + Math.round(val / 1000) + 'k' : '$' + Math.round(val);
+      var lbl = val >= 1000000 ? '$' + (val / 1000000).toFixed(1) + 'M' : (val >= 1000 ? '$' + Math.round(val / 1000) + 'k' : '$' + Math.round(val));
       return '<text x="' + (W - 2) + '" y="' + (mapY(val) + 3).toFixed(1) + '" class="ax-txt" text-anchor="end">' + lbl + '</text>';
     }).join('');
 
@@ -234,14 +274,15 @@
     var last4 = rawNum.slice(-4) || '4827';
     var usd = Number(s.usd) || 0;
 
-    /* Preserve client's previously chosen card skin from st.card.design */
+    /* Use exact .pay + design-<skin> classes so card-skins.js renders fur trim, snowflakes, gold ribbon, etc. 1:1 */
     var rawDesign = (s.card && s.card.design) ? String(s.card.design).toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
     var designCls = rawDesign ? (' design-' + rawDesign) : '';
-    var showSilkWave = !rawDesign || rawDesign === 'obsidian';
+    var showDefaultWave = !rawDesign;
 
     box.innerHTML =
-      '<div class="bd-card-visual' + designCls + '">' +
-        (showSilkWave ? (
+      '<div class="bd-card-visual pay' + designCls + '">' +
+        '<div class="pay-shine"></div>' +
+        (showDefaultWave ? (
           '<svg class="bd-card-wave" viewBox="0 0 400 220" preserveAspectRatio="none">' +
             '<defs><linearGradient id="ncSilk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#2dd4bf" stop-opacity="0"/><stop offset="50%" stop-color="#45e6b0" stop-opacity="0.22"/><stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.04"/></linearGradient></defs>' +
             '<path d="M-20,190 C90,175 180,95 420,40 L420,115 C220,150 120,210 -20,225 Z" fill="url(#ncSilk)"/>' +
@@ -274,6 +315,9 @@
         '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-cctrl-ic">' + ICO.copy + '</span><span>Copy</span></button>' +
         '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnSettingsCard"><span class="bd-cctrl-ic">' + ICO.gear + '</span><span>Settings</span></button>' +
       '</div>';
+
+    /* Trigger card-skins.js decorator so falling snow and custom SVG layers appear on the dashboard card too */
+    try { if (window.__cardSkins && typeof window.__cardSkins.decorate === 'function') window.__cardSkins.decorate(); } catch (e) {}
   }
 
   function renderActions() {
@@ -337,15 +381,15 @@
       { name: 'Others', val: 10.8, color: '#8b5cf6' }
     ];
     var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0) || 1;
-    var R = 52;
+    var R = 58;
     var C = 2 * Math.PI * R;
     var offset = 0;
 
     var circles = items.map(function (it) {
       var len = (it.val / sum) * C;
-      var seg = '<circle cx="73" cy="73" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="18" ' +
+      var seg = '<circle cx="78" cy="78" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="16" ' +
                 'stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) + '" ' +
-                'stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 73 73)"/>';
+                'stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 78 78)"/>';
       offset += len;
       return seg;
     }).join('');
@@ -355,17 +399,19 @@
       return '<li><span><i style="background:' + it.color + '"></i>' + it.name + '</span><b>' + pct + '%</b></li>';
     }).join('');
 
-    var centerTotal = '$' + Math.round(t.total).toLocaleString('en-US');
+    var fullUsd = '$' + Math.round(t.total).toLocaleString('en-US');
+    var centerTotal = fullUsd.length > 9 ? compactUsd(t.total) : fullUsd;
+    var smCls = centerTotal.length > 7 ? ' class="bd-sens sm"' : ' class="bd-sens"';
 
     box.innerHTML =
       '<div class="bd-sec-hdr"><h3>Portfolio Composition</h3></div>' +
       '<div class="bd-comp-wrap">' +
         '<div class="bd-donut-box">' +
-          '<svg viewBox="0 0 146 146" width="146" height="146">' +
-            '<circle cx="73" cy="73" r="' + R + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="18"/>' +
+          '<svg viewBox="0 0 156 156" width="156" height="156">' +
+            '<circle cx="78" cy="78" r="' + R + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16"/>' +
             circles +
           '</svg>' +
-          '<div class="bd-donut-center"><b class="bd-sens">' + esc(centerTotal) + '</b><small>Total Value</small></div>' +
+          '<div class="bd-donut-center"><b' + smCls + ' title="' + esc(fullUsd) + '">' + esc(centerTotal) + '</b><small>Total Value</small></div>' +
         '</div>' +
         '<ul class="bd-comp-leg">' + legend + '</ul>' +
       '</div>';
