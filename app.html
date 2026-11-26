@@ -4407,15 +4407,43 @@ document.addEventListener('DOMContentLoaded', function(){
       <span class="tx" data-nci18n="off">Support</span>
     </li>
   </ul>
-  <div class="bd-prem-card" style="margin:auto 12px 12px;padding:14px;border-radius:16px;background:linear-gradient(145deg,rgba(24,46,56,0.85),rgba(11,22,30,0.95));border:1px solid rgba(69,230,176,0.22);">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-      <span style="width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#2dd4bf);display:grid;place-items:center;font-size:12px;">💎</span>
-      <strong style="font-size:13px;color:#fff;">Premium Account</strong>
+  <div class="bd-prem-card">
+    <div class="bd-prem-gem" aria-hidden="true">
+      <svg width="46" height="46" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <linearGradient id="ncGemTop" x1="12" y1="8" x2="52" y2="28" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#a7f3d0"/>
+            <stop offset="50%" stop-color="#2dd4bf"/>
+            <stop offset="100%" stop-color="#0d9488"/>
+          </linearGradient>
+          <linearGradient id="ncGemLeft" x1="8" y1="24" x2="32" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5eead4"/>
+            <stop offset="100%" stop-color="#0f766e"/>
+          </linearGradient>
+          <linearGradient id="ncGemRight" x1="32" y1="24" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#14b8a6"/>
+            <stop offset="100%" stop-color="#042f2e"/>
+          </linearGradient>
+          <linearGradient id="ncGemMid" x1="22" y1="24" x2="42" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#99f6e4"/>
+            <stop offset="100%" stop-color="#0d9488"/>
+          </linearGradient>
+        </defs>
+        <polygon points="20,10 44,10 56,24 8,24" fill="url(#ncGemTop)"/>
+        <polygon points="20,10 32,24 8,24" fill="#ccfbf1" fill-opacity="0.55"/>
+        <polygon points="44,10 56,24 32,24" fill="#0d9488" fill-opacity="0.45"/>
+        <polygon points="8,24 22,24 32,56" fill="url(#ncGemLeft)"/>
+        <polygon points="22,24 42,24 32,56" fill="url(#ncGemMid)"/>
+        <polygon points="42,24 56,24 32,56" fill="url(#ncGemRight)"/>
+        <polyline points="20,10 22,24 32,56 42,24 44,10" stroke="#ecfdf5" stroke-opacity="0.45" stroke-width="1"/>
+        <line x1="8" y1="24" x2="56" y2="24" stroke="#ecfdf5" stroke-opacity="0.5" stroke-width="1"/>
+      </svg>
     </div>
-    <p style="font-size:11px;color:#8fa3b0;margin:0 0 10px;line-height:1.4;">Unlock higher limits, priority support &amp; cashback.</p>
-    <button type="button" onclick="var m=document.querySelector('.mi[data-p=\'order\']');if(m)m.click();" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(69,230,176,0.35);background:rgba(69,230,176,0.12);color:#45e6b0;font-size:12px;font-weight:700;cursor:pointer;">Upgrade Plan →</button>
+    <div class="bd-prem-title">Premium Account</div>
+    <p class="bd-prem-desc">Unlock more opportunities with premium features.</p>
+    <button type="button" class="bd-prem-btn" onclick="var m=document.querySelector('.mi[data-p=\'order\']');if(m)m.click();">Upgrade Plan →</button>
   </div>
-  <div class="umi"><div class="av" id="userAvatar">--</div><div class="inf"><h4 id="userName">User</h4><span style="font-size:11px;color:#45e6b0;">Premium Member</span></div></div>
+  <div class="umi"><div class="av" id="userAvatar">--</div><div class="inf"><h4 id="userName">User</h4><span class="bd-prem-badge">Premium Member <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24" style="display:inline-block;vertical-align:-1px;margin-left:3px"><path d="M2 18h20l-2-11-5 4-3-6-3 6-5-4-2 11zm2 2h16v2H4v-2z"/></svg></span></div></div>
 </div>
 
 <!-- MAIN -->
