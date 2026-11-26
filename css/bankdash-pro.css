@@ -1,26 +1,34 @@
-/* NORDIC CRYPTO — Banking Dashboard PRO v3.0 (Nordic Emerald Glass & Vector UI) */
+/* NORDIC CRYPTO — Banking Dashboard PRO v4.0 (Exact Reference Match + Mobile Ready) */
 #dash.bd-on > :not(#bd) { display: none !important; }
 
 body {
   background: #050b10 !important;
   color: #eef5f8 !important;
+  overflow-x: hidden;
 }
 
-/* Panoramic Nordic Fjord & Aurora Header Backdrop (Built-in SVG + Multi-layer Gradient) */
+/* Topbar transparent over mountain panorama */
+#mainApp .top {
+  background: linear-gradient(180deg, rgba(5, 11, 16, 0.72) 0%, rgba(5, 11, 16, 0.25) 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Panoramic Mountain Background with Smooth Fade into #050b10 */
 #mainApp {
   position: relative;
   background-color: #050b10 !important;
   background-image:
-    linear-gradient(180deg, rgba(5, 12, 18, 0.18) 0%, rgba(5, 11, 16, 0.72) 230px, #050b10 390px),
-    radial-gradient(950px 320px at 62% 0%, rgba(45, 212, 191, 0.24), transparent 72%),
-    radial-gradient(700px 260px at 22% 5%, rgba(14, 165, 233, 0.16), transparent 70%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23091e26'/%3E%3Cstop offset='55%25' stop-color='%230d2b33'/%3E%3Cstop offset='100%25' stop-color='%23050b10'/%3E%3C/linearGradient%3E%3ClinearGradient id='aurora' x1='0' y1='0' x2='1' y2='0.4'%3E%3Cstop offset='0%25' stop-color='%232dd4bf' stop-opacity='0.05'/%3E%3Cstop offset='45%25' stop-color='%2345e6b0' stop-opacity='0.28'/%3E%3Cstop offset='80%25' stop-color='%2338bdf8' stop-opacity='0.18'/%3E%3Cstop offset='100%25' stop-color='%232dd4bf' stop-opacity='0.04'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1600' height='420' fill='url(%23sky)'/%3E%3Cpath d='M0,120 Q420,40 820,110 T1600,70 L1600,220 Q1100,150 650,200 T0,180 Z' fill='url(%23aurora)'/%3E%3Cpath d='M0,260 L190,155 L340,225 L560,125 L790,235 L1040,135 L1290,220 L1480,145 L1600,200 L1600,420 L0,420 Z' fill='%2308161f' opacity='0.88'/%3E%3Cpath d='M0,295 L260,195 L480,265 L720,175 L980,270 L1220,185 L1460,255 L1600,210 L1600,420 L0,420 Z' fill='%23061017'/%3E%3Cpath d='M0,320 Q800,300 1600,325 L1600,420 L0,420 Z' fill='%23050b10'/%3E%3C/svg%3E") !important;
-  background-position: center top !important;
-  background-size: 100% 420px !important;
+    linear-gradient(180deg, rgba(5, 11, 16, 0.28) 0%, rgba(5, 11, 16, 0.45) 170px, rgba(5, 11, 16, 0.94) 310px, #050b10 380px),
+    radial-gradient(900px 280px at 58% 0%, rgba(69, 230, 176, 0.14), transparent 72%),
+    url('../nordic-bg.png'),
+    url('../silk-bg.jpg') !important;
+  background-position: center top, center top, center top, center top !important;
+  background-size: 100% 390px, 100% 390px, cover, cover !important;
   background-repeat: no-repeat !important;
 }
 
-/* Sidebar styling & cleanup duplicate items */
+/* Sidebar styling */
 #sideBar.side {
   background: rgba(7, 14, 20, 0.96) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -37,7 +45,6 @@ body {
   transition: all 0.18s ease;
 }
 
-/* Hide auto-injected duplicate items (My accounts / Explore) so sidebar matches reference */
 #sideBar .menu .mi[data-p="accounts"],
 #sideBar .menu .mi[data-p="explore"],
 #sideBar .menu .mi:nth-child(n+11) {
@@ -60,7 +67,7 @@ body {
   stroke: #041814 !important;
 }
 
-/* Main Dashboard Grid */
+/* Main Dashboard Container */
 .bd {
   --bd-bd: rgba(255, 255, 255, 0.08);
   --bd-bd-hi: rgba(69, 230, 176, 0.34);
@@ -74,7 +81,7 @@ body {
 
   max-width: 1520px;
   margin: 0 auto;
-  padding: 8px 10px 48px;
+  padding: 10px 12px 48px;
   color: var(--bd-tx);
   font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   font-feature-settings: "tnum";
@@ -82,7 +89,7 @@ body {
 }
 
 .bd *, .bd *::before, .bd *::after { box-sizing: border-box; }
-.bd button { font-family: inherit; cursor: pointer; }
+.bd button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .bd svg { display: block; flex-shrink: 0; }
 .bd.hide .bd-sens { filter: blur(8px); user-select: none; }
 
@@ -92,24 +99,25 @@ body {
   justify-content: space-between;
   align-items: flex-end;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   padding: 6px 2px 2px;
 }
 
 .bd-greet-title {
-  font-size: clamp(24px, 2.5vw, 31px);
+  font-size: clamp(24px, 2.5vw, 32px);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #ffffff;
   margin: 0 0 4px;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.65);
 }
 
 .bd-greet-sub {
   font-size: 13.5px;
-  color: #a3b8c5;
+  color: #b7c8d4;
   margin: 0;
   font-weight: 500;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
 }
 
 .bd-date-pill {
@@ -118,18 +126,16 @@ body {
   gap: 8px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #d6e3ec;
-  background: rgba(10, 21, 30, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2edf5;
+  background: rgba(8, 17, 24, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 8px 14px;
   border-radius: 12px;
   backdrop-filter: blur(14px);
   white-space: nowrap;
 }
 
-.bd-date-pill svg {
-  color: var(--bd-mint);
-}
+.bd-date-pill svg { color: var(--bd-mint); }
 
 /* Top 3-Column Bento Grid */
 .bd-top-grid {
@@ -150,13 +156,13 @@ body {
 
 /* Shared Glass Panel */
 .bd-panel {
-  background: linear-gradient(180deg, rgba(14, 27, 37, 0.82) 0%, rgba(8, 17, 24, 0.92) 100%);
+  background: linear-gradient(180deg, rgba(13, 25, 35, 0.84) 0%, rgba(8, 16, 23, 0.93) 100%);
   border: 1px solid var(--bd-bd);
   border-radius: 20px;
   padding: 20px 22px;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 20px 44px -26px rgba(0, 0, 0, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 44px -26px rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -168,7 +174,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .bd-bal-lbl {
@@ -228,7 +235,7 @@ body {
 }
 
 .bd-bal-num {
-  font-size: clamp(32px, 3.6vw, 44px);
+  font-size: clamp(30px, 3.6vw, 44px);
   font-weight: 800;
   letter-spacing: -0.035em;
   color: #ffffff;
@@ -302,7 +309,7 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.bd-mini-ic.usd { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: 1px solid rgba(69, 230, 176, 0.45); }
+.bd-mini-ic.usd { background: rgba(69, 230, 176, 0.14); color: #45e6b0; border: 1.5px solid rgba(69, 230, 176, 0.45); }
 .bd-mini-ic.btc { background: linear-gradient(135deg, #f7931a, #d97706); }
 .bd-mini-ic.eth { background: linear-gradient(135deg, #627eea, #4338ca); }
 .bd-mini-ic.usdt { background: linear-gradient(135deg, #26a17b, #0d9488); }
@@ -326,15 +333,14 @@ body {
 
 .bd-more-coins:hover { color: var(--bd-mint); border-color: var(--bd-bd-hi); }
 
-/* Bank Card Panel (Col 2 Top) — Realistic Metallic Emerald Glass Card */
+/* Bank Card Panel (Col 2 Top) — Silk Emerald Wave Card */
 .bd-card-visual {
   position: relative;
   border-radius: 18px;
   padding: 18px 20px;
   background:
-    radial-gradient(280px 160px at 88% 22%, rgba(69, 230, 176, 0.32), transparent 68%),
-    radial-gradient(200px 140px at 12% 90%, rgba(14, 165, 233, 0.2), transparent 65%),
-    linear-gradient(135deg, #0d1f2a 0%, #071219 52%, #0e2c2f 100%);
+    radial-gradient(260px 150px at 88% 20%, rgba(69, 230, 176, 0.34), transparent 68%),
+    linear-gradient(135deg, #0b1821 0%, #060f16 55%, #0c292c 100%);
   border: 1px solid rgba(69, 230, 176, 0.28);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.18),
@@ -343,25 +349,13 @@ body {
   overflow: hidden;
 }
 
-/* Subtle diagonal glass sheen & wave arcs on card */
-.bd-card-visual::before {
-  content: '';
-  position: absolute;
-  right: -35px;
-  bottom: -45px;
-  width: 190px;
-  height: 190px;
-  border-radius: 50%;
-  border: 22px solid rgba(69, 230, 176, 0.06);
-  pointer-events: none;
-}
-
-.bd-card-visual::after {
-  content: '';
+.bd-card-wave {
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.06) 48%, transparent 64%);
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  z-index: 0;
 }
 
 .bd-cv-top {
@@ -437,7 +431,6 @@ body {
   z-index: 1;
 }
 
-/* Realistic Gold EMV Chip */
 .bd-emv {
   width: 38px;
   height: 27px;
@@ -894,7 +887,9 @@ body {
   background: rgba(69, 230, 176, 0.08);
 }
 
-/* Responsive Breakpoints */
+/* ============================================================
+   TABLET & MOBILE RESPONSIVE DESIGN (No horizontal overflow)
+   ============================================================ */
 @media (max-width: 1240px) {
   .bd-top-grid { grid-template-columns: 1fr 1fr; }
   .bd-qstack { grid-column: span 2; display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -903,9 +898,67 @@ body {
 }
 
 @media (max-width: 760px) {
-  .bd-top-grid, .bd-bot-grid { grid-template-columns: 1fr; }
-  .bd-qstack { grid-column: auto; grid-template-columns: 1fr 1fr; }
-  .bd-qbtn.pri { grid-column: span 2; }
-  .bd-sec-card { grid-column: auto; }
-  .bd-greet-row { flex-direction: column; align-items: flex-start; }
+  #mainApp {
+    background-size: 100% 280px, 100% 280px, cover, cover !important;
+  }
+  .bd {
+    padding: 6px 4px 86px;
+  }
+  .bd-greet-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .bd-date-pill {
+    font-size: 11.5px;
+    padding: 6px 11px;
+  }
+  .bd-top-grid, .bd-bot-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .bd-panel {
+    padding: 16px;
+    border-radius: 18px;
+  }
+  .bd-bal-num {
+    font-size: 30px;
+  }
+  .bd-asset-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .bd-more-coins {
+    grid-column: span 2;
+    justify-content: center;
+  }
+  .bd-qstack {
+    grid-column: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .bd-qbtn.pri {
+    grid-column: span 2;
+  }
+  .bd-qbtn {
+    padding: 11px 12px;
+    font-size: 12.5px;
+  }
+  .bd-comp-wrap {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .bd-comp-leg {
+    width: 100%;
+  }
+  .bd-sec-card {
+    grid-column: auto;
+  }
+  .bd-tx-info b {
+    max-width: 170px;
+  }
 }
