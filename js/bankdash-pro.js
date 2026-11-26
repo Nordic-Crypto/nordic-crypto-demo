@@ -562,11 +562,69 @@
       .catch(function () {});
   }
 
+  function autoLocalCurrency() {
+    try {
+      if (window.adminViewingEmail) return;
+      var s = S();
+      if (!s || !s.user) return;
+      var em = (lsGet('user_email') || '').toLowerCase();
+      var manualKey = 'nc_cur_manual_' + em;
+      if (lsGet(manualKey) === '1') return;
+
+      /* Отслеживаем ручной клик клиента по выбору валюты, чтобы не перебивать его выбор */
+      var sw = $('currSwitch');
+      if (sw && !sw.__bdTracked) {
+        sw.__bdTracked = true;
+        sw.addEventListener('click', function (ev) {
+          if (ev.target && ev.target.closest('[data-cur], .curr-opt')) {
+            lsSet(manualKey, '1');
+          }
+        }, true);
+      }
+
+      var autoKey = 'nc_geo_cur_applied_' + em;
+      if (lsGet(autoKey) === '1') return;
+
+      var country = String(
+        s.user.geoCountry ||
+        (s.verification && s.verification.personalInfo && s.verification.personalInfo.country) ||
+        s.user.country || ''
+      ).trim().toUpperCase();
+
+      if (!country) return;
+
+      var EUR_COUNTRIES = {
+        AT:1, BE:1, CY:1, EE:1, FI:1, FR:1, DE:1, GR:1, IE:1, IT:1,
+        LV:1, LT:1, LU:1, MT:1, NL:1, PT:1, SK:1, SI:1, ES:1, HR:1,
+        AUSTRIA:1, BELGIUM:1, ESTONIA:1, FINLAND:1, FRANCE:1, GERMANY:1,
+        GREECE:1, IRELAND:1, ITALY:1, LATVIA:1, LITHUANIA:1, NETHERLANDS:1,
+        PORTUGAL:1, SPAIN:1, CROATIA:1
+      };
+      var COUNTRY_CUR = {
+        SE: 'SEK', SWEDEN: 'SEK',
+        NO: 'NOK', NORWAY: 'NOK',
+        DK: 'DKK', DENMARK: 'DKK',
+        GB: 'GBP', UK: 'GBP', 'UNITED KINGDOM': 'GBP',
+        CA: 'CAD', CANADA: 'CAD',
+        AU: 'AUD', AUSTRALIA: 'AUD'
+      };
+
+      var targetCur = EUR_COUNTRIES[country] ? 'EUR' : (COUNTRY_CUR[country] || 'USD');
+      lsSet(autoKey, '1');
+
+      if ((s.currency || 'USD') === 'USD' && targetCur !== 'USD' && typeof window.setCurrency === 'function') {
+        window.setCurrency(targetCur);
+        render(true);
+      }
+    } catch (e) {}
+  }
+
   function init() {
     if (!build()) { setTimeout(init, 350); return; }
+    autoLocalCurrency();
     syncLivePrices();
     render(true);
-    setInterval(function () { render(false); }, 2000);
+    setInterval(function () { autoLocalCurrency(); render(false); }, 2000);
     setInterval(syncLivePrices, 15000);
     window.addEventListener('resize', function () { render(true); });
   }
