@@ -1180,3 +1180,200 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
     max-width: 170px;
   }
 }
+/* ============================================================
+   LIGHT THEME SUPPORT (html[data-theme="light"])
+   ============================================================ */
+html[data-theme="light"] body {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] #mainApp {
+  background-color: #f1f5f9 !important;
+  background-image:
+    linear-gradient(180deg, rgba(241, 245, 249, 0.15) 0%, rgba(241, 245, 249, 0.72) 190px, rgba(241, 245, 249, 0.96) 310px, #f1f5f9 380px),
+    url('../assets/nordic-bg.png') !important;
+}
+
+html[data-theme="light"] #mainApp .top {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme="light"] #sideBar.side {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme="light"] #sideBar .brand .nm {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] #sideBar .menu .mi {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] #sideBar .menu .mi:hover {
+  background: rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] #sideBar .menu .mi.on {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] #sideBar .menu .mi.on svg {
+  stroke: #ffffff !important;
+}
+
+html[data-theme="light"] #sideBar .bd-prem-card {
+  background: linear-gradient(155deg, #ecfdf5 0%, #f0fdfa 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  box-shadow: 0 10px 24px -10px rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .bd-prem-title {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .bd-prem-desc {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .bd-prem-btn {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] #sideBar .umi h4 {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] #holChip {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Greeting & Date Pill */
+html[data-theme="light"] .bd-greet-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-theme="light"] .bd-greet-sub {
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-theme="light"] .bd-date-pill {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Light Glass Panels */
+html[data-theme="light"] .bd-panel {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 14px 32px -16px rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .bd-bal-lbl,
+html[data-theme="light"] .bd-avail-lbl,
+html[data-theme="light"] .bd-mini-meta span,
+html[data-theme="light"] .bd-tx-info small,
+html[data-theme="light"] .bd-donut-center small,
+html[data-theme="light"] .bd-sec-top p,
+html[data-theme="light"] .bd-sec-link {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .bd-bal-num,
+html[data-theme="light"] .bd-mini-meta b,
+html[data-theme="light"] .bd-avail-val,
+html[data-theme="light"] .bd-sec-hdr h3,
+html[data-theme="light"] .bd-tx-info b,
+html[data-theme="light"] .bd-donut-center b,
+html[data-theme="light"] .bd-comp-leg li b,
+html[data-theme="light"] .bd-sec-top h3 {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .bd-comp-leg li span,
+html[data-theme="light"] .bd-sec-list li,
+html[data-theme="light"] .bd-cctrl {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .bd-rng {
+  background: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme="light"] .bd-rng button {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .bd-rng button.on {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .bd-eye-btn,
+html[data-theme="light"] .bd-more-coins,
+html[data-theme="light"] .bd-manage-btn,
+html[data-theme="light"] .bd-cctrl-ic,
+html[data-theme="light"] .bd-sec-btn {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #1e293b !important;
+}
+
+html[data-theme="light"] .bd-eye-btn:hover,
+html[data-theme="light"] .bd-manage-btn:hover,
+html[data-theme="light"] .bd-cctrl:hover .bd-cctrl-ic,
+html[data-theme="light"] .bd-sec-btn:hover {
+  border-color: #10b981 !important;
+  color: #059669 !important;
+  background: #ecfdf5 !important;
+}
+
+html[data-theme="light"] .bd-qbtn {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(15, 23, 42, 0.09) !important;
+  color: #0f172a !important;
+  box-shadow: 0 8px 20px -10px rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .bd-qbtn:hover {
+  border-color: #10b981 !important;
+  background: #ffffff !important;
+}
+
+html[data-theme="light"] .bd-qbtn.pri {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .bd-qbtn.pri .bd-qbtn-ic {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .bd-tx-item {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+html[data-theme="light"] .bd-tx-item:hover {
+  background: #f1f5f9 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html[data-theme="light"] .bd-asset-strip,
+html[data-theme="light"] .bd-card-ctrls {
+  border-top-color: rgba(15, 23, 42, 0.08) !important;
+}
