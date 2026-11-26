@@ -96,17 +96,76 @@ body:has(#mainApp[style*="flex"]) #holChip {
   cursor: pointer !important;
 }
 
-/* Hide desktop-only Premium Card & extra links in mobile bottom bar */
+/* Mobile Bottom Navigation Bar — Clean 5-Icon Grid, Solid Backdrop & No Clipping */
 @media (max-width: 900px) {
+  #sideBar.side {
+    background: #070f15 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.85) !important;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+  html[data-theme="light"] #sideBar.side {
+    background: #ffffff !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
+  }
+  #sideBar .brand,
   #sideBar .bd-prem-card,
   #sideBar .umi,
   #sideBar .menu .mi:nth-child(n+6) {
     display: none !important;
   }
-  #holChip {
-    left: auto !important;
+  #sideBar .menu {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+  #sideBar .menu .mi {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 7px 4px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+  }
+  #sideBar .menu .mi::before {
+    display: none !important;
+  }
+  #sideBar .menu .mi svg {
+    width: 19px !important;
+    height: 19px !important;
+    margin: 0 !important;
+  }
+  #sideBar .menu .mi .tx {
+    display: block !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  #chatToggle {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
     right: 14px !important;
-    bottom: calc(136px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+  #holChip {
+    left: 14px !important;
+    right: auto !important;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
     width: auto !important;
     padding: 6px 11px !important;
   }
