@@ -66,9 +66,9 @@
     return { usd: usd, btc: btcVal, eth: ethVal, usdt: usdtVal, others: othersVal, total: total };
   }
 
-  function build() {
+ function build() {
     var dash = $('dash');
-    if (!dash || !dash.querySelector('.nc3-dashboard')) return false;
+    if (!dash) return false;
     if ($('bd')) { B.built = true; return true; }
 
     var root = document.createElement('div');
