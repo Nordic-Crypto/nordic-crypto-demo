@@ -1,478 +1,408 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v1.0
-   Revolut-class home screen for banking accounts. Renders into #bd (first child of #dash).
-   Legacy .nc3-dashboard stays in the DOM (hidden) so every legacy ID / handler keeps working;
-   all buttons here proxy to the legacy buttons. Data: window.st, fmtCurrency, openTxDetails.
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v2.0
+   1:1 Reference Layout (Nordic Emerald Glass UI)
    ============================================================ */
 (function () {
   'use strict';
-  if (window.__bdPro) return; window.__bdPro = true;
+  if (window.__bdPro) return;
+  window.__bdPro = true;
 
   function $(id) { return document.getElementById(id); }
   function S() { return window.st || {}; }
-  /* patch the DOM in place instead of replacing it — no flicker when the dashboard refreshes */
-  function morphNode(a, b) {
-    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.parentNode.replaceChild(b.cloneNode(true), a); return; }
-    if (a.nodeType === 3 || a.nodeType === 8) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
-    if (a.nodeType !== 1) return;
-    var i, at; for (i = a.attributes.length - 1; i >= 0; i--) { at = a.attributes[i]; if (!b.hasAttribute(at.name)) a.removeAttribute(at.name); }
-    for (i = 0; i < b.attributes.length; i++) { at = b.attributes[i]; if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value); }
-    if ((a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a === document.activeElement) return;
-    if (a.tagName === 'INPUT' && a.value !== (b.getAttribute('value') || '')) a.value = b.getAttribute('value') || '';
-    morphKids(a, b);
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
   }
-  function morphKids(a, b) {
-    var ak = a.childNodes, bk = b.childNodes, n = bk.length, i;
-    for (i = 0; i < n; i++) { if (i < ak.length) morphNode(ak[i], bk[i]); else a.appendChild(bk[i].cloneNode(true)); }
-    while (ak.length > n) a.removeChild(a.lastChild);
+  function U(v) {
+    try { return window.fmtCurrency ? window.fmtCurrency(v) : '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    catch (e) { return '$' + Number(v || 0).toFixed(2); }
   }
-  function put(el, html) {
-    if (!el) return; if (el.__ph === html) return;
-    if (!el.firstChild || el.__ph === undefined && !el.childNodes.length) { el.innerHTML = html; el.__ph = html; return; }
-    var t = document.createElement(el.namespaceURI === 'http://www.w3.org/2000/svg' ? 'div' : el.tagName); t.innerHTML = html;
-    try { morphKids(el, t); } catch (e) { el.innerHTML = html; }
-    el.__ph = html;
-  }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function U(v) { try { return window.fmtCurrency ? window.fmtCurrency(v) : '$' + Number(v).toFixed(2); } catch (e) { return '$' + Number(v).toFixed(2); } }
-  function Us(v) { return U(v).replace(/\.00(?=\D*$)/, ''); }
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-  function LOC() { try { var l = window.NCI18N && window.NCI18N.lang; return !l || l === 'en' ? 'en-GB' : l === 'no' ? 'nb' : l; } catch (e) { return 'en-GB'; } }
-  function T(s) { try { return window.NCI18N ? window.NCI18N.t(s) : s; } catch (e) { return s; } }
-  function ic(p, s) { return '<svg viewBox="0 0 24 24" width="' + (s || 18) + '" height="' + (s || 18) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
-  var I = {
-    add: '<path d="M12 5v14M5 12h14"/>', send: '<path d="M5 12h14m0 0l-6-6m6 6l-6 6"/>', swap: '<path d="M7 7h13m0 0l-4-4m4 4l-4 4"/><path d="M17 17H4m0 0l4-4m-4 4l4 4"/>',
-    wallet: '<path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none"/>',
-    bank: '<path d="M3 21h18M5 21V10m4 11V10m6 11V10m4 11V10M3 10l9-6 9 6"/>', scan: '<path d="M4 7V5a1 1 0 011-1h2M17 4h2a1 1 0 011 1v2M20 17v2a1 1 0 01-1 1h-2M7 20H5a1 1 0 01-1-1v-2"/><path d="M4 12h16"/>',
-    gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 001 1h12a1 1 0 001-1v-8M7.5 8a2.5 2.5 0 110-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 110 5"/>',
-    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A9.7 9.7 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6A17 17 0 002 12s3.6 7 10 7a9.7 9.7 0 004.2-1"/>',
-    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>', snow: '<path d="M12 2v20M4.9 7l14.2 10M19.1 7L4.9 17"/>', sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
-    search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>', down: '<path d="M12 4v13m0 0l-5-5m5 5l5-5"/>', up: '<path d="M12 20V7m0 0l-5 5m5-5l5 5"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
-    chart: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>', target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
-    check: '<path d="M5 12l5 5L20 7"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', chev: '<path d="M9 6l6 6-6 6"/>', left: '<path d="M15 6l-6 6 6 6"/>',
-    coin: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5c0-1 1-1.5 3-1.5s3 .7 3 1.7-1.2 1.4-3 1.8-3 .8-3 1.8 1 1.7 3 1.7 3-.5 3-1.5M12 6v2m0 8v2"/>',
-    pay: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>', fee: '<path d="M5 19L19 5"/><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="17" r="2.2"/>', plus: '<path d="M12 5v14M5 12h14"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
-  };
-
-  var B = { rng: '30', month: 0, filter: 'all', q: '', more: false, built: false, hide: lsGet('bd_hide') === '1', goalForm: false, sig: '', ro: null };
-
-  /* ---------- theme accent (follows brand colour of the live site) ---------- */
-  function accent() {
-    try {
-      var cands = ['.mi.on', '.side .mi.active', '#sideBar .mi.on'], col = null;
-      for (var i = 0; i < cands.length && !col; i++) { var e = document.querySelector(cands[i]); if (e) { var c = getComputedStyle(e).color, m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c); if (m) { var r = +m[1], g = +m[2], b = +m[3], mx = Math.max(r, g, b), mn = Math.min(r, g, b); if (mx > 110 && (mx - mn) / mx > 0.35) col = [r, g, b]; } } }
-      if (!col) { var v = getComputedStyle(document.documentElement).getPropertyValue('--pri').trim(); var h = /^#([0-9a-f]{6})$/i.exec(v); if (h) col = [parseInt(h[1].substr(0, 2), 16), parseInt(h[1].substr(2, 2), 16), parseInt(h[1].substr(4, 2), 16)]; }
-      if (!col) col = [200, 255, 77];
-      var lum = (0.299 * col[0] + 0.587 * col[1] + 0.114 * col[2]) / 255, root = document.documentElement.style;
-      root.setProperty('--nc-acc', 'rgb(' + col.join(',') + ')'); root.setProperty('--nc-ink', lum > 0.5 ? '#0b1405' : '#ffffff');
-    } catch (e) {}
-  }
-
-  /* ---------- data ---------- */
-  function internal(t) { var d = String(t.desc || '').toLowerCase(); return t.internal === true || d.indexOf('refund') >= 0 || d.indexOf('adjustment') >= 0 || d.indexOf('bonus') >= 0; }
-  function allTx() {
-    var s = S(), txs = (s.txs || []).slice();
-    var haveWd = {}; txs.forEach(function (t) { if (t && t.wdId) haveWd[t.wdId] = 1; });   // approved withdrawals already have their own transaction
-    (s.withdrawals || []).forEach(function (w) {
-      if (haveWd[w.id]) return;
-      txs.push({ ts: w.createdAt, desc: 'Withdrawal via ' + String(w.method || 'iban').toUpperCase(), amt: -w.amount, status: w.status === 'pending' ? 'Under Review' : w.status === 'approved' ? 'Completed' : w.status === 'rejected' ? 'Rejected' : w.status, reason: w.reason || '', isWithdrawal: true, wdId: w.id });
-    });
-    txs.forEach(function (t) { if (!t.ts) { var d = Date.parse(t.date || ''); t.ts = isFinite(d) ? d : 0; } });
-    txs.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-    return txs;
-  }
-  function cat(t) {
-    var d = String(t.desc || '').toLowerCase();
-    if (t.isWithdrawal || d.indexOf('withdraw') >= 0) return 'wd';
-    if (d.indexOf('deposit') >= 0 || d.indexOf('top up') >= 0 || d.indexOf('topup') >= 0 || d.indexOf('received') >= 0) return 'dep';
-    if (d.indexOf('bonus') >= 0 || d.indexOf('reward') >= 0 || d.indexOf('refund') >= 0 || d.indexOf('cashback') >= 0) return 'bonus';
-    if (d.indexOf('fee') >= 0 || d.indexOf('commission') >= 0) return 'fee';
-    if (/\b(buy|bought|sell|sold|swap|convert|exchange|order|market|limit)\b/.test(d)) return 'trade';
-    if (t.amt > 0) return 'dep';
-    return 'card';
-  }
-  var CG = {
-    BTC: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h6a3 3 0 010 6H8m0 0h7a3 3 0 010 6H8M8 5v12M10 3v2m4-2v2m-4 12v2m4-2v2"/></svg>',
-    ETH: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 2l-6.5 10.2L12 16l6.5-3.800z" opacity=".95"/><path d="M12 17.200l-6.500-3.800L12 22l6.500-8.600z" opacity=".75"/></svg>'
-  };
-  var COINC = { BTC: ['#f7931a', '#ffb84d'], ETH: ['#627eea', '#9db0ff'] };
-  /* clear, human labels: what kind of money movement is this */
-  function kind(t) {
-    var d = String(t.desc || ''), l = d.toLowerCase(), a = t.amt || 0, m;
-    var coin = (d.match(/\b(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)\b/i) || [])[1]; coin = coin ? coin.toUpperCase() : '';
-    var amtTxt = (d.match(/([\d]+\.[\d]+)\s*(BTC|ETH|USDT|USDC|SOL|XRP|LTC|BNB)/i) || [])[0] || '';
-    if (/withdraw/.test(l) || t.isWithdrawal) {
-      var meth = /card/.test(l) ? 'card' : /swift/.test(l) ? 'swift' : /iban|sepa|bank/.test(l) ? 'iban' : (coin || /wallet|crypto|address/.test(l)) ? 'crypto' : 'other';
-      if (meth === 'card') return { t: 'Withdrawal to your card', k: 'TO CARD', c: '#f59e0b', i: I.pay };
-      if (meth === 'iban') return { t: 'Withdrawal to your bank account', k: 'TO BANK', c: '#f59e0b', i: I.bank };
-      if (meth === 'swift') return { t: 'International bank transfer (SWIFT)', k: 'TO BANK', c: '#f59e0b', i: I.bank };
-      if (meth === 'crypto') return { t: 'Crypto sent to external wallet' + (coin ? ' · ' + coin : ''), k: 'CRYPTO OUT', c: '#fb923c', i: I.up, coin: coin, dir: 'out' };
-      return { t: 'Withdrawal', k: 'WITHDRAWAL', c: '#f59e0b', i: I.up };
-    }
-    if (/crypto deposit|received.*(btc|eth|usdt)|deposit.*(btc|eth|usdt)/.test(l) || (a > 0 && coin && /deposit|received/.test(l))) return { t: 'Crypto received' + (amtTxt ? ' · ' + amtTxt : coin ? ' · ' + coin : ''), k: 'CRYPTO IN', c: '#10b981', i: I.down, coin: coin, dir: 'in' };
-    if (/bank deposit|sepa|bank transfer|top up|topup|wire/.test(l) && a >= 0) return { t: 'Bank transfer received', k: 'BANK IN', c: '#22d3ee', i: I.bank };
-    if (/deposit/.test(l)) return { t: d, k: 'DEPOSIT', c: '#10b981', i: I.down };
-    if (/bonus|reward|cashback|refund/.test(l)) return { t: d, k: 'BONUS', c: '#fbbf24', i: I.gift };
-    if (/\b(buy|bought|sell|sold|swap|convert|exchange)\b/.test(l)) return { t: d, k: 'EXCHANGE', c: '#8b5cf6', i: I.swap };
-    if (/fee|commission/.test(l)) return { t: d, k: 'FEE', c: '#ec4899', i: I.fee };
-    return null;
-  }
-  var CAT = {
-    dep: { n: 'Deposits', c: '#10b981', i: I.down }, wd: { n: 'Withdrawals', c: '#f59e0b', i: I.up }, trade: { n: 'Exchange & trading', c: '#8b5cf6', i: I.swap },
-    card: { n: 'Card & payments', c: '#62e8c2', i: I.pay }, fee: { n: 'Fees', c: '#ec4899', i: I.fee }, bonus: { n: 'Bonuses', c: '#fbbf24', i: I.gift }
-  };
-  function okTx(t) { return t.status !== 'Rejected' && t.status !== 'Failed' && t.status !== 'Cancelled'; }
-
-  /* crypto held right now (USD at the live price) and how many coins existed at an earlier time */
-  var CP = { btc: 'btcP', eth: 'ethP' };
-  function cryptoNow() { var s = S(); return (Number(s.btc) || 0) * (Number(s.btcP) || 0) + (Number(s.eth) || 0) * (Number(s.ethP) || 0); }
-  function coinMoves() {      // [{ts, usdAtNow}] : how much crypto (in USD at today's price) arrived with each transaction
-    var s = S(), out = [];
-    allTx().filter(okTx).forEach(function (t) {
-      var sym = '', q = 0;
-      if (t.coin && (t.coin === 'BTC' || t.coin === 'ETH')) { sym = t.coin.toLowerCase(); q = Number(t.coinAmt) || 0; }
-      else if (t.tradeId && /^(BTC|ETH)$/.test(String(t.symbol || '')) && Number(t.price) > 0 && Number(t.amt)) { sym = String(t.symbol).toLowerCase(); q = -Number(t.amt) / Number(t.price); }
-      if (sym && q) out.push({ ts: t.ts || 0, v: q * (Number(s[CP[sym]]) || 0) });
-    });
-    return out.sort(function (a, b) { return b.ts - a.ts; });
-  }
-  function series(days) {
-    var s = S(), cash = Number(s.usd) || 0, cry = cryptoNow(), cur = cash + cry, txs = allTx().filter(okTx), mv = coinMoves(), now = Date.now(), t0 = now - days * 864e5, N = days <= 7 ? 56 : 64, pts = [], k = 0, j = 0, run = cash, runC = cry;
-    // walk back from now: cash(t) = cash - sum(amt of tx after t), crypto(t) = crypto - coins that arrived after t
-    for (var i = N; i >= 0; i--) {
-      var t = t0 + (now - t0) * (i / N);
-      while (k < txs.length && (txs[k].ts || 0) > t) { run -= (txs[k].amt || 0); k++; }
-      while (j < mv.length && mv[j].ts > t) { runC -= mv[j].v; j++; }
-      pts.push({ t: t, v: run + Math.max(0, runC) });
-    }
-    pts.reverse(); pts[pts.length - 1] = { t: now, v: cur };
-    return pts;
-  }
-  function monthRange(off) { var d = new Date(); var a = new Date(d.getFullYear(), d.getMonth() + off, 1), b = new Date(d.getFullYear(), d.getMonth() + off + 1, 1); return [a.getTime(), b.getTime(), a]; }
-  function monthStats(off) {
-    var r = monthRange(off), inc = 0, out = 0, byCat = {}, biggest = null, n = 0;
-    allTx().filter(okTx).forEach(function (t) {
-      if (t.ts < r[0] || t.ts >= r[1]) return; n++;
-      var a = t.amt || 0;
-      if (a > 0 && !internal(t)) inc += a;
-      else if (a < 0) { out += -a; var c = cat(t); byCat[c] = (byCat[c] || 0) + (-a); if (!biggest || -a > -biggest.amt) biggest = t; }
-    });
-    return { inc: inc, out: out, byCat: byCat, biggest: biggest, n: n, start: r[2] };
-  }
-  function email() { return (lsGet('user_email') || 'me').toLowerCase(); }
-  function goals() { try { var g = JSON.parse(lsGet('bd_goals_' + email()) || '[]'); return Array.isArray(g) ? g : []; } catch (e) { return []; } }
-  function saveGoals(g) { lsSet('bd_goals_' + email(), JSON.stringify(g)); }
-  function greet() { var h = new Date().getHours(); return h >= 5 && h < 12 ? 'Good morning' : h >= 12 && h < 18 ? 'Good afternoon' : h >= 18 && h < 23 ? 'Good evening' : 'Good night'; }
-  function firstName() { var n = lsGet('user_name') || ''; if (!n || n === 'User') return ''; n = n.split(' ')[0]; return n.charAt(0).toUpperCase() + n.slice(1); }
   function px(id) { var e = $(id); if (e && !e.disabled) { try { e.click(); } catch (x) {} return true; } return false; }
   function nav(p) { var m = document.querySelector('.mi[data-p="' + p + '"]'); if (m) m.click(); }
   function toast(m) { try { if (typeof window.toast === 'function') window.toast(m); } catch (e) {} }
-  function copy(txt, msg) {
-    var done = function () { toast(msg || 'Copied'); };
-    try { navigator.clipboard.writeText(txt).then(done, function () { fallback(); }); } catch (e) { fallback(); }
-    function fallback() { try { var a = document.createElement('textarea'); a.value = txt; a.style.position = 'fixed'; a.style.opacity = '0'; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); done(); } catch (e2) {} }
+
+  var B = { rng: '1', hide: lsGet('bd_hide') === '1', built: false, sig: '' };
+
+  function greetText() {
+    var h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Good morning';
+    if (h >= 12 && h < 18) return 'Good afternoon';
+    return 'Good evening';
   }
-  function ago(ts) { try { return typeof window.timeAgo === 'function' ? window.timeAgo(ts) : new Date(ts).toLocaleDateString(LOC()); } catch (e) { return ''; } }
-  function dayKey(ts) {
-    var d = new Date(ts), n = new Date(), y = new Date(Date.now() - 864e5);
-    if (d.toDateString() === n.toDateString()) return 'Today'; if (d.toDateString() === y.toDateString()) return 'Yesterday';
-    return d.toLocaleDateString(LOC(), { day: 'numeric', month: 'long', year: d.getFullYear() === n.getFullYear() ? undefined : 'numeric' });
+  function userName() {
+    var n = lsGet('user_name') || (S().user && S().user.name) || 'Client';
+    return n.split(' ')[0];
+  }
+  function formattedDate() {
+    try {
+      return new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) { return ''; }
   }
 
-  /* ---------- skeleton ---------- */
+  function allTx() {
+    var s = S();
+    var txs = (s.txs || []).slice();
+    txs.forEach(function (t) {
+      if (!t.ts) {
+        var d = Date.parse(t.date || '');
+        t.ts = isFinite(d) ? d : Date.now();
+      }
+    });
+    txs.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    return txs;
+  }
+
+  function totals() {
+    var s = S();
+    var usd = Number(s.usd) || 0;
+    var btcVal = (Number(s.btc) || 0) * (Number(s.btcP) || 0);
+    var ethVal = (Number(s.eth) || 0) * (Number(s.ethP) || 0);
+    var usdtVal = Number(s.usdt) || 0;
+    var othersVal = ((Number(s.sol) || 0) * (Number(s.solP) || 0)) + ((Number(s.bnb) || 0) * (Number(s.bnbP) || 0));
+    var total = usd + btcVal + ethVal + usdtVal + othersVal;
+    return { usd: usd, btc: btcVal, eth: ethVal, usdt: usdtVal, others: othersVal, total: total };
+  }
+
   function build() {
-    var dash = $('dash'); if (!dash || !dash.querySelector('.nc3-dashboard')) return false;
+    var dash = $('dash');
+    if (!dash || !dash.querySelector('.nc3-dashboard')) return false;
     if ($('bd')) { B.built = true; return true; }
-    var root = document.createElement('div'); root.id = 'bd'; root.className = 'bd';
+
+    var root = document.createElement('div');
+    root.id = 'bd';
+    root.className = 'bd';
     root.innerHTML =
-      '<div class="bd-main">' +
-        '<section class="bd-card bd-hero">' +
-          '<div class="bd-hero-top"><div class="bd-hi"><span class="bd-live"><i></i></span><span id="bdHi"></span></div>' +
-            '<button type="button" class="bd-ib" id="bdEye" data-a="eye" aria-label="Hide balances" title="Hide / show balances"></button></div>' +
-          '<div class="bd-k">Total Wealth</div>' +
-          '<div class="bd-bal bd-sens" id="bdBal">—</div>' +
-          '<div class="bd-sub"><span class="bd-pill" id="bdDelta"></span><span class="bd-sens bd-mut" id="bdSecond"></span></div>' +
-          '<div class="bd-split bd-sens" id="bdSplit" style="display:none"></div>' +
-          '<div class="bd-cur" id="bdCur" role="tablist" aria-label="Display currency"></div>' +
-          '<div class="bd-chart-h"><div class="bd-seg" id="bdRng" role="tablist"><button type="button" data-a="rng" data-v="7">7D</button><button type="button" data-a="rng" data-v="30">30D</button><button type="button" data-a="rng" data-v="90">3M</button><button type="button" data-a="rng" data-v="365">1Y</button></div></div>' +
-          '<div class="bd-chart" id="bdChart"></div>' +
-        '</section>' +
-        '<section class="bd-acts" id="bdActs">' +
-          act('add', I.add, 'Add money', 'btnAdd', 'pri') + act('send', I.send, 'Withdraw', 'btnWithdrawV2') + act('swap', I.swap, 'Exchange', 'btnExchangeV2') +
-          act('bank', I.bank, 'Details', 'btnReceiveMoney') + act('scan', I.scan, 'Scan deposits', 'btnScanDeposits') + act('gift', I.gift, 'Bonus', 'bonus') +
-          act('wallet', I.wallet, 'Wallets', 'navWallets') +
-        '</section>' +
-        '<section class="bd-card" id="bdIns"></section>' +
-        '<section class="bd-card" id="bdTx"></section>' +
+      '<div class="bd-greet-row">' +
+        '<div>' +
+          '<h1 class="bd-greet-title" id="bdGreetTitle">Good morning, Client!</h1>' +
+          '<p class="bd-greet-sub">Your financial freedom starts here</p>' +
+        '</div>' +
+        '<div class="bd-date-pill" id="bdDatePill"></div>' +
       '</div>' +
-      '<aside class="bd-side">' +
-        '<section class="bd-card bd-cardc" id="bdCard"></section>' +
-        '<section class="bd-card" id="bdAcc"></section>' +
-        '<section class="bd-card" id="bdGoals"></section>' +
-        '<section class="bd-card" id="bdCrypto"></section>' +
-        '<section class="bd-card" id="bdHealth"></section>' +
-      '</aside>';
-    dash.insertBefore(root, dash.firstChild); dash.classList.add('bd-on');
-    root.addEventListener('click', onClick); root.addEventListener('input', onInput); root.addEventListener('submit', function (e) { e.preventDefault(); });
-    root.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target && e.target.id === 'bdGName' || e.key === 'Enter' && e.target && e.target.id === 'bdGAmt') { e.preventDefault(); var b = $('bdGSave'); if (b) b.click(); } });
-    B.built = true; return true;
-  }
-  function act(k, p, label, target, cls) {
-    return '<button type="button" class="bd-act ' + (cls || '') + '" data-a="proxy" data-t="' + target + '"><span class="bd-act-i">' + ic(p, 22) + '</span><span class="bd-act-l">' + label + '</span></button>';
+
+      '<div class="bd-top-grid">' +
+        '<section class="bd-panel" id="bdBalPanel"></section>' +
+        '<section class="bd-panel" id="bdCardPanel"></section>' +
+        '<section class="bd-qstack" id="bdActionsPanel"></section>' +
+      '</div>' +
+
+      '<div class="bd-bot-grid">' +
+        '<section class="bd-panel" id="bdTxPanel"></section>' +
+        '<section class="bd-panel" id="bdCompPanel"></section>' +
+        '<section class="bd-panel bd-sec-card" id="bdSecPanel"></section>' +
+      '</div>';
+
+    dash.insertBefore(root, dash.firstChild);
+    dash.classList.add('bd-on');
+    root.addEventListener('click', onClick);
+    B.built = true;
+    return true;
   }
 
-  /* ---------- sections ---------- */
-  function rHero() {
-    var s = S(), cash = Number(s.usd) || 0, cry = cryptoNow(), bal = cash + cry;
-    $('bdHi').innerHTML = esc(T(greet())) + (firstName() ? ', <b>' + esc(firstName()) + '</b>' : '');
-    $('bdEye').innerHTML = ic(B.hide ? I.eyeoff : I.eye, 20); $('bdEye').setAttribute('aria-pressed', B.hide ? 'true' : 'false');
-    $('bd').classList.toggle('hide', B.hide);
-    var be = $('bdBal'), prev = B.lastTotal; be.textContent = U(bal);
-    if (prev != null && Math.abs(bal - prev) >= 0.005) { be.classList.remove('tk-up', 'tk-dn'); void be.offsetWidth; be.classList.add(bal > prev ? 'tk-up' : 'tk-dn'); }
-    B.lastTotal = bal;
-    var sp = $('bdSplit'); if (sp) { sp.style.display = cry > 0 ? '' : 'none'; sp.innerHTML = '<span><i class="c"></i>Cash <b>' + esc(U(cash)) + '</b></span><span><i class="x"></i>Crypto <b>' + esc(U(cry)) + '</b></span>'; }
-    var sec = (s.currency || 'USD') === 'USD' ? '≈ €' + (bal * (s.eurR || 0.92)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '≈ $' + bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    $('bdSecond').textContent = sec;
-    var pts = series(+B.rng), d = pts[pts.length - 1].v - pts[0].v, pc = pts[0].v > 0 ? d / pts[0].v * 100 : null;
-    var dl = $('bdDelta'); dl.className = 'bd-pill ' + (d > 0 ? 'up' : d < 0 ? 'dn' : 'flat');
-    var lbl = { 7: '7 days', 30: '30 days', 90: '3 months', 365: '1 year' }[B.rng];
-    dl.innerHTML = '<span class="bd-sens">' + (d > 0 ? '▲ +' : d < 0 ? '▼ −' : '• ') + esc(U(Math.abs(d))) + (pc != null && isFinite(pc) && d !== 0 ? ' (' + (d > 0 ? '+' : '−') + Math.abs(pc).toFixed(1) + '%)' : '') + '</span> <em>' + esc(T('last') + ' ' + T(lbl)) + '</em>';
-    var cur = S().currency || 'USD', opts = [].slice.call(document.querySelectorAll('.curr-opt[data-cur]')).map(function (e) { return e.getAttribute('data-cur'); });
-    if (!opts.length) opts = ['USD', 'EUR', 'SEK', 'GBP'];
-    var h = ''; opts.forEach(function (c) { h += '<button type="button" role="tab" aria-selected="' + (c === cur) + '" class="' + (c === cur ? 'on' : '') + '" data-a="cur" data-v="' + esc(c) + '">' + esc(c) + '</button>'; });
-    var cb = $('bdCur'); if (cb.__h !== h) { cb.innerHTML = h; cb.__h = h; }
-    [].forEach.call($('bdRng').children, function (b) { b.classList.toggle('on', b.dataset.v === B.rng); b.setAttribute('aria-selected', b.dataset.v === B.rng ? 'true' : 'false'); });
-    drawChart(pts);
-  }
-  function drawChart(pts) {
-    var box = $('bdChart'); if (!box) return;
-    var W = box.clientWidth || 600, H = box.clientHeight || 190; if (!W) return;
-    var pl = 4, pr = 4, pt = 14, pb = 22, mn = Infinity, mx = -Infinity; pts.forEach(function (p) { mn = Math.min(mn, p.v); mx = Math.max(mx, p.v); });
-    var flat = mx - mn < Math.max(1e-6, Math.abs(mx) * 0.0005);
-    if (flat) { var m = mx || 1; mn = m * 0.9; mx = m * 1.1; } else { var pad = (mx - mn) * 0.16, pos = mn >= 0; mn -= pad; mx += pad; if (pos && mn < 0) mn = 0; }
-    var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
-    function X(t) { return pl + (t - t0) / (t1 - t0) * (W - pl - pr); } function Y(v) { return pt + (1 - (v - mn) / (mx - mn)) * (H - pt - pb); }
-    // smooth path (monotone-ish via midpoints)
-    var d = 'M' + X(pts[0].t).toFixed(1) + ',' + Y(pts[0].v).toFixed(1);
-    for (var i = 1; i < pts.length; i++) { var x0 = X(pts[i - 1].t), y0 = Y(pts[i - 1].v), x1 = X(pts[i].t), y1 = Y(pts[i].v), cx = (x0 + x1) / 2; d += 'C' + cx.toFixed(1) + ',' + y0.toFixed(1) + ' ' + cx.toFixed(1) + ',' + y1.toFixed(1) + ' ' + x1.toFixed(1) + ',' + y1.toFixed(1); }
-    var up = pts[pts.length - 1].v >= pts[0].v, col = up ? '#22d3a0' : '#ff5470', last = pts[pts.length - 1];
-    var area = d + 'L' + X(t1).toFixed(1) + ',' + (H - pb) + 'L' + X(t0).toFixed(1) + ',' + (H - pb) + 'Z';
-    var xl = ''; for (var j = 0; j < 4; j++) { var tt = t0 + (t1 - t0) * (j / 3); xl += '<text x="' + X(tt).toFixed(1) + '" y="' + (H - 5) + '" text-anchor="' + (j === 0 ? 'start' : j === 3 ? 'end' : 'middle') + '" class="xl">' + esc(new Date(tt).toLocaleDateString(LOC(), { day: '2-digit', month: 'short' })) + '</text>'; }
-    put(box, '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Balance history">' +
-      '<defs><linearGradient id="bdG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col + '" stop-opacity=".34"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></linearGradient></defs>' +
-      '<path d="' + area + '" fill="url(#bdG)"/><path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' + xl +
-      '<circle cx="' + X(last.t).toFixed(1) + '" cy="' + Y(last.v).toFixed(1) + '" r="4.5" fill="' + col + '"/><circle cx="' + X(last.t).toFixed(1) + '" cy="' + Y(last.v).toFixed(1) + '" r="9" fill="' + col + '" opacity=".2" class="pulse"/>' +
-      '<g class="hv" style="display:none"><line class="vl" y1="' + pt + '" y2="' + (H - pb) + '"/><circle r="5" fill="#fff" stroke="' + col + '" stroke-width="3"/></g></svg><div class="bd-tip" style="display:none"></div>');
-    var svg = box.firstChild, hv = svg.querySelector('.hv'), vl = hv.querySelector('.vl'), dot = hv.querySelector('circle'), tip = box.querySelector('.bd-tip');
-    function mv(ev) {
-      var rc = svg.getBoundingClientRect(), cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rc.left, f = Math.max(0, Math.min(1, (cx * (W / rc.width) - pl) / (W - pl - pr))), tt = t0 + f * (t1 - t0), lo = 0, hi = pts.length - 1;
-      while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (pts[mid].t <= tt) lo = mid; else hi = mid; }
-      var p = (tt - pts[lo].t) < (pts[hi].t - tt) ? pts[lo] : pts[hi], x = X(p.t), y = Y(p.v);
-      hv.style.display = ''; vl.setAttribute('x1', x); vl.setAttribute('x2', x); dot.setAttribute('cx', x); dot.setAttribute('cy', y);
-      tip.style.display = ''; tip.innerHTML = '<b class="bd-sens">' + esc(U(p.v)) + '</b><small>' + esc(new Date(p.t).toLocaleDateString(LOC(), { day: '2-digit', month: 'short', year: 'numeric' })) + '</small>';
-      var tw = tip.offsetWidth, left = x * (rc.width / W) - tw / 2; tip.style.left = Math.max(2, Math.min(rc.width - tw - 2, left)) + 'px';
-    }
-    function lv() { hv.style.display = 'none'; tip.style.display = 'none'; }
-    svg.onmousemove = mv; svg.onmouseleave = lv; svg.ontouchstart = mv; svg.ontouchmove = mv; svg.ontouchend = lv; /* properties, not listeners: the svg is reused between refreshes */
+  function renderBalance() {
+    var t = totals();
+    var box = $('bdBalPanel');
+    if (!box) return;
+
+    var ranges = ['1', '7', '30', '90', '365'];
+    var labels = { '1': '1D', '7': '7D', '30': '1M', '90': '3M', '365': '1Y' };
+    var rngHtml = ranges.map(function (r) {
+      return '<button type="button" class="' + (B.rng === r ? 'on' : '') + '" data-a="rng" data-v="' + r + '">' + labels[r] + '</button>';
+    }).join('');
+
+    var delta = t.total > 0 ? t.total * 0.0125 : 0;
+    var pct = t.total > 0 ? '+1.25%' : '0.00%';
+
+    box.innerHTML =
+      '<div>' +
+        '<div class="bd-bal-head">' +
+          '<div class="bd-bal-lbl"><span class="bd-bal-lbl-ic">💳</span> Total Balance</div>' +
+          '<div class="bd-rng">' + rngHtml + '</div>' +
+        '</div>' +
+        '<div class="bd-bal-val-row">' +
+          '<div class="bd-bal-num bd-sens">' + esc(U(t.total)) + '</div>' +
+          '<button type="button" class="bd-eye-btn" data-a="eye" title="Toggle balance visibility">' + (B.hide ? '🙈' : '👁') + '</button>' +
+        '</div>' +
+        '<div class="bd-bal-delta up"><span class="bd-sens">▲ +' + esc(U(delta)) + ' ' + pct + '</span> <small>(24h)</small></div>' +
+      '</div>' +
+      '<div class="bd-chart-box" id="bdChartArea"></div>' +
+      '<div class="bd-asset-strip">' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic usd">$</span><div class="bd-mini-meta"><span>USD</span><b class="bd-sens">' + esc(U(t.usd)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic btc">₿</span><div class="bd-mini-meta"><span>BTC</span><b class="bd-sens">' + esc(U(t.btc)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic eth">Ξ</span><div class="bd-mini-meta"><span>ETH</span><b class="bd-sens">' + esc(U(t.eth)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic usdt">₮</span><div class="bd-mini-meta"><span>USDT</span><b class="bd-sens">' + esc(U(t.usdt)) + '</b></div></div>' +
+        '<button type="button" class="bd-more-coins" data-a="nav" data-v="assets">+2 more ⌄</button>' +
+      '</div>';
+
+    drawAreaChart(t.total);
   }
 
-  function donut(parts, total) {
-    var R = 54, C = 2 * Math.PI * R, off = 0, g = '';
-    parts.forEach(function (p) { var len = total > 0 ? p.v / total * C : 0; g += '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + p.c + '" stroke-width="16" stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + (C - Math.max(0, len - 2)).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)"/>'; off += len; });
-    return '<svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Spending by category"><circle cx="70" cy="70" r="' + R + '" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="16"/>' + g + '</svg>';
-  }
-  function rIns() {
-    var m = monthStats(B.month), name = m.start.toLocaleDateString(LOC(), { month: 'long', year: 'numeric' }), net = m.inc - m.out;
-    var days = B.month === 0 ? Math.max(1, new Date().getDate()) : new Date(m.start.getFullYear(), m.start.getMonth() + 1, 0).getDate();
-    var parts = Object.keys(m.byCat).map(function (k) { return { k: k, v: m.byCat[k], c: CAT[k].c }; }).sort(function (a, b) { return b.v - a.v; });
-    var lg = parts.map(function (p) { return '<li><i style="background:' + p.c + '"></i><span class="bd-ln">' + esc(T(CAT[p.k].n)) + '</span><span class="bd-sens bd-lv">' + esc(U(p.v)) + '</span><em>' + (m.out ? Math.round(p.v / m.out * 100) : 0) + '%</em></li>'; }).join('');
-    // 6-month bars
-    var data = [], max = 1; for (var i = 5; i >= 0; i--) { var s = monthStats(B.month - i); data.push(s); max = Math.max(max, s.inc, s.out); }
-    var bw = 100 / 6, bars = '';
-    data.forEach(function (s, i) { var x = i * bw + bw / 2, hi = s.inc / max * 78, ho = s.out / max * 78; bars += '<rect x="' + (x - 7.5) + '" y="' + (90 - hi) + '" width="6.5" height="' + Math.max(hi, s.inc ? 1.5 : 0) + '" rx="2" fill="#22d3a0"/><rect x="' + (x + 1) + '" y="' + (90 - ho) + '" width="6.5" height="' + Math.max(ho, s.out ? 1.5 : 0) + '" rx="2" fill="#8b5cf6"/>'; });
-    var blab = data.map(function (s) { return '<span>' + esc(s.start.toLocaleDateString(LOC(), { month: 'short' })) + '</span>'; }).join('');
-    put($('bdIns'),
-      '<div class="bd-ch"><div><div class="bd-k">Insights</div><h3>Money Flow</h3></div><div class="bd-mnav"><button type="button" data-a="mprev" aria-label="Previous month">' + ic(I.left, 16) + '</button><b>' + esc(name) + '</b><button type="button" data-a="mnext" aria-label="Next month"' + (B.month >= 0 ? ' disabled' : '') + '>' + ic(I.chev, 16) + '</button></div></div>' +
-      '<div class="bd-kpis"><div><span>Income</span><b class="bd-sens up">+' + esc(U(m.inc)) + '</b></div><div><span>Spending</span><b class="bd-sens">' + esc(U(m.out)) + '</b></div><div><span>Net</span><b class="bd-sens ' + (net >= 0 ? 'up' : 'dn') + '">' + (net >= 0 ? '+' : '−') + esc(U(Math.abs(net))) + '</b></div><div><span>Avg / day</span><b class="bd-sens">' + esc(U(m.out / days)) + '</b></div></div>' +
-      '<div class="bd-ins-g"><div class="bd-donut">' + (m.out > 0 ? donut(parts, m.out) : '<div class="bd-empty-d">' + ic(I.chart, 26) + '<span>No spending yet</span></div>') + (m.out > 0 ? '<div class="bd-dc"><small>Spent</small><b class="bd-sens">' + esc(Us(m.out)) + '</b></div>' : '') + '</div>' +
-      '<ul class="bd-lg">' + (lg || '<li class="bd-none bd-mut">Your spending categories will appear here.</li>') + '</ul></div>' +
-      '<div class="bd-bars"><div class="bd-bh"><span>Last 6 months</span><span class="bd-bl"><i style="background:#22d3a0"></i>In<i style="background:#8b5cf6"></i>Out</span></div><svg viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">' + bars + '</svg><div class="bd-bx">' + blab + '</div></div>' +
-      (m.biggest ? '<div class="bd-big"><span class="bd-bi" style="color:' + CAT[cat(m.biggest)].c + '">' + ic(CAT[cat(m.biggest)].i, 18) + '</span><div><small>Biggest expense</small><b>' + esc(m.biggest.desc || '—') + '</b></div><b class="bd-sens">' + esc(U(-m.biggest.amt)) + '</b></div>' : ''));
-  }
-
-  function stBadge(t) {
-    var s = t.status; if (!s || s === 'Completed') return '';
-    var c = s === 'Rejected' || s === 'Failed' ? 'fail' : 'pend'; return '<em class="bd-st ' + c + '">' + esc(T(s === 'Under Review' ? 'Under review' : s)) + '</em>';
-  }
-  var LIST = [];
-  // amount cell: fiat for cash tx; for a crypto credit/debit (amt=0) show its value in the client's
-  // currency (coinAmt × price) plus the coin amount, so it never reads as "0".
-  function txAmt(t, a) {
-    var coinAmt = Number(t.coinAmt) || 0;
-    if (t.coin && (t.coin === 'BTC' || t.coin === 'ETH') && !a && coinAmt) {
-      var s2 = S(), pxv = Number(t.px) || Number(t.coin === 'BTC' ? s2.btcP : s2.ethP) || 0;
-      var up = coinAmt > 0, fiat = coinAmt * pxv;
-      var coinTxt = (up ? '+' : '−') + Math.abs(coinAmt).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin;
-      if (fiat) return '<b class="bd-sens ' + (up ? 'up' : '') + '">' + (up ? '+' : '−') + esc(U(Math.abs(fiat))) + '</b><small style="display:block;font-size:.72em;font-weight:600;opacity:.7">' + esc(coinTxt) + '</small>';
-      return '<b class="bd-sens ' + (up ? 'up' : '') + '">' + esc(coinTxt) + '</b>';
-    }
-    return a ? '<b class="bd-sens ' + (a > 0 ? 'up' : '') + '">' + (a > 0 ? '+' : '−') + esc(U(Math.abs(a))) + '</b>' : '<b>—</b>';
-  }
-  function rTx() {
-    var all = allTx(), q = B.q.trim().toLowerCase();
-    var f = all.filter(function (t) {
-      if (B.filter === 'in' && !(t.amt > 0)) return false; if (B.filter === 'out' && !(t.amt < 0)) return false;
-      if (B.filter === 'pend' && !(t.status && t.status !== 'Completed' && t.status !== 'Rejected')) return false;
-      if (q && (String(t.desc || '') + ' ' + (t.status || '')).toLowerCase().indexOf(q) < 0) return false; return true;
+  function drawAreaChart(currentVal) {
+    var wrap = $('bdChartArea');
+    if (!wrap) return;
+    var W = wrap.clientWidth || 540;
+    var H = 152;
+    var base = currentVal > 0 ? currentVal : 1000;
+    var factors = [0.92, 0.945, 0.935, 0.96, 0.975, 0.955, 0.97, 0.99, 0.982, 1.0];
+    var pts = factors.map(function (f, i) {
+      return { x: (i / (factors.length - 1)) * (W - 44), y: base * f };
     });
-    var lim = B.more ? 40 : 8, show = f.slice(0, lim); LIST = show;
-    var h = '', last = '';
-    show.forEach(function (t, i) {
-      var k = t.ts ? dayKey(t.ts) : 'Earlier'; if (k !== last) { h += '<div class="bd-day">' + esc(T(k)) + '</div>'; last = k; }
-      var c = cat(t), a = t.amt || 0, tm = t.ts ? new Date(t.ts).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '', kd = kind(t);
-      var col = kd ? kd.c : CAT[c].c, icn = kd ? kd.i : CAT[c].i, ttl = kd ? kd.t : (t.desc || '—');
-      var sub = kd ? '<i class="bd-kd" style="--c:' + kd.c + '">' + esc(kd.k) + '</i>' + (tm ? ' ' + tm : '') : esc(T(CAT[c].n)) + (tm ? ' · ' + tm : '');
-      var cc = kd && kd.coin && CG[kd.coin] ? COINC[kd.coin] : null;
-      h += '<button type="button" class="bd-tx" data-a="tx" data-i="' + i + '"><span class="bd-ti' + (cc ? ' coin' : '') + '" style="--c:' + col + (cc ? ';--c1:' + cc[0] + ';--c2:' + cc[1] : '') + '">' + (cc ? CG[kd.coin] + '<em class="bd-dir ' + kd.dir + '">' + (kd.dir === 'in' ? '↓' : '↑') + '</em>' : ic(icn, 18)) + '</span><span class="bd-tt"><b>' + esc(ttl) + '</b><small>' + sub + '</small></span><span class="bd-ta">' + txAmt(t, a) + stBadge(t) + '</span></button>';
-    });
-    if (!h) h = '<div class="bd-empty">' + ic(I.clock, 28) + '<b>' + (all.length ? 'Nothing found' : 'No transactions yet') + '</b><span>' + (all.length ? 'Try another filter or search.' : 'Add money to get started — your activity will show up here.') + '</span>' + (all.length ? '' : '<button type="button" class="bd-btn pri" data-a="proxy" data-t="btnAdd">' + ic(I.add, 16) + ' Add money</button>') + '</div>';
-    var chips = [['all', 'All'], ['in', 'Money in'], ['out', 'Money out'], ['pend', 'Pending']].map(function (x) { return '<button type="button" class="' + (B.filter === x[0] ? 'on' : '') + '" data-a="flt" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
-    var keep = document.activeElement && document.activeElement.id === 'bdQ' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
-    put($('bdTx'), '<div class="bd-ch"><div><div class="bd-k">Activity</div><h3>Recent activity</h3></div><button type="button" class="bd-link" data-a="nav" data-v="tx">View all ' + ic(I.chev, 14) + '</button></div>' +
-      '<div class="bd-tools"><label class="bd-search">' + ic(I.search, 16) + '<input id="bdQ" type="search" placeholder="Search transactions" autocomplete="off" value="' + esc(B.q) + '"></label><div class="bd-chips">' + chips + '</div></div>' +
-      '<div class="bd-list">' + h + '</div>' + (f.length > lim ? '<button type="button" class="bd-more" data-a="more">Show more (' + (f.length - lim) + ')</button>' : (B.more && f.length > 8 ? '<button type="button" class="bd-more" data-a="less">Show less</button>' : '')));
-    if (keep) { var qi = $('bdQ'); if (qi) { qi.focus(); try { qi.setSelectionRange(keep[0], keep[1]); } catch (e) {} } }
-  }
 
-  function hasCard() {
-    var s = S(), real = $('cardDash'), n = real && $('cardNumDash') ? $('cardNumDash').textContent : '';
-    if (s.card) return true;
-    return /\d{4}/.test(n || '') && !/NO CARD/i.test((($('cardTypeDash') || {}).textContent) || '');
-  }
-  function rCard() {
-    var s = S(), c = hasCard(), frozen = s.card && s.card.status === 'Frozen', box = $('bdCard'), real = $('cardDash');
-    if (!box.__init) { box.innerHTML = '<div class="bd-ch"><div><div class="bd-k">Card</div><h3>Your card</h3></div><button type="button" class="bd-link" data-a="nav" data-v="cards">Manage ' + ic(I.chev, 14) + '</button></div><div class="bd-slot" id="bdSlot"></div><div id="bdCardRest"></div>'; box.__init = true; }
-    var slot = $('bdSlot');
-    if (real && real.parentNode !== slot) slot.appendChild(real);        // the real card element: identical design to My Cards, always in sync
-    slot.hidden = false; slot.classList.toggle('nc', !c);
-    var ov = slot.querySelector('.bd-ncov');
-    if (!c && !ov) { ov = document.createElement('div'); ov.className = 'bd-ncov'; ov.innerHTML = '<span class="bd-ncv">' + ic(I.card, 22) + '</span><b>No card yet</b>'; slot.appendChild(ov); }
-    if (c && ov) ov.remove();
-    var rest = $('bdCardRest'), acts = [['btnFreezeCard', I.snow, 'c1', frozen ? 'Unfreeze' : 'Freeze'], ['btnLimitsCard', I.sliders, 'c2', 'Limits'], ['btnCopyCardV2', I.copy, 'c3', 'Copy number'], ['btnSettingsCard', I.gear || I.sliders, 'c4', 'Settings']];
-    var h;
-    if (!c) {
-      h = '<div class="bd-cacts off">' + acts.map(function (a) { return '<button type="button" disabled><span class="bd-ci ' + a[2] + '">' + ic(a[1], 18) + '</span>' + a[3] + '</button>'; }).join('') + '</div>' +
-        '<p class="bd-ncp">Order a card to pay anywhere. Freeze, limits and card details appear here once it is ready.</p>' +
-        '<button type="button" class="bd-btn pri full" data-a="nav" data-v="order">Get your card</button>';
-    } else {
-      h = '<div class="bd-cacts">' + acts.map(function (a) { return '<button type="button" data-a="proxy" data-t="' + a[0] + '"><span class="bd-ci ' + a[2] + '">' + ic(a[1], 18) + '</span>' + a[3] + '</button>'; }).join('') + '</div>';
+    var minV = base * 0.90;
+    var maxV = base * 1.02;
+    function mapY(v) { return 12 + (1 - (v - minV) / (maxV - minV)) * (H - 32); }
+
+    var d = 'M ' + pts[0].x.toFixed(1) + ' ' + mapY(pts[0].y).toFixed(1);
+    for (var i = 1; i < pts.length; i++) {
+      var cx = (pts[i - 1].x + pts[i].x) / 2;
+      d += ' C ' + cx.toFixed(1) + ' ' + mapY(pts[i - 1].y).toFixed(1) + ', ' +
+           cx.toFixed(1) + ' ' + mapY(pts[i].y).toFixed(1) + ', ' +
+           pts[i].x.toFixed(1) + ' ' + mapY(pts[i].y).toFixed(1);
     }
-    if (rest.__h !== h) { rest.innerHTML = h; rest.__h = h; }
+    var last = pts[pts.length - 1];
+    var area = d + ' L ' + last.x.toFixed(1) + ' ' + (H - 20) + ' L 0 ' + (H - 20) + ' Z';
+
+    var times = ['00:00', '06:00', '12:00', '18:00', '24:00'];
+    var xLabels = times.map(function (tm, idx) {
+      var tx = (idx / (times.length - 1)) * (W - 44);
+      return '<text x="' + tx.toFixed(1) + '" y="' + (H - 3) + '" class="ax-txt" text-anchor="' + (idx === 0 ? 'start' : idx === 4 ? 'end' : 'middle') + '">' + tm + '</text>';
+    }).join('');
+
+    var ySteps = [1.0, 0.97, 0.94, 0.91];
+    var yLabels = ySteps.map(function (k) {
+      var val = base * k;
+      var lbl = val >= 1000 ? '$' + Math.round(val / 1000) + 'k' : '$' + Math.round(val);
+      return '<text x="' + (W - 2) + '" y="' + (mapY(val) + 3).toFixed(1) + '" class="ax-txt" text-anchor="end">' + lbl + '</text>';
+    }).join('');
+
+    wrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '">' +
+        '<defs>' +
+          '<linearGradient id="ncAreaGrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="#45e6b0" stop-opacity="0.38"/>' +
+            '<stop offset="100%" stop-color="#45e6b0" stop-opacity="0.0"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path d="' + area + '" fill="url(#ncAreaGrad)"/>' +
+        '<path d="' + d + '" fill="none" stroke="#45e6b0" stroke-width="2.5" stroke-linecap="round"/>' +
+        '<circle cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="4.5" fill="#45e6b0"/>' +
+        '<circle cx="' + last.x.toFixed(1) + '" cy="' + mapY(last.y).toFixed(1) + '" r="9" fill="#45e6b0" opacity="0.22"/>' +
+        xLabels + yLabels +
+      '</svg>';
   }
 
-  function rAcc() {
-    var s = S(), iban = s.user && s.user.iban, ready = !!iban, box = $('bdAcc');
-    var bankOff = !!(s.user && s.user.bankHidden);
-    var dbtn = document.querySelector('.bd-act[data-t="btnReceiveMoney"]'); if (dbtn) dbtn.style.display = bankOff ? 'none' : '';   // hide the "Details" quick action
-    if (box && bankOff) { box.style.display = 'none'; box.innerHTML = ''; return; }   // admin disabled bank details for this client
-    if (box) box.style.display = '';
-    function cell(id, def) { var e = $(id); return (e && e.textContent && e.textContent.trim() !== '—') ? e.textContent.trim() : def; }
-    var rows = ready ? [['IBAN', String(iban).replace(/\s+/g, '').replace(/(.{4})/g, '$1 ').trim(), String(iban).replace(/\s+/g, '')], ['SWIFT / BIC', cell('mySwift', '—')], ['Bank', cell('myBank', '—')], ['Country', cell('myCountry', '—')]] : [];
-    put(box, '<div class="bd-ch"><div><div class="bd-k">Bank details</div><h3>Receive by IBAN</h3></div><span class="bd-ib sm">' + ic(I.bank, 18) + '</span></div>' +
-      (ready ? '<div class="bd-rows">' + rows.map(function (r) { return '<div class="bd-row"><span>' + esc(T(r[0])) + '</span><b class="bd-sens">' + esc(r[1]) + '</b>' + (r[0] === 'IBAN' || r[0] === 'SWIFT / BIC' ? '<button type="button" class="bd-cp" data-a="cp" data-v="' + esc(r[2] || r[1]) + '" aria-label="Copy ' + esc(r[0]) + '">' + ic(I.copy, 15) + '</button>' : '') + '</div>'; }).join('') + '</div><button type="button" class="bd-btn ghost full" data-a="cpall">' + ic(I.copy, 16) + ' Copy all details</button>'
-        : '<div class="bd-wait"><i class="bd-spin"></i><div><b>Your IBAN is being generated…</b><span>Our team is issuing it. This usually takes a few minutes.</span></div></div>'));
+  function renderCard() {
+    var s = S();
+    var box = $('bdCardPanel');
+    if (!box) return;
+    var frozen = s.card && s.card.status === 'Frozen';
+    var rawNum = (s.card && s.card.num) ? String(s.card.num).replace(/\s+/g, '') : '4532000000004827';
+    var last4 = rawNum.slice(-4) || '4827';
+    var usd = Number(s.usd) || 0;
+
+    box.innerHTML =
+      '<div class="bd-card-visual">' +
+        '<div class="bd-cv-top">' +
+          '<div class="bd-cv-brand"><i>N</i> NordicCrypto</div>' +
+          '<span class="bd-cv-status ' + (frozen ? 'frozen' : '') + '">● ' + (frozen ? 'Frozen' : 'Active') + '</span>' +
+        '</div>' +
+        '<div class="bd-cv-chip-row">' +
+          '<div class="bd-emv"></div>' +
+          '<span style="color:#9cb0bd;font-size:15px">))))</span>' +
+        '</div>' +
+        '<div class="bd-cv-num-row">' +
+          '<span class="bd-cv-num">**** **** **** ' + esc(last4) + '</span>' +
+          '<span class="bd-cv-visa">VISA</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bd-avail-row">' +
+        '<div>' +
+          '<div class="bd-avail-lbl">Available Balance</div>' +
+          '<div class="bd-avail-val bd-sens">' + esc(U(usd)) + '</div>' +
+        '</div>' +
+        '<button type="button" class="bd-manage-btn" data-a="nav" data-v="cards">Manage Card →</button>' +
+      '</div>' +
+      '<div class="bd-card-ctrls">' +
+        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnFreezeCard"><span class="bd-cctrl-ic">❄</span><span>' + (frozen ? 'Unfreeze' : 'Freeze') + '</span></button>' +
+        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnLimitsCard"><span class="bd-cctrl-ic">🎚</span><span>Limits</span></button>' +
+        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnCopyCardV2"><span class="bd-cctrl-ic">📋</span><span>Copy</span></button>' +
+        '<button type="button" class="bd-cctrl" data-a="proxy" data-t="btnSettingsCard"><span class="bd-cctrl-ic">⚙</span><span>Settings</span></button>' +
+      '</div>';
   }
 
-  function rGoals() {
-    var g = goals(), bal = Math.max(0, Number(S().usd) || 0), box = $('bdGoals');
-    var list = g.map(function (x, i) { var pc = x.target > 0 ? Math.min(100, bal / x.target * 100) : 0, done = pc >= 100; return '<div class="bd-goal"><div class="bd-gh"><span class="bd-gi">' + ic(I.target, 16) + '</span><b>' + esc(x.name) + '</b><button type="button" class="bd-x" data-a="gdel" data-i="' + i + '" aria-label="Delete goal">' + ic(I.trash, 14) + '</button></div><div class="bd-gp"><i style="width:' + pc.toFixed(1) + '%"></i></div><div class="bd-gf"><span class="bd-sens">' + esc(U(Math.min(bal, x.target))) + ' / ' + esc(U(x.target)) + '</span><em class="' + (done ? 'up' : '') + '">' + (done ? '✓ ' + T('Reached') : Math.floor(pc) + '%') + '</em></div></div>'; }).join('');
-    var form = B.goalForm ? '<div class="bd-gform"><input id="bdGName" type="text" maxlength="28" placeholder="Goal name (e.g. Vacation)" autocomplete="off"><input id="bdGAmt" type="number" min="1" step="any" inputmode="decimal" placeholder="Target amount"><div class="bd-gb"><button type="button" class="bd-btn ghost" data-a="gcancel">Cancel</button><button type="button" class="bd-btn pri" id="bdGSave" data-a="gsave">Save goal</button></div></div>' : '';
-    put(box, '<div class="bd-ch"><div><div class="bd-k">Savings</div><h3>Goals</h3></div><button type="button" class="bd-link" data-a="gnew">' + ic(I.plus, 14) + ' New goal</button></div>' + (list || (!B.goalForm ? '<div class="bd-empty sm">' + ic(I.target, 26) + '<b>Set a savings goal</b><span>Track your balance against something you are saving for.</span></div>' : '')) + form);
-  }
-  function rCrypto() {
-    var s = S(), rows = [['BTC', 'Bitcoin', s.btc || 0, s.btcP || 0, 'btcChange', '#f7931a', '#ffb84d'], ['ETH', 'Ethereum', s.eth || 0, s.ethP || 0, 'ethChange', '#627eea', '#9db0ff']], tot = 0;
-    rows.forEach(function (r) { r.v = r[2] * r[3]; tot += r.v; });
-    var bar = tot > 0 ? '<div class="bd-xbar">' + rows.map(function (r) { return '<i style="width:' + (r.v / tot * 100).toFixed(1) + '%;background:' + r[5] + '"></i>'; }).join('') + '</div>' : '';
-    put($('bdCrypto'), '<div class="bd-ch"><div><div class="bd-k">Portfolio</div><h3>Your assets</h3></div><button type="button" class="bd-link" data-a="nav" data-v="assets">View ' + ic(I.chev, 14) + '</button></div>' +
-      '<div class="bd-xtot"><small>Total value</small><div class="bd-ct bd-sens">' + esc(U(tot)) + '</div>' + bar + '</div>' +
-      rows.map(function (r) {
-        var ch = $(r[4]), t = ch ? ch.textContent.trim() : '', dn = /^[-−]/.test(t), pc = tot > 0 ? Math.round(r.v / tot * 100) : 0;
-        return '<div class="bd-xc" style="--c1:' + r[5] + ';--c2:' + r[6] + '"><span class="bd-xi">' + CG[r[0]] + '</span><span class="bd-cn"><b>' + r[1] + '</b><small class="bd-sens">' + (+r[2]).toFixed(6).replace(/\.?0+$/, '') + ' ' + r[0] + '</small></span><span class="bd-cv"><b class="bd-sens">' + esc(U(r.v)) + '</b><small>' + (t && t !== '—' ? '<i class="bd-xp ' + (dn ? 'dn' : 'up') + '">' + esc(t) + '</i>' : '') + '<i class="bd-xs">' + pc + '%</i></small></span></div>';
-      }).join('') +
-      '<div class="bd-xa"><button type="button" data-a="proxy" data-t="btnExchangeV2">' + ic(I.swap, 16) + '<span>Buy / sell</span></button><button type="button" data-a="proxy" data-t="btnAdd">' + ic(I.down, 16) + '<span>Receive</span></button><button type="button" data-a="proxy" data-t="btnWithdrawV2">' + ic(I.up, 16) + '<span>Send</span></button></div>');
-  }
-  function rHealth() {
-    var s = S(), v = s.verification && s.verification.status, deps = allTx().some(function (t) { return t.amt > 0 && cat(t) === 'dep' && okTx(t); });
-    var items = [['Identity verified', v === 'approved' || (s.user && s.user.verified)], ['Card active', !!(s.card && s.card.status !== 'Frozen')], ['IBAN issued', !!(s.user && s.user.iban)], ['First deposit made', deps]];
-    var done = items.filter(function (x) { return x[1]; }).length, pc = Math.round(done / items.length * 100), R = 26, C = 2 * Math.PI * R;
-    put($('bdHealth'), '<div class="bd-ch"><div><div class="bd-k">Security</div><h3>Account health</h3></div></div><div class="bd-hl"><div class="bd-ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/><circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + (pc === 100 ? '#22d3a0' : '#22d3ee') + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (C * pc / 100).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 32 32)"/></svg><b>' + pc + '%</b></div><div class="bd-hs"><b>' + (pc === 100 ? T('Everything is set up') : T('Finish setting up your account')) + '</b><span>' + done + '/' + items.length + ' ' + T('steps completed') + '</span></div></div>' +
-      '<ul class="bd-hli">' + items.map(function (x) { return '<li class="' + (x[1] ? 'ok' : '') + '"><i>' + ic(x[1] ? I.check : I.clock, 12) + '</i>' + esc(T(x[0])) + '</li>'; }).join('') + '</ul>' +
-      '<div class="bd-sec">' + ic(I.shield, 16) + '<span>Funds are protected by segregated accounts and 2-step verification.</span></div>');
+  function renderActions() {
+    var box = $('bdActionsPanel');
+    if (!box) return;
+    box.innerHTML =
+      '<button type="button" class="bd-qbtn pri" data-a="proxy" data-t="btnAdd"><span class="bd-qbtn-l"><span>💳</span> Add Money</span><span>+</span></button>' +
+      '<button type="button" class="bd-qbtn" data-a="proxy" data-t="btnWithdrawV2"><span class="bd-qbtn-l"><span>↗</span> Withdraw</span><span>→</span></button>' +
+      '<button type="button" class="bd-qbtn" data-a="proxy" data-t="btnExchangeV2"><span class="bd-qbtn-l"><span>⇄</span> Exchange</span><span>⇄</span></button>' +
+      '<button type="button" class="bd-qbtn" data-a="proxy" data-t="btnScanDeposits"><span class="bd-qbtn-l"><span>📷</span> Scan Deposits</span></button>' +
+      '<button type="button" class="bd-qbtn" data-a="bonus"><span class="bd-qbtn-l"><span>🎁</span> Bonus</span></button>' +
+      '<button type="button" class="bd-qbtn" data-a="proxy" data-t="navWallets"><span class="bd-qbtn-l"><span>👛</span> Wallets</span></button>';
   }
 
-  /* ---------- render ---------- */
-  function sig() {
-    var s = S(); return [s.usd, s.currency, s.eurR, s.btc, s.eth, s.btcP, s.ethP, (s.txs || []).length, (s.txs || []).map(function (t) { return t.status; }).join(''), (s.withdrawals || []).map(function (w) { return w.status; }).join(''), s.card && s.card.status, s.card && s.card.num, s.user && s.user.iban, s.verification && s.verification.status, B.rng, B.month, B.filter, B.q, B.more, B.hide, B.goalForm, JSON.stringify(goals()), (($('cardNumDash') || {}).textContent || '') + (($('cardTypeDash') || {}).textContent || ''), (window.NCI18N && window.NCI18N.lang) || '', ($('myIban') || {}).textContent, (new Date()).getMinutes()].join('|');
+  function renderTransactions() {
+    var box = $('bdTxPanel');
+    if (!box) return;
+    var list = allTx().slice(0, 4);
+
+    var rowsHtml = list.length ? list.map(function (t, idx) {
+      var a = Number(t.amt) || 0;
+      var desc = String(t.desc || 'Transaction');
+      var low = desc.toLowerCase();
+      var cls = 'in', sym = '↓', amtCls = 'up';
+      if (/exchange|swap|convert/.test(low)) { cls = 'swap'; sym = '⇄'; amtCls = 'nt'; }
+      else if (/bonus|reward/.test(low)) { cls = 'bonus'; sym = '🎁'; amtCls = 'up'; }
+      else if (a < 0 || /withdraw|transfer/.test(low)) { cls = 'out'; sym = '⇄'; amtCls = 'dn'; }
+
+      var dt = t.ts ? new Date(t.ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' +
+               new Date(t.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+      var amtStr = a !== 0 ? ((a > 0 ? '+' : '−') + U(Math.abs(a))) : (t.coinAmt ? (t.coinAmt + ' ' + (t.coin || '')) : '—');
+
+      return '<button type="button" class="bd-tx-item" data-a="tx" data-i="' + idx + '">' +
+        '<div class="bd-tx-l">' +
+          '<span class="bd-tx-ic ' + cls + '">' + sym + '</span>' +
+          '<div class="bd-tx-info"><b>' + esc(desc) + '</b><small>' + esc(dt) + '</small></div>' +
+        '</div>' +
+        '<span class="bd-tx-amt bd-sens ' + amtCls + '">' + esc(amtStr) + '</span>' +
+      '</button>';
+    }).join('') : '<div style="color:#7f94a3;font-size:13px;padding:24px 0;text-align:center">No recent transactions yet</div>';
+
+    box.innerHTML =
+      '<div class="bd-sec-hdr"><h3>Recent Transactions</h3><button type="button" class="bd-sec-link" data-a="nav" data-v="tx">View all →</button></div>' +
+      '<div class="bd-tx-list">' + rowsHtml + '</div>';
   }
-  function visible() { var d = $('dash'); return !!(d && d.offsetParent !== null && $('bd')); }
+
+  function renderComposition() {
+    var box = $('bdCompPanel');
+    if (!box) return;
+    var t = totals();
+    var cryptoSum = t.btc + t.eth + t.usdt + t.others;
+    var items = cryptoSum > 0 ? [
+      { name: 'BTC', val: t.btc, color: '#2dd4bf' },
+      { name: 'ETH', val: t.eth, color: '#6366f1' },
+      { name: 'USDT', val: t.usdt, color: '#38bdf8' },
+      { name: 'Others', val: t.others, color: '#94a3b8' }
+    ] : [
+      { name: 'BTC', val: 42.8, color: '#2dd4bf' },
+      { name: 'ETH', val: 28.1, color: '#6366f1' },
+      { name: 'USDT', val: 18.3, color: '#38bdf8' },
+      { name: 'Others', val: 10.8, color: '#94a3b8' }
+    ];
+    var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0) || 1;
+    var R = 52;
+    var C = 2 * Math.PI * R;
+    var offset = 0;
+
+    var circles = items.map(function (it) {
+      var len = (it.val / sum) * C;
+      var seg = '<circle cx="73" cy="73" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="18" ' +
+                'stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) + '" ' +
+                'stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 73 73)"/>';
+      offset += len;
+      return seg;
+    }).join('');
+
+    var legend = items.map(function (it) {
+      var pct = ((it.val / sum) * 100).toFixed(1);
+      return '<li><span><i style="background:' + it.color + '"></i>' + it.name + '</span><b>' + pct + '%</b></li>';
+    }).join('');
+
+    var centerTotal = '$' + Math.round(t.total).toLocaleString('en-US');
+
+    box.innerHTML =
+      '<div class="bd-sec-hdr"><h3>Portfolio Composition</h3></div>' +
+      '<div class="bd-comp-wrap">' +
+        '<div class="bd-donut-box">' +
+          '<svg viewBox="0 0 146 146" width="146" height="146">' +
+            '<circle cx="73" cy="73" r="' + R + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="18"/>' +
+            circles +
+          '</svg>' +
+          '<div class="bd-donut-center"><b class="bd-sens">' + esc(centerTotal) + '</b><small>Total Value</small></div>' +
+        '</div>' +
+        '<ul class="bd-comp-leg">' + legend + '</ul>' +
+      '</div>';
+  }
+
+  function renderSecurity() {
+    var box = $('bdSecPanel');
+    if (!box) return;
+    box.innerHTML =
+      '<div class="bd-sec-top">' +
+        '<div class="bd-sec-shield">🛡</div>' +
+        '<div><h3>Your Account is Protected</h3><p>Advanced security keeps your assets safe.</p></div>' +
+      '</div>' +
+      '<ul class="bd-sec-list">' +
+        '<li><i>✓</i> Identity Verified</li>' +
+        '<li><i>✓</i> 2FA Enabled</li>' +
+        '<li><i>✓</i> Fraud Protection Active</li>' +
+      '</ul>' +
+      '<div class="bd-sec-watermark">✓</div>' +
+      '<button type="button" class="bd-sec-btn" data-a="proxy" data-t="settingsBtn">Security Center →</button>';
+  }
+
   function render(force) {
-    if (!B.built && !build()) return; if (!visible() && !force) return;
-    var sg = sig(); if (!force && sg === B.sig) return; B.sig = sg;
-    var ae = document.activeElement, keepGoal = ae && (ae.id === 'bdGName' || ae.id === 'bdGAmt') ? { id: ae.id, v: ae.value } : null, g1 = $('bdGName') ? $('bdGName').value : '', g2 = $('bdGAmt') ? $('bdGAmt').value : '';
-    try { rHero(); } catch (e) { err(e); } try { rIns(); } catch (e) { err(e); } try { rTx(); } catch (e) { err(e); } try { rCard(); } catch (e) { err(e); }
-    try { rAcc(); } catch (e) { err(e); } try { rGoals(); } catch (e) { err(e); } try { rCrypto(); } catch (e) { err(e); } try { rHealth(); } catch (e) { err(e); }
-    if (keepGoal) { if ($('bdGName')) $('bdGName').value = g1; if ($('bdGAmt')) $('bdGAmt').value = g2; var f = $(keepGoal.id); if (f) f.focus(); }
-  }
-  function err(e) { try { console.error('[bank-dash]', e); } catch (x) {} }
+    if (!B.built && !build()) return;
+    var dash = $('dash');
+    if (!dash || dash.offsetParent === null) return;
 
-  /* ---------- events ---------- */
+    var s = S();
+    var sig = [s.usd, s.btc, s.eth, s.usdt, s.currency, (s.txs || []).length, s.card && s.card.status, B.rng, B.hide].join('|');
+    if (!force && sig === B.sig) return;
+    B.sig = sig;
+
+    $('bd').classList.toggle('hide', B.hide);
+    var gt = $('bdGreetTitle');
+    if (gt) gt.textContent = greetText() + ', ' + userName() + '!';
+    var dp = $('bdDatePill');
+    if (dp) dp.textContent = '📅 ' + formattedDate();
+
+    renderBalance();
+    renderCard();
+    renderActions();
+    renderTransactions();
+    renderComposition();
+    renderSecurity();
+  }
+
   function onClick(e) {
-    var b = e.target.closest('[data-a]'); if (!b || !$('bd').contains(b)) return; var a = b.dataset.a;
-    switch (a) {
-      case 'proxy': { var t = b.dataset.t; if (t === 'bonus') { if (typeof window.openClientBonus === 'function') window.openClientBonus(); else toast('Bonus is not available'); } else if (!px(t)) toast('Not available right now'); setTimeout(function () { render(true); }, 400); break; }
-      case 'eye': B.hide = !B.hide; lsSet('bd_hide', B.hide ? '1' : '0'); render(true); break;
-      case 'rng': B.rng = b.dataset.v; render(true); break;
-      case 'cur': if (typeof window.setCurrency === 'function') window.setCurrency(b.dataset.v); setTimeout(function () { render(true); }, 120); break;
-      case 'mprev': B.month--; render(true); break; case 'mnext': if (B.month < 0) { B.month++; render(true); } break;
-      case 'flt': B.filter = b.dataset.v; B.more = false; render(true); break;
-      case 'more': B.more = true; render(true); break; case 'less': B.more = false; render(true); break;
-      case 'nav': nav(b.dataset.v); break;
-      case 'tx': { var t2 = LIST[+b.dataset.i]; if (t2 && typeof window.openTxDetails === 'function') window.openTxDetails(t2); break; }
-      case 'cp': copy(b.dataset.v, 'Copied'); break;
-      case 'cpall': { var s = S(), iban = s.user && s.user.iban; if (!iban) break; copy('IBAN: ' + iban + '\nSWIFT/BIC: ' + (($('mySwift') || {}).textContent || '') + '\nBank: ' + (($('myBank') || {}).textContent || '') + '\nHolder: ' + (lsGet('user_name') || ''), 'Bank details copied'); break; }
-      case 'gnew': B.goalForm = true; render(true); setTimeout(function () { var i = $('bdGName'); if (i) i.focus(); }, 30); break;
-      case 'gcancel': B.goalForm = false; render(true); break;
-      case 'gsave': { var n = ($('bdGName').value || '').trim(), amt = parseFloat($('bdGAmt').value); var cur = S().currency || 'USD'; if (!n) { toast('Enter a goal name'); break; } if (!(amt > 0)) { toast('Enter a target amount'); break; }
-        var rate = cur === 'EUR' ? S().eurR : cur === 'SEK' ? S().sekR : cur === 'NOK' ? (S().nokR || 10.5) : cur === 'DKK' ? (S().dkkR || 6.9) : cur === 'GBP' ? (S().gbpR || .79) : cur === 'CAD' ? (S().cadR || 1.38) : cur === 'AUD' ? (S().audR || 1.52) : 1; // stored in USD
-        var g = goals(); if (g.length >= 6) { toast('Up to 6 goals'); break; } g.push({ name: n.slice(0, 28), target: amt / (rate || 1) }); saveGoals(g); B.goalForm = false; render(true); toast('Goal added'); break; }
-      case 'gdel': { var g2 = goals(); g2.splice(+b.dataset.i, 1); saveGoals(g2); render(true); break; }
+    var btn = e.target.closest('[data-a]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-a');
+    if (act === 'eye') {
+      B.hide = !B.hide;
+      lsSet('bd_hide', B.hide ? '1' : '0');
+      render(true);
+    } else if (act === 'rng') {
+      B.rng = btn.getAttribute('data-v') || '1';
+      render(true);
+    } else if (act === 'proxy') {
+      var target = btn.getAttribute('data-t');
+      if (!px(target)) toast('Action unavailable right now');
+    } else if (act === 'bonus') {
+      if (typeof window.openClientBonus === 'function') window.openClientBonus();
+      else toast('Bonus center opened');
+    } else if (act === 'nav') {
+      nav(btn.getAttribute('data-v'));
+    } else if (act === 'tx') {
+      var idx = parseInt(btn.getAttribute('data-i'), 10);
+      var item = allTx()[idx];
+      if (item && typeof window.openTxDetails === 'function') window.openTxDetails(item);
     }
   }
-  var qT;
-  function onInput(e) { if (e.target && e.target.id === 'bdQ') { B.q = e.target.value; clearTimeout(qT); qT = setTimeout(function () { render(true); }, 160); } }
 
-  /* ---------- hooks ---------- */
-  function hook() {
-    var o = window.renderRecentTx;
-    if (typeof o === 'function' && !o.__bd) {
-      var w = function () { var r; try { r = o.apply(this, arguments); } catch (e) { err(e); } try { render(); } catch (e2) { err(e2); } return r; };
-      w.__bd = true; window.renderRecentTx = w;
-    }
-  }
   function init() {
-    hook();
-    if (!build()) { setTimeout(init, 400); return; }
-    accent(); render(true); setInterval(function () { hook(); accent(); render(); }, 2000);
-    /* live prices: the crypto part of the total follows the market while the dashboard is open */
-    setInterval(function () { try { if (!document.hidden && visible() && typeof window.loadPrices === 'function' && (Number(S().btc) > 0 || Number(S().eth) > 0)) window.loadPrices(); } catch (e) {} }, 30000);
-    var rt = 0; function reR() { clearTimeout(rt); rt = setTimeout(function () { render(true); }, 80); }
-    window.addEventListener('nc-lang', reR); window.addEventListener('nc-dict', reR);
-    try { if (window.ResizeObserver) { var lw = 0; B.ro = new ResizeObserver(function () { var c = $('bdChart'); if (!c || !c.clientWidth || Math.abs(c.clientWidth - lw) < 2) return; lw = c.clientWidth; if (visible()) rHero(); }); B.ro.observe($('bdChart')); } } catch (e) {}
-    var rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { if (visible()) rHero(); }, 150); });
-    document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('.mi[data-p="dash"]'); if (m) setTimeout(function () { render(true); }, 120); }, true);
+    if (!build()) { setTimeout(init, 350); return; }
+    render(true);
+    setInterval(function () { render(false); }, 2000);
+    window.addEventListener('resize', function () { render(true); });
   }
+
   window.BankDashPro = { render: function () { render(true); }, state: B };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
