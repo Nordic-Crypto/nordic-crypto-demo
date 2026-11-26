@@ -408,7 +408,19 @@
       else if (a >= 0) { kind = 'dep'; icon = '<i class="dp-ti up">' + ic(I.dep, 18) + '</i>'; }
       else { kind = 'wd'; icon = '<i class="dp-ti dn">' + ic(I.wd, 18) + '</i>'; }
       var stc = t.status === 'Completed' ? 'ok' : (/reject|fail|cancel/i.test(t.status || '') ? 'bad' : 'wait');
-      return '<div class="dp-tx"><span class="dp-tic">' + icon + '</span><span class="dp-tt"><b>' + esc(title) + '</b><em>' + esc(ago(t.ts)) + (sub ? ' · ' + esc(sub) : '') + '</em></span><span class="dp-st ' + stc + '">' + esc(t.status || 'Completed') + '</span><span class="dp-ta3 dp-sens ' + (a >= 0 ? 'up' : 'dn') + '">' + (a >= 0 ? '+' : '−') + esc(money(Math.abs(a))) + '</span></div>';
+      // crypto credit/debit stores amt=0 — show its value in the client's currency (coinAmt × price) + the coin amount
+      var amtHtml;
+      var _coin = t.coin, _ca = Number(t.coinAmt) || 0;
+      if (_coin && (_coin === 'BTC' || _coin === 'ETH') && !a && _ca) {
+        var _s = (window.st || {}), _px = Number(t.px) || Number(_coin === 'BTC' ? _s.btcP : _s.ethP) || 0, _up = _ca > 0, _fiat = _ca * _px;
+        var _ct = (_up ? '+' : '−') + Math.abs(_ca).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + _coin;
+        amtHtml = _fiat
+          ? '<span class="dp-ta3 dp-sens ' + (_up ? 'up' : 'dn') + '">' + (_up ? '+' : '−') + esc(money(Math.abs(_fiat))) + '<small style="display:block;font-size:.72em;font-weight:600;opacity:.7">' + esc(_ct) + '</small></span>'
+          : '<span class="dp-ta3 dp-sens ' + (_up ? 'up' : 'dn') + '">' + esc(_ct) + '</span>';
+      } else {
+        amtHtml = '<span class="dp-ta3 dp-sens ' + (a >= 0 ? 'up' : 'dn') + '">' + (a >= 0 ? '+' : '−') + esc(money(Math.abs(a))) + '</span>';
+      }
+      return '<div class="dp-tx"><span class="dp-tic">' + icon + '</span><span class="dp-tt"><b>' + esc(title) + '</b><em>' + esc(ago(t.ts)) + (sub ? ' · ' + esc(sub) : '') + '</em></span><span class="dp-st ' + stc + '">' + esc(t.status || 'Completed') + '</span>' + amtHtml + '</div>';
     }).join('');
     if (box.__h !== h) { box.__h = h; box.innerHTML = h; }
   }
