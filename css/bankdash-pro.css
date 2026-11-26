@@ -1,5 +1,5 @@
 /* NORDIC CRYPTO — Banking Dashboard PRO v2.0 (Nordic Glass Emerald Edition) */
-#dash.bd-on > .nc3-dashboard { display: none !important; }
+#dash.bd-on > :not(#bd) { display: none !important; }
 
 body {
   background: #050b10 !important;
