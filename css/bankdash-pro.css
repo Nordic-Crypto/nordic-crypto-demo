@@ -1,4 +1,4 @@
-/* NORDIC CRYPTO — Banking Dashboard PRO v4.0 (Exact Reference Match + Mobile Ready) */
+/* NORDIC CRYPTO — Banking Dashboard PRO v5.0 (Exact Reference + Custom Card Skins + Elite Icons) */
 #dash.bd-on > :not(#bd) { display: none !important; }
 
 body {
@@ -7,7 +7,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Topbar transparent over mountain panorama */
+/* Transparent Topbar over Panoramic Mountains */
 #mainApp .top {
   background: linear-gradient(180deg, rgba(5, 11, 16, 0.72) 0%, rgba(5, 11, 16, 0.25) 100%) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -19,7 +19,7 @@ body {
   position: relative;
   background-color: #050b10 !important;
   background-image:
-    linear-gradient(180deg, rgba(5, 11, 16, 0.22) 0%, rgba(5, 11, 16, 0.42) 170px, rgba(5, 11, 16, 0.94) 315px, #050b10 385px),
+    linear-gradient(180deg, rgba(5, 11, 16, 0.20) 0%, rgba(5, 11, 16, 0.38) 170px, rgba(5, 11, 16, 0.94) 315px, #050b10 385px),
     url('../assets/nordic-bg.png') !important;
   background-position: center top, center top !important;
   background-size: 100% 390px, 100% auto !important;
@@ -31,6 +31,7 @@ body {
   background: rgba(7, 14, 20, 0.96) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
   backdrop-filter: blur(22px);
+  padding-bottom: 12px !important;
 }
 
 #sideBar .menu .mi {
@@ -63,6 +64,43 @@ body {
 
 #sideBar .menu .mi.on svg {
   stroke: #041814 !important;
+}
+
+/* Fix Holiday Mode pill overlapping user avatar ("Otis / Premium Member") */
+#sideBar .umi {
+  position: relative;
+  z-index: 2;
+  margin-top: 4px !important;
+  padding: 12px 14px 6px !important;
+}
+
+#holChip {
+  left: 16px !important;
+  bottom: 72px !important;
+  width: 188px !important;
+  justify-content: center !important;
+  background: rgba(13, 25, 34, 0.92) !important;
+  border: 1px solid rgba(69, 230, 176, 0.22) !important;
+  backdrop-filter: blur(12px) !important;
+  font-size: 11.5px !important;
+  padding: 6px 10px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45) !important;
+}
+
+#sideBar .bd-prem-card {
+  margin-bottom: 44px !important;
+}
+
+@media (max-width: 900px) {
+  #holChip {
+    left: auto !important;
+    right: 14px !important;
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+  }
+  #sideBar .bd-prem-card {
+    margin-bottom: 12px !important;
+  }
 }
 
 /* Main Dashboard Container */
@@ -277,7 +315,7 @@ body {
 .bd-chart-box svg { width: 100%; height: 100%; overflow: visible; }
 .bd-chart-box .ax-txt { fill: #637987; font-size: 10px; font-weight: 600; }
 
-/* Mini Asset Ticker Strip under Chart */
+/* Elite Mini Asset Ticker Strip under Chart */
 .bd-asset-strip {
   display: flex;
   align-items: center;
@@ -291,26 +329,40 @@ body {
 .bd-mini-coin {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
 .bd-mini-ic {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-weight: 800;
-  font-size: 13px;
-  color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 6px 14px -4px rgba(0, 0, 0, 0.55);
 }
 
-.bd-mini-ic.usd { background: rgba(69, 230, 176, 0.14); color: #45e6b0; border: 1.5px solid rgba(69, 230, 176, 0.45); }
-.bd-mini-ic.btc { background: linear-gradient(135deg, #f7931a, #d97706); }
-.bd-mini-ic.eth { background: linear-gradient(135deg, #627eea, #4338ca); }
-.bd-mini-ic.usdt { background: linear-gradient(135deg, #26a17b, #0d9488); }
+.bd-mini-ic.usd {
+  background: radial-gradient(circle at 30% 25%, #34d399, #059669 75%);
+  border: 1px solid rgba(110, 231, 183, 0.55);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.bd-mini-ic.btc {
+  background: radial-gradient(circle at 30% 25%, #fbbf24, #d97706 80%);
+  border: 1px solid rgba(253, 224, 71, 0.5);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+.bd-mini-ic.eth {
+  background: radial-gradient(circle at 30% 25%, #818cf8, #4338ca 80%);
+  border: 1px solid rgba(165, 180, 252, 0.5);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+.bd-mini-ic.usdt {
+  background: radial-gradient(circle at 30% 25%, #2dd4bf, #0f766e 80%);
+  border: 1px solid rgba(94, 234, 212, 0.5);
+  box-shadow: 0 0 14px rgba(20, 184, 166, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+}
 
 .bd-mini-meta span { display: block; font-size: 10px; font-weight: 700; color: #7f94a3; text-transform: uppercase; letter-spacing: 0.04em; }
 .bd-mini-meta b { display: block; font-size: 13px; font-weight: 700; color: #eef5f8; }
@@ -331,20 +383,114 @@ body {
 
 .bd-more-coins:hover { color: var(--bd-mint); border-color: var(--bd-bd-hi); }
 
-/* Bank Card Panel (Col 2 Top) — Silk Emerald Wave Card */
+/* ============================================================
+   BANK CARD PANEL (Col 2 Top) — Compact ISO Proportions + All Client Card Designs
+   ============================================================ */
 .bd-card-visual {
   position: relative;
-  border-radius: 18px;
-  padding: 18px 20px;
+  border-radius: 16px;
+  padding: 15px 18px;
+  aspect-ratio: 1.65 / 1;
+  max-height: 204px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   background:
-    radial-gradient(260px 150px at 88% 20%, rgba(69, 230, 176, 0.34), transparent 68%),
+    radial-gradient(240px 130px at 88% 20%, rgba(69, 230, 176, 0.34), transparent 68%),
     linear-gradient(135deg, #0b1821 0%, #060f16 55%, #0c292c 100%);
   border: 1px solid rgba(69, 230, 176, 0.28);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.18),
     inset 0 -1px 1px rgba(0, 0, 0, 0.5),
-    0 18px 34px -16px rgba(0, 0, 0, 0.85);
+    0 16px 30px -14px rgba(0, 0, 0, 0.85);
   overflow: hidden;
+  color: #ffffff;
+}
+
+/* Custom client card designs preserved from cards-pro.css & card-skins.js */
+.bd-card-visual.design-cosmic {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 92% 0%,rgba(138,108,255,.55),transparent 55%), radial-gradient(circle at 0% 105%,rgba(95,227,191,.2),transparent 50%), linear-gradient(135deg,#1c2040 0%,#0b0c18 100%) !important;
+  border-color: rgba(138,108,255,0.4) !important;
+}
+.bd-card-visual.design-purple {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 95% 5%,rgba(255,92,200,.55),transparent 55%), linear-gradient(135deg,#5a2fc0 0%,#1e1046 100%) !important;
+  border-color: rgba(255,92,200,0.4) !important;
+}
+.bd-card-visual.design-silver {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.25) 46%,transparent 62%), linear-gradient(135deg,#f3f4f6 0%,#b9bec7 48%,#e8eaee 100%) !important;
+  border-color: rgba(255,255,255,0.6) !important;
+}
+.bd-card-visual.design-black {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 0% 110%,rgba(95,227,191,.28),transparent 52%), linear-gradient(135deg,#1a1b1d 0%,#050506 100%) !important;
+  border-color: rgba(95,227,191,0.35) !important;
+}
+.bd-card-visual.design-gold {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.25) 46%,transparent 62%), radial-gradient(circle at 90% 0%,rgba(255,244,196,.65),transparent 52%), linear-gradient(135deg,#f1d98c 0%,#c9a24a 46%,#8a6414 100%) !important;
+  border-color: rgba(255,235,170,0.65) !important;
+}
+.bd-card-visual.design-ocean {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 90% 0%,rgba(80,230,240,.5),transparent 55%), linear-gradient(135deg,#0d7586 0%,#06222f 100%) !important;
+  border-color: rgba(80,230,240,0.4) !important;
+}
+.bd-card-visual.design-mountain {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 85% 0%,rgba(190,215,235,.4),transparent 55%), linear-gradient(135deg,#566f80 0%,#151f28 100%) !important;
+  border-color: rgba(190,215,235,0.35) !important;
+}
+.bd-card-visual.design-aurora {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 15% 100%,rgba(70,255,170,.55),transparent 55%), radial-gradient(circle at 95% 0%,rgba(146,98,255,.55),transparent 55%), linear-gradient(135deg,#07120f 0%,#120b2a 100%) !important;
+  border-color: rgba(70,255,170,0.4) !important;
+}
+.bd-card-visual.design-city {
+  background: linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 46%,transparent 62%), radial-gradient(circle at 100% 100%,rgba(255,130,80,.65),transparent 55%), linear-gradient(135deg,#2b1f55 0%,#74275f 100%) !important;
+  border-color: rgba(255,130,80,0.4) !important;
+}
+.bd-card-visual.design-frost {
+  background: linear-gradient(135deg,#d8e6f2 0%,#90adc6 50%,#52718a 100%) !important;
+  border-color: rgba(255,255,255,0.55) !important;
+}
+.bd-card-visual.design-noel {
+  background: radial-gradient(circle at 85% 20%,rgba(234,179,8,.35),transparent 55%), linear-gradient(135deg,#18181b 0%,#09090b 100%) !important;
+  border-color: rgba(234,179,8,0.45) !important;
+}
+.bd-card-visual.design-iceglass {
+  background: radial-gradient(circle at 80% 15%,rgba(56,189,248,.45),transparent 55%), linear-gradient(135deg,#0c2d48 0%,#061523 100%) !important;
+  border-color: rgba(56,189,248,0.45) !important;
+}
+.bd-card-visual.design-santa {
+  background: radial-gradient(circle at 85% 20%,rgba(255,255,255,.22),transparent 55%), linear-gradient(135deg,#b91c1c 0%,#7f1d1d 100%) !important;
+  border-color: rgba(254,202,202,0.45) !important;
+}
+.bd-card-visual.design-pine {
+  background: radial-gradient(circle at 85% 20%,rgba(52,211,153,.35),transparent 55%), linear-gradient(135deg,#064e3b 0%,#022c22 100%) !important;
+  border-color: rgba(52,211,153,0.4) !important;
+}
+.bd-card-visual.design-sleigh {
+  background: radial-gradient(circle at 82% 24%,rgba(253,224,71,.35),transparent 45%), linear-gradient(135deg,#1e1b4b 0%,#090d16 100%) !important;
+  border-color: rgba(165,180,252,0.4) !important;
+}
+.bd-card-visual.design-obsidian {
+  background: radial-gradient(240px 130px at 88% 20%, rgba(95, 227, 191, 0.32), transparent 68%), linear-gradient(135deg, #15181c 0%, #07080a 100%) !important;
+  border-color: rgba(95,227,191,0.35) !important;
+}
+
+/* Dark text on light card skins (Silver, Gold, Frost) */
+.bd-card-visual.design-silver .bd-cv-brand,
+.bd-card-visual.design-silver .bd-cv-num,
+.bd-card-visual.design-silver .bd-cv-visa,
+.bd-card-visual.design-gold .bd-cv-brand,
+.bd-card-visual.design-gold .bd-cv-num,
+.bd-card-visual.design-gold .bd-cv-visa,
+.bd-card-visual.design-frost .bd-cv-brand,
+.bd-card-visual.design-frost .bd-cv-num,
+.bd-card-visual.design-frost .bd-cv-visa {
+  color: #16140c !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+.bd-card-visual.design-silver .bd-cv-status,
+.bd-card-visual.design-gold .bd-cv-status,
+.bd-card-visual.design-frost .bd-cv-status {
+  background: rgba(15, 23, 42, 0.78) !important;
 }
 
 .bd-card-wave {
@@ -360,7 +506,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
   position: relative;
   z-index: 1;
 }
@@ -370,19 +515,19 @@ body {
   align-items: center;
   gap: 8px;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14.5px;
   color: #fff;
   letter-spacing: -0.01em;
 }
 
 .bd-cv-logo-badge {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #45e6b0, #0d9488);
   color: #041814;
   font-weight: 900;
-  font-size: 13px;
+  font-size: 12px;
   display: grid;
   place-items: center;
   box-shadow: 0 3px 10px rgba(69, 230, 176, 0.35);
@@ -392,12 +537,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #45e6b0;
   background: rgba(69, 230, 176, 0.14);
   border: 1px solid rgba(69, 230, 176, 0.32);
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
 }
 
@@ -423,16 +568,15 @@ body {
 .bd-cv-chip-row {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin-bottom: 14px;
+  gap: 10px;
   position: relative;
   z-index: 1;
 }
 
 .bd-emv {
-  width: 38px;
-  height: 27px;
-  border-radius: 6px;
+  width: 34px;
+  height: 24px;
+  border-radius: 5px;
   background: linear-gradient(135deg, #f6dc8d 0%, #d4a246 50%, #b58129 100%);
   border: 1px solid rgba(255, 245, 210, 0.45);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -443,7 +587,7 @@ body {
 .bd-emv::before {
   content: '';
   position: absolute;
-  inset: 5px 0;
+  inset: 4px 0;
   border-top: 1px solid rgba(90, 60, 10, 0.45);
   border-bottom: 1px solid rgba(90, 60, 10, 0.45);
 }
@@ -451,7 +595,7 @@ body {
 .bd-emv::after {
   content: '';
   position: absolute;
-  inset: 0 11px;
+  inset: 0 10px;
   border-left: 1px solid rgba(90, 60, 10, 0.45);
   border-right: 1px solid rgba(90, 60, 10, 0.45);
 }
@@ -466,15 +610,15 @@ body {
 
 .bd-cv-num {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 14.5px;
-  letter-spacing: 0.14em;
+  font-size: 14px;
+  letter-spacing: 0.13em;
   color: #e6f0f6;
   font-weight: 600;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .bd-cv-visa {
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 900;
   font-style: italic;
   letter-spacing: -0.04em;
@@ -486,7 +630,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 14px 0;
+  margin: 12px 0;
   gap: 10px;
 }
 
@@ -538,8 +682,8 @@ body {
 .bd-cctrl:hover { color: #fff; }
 
 .bd-cctrl-ic {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -886,7 +1030,7 @@ body {
 }
 
 /* ============================================================
-   TABLET & MOBILE RESPONSIVE DESIGN (No horizontal overflow)
+   TABLET & MOBILE RESPONSIVE DESIGN
    ============================================================ */
 @media (max-width: 1240px) {
   .bd-top-grid { grid-template-columns: 1fr 1fr; }
@@ -897,7 +1041,7 @@ body {
 
 @media (max-width: 760px) {
   #mainApp {
-    background-size: 100% 280px, 100% 280px, cover, cover !important;
+    background-size: 100% 280px, cover !important;
   }
   .bd {
     padding: 6px 4px 86px;
@@ -931,6 +1075,9 @@ body {
   .bd-more-coins {
     grid-column: span 2;
     justify-content: center;
+  }
+  .bd-card-visual {
+    max-height: 196px;
   }
   .bd-qstack {
     grid-column: auto;
