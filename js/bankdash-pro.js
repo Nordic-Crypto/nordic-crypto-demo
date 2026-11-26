@@ -1,6 +1,6 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v3.0
-   1:1 Reference Layout with Crisp Vector SVG Icons
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v5.0
+   1:1 Reference Layout + Custom Client Card Designs + Elite Coin SVGs
    ============================================================ */
 (function () {
   'use strict';
@@ -24,13 +24,13 @@
   function nav(p) { var m = document.querySelector('.mi[data-p="' + p + '"]'); if (m) m.click(); }
   function toast(m) { try { if (typeof window.toast === 'function') window.toast(m); } catch (e) {} }
 
-  /* Crisp Vector SVG Icon Set */
+  /* Elite Vector SVG Icons + Authentic Crypto Logos */
   var ICO = {
     cal: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     walletSm: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 14h.01"/><path d="M2 9l14-4v2"/></svg>',
     eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>',
-    nfc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9cb0bd" stroke-width="2" stroke-linecap="round"><path d="M6 8.5a6.5 6.5 0 0 1 0 7"/><path d="M9.5 6a10.5 10.5 0 0 1 0 12"/><path d="M13 3.5a14.5 14.5 0 0 1 0 17"/></svg>',
+    nfc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.75"><path d="M6 8.5a6.5 6.5 0 0 1 0 7"/><path d="M9.5 6a10.5 10.5 0 0 1 0 12"/><path d="M13 3.5a14.5 14.5 0 0 1 0 17"/></svg>',
     freeze: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></svg>',
     limits: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg>',
     copy: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
@@ -47,7 +47,12 @@
     shieldBig: '<svg width="78" height="78" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
     check: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     arrowDownLeft: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>',
-    chevDown: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
+    chevDown: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    /* Authentic Luxury Crypto & Fiat Badges */
+    coinUsd: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    coinBtc: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff"><path d="M16.6 10.7c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.6-.4-.7 2.6c-.4-.1-.9-.2-1.3-.3l.7-2.6-1.6-.4-.7 2.7c-.3-.1-.7-.2-1-.2l-2.3-.6-.4 1.7s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c.1 0 .2.1.3.1l-.3-.1-1.1 4.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.1.5c.4.1.8.2 1.2.3l-.7 2.7 1.6.4.7-2.7c.4.1.9.2 1.3.3l-.7 2.7 1.6.4.7-2.7c2.8.5 4.9.3 5.8-2.2.7-2-.1-3.2-1.5-3.9 1.1-.3 1.9-1 2.1-2.5zm-3.7 5.2c-.5 2-3.9.9-5 .7l.9-3.6c1.1.3 4.6.8 4.1 2.9zm.5-5.3c-.5 1.8-3.3.9-4.2.7l.8-3.2c.9.2 3.9.7 3.4 2.5z"/></svg>',
+    coinEth: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L5.5 12.2L12 16L18.5 12.2L12 2Z" fill="#ffffff"/><path d="M12 2V16L18.5 12.2L12 2Z" fill="#e0e7ff" fill-opacity="0.75"/><path d="M12 17.5L5.5 13.7L12 22L18.5 13.7L12 17.5Z" fill="#ffffff"/><path d="M12 17.5V22L18.5 13.7L12 17.5Z" fill="#e0e7ff" fill-opacity="0.75"/></svg>',
+    coinUsdt: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 5H19V8.2H13.6V11.1C16.7 11.3 19 11.9 19 12.7C19 13.5 16.7 14.1 13.6 14.3V19.5H10.4V14.3C7.3 14.1 5 13.5 5 12.7C5 11.9 7.3 11.3 10.4 11.1V8.2H5V5ZM12 13.6C15.1 13.6 17.6 13.2 17.6 12.7C17.6 12.2 15.1 11.8 12 11.8C8.9 11.8 6.4 12.2 6.4 12.7C6.4 13.2 8.9 13.6 12 13.6Z" fill="#ffffff"/></svg>'
   };
 
   var B = { rng: '1', hide: lsGet('bd_hide') === '1', built: false, sig: '' };
@@ -156,10 +161,10 @@
       '</div>' +
       '<div class="bd-chart-box" id="bdChartArea"></div>' +
       '<div class="bd-asset-strip">' +
-        '<div class="bd-mini-coin"><span class="bd-mini-ic usd">$</span><div class="bd-mini-meta"><span>USD</span><b class="bd-sens">' + esc(U(t.usd)) + '</b></div></div>' +
-        '<div class="bd-mini-coin"><span class="bd-mini-ic btc">₿</span><div class="bd-mini-meta"><span>BTC</span><b class="bd-sens">' + esc(U(t.btc)) + '</b></div></div>' +
-        '<div class="bd-mini-coin"><span class="bd-mini-ic eth">Ξ</span><div class="bd-mini-meta"><span>ETH</span><b class="bd-sens">' + esc(U(t.eth)) + '</b></div></div>' +
-        '<div class="bd-mini-coin"><span class="bd-mini-ic usdt">₮</span><div class="bd-mini-meta"><span>USDT</span><b class="bd-sens">' + esc(U(t.usdt)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic usd">' + ICO.coinUsd + '</span><div class="bd-mini-meta"><span>USD</span><b class="bd-sens">' + esc(U(t.usd)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic btc">' + ICO.coinBtc + '</span><div class="bd-mini-meta"><span>BTC</span><b class="bd-sens">' + esc(U(t.btc)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic eth">' + ICO.coinEth + '</span><div class="bd-mini-meta"><span>ETH</span><b class="bd-sens">' + esc(U(t.eth)) + '</b></div></div>' +
+        '<div class="bd-mini-coin"><span class="bd-mini-ic usdt">' + ICO.coinUsdt + '</span><div class="bd-mini-meta"><span>USDT</span><b class="bd-sens">' + esc(U(t.usdt)) + '</b></div></div>' +
         '<button type="button" class="bd-more-coins" data-a="nav" data-v="assets">+2 more ' + ICO.chevDown + '</button>' +
       '</div>';
 
@@ -229,14 +234,21 @@
     var last4 = rawNum.slice(-4) || '4827';
     var usd = Number(s.usd) || 0;
 
+    /* Preserve client's previously chosen card skin from st.card.design */
+    var rawDesign = (s.card && s.card.design) ? String(s.card.design).toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
+    var designCls = rawDesign ? (' design-' + rawDesign) : '';
+    var showSilkWave = !rawDesign || rawDesign === 'obsidian';
+
     box.innerHTML =
-  '<div class="bd-card-visual">' +
-    '<svg class="bd-card-wave" viewBox="0 0 400 220" preserveAspectRatio="none">' +
-      '<defs><linearGradient id="ncSilk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#2dd4bf" stop-opacity="0"/><stop offset="50%" stop-color="#45e6b0" stop-opacity="0.22"/><stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.04"/></linearGradient></defs>' +
-      '<path d="M-20,190 C90,175 180,95 420,40 L420,115 C220,150 120,210 -20,225 Z" fill="url(#ncSilk)"/>' +
-      '<path d="M40,220 C160,185 250,115 430,75 L430,145 C270,175 180,220 40,235 Z" fill="url(#ncSilk)" opacity="0.7"/>' +
-    '</svg>' +
-    '<div class="bd-cv-top">' +
+      '<div class="bd-card-visual' + designCls + '">' +
+        (showSilkWave ? (
+          '<svg class="bd-card-wave" viewBox="0 0 400 220" preserveAspectRatio="none">' +
+            '<defs><linearGradient id="ncSilk" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#2dd4bf" stop-opacity="0"/><stop offset="50%" stop-color="#45e6b0" stop-opacity="0.22"/><stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.04"/></linearGradient></defs>' +
+            '<path d="M-20,190 C90,175 180,95 420,40 L420,115 C220,150 120,210 -20,225 Z" fill="url(#ncSilk)"/>' +
+            '<path d="M40,220 C160,185 250,115 430,75 L430,145 C270,175 180,220 40,235 Z" fill="url(#ncSilk)" opacity="0.7"/>' +
+          '</svg>'
+        ) : '') +
+        '<div class="bd-cv-top">' +
           '<div class="bd-cv-brand"><span class="bd-cv-logo-badge">N</span> NordicCrypto</div>' +
           '<span class="bd-cv-status ' + (frozen ? 'frozen' : '') + '"><i class="dot"></i> ' + (frozen ? 'Frozen' : 'Active') + '</span>' +
         '</div>' +
@@ -313,17 +325,17 @@
     if (!box) return;
     var t = totals();
     var cryptoSum = t.btc + t.eth + t.usdt + t.others;
-  var items = cryptoSum > 0 ? [
-  { name: 'BTC', val: t.btc, color: '#2dd4bf' },
-  { name: 'ETH', val: t.eth, color: '#f59e0b' },
-  { name: 'USDT', val: t.usdt, color: '#3b82f6' },
-  { name: 'Others', val: t.others, color: '#8b5cf6' }
-] : [
-  { name: 'BTC', val: 42.8, color: '#2dd4bf' },
-  { name: 'ETH', val: 28.1, color: '#f59e0b' },
-  { name: 'USDT', val: 18.3, color: '#3b82f6' },
-  { name: 'Others', val: 10.8, color: '#8b5cf6' }
-];
+    var items = cryptoSum > 0 ? [
+      { name: 'BTC', val: t.btc, color: '#2dd4bf' },
+      { name: 'ETH', val: t.eth, color: '#f59e0b' },
+      { name: 'USDT', val: t.usdt, color: '#3b82f6' },
+      { name: 'Others', val: t.others, color: '#8b5cf6' }
+    ] : [
+      { name: 'BTC', val: 42.8, color: '#2dd4bf' },
+      { name: 'ETH', val: 28.1, color: '#f59e0b' },
+      { name: 'USDT', val: 18.3, color: '#3b82f6' },
+      { name: 'Others', val: 10.8, color: '#8b5cf6' }
+    ];
     var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0) || 1;
     var R = 52;
     var C = 2 * Math.PI * R;
@@ -382,7 +394,7 @@
     if (!dash || dash.offsetParent === null) return;
 
     var s = S();
-    var sig = [s.usd, s.btc, s.eth, s.usdt, s.currency, (s.txs || []).length, s.card && s.card.status, B.rng, B.hide].join('|');
+    var sig = [s.usd, s.btc, s.eth, s.usdt, s.currency, (s.txs || []).length, s.card && s.card.status, s.card && s.card.design, B.rng, B.hide].join('|');
     if (!force && sig === B.sig) return;
     B.sig = sig;
 
