@@ -307,6 +307,19 @@
     var c = s === 'Rejected' || s === 'Failed' ? 'fail' : 'pend'; return '<em class="bd-st ' + c + '">' + esc(T(s === 'Under Review' ? 'Under review' : s)) + '</em>';
   }
   var LIST = [];
+  // amount cell: fiat for cash tx; for a crypto credit/debit (amt=0) show its value in the client's
+  // currency (coinAmt × price) plus the coin amount, so it never reads as "0".
+  function txAmt(t, a) {
+    var coinAmt = Number(t.coinAmt) || 0;
+    if (t.coin && (t.coin === 'BTC' || t.coin === 'ETH') && !a && coinAmt) {
+      var s2 = S(), pxv = Number(t.px) || Number(t.coin === 'BTC' ? s2.btcP : s2.ethP) || 0;
+      var up = coinAmt > 0, fiat = coinAmt * pxv;
+      var coinTxt = (up ? '+' : '−') + Math.abs(coinAmt).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' ' + t.coin;
+      if (fiat) return '<b class="bd-sens ' + (up ? 'up' : '') + '">' + (up ? '+' : '−') + esc(U(Math.abs(fiat))) + '</b><small style="display:block;font-size:.72em;font-weight:600;opacity:.7">' + esc(coinTxt) + '</small>';
+      return '<b class="bd-sens ' + (up ? 'up' : '') + '">' + esc(coinTxt) + '</b>';
+    }
+    return a ? '<b class="bd-sens ' + (a > 0 ? 'up' : '') + '">' + (a > 0 ? '+' : '−') + esc(U(Math.abs(a))) + '</b>' : '<b>—</b>';
+  }
   function rTx() {
     var all = allTx(), q = B.q.trim().toLowerCase();
     var f = all.filter(function (t) {
@@ -322,7 +335,7 @@
       var col = kd ? kd.c : CAT[c].c, icn = kd ? kd.i : CAT[c].i, ttl = kd ? kd.t : (t.desc || '—');
       var sub = kd ? '<i class="bd-kd" style="--c:' + kd.c + '">' + esc(kd.k) + '</i>' + (tm ? ' ' + tm : '') : esc(T(CAT[c].n)) + (tm ? ' · ' + tm : '');
       var cc = kd && kd.coin && CG[kd.coin] ? COINC[kd.coin] : null;
-      h += '<button type="button" class="bd-tx" data-a="tx" data-i="' + i + '"><span class="bd-ti' + (cc ? ' coin' : '') + '" style="--c:' + col + (cc ? ';--c1:' + cc[0] + ';--c2:' + cc[1] : '') + '">' + (cc ? CG[kd.coin] + '<em class="bd-dir ' + kd.dir + '">' + (kd.dir === 'in' ? '↓' : '↑') + '</em>' : ic(icn, 18)) + '</span><span class="bd-tt"><b>' + esc(ttl) + '</b><small>' + sub + '</small></span><span class="bd-ta">' + (a ? '<b class="bd-sens ' + (a > 0 ? 'up' : '') + '">' + (a > 0 ? '+' : '−') + esc(U(Math.abs(a))) + '</b>' : '<b>—</b>') + stBadge(t) + '</span></button>';
+      h += '<button type="button" class="bd-tx" data-a="tx" data-i="' + i + '"><span class="bd-ti' + (cc ? ' coin' : '') + '" style="--c:' + col + (cc ? ';--c1:' + cc[0] + ';--c2:' + cc[1] : '') + '">' + (cc ? CG[kd.coin] + '<em class="bd-dir ' + kd.dir + '">' + (kd.dir === 'in' ? '↓' : '↑') + '</em>' : ic(icn, 18)) + '</span><span class="bd-tt"><b>' + esc(ttl) + '</b><small>' + sub + '</small></span><span class="bd-ta">' + txAmt(t, a) + stBadge(t) + '</span></button>';
     });
     if (!h) h = '<div class="bd-empty">' + ic(I.clock, 28) + '<b>' + (all.length ? 'Nothing found' : 'No transactions yet') + '</b><span>' + (all.length ? 'Try another filter or search.' : 'Add money to get started — your activity will show up here.') + '</span>' + (all.length ? '' : '<button type="button" class="bd-btn pri" data-a="proxy" data-t="btnAdd">' + ic(I.add, 16) + ' Add money</button>') + '</div>';
     var chips = [['all', 'All'], ['in', 'Money in'], ['out', 'Money out'], ['pend', 'Pending']].map(function (x) { return '<button type="button" class="' + (B.filter === x[0] ? 'on' : '') + '" data-a="flt" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
