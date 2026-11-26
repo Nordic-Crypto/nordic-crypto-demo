@@ -66,29 +66,97 @@ body {
   stroke: #041814 !important;
 }
 
-/* Fix Holiday Mode pill overlapping user avatar ("Otis / Premium Member") */
-#sideBar .umi {
-  position: relative;
-  z-index: 2;
-  margin-top: 4px !important;
-  padding: 12px 14px 6px !important;
+/* Fix Holiday Mode pill visibility (never hidden behind sidebar) + Luxury Premium Account Card */
+#sideBar.side {
+  z-index: 90 !important;
 }
 
 #holChip {
+  z-index: 100050 !important;
   left: 16px !important;
-  bottom: 72px !important;
+  bottom: 74px !important;
   width: 188px !important;
   justify-content: center !important;
-  background: rgba(13, 25, 34, 0.92) !important;
-  border: 1px solid rgba(69, 230, 176, 0.22) !important;
+  background: rgba(11, 23, 31, 0.95) !important;
+  border: 1px solid rgba(69, 230, 176, 0.28) !important;
+  color: #cfe4ee !important;
   backdrop-filter: blur(12px) !important;
   font-size: 11.5px !important;
-  padding: 6px 10px !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45) !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
 }
 
 #sideBar .bd-prem-card {
-  margin-bottom: 44px !important;
+  position: relative;
+  margin: auto 12px 44px !important;
+  padding: 16px 15px 14px !important;
+  border-radius: 18px !important;
+  background:
+    radial-gradient(120px 90px at 88% 18%, rgba(69, 230, 176, 0.28), transparent 70%),
+    linear-gradient(155deg, rgba(20, 44, 52, 0.92) 0%, rgba(10, 21, 29, 0.98) 100%) !important;
+  border: 1px solid rgba(69, 230, 176, 0.24) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 14px 28px -12px rgba(0, 0, 0, 0.75) !important;
+  overflow: hidden;
+}
+
+.bd-prem-gem {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  filter: drop-shadow(0 6px 14px rgba(45, 212, 191, 0.45));
+  pointer-events: none;
+}
+
+.bd-prem-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+  padding-right: 44px;
+  letter-spacing: -0.01em;
+}
+
+.bd-prem-desc {
+  font-size: 11px;
+  color: #93a8b6;
+  margin: 0 0 12px;
+  padding-right: 38px;
+  line-height: 1.4;
+}
+
+.bd-prem-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(69, 230, 176, 0.35);
+  background: rgba(69, 230, 176, 0.1);
+  color: #eef8f5;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.bd-prem-btn:hover {
+  background: linear-gradient(135deg, #4ae8b5 0%, #2dd4bf 100%);
+  color: #041814;
+  border-color: transparent;
+  box-shadow: 0 6px 16px -4px rgba(69, 230, 176, 0.5);
+}
+
+#sideBar .umi {
+  position: relative;
+  z-index: 2;
+  margin-top: 2px !important;
+  padding: 12px 14px 4px !important;
+}
+
+.bd-prem-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8ea3b2;
 }
 
 @media (max-width: 900px) {
