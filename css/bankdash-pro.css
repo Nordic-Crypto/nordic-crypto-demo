@@ -1,4 +1,4 @@
-/* NORDIC CRYPTO — Banking Dashboard PRO v6.0 (Luxury Glass, Exact Card Skins & Adaptive Typography) */
+/* NORDIC CRYPTO — Banking Dashboard PRO v7.0 (Complete & Clean) */
 #dash.bd-on > :not(#bd) { display: none !important; }
 
 body {
@@ -28,6 +28,7 @@ body {
 
 /* Sidebar styling */
 #sideBar.side {
+  z-index: 90 !important;
   background: rgba(7, 14, 20, 0.96) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
   backdrop-filter: blur(22px);
@@ -66,16 +67,13 @@ body {
   stroke: #041814 !important;
 }
 
-/* Fix Holiday Mode pill visibility + Mobile Sidebar Cleanup */
-#sideBar.side {
-  z-index: 90 !important;
-}
-
+/* Holiday Mode Pill Visibility */
 body:has(#mainApp[style*="flex"]) #holChip {
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
+
 #holChip {
   pointer-events: auto !important;
   z-index: 9000 !important;
@@ -96,81 +94,7 @@ body:has(#mainApp[style*="flex"]) #holChip {
   cursor: pointer !important;
 }
 
-/* Mobile Bottom Navigation Bar — Clean 5-Icon Grid, Solid Backdrop & No Clipping */
-@media (max-width: 900px) {
-  #sideBar.side {
-    background: #070f15 !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.85) !important;
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-    height: auto !important;
-    overflow: hidden !important;
-  }
-  html[data-theme="light"] #sideBar.side {
-    background: #ffffff !important;
-    border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
-  }
-  #sideBar .brand,
-  #sideBar .bd-prem-card,
-  #sideBar .umi,
-  #sideBar .menu .mi:nth-child(n+6) {
-    display: none !important;
-  }
-  #sideBar .menu {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    gap: 4px !important;
-  }
-  #sideBar .menu .mi {
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    padding: 7px 4px !important;
-    border-radius: 12px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 3px !important;
-  }
-  #sideBar .menu .mi::before {
-    display: none !important;
-  }
-  #sideBar .menu .mi svg {
-    width: 19px !important;
-    height: 19px !important;
-    margin: 0 !important;
-  }
-  #sideBar .menu .mi .tx {
-    display: block !important;
-    font-size: 9.5px !important;
-    font-weight: 700 !important;
-    line-height: 1.1 !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-  #chatToggle {
-    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
-    right: 14px !important;
-    width: 48px !important;
-    height: 48px !important;
-  }
-  #holChip {
-    left: 14px !important;
-    right: auto !important;
-    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
-    width: auto !important;
-    padding: 6px 11px !important;
-  }
-}
-
+/* Luxury Premium Account Card in Sidebar */
 #sideBar .bd-prem-card {
   position: relative;
   margin: auto 12px 44px !important;
@@ -240,18 +164,6 @@ body:has(#mainApp[style*="flex"]) #holChip {
   font-size: 11px;
   font-weight: 600;
   color: #8ea3b2;
-}
-
-@media (max-width: 900px) {
-  #holChip {
-    left: auto !important;
-    right: 14px !important;
-    bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important;
-    width: auto !important;
-  }
-  #sideBar .bd-prem-card {
-    margin-bottom: 12px !important;
-  }
 }
 
 /* Main Dashboard Container */
@@ -468,6 +380,23 @@ body:has(#mainApp[style*="flex"]) #holChip {
 .bd-chart-box svg { width: 100%; height: 100%; overflow: visible; }
 .bd-chart-box .ax-txt { fill: #637987; font-size: 10px; font-weight: 600; }
 
+/* Interactive Chart Tooltip */
+.bd-tip {
+  position: absolute;
+  top: 4px;
+  background: rgba(7, 16, 24, 0.96);
+  border: 1px solid rgba(69, 230, 176, 0.42);
+  border-radius: 10px;
+  padding: 6px 10px;
+  pointer-events: none;
+  font-size: 12px;
+  z-index: 6;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+}
+.bd-tip b { display: block; color: #ffffff; font-weight: 700; }
+.bd-tip small { display: block; color: #8fa3b0; font-size: 10px; margin-top: 1px; }
+
 /* Elite Mini Asset Ticker Strip under Chart */
 .bd-asset-strip {
   display: flex;
@@ -536,9 +465,8 @@ body:has(#mainApp[style*="flex"]) #holChip {
 .bd-more-coins:hover { color: var(--bd-mint); border-color: var(--bd-bd-hi); background: rgba(69, 230, 176, 0.08); }
 
 /* ============================================================
-   BANK CARD PANEL (Col 2 Top) — Integrates 1:1 with card-skins.js (.pay)
+   BANK CARD PANEL (Col 2 Top) — 3D Stage + Custom Card Skins
    ============================================================ */
-/* 3D Perspective Stage for the Bank Card */
 #bdCardPanel {
   perspective: 1100px;
 }
@@ -587,7 +515,6 @@ html body .bd-card-visual.pay.bd-3d-active {
     0 14px 30px -10px rgba(69, 230, 176, 0.34) !important;
 }
 
-/* Dynamic 3D Specular Glare Overlay */
 html body .bd-card-visual.pay::before {
   content: '';
   position: absolute;
@@ -599,21 +526,18 @@ html body .bd-card-visual.pay::before {
   transition: opacity 0.25s ease;
 }
 
-/* Subtle 3D depth pop on card elements */
 html body .bd-card-visual.pay .bd-cv-top,
 html body .bd-card-visual.pay .bd-cv-chip-row,
 html body .bd-card-visual.pay .bd-cv-num-row {
   transform: translateZ(14px);
 }
 
-/* Override card-pro2.css child margins inside our dashboard card */
 html body .bd-card-visual.pay > :not(.pay-shine):not(.hk-snow):not(.bd-card-wave) {
   margin-inline: 0 !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
 
-/* Ensure light text on dark skins and dark text on Frost Platinum */
 html body .bd-card-visual.pay.design-frost .bd-cv-brand,
 html body .bd-card-visual.pay.design-frost .bd-cv-num,
 html body .bd-card-visual.pay.design-frost .bd-cv-visa,
@@ -626,6 +550,7 @@ html body .bd-card-visual.pay.design-gold .bd-cv-visa {
   color: #161822 !important;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) !important;
 }
+
 html body .bd-card-visual.pay.design-frost .bd-cv-status,
 html body .bd-card-visual.pay.design-silver .bd-cv-status,
 html body .bd-card-visual.pay.design-gold .bd-cv-status {
@@ -686,12 +611,18 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
   backdrop-filter: blur(6px);
 }
 
+@keyframes bdPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
 .bd-cv-status .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #45e6b0;
   box-shadow: 0 0 8px #45e6b0;
+  animation: bdPulseDot 2.2s ease-in-out infinite;
 }
 
 .bd-cv-status.frozen {
@@ -840,7 +771,7 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
   transform: translateY(-2px);
 }
 
-/* Right Quick Actions Stack (Col 3 Top) — Luxury Glass Buttons */
+/* Right Quick Actions Stack (Col 3 Top) */
 .bd-qstack {
   display: flex;
   flex-direction: column;
@@ -1012,7 +943,7 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
 .bd-tx-amt.dn { color: #f87171; }
 .bd-tx-amt.nt { color: #cbd5e1; }
 
-/* Portfolio Composition Donut — Fixed Center Fitting for Multi-Million Values */
+/* Portfolio Composition Donut */
 .bd-comp-wrap {
   display: flex;
   align-items: center;
@@ -1183,6 +1114,137 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
 }
 
 /* ============================================================
+   MOBILE FULL-FEATURE HUB SHEET (opened by top ☰ button)
+   ============================================================ */
+.bd-mob-hub {
+  position: fixed;
+  inset: 0;
+  z-index: 100080;
+  background: rgba(4, 9, 14, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.bd-mob-hub.on { display: flex; }
+
+.bd-mh-sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #0d1a24 0%, #070e15 100%);
+  border-top: 1px solid rgba(69, 230, 176, 0.28);
+  border-radius: 24px 24px 0 0;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.85);
+  color: #eef5f8;
+}
+
+.bd-mh-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.bd-mh-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bd-mh-av {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #45e6b0, #0d9488);
+  color: #041814;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+.bd-mh-user b { display: block; font-size: 14.5px; color: #fff; }
+.bd-mh-user span { display: block; font-size: 11px; color: #45e6b0; font-weight: 600; }
+
+.bd-mh-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+}
+
+.bd-mh-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bd-mh-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #eef5f8;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.bd-mh-tile:active {
+  background: rgba(69, 230, 176, 0.14);
+  border-color: rgba(69, 230, 176, 0.4);
+}
+
+.bd-mh-tile-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(69, 230, 176, 0.14);
+  color: #45e6b0;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bd-mh-row {
+  display: flex;
+  gap: 8px;
+}
+
+.bd-mh-pill {
+  flex: 1;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d6e4ee;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bd-mh-pill.danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+/* ============================================================
    TABLET & MOBILE RESPONSIVE DESIGN
    ============================================================ */
 @media (max-width: 1240px) {
@@ -1190,6 +1252,76 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
   .bd-qstack { grid-column: span 2; display: grid; grid-template-columns: repeat(3, 1fr); }
   .bd-bot-grid { grid-template-columns: 1fr 1fr; }
   .bd-sec-card { grid-column: span 2; }
+}
+
+@media (max-width: 900px) {
+  #sideBar.side {
+    background: #070f15 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.85) !important;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+  #sideBar .brand,
+  #sideBar .bd-prem-card,
+  #sideBar .umi,
+  #sideBar .menu .mi:nth-child(n+6) {
+    display: none !important;
+  }
+  #sideBar .menu {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+  #sideBar .menu .mi {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 7px 4px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+  }
+  #sideBar .menu .mi::before {
+    display: none !important;
+  }
+  #sideBar .menu .mi svg {
+    width: 19px !important;
+    height: 19px !important;
+    margin: 0 !important;
+  }
+  #sideBar .menu .mi .tx {
+    display: block !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  #chatToggle {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 14px !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+  #holChip {
+    left: 14px !important;
+    right: auto !important;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    padding: 6px 11px !important;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1222,12 +1354,6 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
   .bd-greet-sub {
     color: #dce7ef !important;
     text-shadow: 0 1px 10px rgba(0, 0, 0, 0.85) !important;
-  }
-  #sideBar.side {
-    background: rgba(7, 14, 20, 0.98) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
   }
   .bd-date-pill {
     font-size: 11.5px;
@@ -1286,7 +1412,65 @@ html body .bd-card-visual.pay.design-gold .bd-cv-status {
   .bd-tx-info b {
     max-width: 170px;
   }
+
+  /* Mobile Currency Switcher Popover (Only visible when .open / .on) */
+  #currSwitch {
+    position: relative !important;
+  }
+  #currSwitch .curr-menu,
+  #currSwitch > div:not(:first-child) {
+    display: none !important;
+  }
+  #currSwitch.open .curr-menu,
+  #currSwitch.on .curr-menu,
+  #currSwitch .curr-menu.open,
+  #currSwitch .curr-menu.on,
+  #currSwitch > div:not(:first-child).open,
+  #currSwitch > div:not(:first-child).on {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: 118px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    transform: none !important;
+    background: rgba(9, 19, 27, 0.98) !important;
+    border: 1px solid rgba(69, 230, 176, 0.35) !important;
+    border-radius: 18px !important;
+    padding: 10px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: blur(22px) !important;
+    -webkit-backdrop-filter: blur(22px) !important;
+    z-index: 100060 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  #currSwitch .curr-opt,
+  #currSwitch [data-cur] {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.045) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #eef5f8 !important;
+    white-space: nowrap !important;
+  }
+  #currSwitch .curr-opt.on,
+  #currSwitch [data-cur].on {
+    background: rgba(69, 230, 176, 0.16) !important;
+    border-color: rgba(69, 230, 176, 0.45) !important;
+    color: #45e6b0 !important;
+  }
 }
+
 /* ============================================================
    LIGHT THEME SUPPORT (html[data-theme="light"])
    ============================================================ */
@@ -1312,76 +1496,58 @@ html[data-theme="light"] #sideBar.side {
   border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
 }
 
-html[data-theme="light"] #sideBar .brand .nm {
-  color: #0f172a !important;
+@media (max-width: 900px) {
+  html[data-theme="light"] #sideBar.side {
+    background: #ffffff !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
+  }
 }
 
-html[data-theme="light"] #sideBar .menu .mi {
-  color: #475569 !important;
-}
-
+html[data-theme="light"] #sideBar .brand .nm { color: #0f172a !important; }
+html[data-theme="light"] #sideBar .menu .mi { color: #475569 !important; }
 html[data-theme="light"] #sideBar .menu .mi:hover {
   background: rgba(15, 23, 42, 0.05) !important;
   color: #0f172a !important;
 }
-
 html[data-theme="light"] #sideBar .menu .mi.on {
   background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%) !important;
   color: #ffffff !important;
 }
-
-html[data-theme="light"] #sideBar .menu .mi.on svg {
-  stroke: #ffffff !important;
-}
+html[data-theme="light"] #sideBar .menu .mi.on svg { stroke: #ffffff !important; }
 
 html[data-theme="light"] #sideBar .bd-prem-card {
   background: linear-gradient(155deg, #ecfdf5 0%, #f0fdfa 100%) !important;
   border: 1px solid rgba(16, 185, 129, 0.25) !important;
   box-shadow: 0 10px 24px -10px rgba(15, 23, 42, 0.12) !important;
 }
-
-html[data-theme="light"] .bd-prem-title {
-  color: #0f172a !important;
-}
-
-html[data-theme="light"] .bd-prem-desc {
-  color: #475569 !important;
-}
-
+html[data-theme="light"] .bd-prem-title { color: #0f172a !important; }
+html[data-theme="light"] .bd-prem-desc { color: #475569 !important; }
 html[data-theme="light"] .bd-prem-btn {
   background: #10b981 !important;
   color: #ffffff !important;
   border-color: transparent !important;
 }
-
-html[data-theme="light"] #sideBar .umi h4 {
-  color: #0f172a !important;
-}
-
+html[data-theme="light"] #sideBar .umi h4 { color: #0f172a !important; }
 html[data-theme="light"] #holChip {
   background: rgba(255, 255, 255, 0.95) !important;
   color: #0f172a !important;
   border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
-/* Greeting & Date Pill */
 html[data-theme="light"] .bd-greet-title {
   color: #ffffff !important;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65) !important;
 }
-
 html[data-theme="light"] .bd-greet-sub {
   color: #f1f5f9 !important;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65) !important;
 }
-
 html[data-theme="light"] .bd-date-pill {
   background: rgba(255, 255, 255, 0.88) !important;
   color: #0f172a !important;
   border-color: rgba(15, 23, 42, 0.1) !important;
 }
 
-/* Light Glass Panels */
 html[data-theme="light"] .bd-panel {
   background: rgba(255, 255, 255, 0.92) !important;
   border: 1px solid rgba(15, 23, 42, 0.08) !important;
@@ -1394,9 +1560,7 @@ html[data-theme="light"] .bd-mini-meta span,
 html[data-theme="light"] .bd-tx-info small,
 html[data-theme="light"] .bd-donut-center small,
 html[data-theme="light"] .bd-sec-top p,
-html[data-theme="light"] .bd-sec-link {
-  color: #64748b !important;
-}
+html[data-theme="light"] .bd-sec-link { color: #64748b !important; }
 
 html[data-theme="light"] .bd-bal-num,
 html[data-theme="light"] .bd-mini-meta b,
@@ -1405,25 +1569,17 @@ html[data-theme="light"] .bd-sec-hdr h3,
 html[data-theme="light"] .bd-tx-info b,
 html[data-theme="light"] .bd-donut-center b,
 html[data-theme="light"] .bd-comp-leg li b,
-html[data-theme="light"] .bd-sec-top h3 {
-  color: #0f172a !important;
-}
+html[data-theme="light"] .bd-sec-top h3 { color: #0f172a !important; }
 
 html[data-theme="light"] .bd-comp-leg li span,
 html[data-theme="light"] .bd-sec-list li,
-html[data-theme="light"] .bd-cctrl {
-  color: #334155 !important;
-}
+html[data-theme="light"] .bd-cctrl { color: #334155 !important; }
 
 html[data-theme="light"] .bd-rng {
   background: #f1f5f9 !important;
   border-color: rgba(15, 23, 42, 0.08) !important;
 }
-
-html[data-theme="light"] .bd-rng button {
-  color: #64748b !important;
-}
-
+html[data-theme="light"] .bd-rng button { color: #64748b !important; }
 html[data-theme="light"] .bd-rng button.on {
   background: #10b981 !important;
   color: #ffffff !important;
@@ -1454,17 +1610,14 @@ html[data-theme="light"] .bd-qbtn {
   color: #0f172a !important;
   box-shadow: 0 8px 20px -10px rgba(15, 23, 42, 0.12) !important;
 }
-
 html[data-theme="light"] .bd-qbtn:hover {
   border-color: #10b981 !important;
   background: #ffffff !important;
 }
-
 html[data-theme="light"] .bd-qbtn.pri {
   background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%) !important;
   color: #ffffff !important;
 }
-
 html[data-theme="light"] .bd-qbtn.pri .bd-qbtn-ic {
   background: rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
@@ -1474,101 +1627,33 @@ html[data-theme="light"] .bd-tx-item {
   background: #f8fafc !important;
   border-color: rgba(15, 23, 42, 0.06) !important;
 }
-
 html[data-theme="light"] .bd-tx-item:hover {
   background: #f1f5f9 !important;
   border-color: rgba(16, 185, 129, 0.35) !important;
 }
 
 html[data-theme="light"] .bd-asset-strip,
-html[data-theme="light"] .bd-card-ctrls {
-  border-top-color: rgba(15, 23, 42, 0.08) !important;
-}
-/* Interactive Chart Tooltip & Live Card Status Pulse */
-.bd-tip {
-  position: absolute;
-  top: 4px;
-  background: rgba(7, 16, 24, 0.96);
-  border: 1px solid rgba(69, 230, 176, 0.42);
-  border-radius: 10px;
-  padding: 6px 10px;
-  pointer-events: none;
-  font-size: 12px;
-  z-index: 6;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-}
-.bd-tip b { display: block; color: #ffffff; font-weight: 700; }
-.bd-tip small { display: block; color: #8fa3b0; font-size: 10px; margin-top: 1px; }
+html[data-theme="light"] .bd-card-ctrls { border-top-color: rgba(15, 23, 42, 0.08) !important; }
 
-@keyframes bdPulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.85); }
+html[data-theme="light"] .bd-mh-sheet {
+  background: #ffffff !important;
+  color: #0f172a !important;
 }
-.bd-cv-status .dot {
-  animation: bdPulseDot 2.2s ease-in-out infinite;
+html[data-theme="light"] .bd-mh-user b { color: #0f172a !important; }
+html[data-theme="light"] .bd-mh-tile,
+html[data-theme="light"] .bd-mh-pill {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.09) !important;
+  color: #0f172a !important;
 }
-/* ============================================================
-   MOBILE CURRENCY SWITCHER FIX (No Left Clipping + Touch Sheet)
-   ============================================================ */
+
 @media (max-width: 760px) {
-  #currSwitch {
-    position: relative !important;
-  }
-  #currSwitch .curr-menu,
-  #currSwitch [class*="menu"],
-  #currSwitch [class*="drop"],
-  #currSwitch > div:not(:first-child) {
-    position: fixed !important;
-    left: 12px !important;
-    right: 12px !important;
-    top: 118px !important;
-    width: auto !important;
-    max-width: calc(100vw - 24px) !important;
-    min-width: 0 !important;
-    transform: none !important;
-    background: rgba(9, 19, 27, 0.98) !important;
-    border: 1px solid rgba(69, 230, 176, 0.32) !important;
-    border-radius: 18px !important;
-    padding: 10px !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88) !important;
-    backdrop-filter: blur(22px) !important;
-    -webkit-backdrop-filter: blur(22px) !important;
-    z-index: 100060 !important;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-  }
-  #currSwitch .curr-menu[style*="display: none"],
-  #currSwitch > div:not(:first-child)[style*="display: none"] {
-    display: none !important;
-  }
-  #currSwitch .curr-opt,
-  #currSwitch button:not(:first-child),
-  #currSwitch [data-cur] {
-    width: 100% !important;
-    min-height: 44px !important;
-    padding: 9px 12px !important;
-    border-radius: 12px !important;
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    color: #eef5f8 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-  }
-  #currSwitch .curr-opt.on,
-  #currSwitch [data-cur].on {
-    background: rgba(69, 230, 176, 0.16) !important;
-    border-color: rgba(69, 230, 176, 0.45) !important;
-    color: #45e6b0 !important;
-  }
-  html[data-theme="light"] #currSwitch .curr-menu,
-  html[data-theme="light"] #currSwitch > div:not(:first-child) {
+  html[data-theme="light"] #currSwitch.open .curr-menu,
+  html[data-theme="light"] #currSwitch.on .curr-menu,
+  html[data-theme="light"] #currSwitch .curr-menu.open,
+  html[data-theme="light"] #currSwitch .curr-menu.on,
+  html[data-theme="light"] #currSwitch > div:not(:first-child).open,
+  html[data-theme="light"] #currSwitch > div:not(:first-child).on {
     background: rgba(255, 255, 255, 0.98) !important;
     border-color: rgba(13, 148, 136, 0.3) !important;
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22) !important;
