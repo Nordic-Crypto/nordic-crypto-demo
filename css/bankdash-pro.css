@@ -66,13 +66,18 @@ body {
   stroke: #041814 !important;
 }
 
-/* Fix Holiday Mode pill visibility (never hidden behind sidebar) + Luxury Premium Account Card */
+/* Fix Holiday Mode pill visibility + Mobile Sidebar Cleanup */
 #sideBar.side {
   z-index: 90 !important;
 }
 
 #holChip {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
   z-index: 100050 !important;
+  position: fixed !important;
   left: 16px !important;
   bottom: 74px !important;
   width: 188px !important;
@@ -86,6 +91,23 @@ body {
   padding: 6px 12px !important;
   border-radius: 999px !important;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
+  cursor: pointer !important;
+}
+
+/* Hide desktop-only Premium Card & extra links in mobile bottom bar */
+@media (max-width: 900px) {
+  #sideBar .bd-prem-card,
+  #sideBar .umi,
+  #sideBar .menu .mi:nth-child(n+6) {
+    display: none !important;
+  }
+  #holChip {
+    left: auto !important;
+    right: 14px !important;
+    bottom: calc(136px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    padding: 6px 11px !important;
+  }
 }
 
 #sideBar .bd-prem-card {
