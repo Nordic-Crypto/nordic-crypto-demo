@@ -542,10 +542,32 @@
     }
   }
 
+  function syncLivePrices() {
+    var base = window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
+    fetch(base + '?action=multiPrices&_t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok || !Array.isArray(d.coins) || !window.st) return;
+        var changed = false;
+        d.coins.forEach(function (c) {
+          if (!c || !(c.usd > 0)) return;
+          var sym = String(c.symbol || '').toUpperCase();
+          if (sym === 'BTC' && st.btcP !== c.usd) { st.btcP = c.usd; changed = true; }
+          else if (sym === 'ETH' && st.ethP !== c.usd) { st.ethP = c.usd; changed = true; }
+          else if (sym === 'SOL' && st.solP !== c.usd) { st.solP = c.usd; changed = true; }
+          else if (sym === 'BNB' && st.bnbP !== c.usd) { st.bnbP = c.usd; changed = true; }
+        });
+        if (changed) render(true);
+      })
+      .catch(function () {});
+  }
+
   function init() {
     if (!build()) { setTimeout(init, 350); return; }
+    syncLivePrices();
     render(true);
     setInterval(function () { render(false); }, 2000);
+    setInterval(syncLivePrices, 15000);
     window.addEventListener('resize', function () { render(true); });
   }
 
