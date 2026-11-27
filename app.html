@@ -810,13 +810,18 @@ function navState(){
  ['#navOpen','#stOpen'].forEach(function(q){var o=$(q);if(!o)return;o.textContent=s?tr('open_app'):tr('open');o.dataset.auth=s?'app':'signup'});
 }
 /* a stored token is only trusted after the server confirms it; a dead one is cleared so the login button comes back */
-function verifySession(){
+/* a just-created session can be briefly invisible to the server (storage propagation): never drop it in the first
+   3 minutes after sign-in, and otherwise only after the server refuses it twice, a few seconds apart */
+function verifySession(again){
  var t;try{t=localStorage.getItem('session_token')}catch(e){}
  if(!t){SESSION_OK=false;navState();return}
+ var fresh=false;try{fresh=Date.now()-Number(localStorage.getItem('nc_login_ts')||0)<180000}catch(e){}
+ if(fresh){SESSION_OK=true;navState();return}
  fetch(WORKER+'?action=getUserState',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})})
  .then(function(r){return r.json()}).then(function(d){
   if(d&&d.ok===false&&/authenticat|session|expired|disabled|token/i.test(String(d.error||''))){
-   try{['session_token','user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});sessionStorage.removeItem('nc_f5_recovery')}catch(e){}
+   if(!again){SESSION_OK=true;navState();setTimeout(function(){verifySession(true)},4000);return}
+   try{if(localStorage.getItem('session_token')!==t)return;['session_token','user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});sessionStorage.removeItem('nc_f5_recovery')}catch(e){}
    SESSION_OK=false;
   }else SESSION_OK=true;
   navState();
@@ -881,7 +886,7 @@ $('#mForm').addEventListener('submit',function(e){
  .then(function(r){return r.json()}).then(function(d){
   if(d&&d.ok&&d.token){
    try{['user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});
-    localStorage.setItem('session_token',d.token);localStorage.setItem('user_email',d.user.email);localStorage.setItem('user_role',d.user.role||'user');localStorage.setItem('nc_agent',d.user.agent?'1':'');
+    localStorage.setItem('session_token',d.token);localStorage.setItem('nc_login_ts',String(Date.now()));localStorage.setItem('user_email',d.user.email);localStorage.setItem('user_role',d.user.role||'user');localStorage.setItem('nc_agent',d.user.agent?'1':'');
     var nm=d.user.name||(d.user.email.split('@')[0]);localStorage.setItem('user_name',d.user.name||nm.charAt(0).toUpperCase()+nm.slice(1));}catch(x){}
    location.href='/app';
   }else{busy=false;btn.disabled=false;btn.style.opacity=1;if(d&&d.needTotp){needCode=true;authText();$('#fCode').value='';$('#fCode').maxLength=8;$('#fCode').placeholder='2FA code';setTimeout(function(){$('#fCode').focus()},50)}showErr((d&&d.error)||tr('e_net'))}
@@ -1011,6 +1016,6 @@ setTimeout(function(){window.ncAuUpdate()},300);
 <script src="js/security-pro.js?v=2mint1"></script>
 <script src="js/trust-content.js?v=3" defer></script>
 <script src="js/trust-pro.js?v=4" defer></script>
-<script src="js/register-pro.js?v=3"></script>
+<script src="js/register-pro.js?v=4"></script>
 </body>
 </html>
