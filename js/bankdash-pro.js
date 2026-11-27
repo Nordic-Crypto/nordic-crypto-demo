@@ -443,36 +443,40 @@
     var box = $('bdCompPanel');
     if (!box) return;
     var t = totals();
-    var cryptoSum = t.btc + t.eth + t.usdt + t.others;
-    var items = cryptoSum > 0 ? [
+    // REAL mix of the client's money (cash + crypto). Nothing is invented: an empty account shows an empty ring.
+    var all = [
+      { name: 'Cash', val: t.usd, color: '#94a3b8' },
       { name: 'BTC', val: t.btc, color: '#2dd4bf' },
       { name: 'ETH', val: t.eth, color: '#f59e0b' },
       { name: 'USDT', val: t.usdt, color: '#3b82f6' },
       { name: 'Others', val: t.others, color: '#8b5cf6' }
-    ] : [
-      { name: 'BTC', val: 42.8, color: '#2dd4bf' },
-      { name: 'ETH', val: 28.1, color: '#f59e0b' },
-      { name: 'USDT', val: 18.3, color: '#3b82f6' },
-      { name: 'Others', val: 10.8, color: '#8b5cf6' }
     ];
-    var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0) || 1;
+    var items = all.filter(function (x) { return x.val > 0.004; });
+    var sum = items.reduce(function (acc, x) { return acc + x.val; }, 0);
     var R = 58;
     var C = 2 * Math.PI * R;
     var offset = 0;
+    var gap = items.length > 1 ? 2 : 0;
 
-    var circles = items.map(function (it) {
+    var circles = sum > 0 ? items.map(function (it) {
       var len = (it.val / sum) * C;
       var seg = '<circle cx="78" cy="78" r="' + R + '" fill="none" stroke="' + it.color + '" stroke-width="16" ' +
-                'stroke-dasharray="' + Math.max(0, len - 2).toFixed(2) + ' ' + C.toFixed(2) + '" ' +
+                'stroke-dasharray="' + Math.max(0.5, len - gap).toFixed(2) + ' ' + C.toFixed(2) + '" ' +
                 'stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 78 78)"/>';
       offset += len;
       return seg;
-    }).join('');
+    }).join('') : '';
 
-    var legend = items.map(function (it) {
-      var pct = ((it.val / sum) * 100).toFixed(1);
-      return '<li><span><i style="background:' + it.color + '"></i>' + it.name + '</span><b>' + pct + '%</b></li>';
-    }).join('');
+    var legend;
+    if (sum > 0) {
+      legend = items.sort(function (a, b) { return b.val - a.val; }).map(function (it) {
+        var pct = (it.val / sum) * 100;
+        var pctTxt = pct > 0 && pct < 0.1 ? '<0.1' : pct.toFixed(1);
+        return '<li><span><i style="background:' + it.color + '"></i>' + it.name + '</span><b class="bd-sens">' + pctTxt + '%</b></li>';
+      }).join('');
+    } else {
+      legend = '<li class="bd-comp-empty" style="display:block;font-weight:500;color:#7f94a3;line-height:1.45;font-size:12px">Your portfolio mix appears here after your first deposit.</li>';
+    }
 
     var fullUsd = '$' + Math.round(t.total).toLocaleString('en-US');
     var centerTotal = fullUsd.length > 9 ? compactUsd(t.total) : fullUsd;
@@ -492,19 +496,54 @@
       '</div>';
   }
 
+  // real 2FA status from the server (asked once per page, refreshed when the tab regains focus)
+  function load2fa(force) {
+    var tok = '';
+    try { tok = localStorage.getItem('session_token') || ''; } catch (e) {}
+    if (!tok || window.adminViewingEmail) return;
+    if (!force && (B.twofaLoading || (B.twofaAt && Date.now() - B.twofaAt < 60000))) return;
+    B.twofaLoading = true;
+    var base = window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
+    fetch(base + '?action=totpStatus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        B.twofaLoading = false; B.twofaAt = Date.now();
+        if (d && d.ok) { var v = !!d.enabled; if (v !== B.twofa) { B.twofa = v; renderSecurity(); } }
+      })
+      .catch(function () { B.twofaLoading = false; });
+  }
+
   function renderSecurity() {
     var box = $('bdSecPanel');
     if (!box) return;
+    var s = S();
+    var vst = (s.verification && s.verification.status) || ((s.user && s.user.verified) ? 'approved' : '');
+    var idOk = vst === 'approved';
+    var tfa = B.twofa;                       // true / false / undefined (still loading)
+    var WARN = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg>';
+    var DOTS = '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg>';
+    function row(state, text) {
+      var cls = state === 'ok' ? '' : (state === 'wait' ? ' wait' : ' warn');
+      var ic = state === 'ok' ? ICO.check : (state === 'wait' ? DOTS : WARN);
+      return '<li class="' + (state === 'ok' ? '' : 'bd-sec-todo') + '"><span class="bd-sec-chk' + cls + '">' + ic + '</span> ' + esc(text) + '</li>';
+    }
+    var idRow = idOk ? row('ok', 'Identity Verified')
+      : (vst === 'pending' ? row('wait', 'Identity check in review')
+      : (vst === 'rejected' ? row('warn', 'Identity check needs attention') : row('warn', 'Verify your identity')));
+    var tfaRow = tfa === true ? row('ok', '2FA Enabled')
+      : (tfa === false ? row('warn', 'Turn on 2FA') : row('wait', 'Checking 2FA…'));
+    var encRow = row('ok', 'Encrypted connection');
+    var done = (idOk ? 1 : 0) + (tfa === true ? 1 : 0) + 1;
+    var allOk = done === 3;
+    var title = allOk ? 'Your Account is Protected' : 'Secure your account';
+    var sub = allOk ? 'Advanced security keeps your assets safe.' : (done + ' of 3 protections on' + (tfa === false ? ' — turn on 2FA in the Security Center.' : '.'));
+    box.classList.toggle('bd-sec-partial', !allOk);
     box.innerHTML =
       '<div class="bd-sec-top">' +
         '<div class="bd-sec-shield">' + ICO.shield + '</div>' +
-        '<div><h3>Your Account is Protected</h3><p>Advanced security keeps your assets safe.</p></div>' +
+        '<div><h3>' + esc(title) + '</h3><p>' + esc(sub) + '</p></div>' +
       '</div>' +
-      '<ul class="bd-sec-list">' +
-        '<li><span class="bd-sec-chk">' + ICO.check + '</span> Identity Verified</li>' +
-        '<li><span class="bd-sec-chk">' + ICO.check + '</span> 2FA Enabled</li>' +
-        '<li><span class="bd-sec-chk">' + ICO.check + '</span> Fraud Protection Active</li>' +
-      '</ul>' +
+      '<ul class="bd-sec-list">' + idRow + tfaRow + encRow + '</ul>' +
       '<div class="bd-sec-watermark">' + ICO.shieldBig + '</div>' +
       '<button type="button" class="bd-sec-btn" data-a="proxy" data-t="settingsBtn">Security Center ' + ICO.arrowRight + '</button>';
   }
@@ -518,8 +557,11 @@
     var sig = [
       s.usd, s.btc, s.eth, s.usdt, s.btcP, s.ethP, s.currency, s.eurR, s.sekR,
       (s.txs || []).length, (s.withdrawals || []).length,
-      s.card && s.card.status, s.card && s.card.design, B.rng, B.hide
+      s.card && s.card.status, s.card && s.card.design, B.rng, B.hide,
+      s.usdt, s.sol, s.bnb, s.solP, s.bnbP,
+      s.verification && s.verification.status, s.user && s.user.verified, B.twofa
     ].join('|');
+    load2fa();
     if (!force && sig === B.sig) return;
     B.sig = sig;
 
@@ -847,6 +889,10 @@
       if (!rafId) rafId = requestAnimationFrame(updateTilt);
     }, { passive: true });
   })();
+
+  // client may switch 2FA on/off in the Security Center: refresh the real status when they come back
+  window.addEventListener('focus', function () { load2fa(); });
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#csBox,[id^="cs"]')) setTimeout(function () { load2fa(true); }, 1500); }, true);
 
   window.BankDashPro = { render: function () { render(true); }, state: B };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
