@@ -317,7 +317,18 @@ html.v4 #bdGoals{grid-area:gl}
 html.v4 .bd>*>section{margin:0!important}
 }
 @media(max-width:1100px){
+/* force the whole dashboard to a single, full-width column on tablet/phone
+   (overrides the 2-col base grid even if an older bankdash-pro.css is cached) */
+html.v4 .bd{display:flex!important;flex-direction:column!important;align-items:stretch!important;grid-template-columns:none!important;grid-template-areas:none!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:clip!important;gap:14px!important}
+html.v4 .bd-main,html.v4 .bd-side{display:contents!important}
+html.v4 .bd>*,html.v4 .bd>.bd-main>*,html.v4 .bd>.bd-side>*{grid-area:auto!important;width:auto!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
 html.v4 .bd-hero{order:1!important}html.v4 #bdCard{order:2!important}html.v4 #bdActs{order:3!important}html.v4 #bdHealth{order:4!important}html.v4 #bdIns{order:5!important}html.v4 #bdTx{order:6!important}html.v4 #bdCrypto{order:7!important}html.v4 #bdAcc{order:8!important}html.v4 #bdGoals{order:9!important}
+}
+/* global phone safety-net: never allow sideways scroll / left-shift */
+@media(max-width:760px){
+html,body{max-width:100%!important;overflow-x:hidden!important}
+html.v4 .body,html.v4 .main{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+html.v4 .body>*{max-width:100%!important;box-sizing:border-box!important}
 }
 
 /* ---- section headers: icon + title, no eyebrow ---- */
