@@ -1,17 +1,21 @@
 /* ============================================================
-   NORDIC CRYPTO — CHAT DOCUMENTS PRO v1.1 (English UI)
-   - Admin & Agents can send any document (PDF, HTML, DOCX, XLSX, ZIP, etc.)
-   - Admin & Agents can request a document from a client
-   - Clients can upload & send a document ONLY when requested by Admin/Agent
+   NORDIC CRYPTO — CHAT DOCUMENTS PRO v2.0 (Admin + Agent Desk + Client)
+   - Works in Admin Modal Chat, Agent Desk, and Client Support Chat
+   - Auto-detects active client email from API calls & UI headers
+   - Admin/Agent can send any document (PDF, HTML, DOCX, XLSX, ZIP, etc.)
+   - Admin/Agent can request a document; Client can upload ONLY on request
    ============================================================ */
 (function () {
   'use strict';
-  if (window.__chatDocsPro) return;
-  window.__chatDocsPro = true;
+  if (window.__chatDocsProV2) return;
+  window.__chatDocsProV2 = true;
 
   var BASE = window.WORKER_LOGIN_URL || window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
+  var EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+
   var state = {
     docRequest: null,
+    lastActiveClient: '',
     fileCache: {}
   };
 
@@ -19,28 +23,66 @@
     try { return typeof window.getSessionToken === 'function' ? window.getSessionToken() : localStorage.getItem('session_token'); }
     catch (e) { return null; }
   }
-  function isAdminRole() {
-    try { return localStorage.getItem('user_role') === 'admin'; } catch (e) { return false; }
+
+  function isStaffMode() {
+    try {
+      if (localStorage.getItem('user_role') === 'admin') return true;
+      if (document.body && /agent/i.test(document.body.innerText.slice(0, 200))) return true;
+      if (location.pathname && /agent/i.test(location.pathname)) return true;
+    } catch (e) {}
+    return false;
   }
+
+  function extractEmailFromText(txt) {
+    if (!txt) return '';
+    var m = String(txt).match(EMAIL_RE);
+    if (!m) return '';
+    var em = m[0].toLowerCase().trim();
+    if (em.indexOf('@nordiccrypto.') >= 0) return '';
+    return em;
+  }
+
   function activeClientEmail() {
-    if (!isAdminRole()) {
+    if (!isStaffMode()) {
       try { return (localStorage.getItem('user_email') || '').toLowerCase().trim(); } catch (e) { return ''; }
     }
+
+    /* 1. From visible Admin Chat modal header (e.g. "otis@bloomquix.info" in image_5f783e) */
+    var modals = document.querySelectorAll('.modal, [role="dialog"], #adminChatModal, #chatModal, .nc-chat-modal');
+    for (var i = 0; i < modals.length; i++) {
+      if (modals[i].offsetParent !== null) {
+        var hdr = modals[i].querySelector('h1, h2, h3, h4, .modal-title, .hdr, div');
+        var found = extractEmailFromText(hdr ? hdr.textContent : modals[i].textContent.slice(0, 250));
+        if (found) { state.lastActiveClient = found; return found; }
+      }
+    }
+
+    /* 2. From Agent Desk active conversation header or sidebar (e.g. "Otis / otis@bloomquix.info" in image_5f78ba) */
+    var agHeaders = document.querySelectorAll('#agdChatHdr, .agd-hdr, .chat-hdr, .conv-hdr, main header, .active, .on');
+    for (var j = 0; j < agHeaders.length; j++) {
+      if (agHeaders[j].offsetParent !== null) {
+        var foundAg = extractEmailFromText(agHeaders[j].textContent.slice(0, 220));
+        if (foundAg) { state.lastActiveClient = foundAg; return foundAg; }
+      }
+    }
+
+    /* 3. From global state or last intercepted getChat request */
     if (window.currentChatEmail) return String(window.currentChatEmail).toLowerCase().trim();
-    if (window.adminViewingEmail) return String(window.adminViewingEmail).toLowerCase().trim();
-    var agActive = document.querySelector('#agd .agi.on, [data-chat-email].on');
-    if (agActive) return (agActive.getAttribute('data-email') || agActive.getAttribute('data-chat-email') || '').toLowerCase().trim();
-    var inp = document.querySelector('#adminChatEmail, [data-admin-chat-email]');
-    return inp ? String(inp.value || inp.getAttribute('data-admin-chat-email') || '').toLowerCase().trim() : '';
+    if (state.lastActiveClient) return state.lastActiveClient;
+
+    return '';
   }
+
   function toast(msg, err) {
     try { if (typeof window.toast === 'function') window.toast(msg, !!err); } catch (e) {}
   }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+
   function fmtSize(bytes) {
     var b = Number(bytes) || 0;
     if (b < 1024) return b + ' B';
@@ -53,25 +95,35 @@
     var s = document.createElement('style');
     s.id = 'ncChatDocsCss';
     s.textContent =
-      '.nc-cd-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(13,26,36,0.96);border-top:1px solid rgba(69,230,176,0.22);font-size:12px;color:#dbeafe;flex-wrap:wrap}' +
-      '.nc-cd-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:10px;border:1px solid rgba(69,230,176,0.38);background:rgba(69,230,176,0.12);color:#45e6b0;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}' +
-      '.nc-cd-btn:hover{background:rgba(69,230,176,0.24);color:#fff}' +
-      '.nc-cd-btn.req{border-color:rgba(251,191,36,0.42);background:rgba(251,191,36,0.12);color:#fbbf24}' +
-      '.nc-cd-btn.req:hover{background:rgba(251,191,36,0.24);color:#fff}' +
-      '.nc-cd-req-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(251,191,36,0.16),rgba(69,230,176,0.12));border-top:1px solid rgba(251,191,36,0.38);color:#fef3c7;font-size:12px}' +
-      '.nc-cd-req-banner b{display:block;color:#fff;font-size:12.5px;margin-bottom:2px}' +
-      '.nc-cd-file-card{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;padding:9px 12px;border-radius:12px;background:rgba(6,14,22,0.78);border:1px solid rgba(69,230,176,0.32);color:#eef5f8;min-width:210px}' +
+      '.nc-cd-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(11,22,32,0.95);border-top:1px solid rgba(69,230,176,0.22);font-size:12px;color:#dbeafe;flex-wrap:wrap;z-index:5}' +
+      '.nc-cd-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;border:1px solid rgba(69,230,176,0.4);background:rgba(69,230,176,0.13);color:#45e6b0;font-weight:700;font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}' +
+      '.nc-cd-btn:hover{background:rgba(69,230,176,0.25);color:#ffffff}' +
+      '.nc-cd-btn.req{border-color:rgba(251,191,36,0.45);background:rgba(251,191,36,0.13);color:#fbbf24}' +
+      '.nc-cd-btn.req:hover{background:rgba(251,191,36,0.25);color:#ffffff}' +
+      '.nc-cd-req-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(251,191,36,0.18),rgba(69,230,176,0.12));border-top:1px solid rgba(251,191,36,0.4);color:#fef3c7;font-size:12px}' +
+      '.nc-cd-req-banner b{display:block;color:#ffffff;font-size:12.5px;margin-bottom:2px}' +
+      '.nc-cd-file-card{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;padding:9px 12px;border-radius:12px;background:rgba(6,14,22,0.82);border:1px solid rgba(69,230,176,0.35);color:#eef5f8;min-width:210px}' +
       '.nc-cd-file-meta{min-width:0;flex:1}' +
-      '.nc-cd-file-meta b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}' +
+      '.nc-cd-file-meta b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ffffff}' +
       '.nc-cd-file-meta small{display:block;font-size:10.5px;color:#8fa3b0;margin-top:2px;text-transform:uppercase}' +
       '.nc-cd-dl{padding:6px 11px;border-radius:8px;background:#45e6b0;color:#041814;border:0;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}' +
       '.nc-cd-dl:hover{filter:brightness(1.08)}';
     document.head.appendChild(s);
   }
 
+  /* Intercept fetch to track active client email, docRequest status, and file attachments */
   var origFetch = window.fetch;
   if (origFetch && !origFetch.__chatDocsWrapped) {
     window.fetch = function (url, opts) {
+      try {
+        if (opts && typeof opts.body === 'string' && opts.body.indexOf('"email"') >= 0) {
+          var parsedBody = JSON.parse(opts.body);
+          if (parsedBody && parsedBody.email && String(parsedBody.email).indexOf('@nordiccrypto.') < 0) {
+            state.lastActiveClient = String(parsedBody.email).toLowerCase().trim();
+          }
+        }
+      } catch (e) {}
+
       var p = origFetch.apply(this, arguments);
       try {
         var u = String(url || '');
@@ -79,6 +131,9 @@
           p.then(function (res) {
             return res.clone().json().then(function (data) {
               if (data && data.ok) {
+                if (data.email && String(data.email).indexOf('@nordiccrypto.') < 0) {
+                  state.lastActiveClient = String(data.email).toLowerCase().trim();
+                }
                 if (data.docRequest !== undefined) state.docRequest = data.docRequest;
                 if (Array.isArray(data.chat)) {
                   data.chat.forEach(function (m) {
@@ -90,7 +145,7 @@
                   state.fileCache[data.message.id] = data.message.file;
                   state.fileCache[data.message.text] = data.message.file;
                 }
-                setTimeout(renderChatUi, 60);
+                setTimeout(renderChatUi, 50);
               }
             }).catch(function () {});
           }).catch(function () {});
@@ -111,12 +166,17 @@
   }
 
   async function uploadDocument(file, targetEmail) {
+    var em = targetEmail || activeClientEmail();
+    if (!em) {
+      toast('Please select a client conversation first', true);
+      return;
+    }
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       toast('File is too large (max 10 MB)', true);
       return;
     }
-    toast('Uploading document: ' + file.name + '...');
+    toast('Uploading ' + file.name + '...');
     try {
       var b64 = await fileToBase64(file);
       var res = await origFetch(BASE + '?action=sendChatFile', {
@@ -124,7 +184,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: tok(),
-          email: targetEmail || activeClientEmail(),
+          email: em,
           fileName: file.name,
           mimeType: file.type || 'application/octet-stream',
           dataBase64: b64,
@@ -141,7 +201,7 @@
         state.fileCache[data.message.id] = data.message.file;
         state.fileCache[data.message.text] = data.message.file;
       }
-      toast('Document sent');
+      toast('Document sent successfully');
       if (typeof window.pollChat === 'function') window.pollChat();
       renderChatUi();
     } catch (e) {
@@ -150,7 +210,12 @@
   }
 
   async function createDocRequest(targetEmail) {
-    var title = window.prompt('Which document would you like to request from the client?\n(e.g. Bank Statement, Signed Agreement, Proof of Source of Funds)', 'Supporting Document (PDF)');
+    var em = targetEmail || activeClientEmail();
+    if (!em) {
+      toast('Please select a client conversation first', true);
+      return;
+    }
+    var title = window.prompt('Which document would you like to request from ' + em + '?\n(e.g. Bank Statement, Signed Agreement, Proof of Source of Funds)', 'Supporting Document (PDF)');
     if (!title || !title.trim()) return;
     var note = window.prompt('Additional note for the client (optional):', '') || '';
     try {
@@ -159,7 +224,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: tok(),
-          email: targetEmail,
+          email: em,
           title: title.trim(),
           note: note.trim()
         })
@@ -170,7 +235,7 @@
         return;
       }
       state.docRequest = data.docRequest;
-      toast('Document request sent to client');
+      toast('Document request sent to ' + em);
       if (typeof window.pollChat === 'function') window.pollChat();
       renderChatUi();
     } catch (e) {
@@ -208,17 +273,22 @@
   }
 
   function pickFileAndSend(targetEmail) {
+    var em = targetEmail || activeClientEmail();
+    if (!em) {
+      toast('Please select a client conversation first', true);
+      return;
+    }
     var inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = '.pdf,.html,.htm,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.webp,.zip';
     inp.onchange = function () {
-      if (inp.files && inp.files[0]) uploadDocument(inp.files[0], targetEmail);
+      if (inp.files && inp.files[0]) uploadDocument(inp.files[0], em);
     };
     inp.click();
   }
 
   function enhanceFileBubbles() {
-    var bubbles = document.querySelectorAll('#chatMsgs .cmsg, #adminChatMsgs .cmsg, #agdMsgs .cmsg, .chat-msg');
+    var bubbles = document.querySelectorAll('#chatMsgs .cmsg, #adminChatMsgs .cmsg, #agdMsgs .cmsg, .cmsg, .chat-msg, [class*="msg"]');
     bubbles.forEach(function (el) {
       if (el.querySelector('.nc-cd-file-card')) return;
       var txt = (el.textContent || '').trim();
@@ -251,42 +321,47 @@
     });
   }
 
+  function mountBarBeforeInput(inp) {
+    if (!inp || inp.offsetParent === null) return;
+    var row = inp.parentElement;
+    if (!row || !row.parentElement) return;
+    if (row.parentElement.querySelector('.nc-cd-bar')) return;
+
+    var bar = document.createElement('div');
+    bar.className = 'nc-cd-bar';
+    bar.innerHTML =
+      '<button type="button" class="nc-cd-btn" data-cd="send">📎 Send Document (PDF, HTML…)</button>' +
+      '<button type="button" class="nc-cd-btn req" data-cd="req">📋 Request Document</button>';
+    row.parentElement.insertBefore(bar, row);
+
+    bar.querySelector('[data-cd="send"]').onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      pickFileAndSend(activeClientEmail());
+    };
+    bar.querySelector('[data-cd="req"]').onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      createDocRequest(activeClientEmail());
+    };
+  }
+
   function renderChatUi() {
     injectCss();
     enhanceFileBubbles();
 
-    var staff = isAdminRole();
+    var staff = isStaffMode();
     var target = activeClientEmail();
 
     if (staff) {
-      var adminInputs = document.querySelectorAll('#adminChatInput, #agdInput, .admin-chat-input');
-      adminInputs.forEach(function (inp) {
-        var row = inp.parentElement;
-        if (!row || !row.parentElement) return;
-        var bar = row.parentElement.querySelector('.nc-cd-bar');
-        if (!bar) {
-          bar = document.createElement('div');
-          bar.className = 'nc-cd-bar';
-          bar.innerHTML =
-            '<button type="button" class="nc-cd-btn" data-cd="send">📎 Send Document (PDF, HTML…)</button>' +
-            '<button type="button" class="nc-cd-btn req" data-cd="req">📋 Request Document</button>';
-          row.parentElement.insertBefore(bar, row);
-          bar.querySelector('[data-cd="send"]').onclick = function () {
-            var em = activeClientEmail();
-            if (!em) { toast('Please select a client chat first', true); return; }
-            pickFileAndSend(em);
-          };
-          bar.querySelector('[data-cd="req"]').onclick = function () {
-            var em = activeClientEmail();
-            if (!em) { toast('Please select a client chat first', true); return; }
-            createDocRequest(em);
-          };
-        }
-      });
+      /* Mount bar in BOTH Admin Modal Chat ("Reply...") and Agent Desk ("Write a message...") */
+      var inputs = document.querySelectorAll('#adminChatInput, #agdInput, textarea[placeholder*="Reply"], input[placeholder*="Reply"], textarea[placeholder*="Write a message"], input[placeholder*="Write a message"]');
+      inputs.forEach(mountBarBeforeInput);
       return;
     }
 
-    var clientInput = document.getElementById('chatInput');
+    /* Client Side: Show Upload Banner ONLY when Admin/Agent has an open request */
+    var clientInput = document.getElementById('chatInput') || document.querySelector('#chatPanel textarea, #chatPanel input[type="text"]');
     if (!clientInput || !clientInput.parentElement || !clientInput.parentElement.parentElement) return;
     var host = clientInput.parentElement.parentElement;
     var existingBanner = host.querySelector('.nc-cd-req-banner');
@@ -309,12 +384,14 @@
       '</div>' +
       '<button type="button" class="nc-cd-btn" id="ncClientUploadDocBtn">📤 Upload File</button>';
 
-    existingBanner.querySelector('#ncClientUploadDocBtn').onclick = function () {
+    existingBanner.querySelector('#ncClientUploadDocBtn').onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       pickFileAndSend(target);
     };
   }
 
-  setInterval(renderChatUi, 1200);
+  setInterval(renderChatUi, 900);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderChatUi);
   else renderChatUi();
 })();
