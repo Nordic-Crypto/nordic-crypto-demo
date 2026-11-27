@@ -1,12 +1,33 @@
-/* NordicCrypto — register-pro.js v1
-   A premium two-step sign-up wizard that REPLACES the single long form in signup mode while driving
-   the existing hidden inputs (#fName/#fEmail/#fPass/#fPass2/#fRef + account-type radios) and the
-   existing submit logic — so validation, the worker call, errors and redirect all stay exactly as
-   before. Login / forgot / reset keep the original form untouched. 8 languages, dark + light, phone.
-   Adds: account-type picker cards, password strength meter, show-password, live inline validation. */
+/* NordicCrypto — register-pro.js v2 (Reliable Submit + 502 Auto-Retry + Loading State) */
 (function () {
   'use strict';
   if (window.__ncReg) return; window.__ncReg = 1;
+
+  /* Auto-retry register/login on transient 502/503/504 edge errors */
+  (function () {
+    var origFetch = window.fetch;
+    if (!origFetch || origFetch.__ncRegRetry) return;
+    window.fetch = function (url, opts) {
+      var u = String(url || '');
+      if (u.indexOf('action=register') < 0 && u.indexOf('action=login') < 0) {
+        return origFetch.apply(this, arguments);
+      }
+      var args = arguments;
+      return origFetch.apply(this, args).then(function (res) {
+        if (res && (res.status === 502 || res.status === 503 || res.status === 504)) {
+          return new Promise(function (r) { setTimeout(r, 450); }).then(function () {
+            return origFetch.apply(null, args);
+          });
+        }
+        return res;
+      }).catch(function (err) {
+        return new Promise(function (r) { setTimeout(r, 450); }).then(function () {
+          return origFetch.apply(null, args);
+        });
+      });
+    };
+    window.fetch.__ncRegRetry = true;
+  })();
 
   var LG = ['en', 'da', 'fi', 'es', 'no', 'sv', 'fr', 'de'];
   var K = {
@@ -28,6 +49,7 @@
     cont: ['Continue', 'Fortsæt', 'Jatka', 'Continuar', 'Fortsett', 'Fortsätt', 'Continuer', 'Weiter'],
     back: ['Back', 'Tilbage', 'Takaisin', 'Atrás', 'Tilbake', 'Tillbaka', 'Retour', 'Zurück'],
     create: ['Create account', 'Opret konto', 'Luo tili', 'Crear cuenta', 'Opprett konto', 'Skapa konto', 'Créer le compte', 'Konto erstellen'],
+    creating: ['Creating...', 'Opretter...', 'Luodaan...', 'Creando...', 'Oppretter...', 'Skapar...', 'Création...', 'Wird erstellt...'],
     have: ['Already have an account?', 'Har du allerede en konto?', 'Onko sinulla jo tili?', '¿Ya tienes una cuenta?', 'Har du allerede en konto?', 'Har du redan ett konto?', 'Vous avez déjà un compte ?', 'Schon ein Konto?'],
     signin: ['Sign in', 'Log ind', 'Kirjaudu', 'Inicia sesión', 'Logg inn', 'Logga in', 'Se connecter', 'Anmelden'],
     show: ['Show', 'Vis', 'Näytä', 'Mostrar', 'Vis', 'Visa', 'Afficher', 'Zeigen'],
@@ -83,8 +105,8 @@
       '#rgz .rgz-refbtn{background:transparent;border:0;color:#62c9a8;font:inherit;font-weight:650;font-size:.84rem;cursor:pointer;padding:4px 0;margin-bottom:8px}#rgz .rgz-refbtn:hover{text-decoration:underline}',
       '#rgz .rgz-refwrap{display:none}#rgz .rgz-refwrap.on{display:block}',
       '#rgz .rgz-act{display:flex;gap:10px;margin-top:6px}',
-      '#rgz .rgz-btn{height:54px;border-radius:16px;border:0;cursor:pointer;font:inherit;font-weight:720;font-size:1rem;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b;box-shadow:0 10px 24px rgba(98,232,194,.26);transition:transform .14s}',
-      '#rgz .rgz-btn:hover{transform:translateY(-1px)}#rgz .rgz-btn svg{width:17px;height:17px}',
+      '#rgz .rgz-btn{height:54px;border-radius:16px;border:0;cursor:pointer;font:inherit;font-weight:720;font-size:1rem;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#a6fbe2,#45cfa8);color:#03251b;box-shadow:0 10px 24px rgba(98,232,194,.26);transition:transform .14s,opacity .15s}',
+      '#rgz .rgz-btn:hover:not(:disabled){transform:translateY(-1px)}#rgz .rgz-btn:disabled{opacity:.65;cursor:not-allowed}#rgz .rgz-btn svg{width:17px;height:17px}',
       '#rgz .rgz-btn.ghost{flex:0 0 auto;padding:0 20px;background:transparent;color:var(--tx,#cfe);border:1.5px solid var(--line2,rgba(255,255,255,.14));box-shadow:none}',
       '#rgz .rgz-err{display:none;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.25);color:#ff8d9a;border-radius:12px;padding:10px 13px;font-size:.84rem;margin-bottom:12px}#rgz .rgz-err.on{display:block}',
       '#rgz .rgz-sw{text-align:center;margin-top:16px;font-size:.88rem;color:var(--mut,#93a79f)}#rgz .rgz-sw button{background:transparent;border:0;color:#45cfa8;font:inherit;font-weight:700;cursor:pointer}#rgz .rgz-sw button:hover{text-decoration:underline}'
@@ -99,7 +121,7 @@
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg>'
   };
 
-  var step = 1, acct = 'banking', showPw = false, el = null;
+  var step = 1, acct = 'banking', showPw = false, el = null, busy = false, resetTimer = null;
 
   function orig(id) { return $(id); }
   function setRadio(v) { try { var r = document.querySelector('input[name="at"][value="' + v + '"]'); if (r) { r.checked = true; } } catch (e) {} }
@@ -111,6 +133,19 @@
     if (orig('fPass2') && p2) orig('fPass2').value = p2.value;
     if (orig('fRef') && rf) orig('fRef').value = rf.value;
     setRadio(acct);
+  }
+
+  function setBusy(on) {
+    busy = !!on;
+    clearTimeout(resetTimer);
+    var sb = el && el.querySelector('[data-rgz="submit"]');
+    if (sb) {
+      sb.disabled = busy;
+      sb.innerHTML = busy ? esc(T('creating')) : (esc(T('create')) + IC.arrow);
+    }
+    if (busy) {
+      resetTimer = setTimeout(function () { setBusy(false); }, 10000);
+    }
   }
 
   function strength(pw) { var s = 0; if (pw.length >= 8) s++; if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) s++; if (/\d/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++; if (pw.length < 8) s = Math.min(s, 1); return s; }
@@ -137,7 +172,6 @@
 
   function render() {
     if (!el) return;
-    el.querySelector('[data-rgz-type="banking"]') && null;
     el.innerHTML =
       '<div class="rgz-pg"><i class="on"></i><i' + (step === 2 ? ' class="on"' : '') + '></i></div>' +
       '<div class="rgz-st">' + esc(T('step')) + ' ' + step + '/2</div>' +
@@ -177,14 +211,19 @@
     var b = e.target.closest && e.target.closest('[data-rgz]'); if (!b) return;
     var k = b.getAttribute('data-rgz');
     if (k === 'next') { step = 2; render(); setTimeout(function () { var n = $('rgzName'); if (n && !n.value) n.focus(); }, 30); return; }
-    if (k === 'back') { mirror(); step = 1; render(); return; }
+    if (k === 'back') { setBusy(false); mirror(); step = 1; render(); return; }
     if (k === 'eye') { mirror(); showPw = !showPw; render(); return; }
     if (k === 'reftog') { var w = $('rgzRefWrap'); if (w) { w.classList.toggle('on'); var i = $('rgzRef'); if (i && w.classList.contains('on')) i.focus(); } return; }
-    if (k === 'signin') { mirror(); var sw = $('mSwBtn'); if (sw) sw.click(); return; }
+    if (k === 'signin') { setBusy(false); mirror(); var swBtn = $('mSwBtn'); if (swBtn) swBtn.click(); return; }
     if (k === 'submit') {
+      if (busy) return;
       mirror();
+      showErr('');
       if (!valid(true)) { var first = el.querySelector('.rgz-f input.bad'); if (first) first.focus(); return; }
-      var f = $('mForm'); if (f && f.requestSubmit) f.requestSubmit(); else { var ms = $('mSubmit'); if (ms) ms.click(); }
+      setBusy(true);
+      var f = $('mForm');
+      if (f && f.requestSubmit) f.requestSubmit();
+      else { var ms = $('mSubmit'); if (ms) ms.click(); }
     }
   }
   function onInput(e) {
@@ -193,31 +232,52 @@
     if (id && /^rgz(Name|Email|Pass|Pass2|Ref)$/.test(id)) { mirror(); e.target.classList.remove('bad'); var map = { rgzName: 'hName', rgzEmail: 'hEmail', rgzPass: 'hPass', rgzPass2: 'hPass2' }; if (map[id]) { var h = $(map[id]); if (h) h.textContent = ''; } }
   }
 
-  function showErr(msg) { var e = $('rgzErr'); if (e) { e.textContent = msg; e.classList.toggle('on', !!msg); } }
+  function showErr(msg) {
+    setBusy(false);
+    var e = $('rgzErr');
+    if (e) { e.textContent = msg; e.classList.toggle('on', !!msg); }
+  }
 
   function activate() {
     var modal = document.querySelector('#mask .modal'); if (!modal) return;
     css();
-    if (!el) { el = document.createElement('div'); el.id = 'rgz'; el.addEventListener('click', onClick); el.addEventListener('input', onInput); }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'rgz';
+      el.addEventListener('click', onClick);
+      el.addEventListener('input', onInput);
+      el.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && step === 2) {
+          ev.preventDefault();
+          var sb = el.querySelector('[data-rgz="submit"]');
+          if (sb) sb.click();
+        }
+      });
+    }
     if (el.parentNode !== modal) modal.appendChild(el);
     modal.classList.add('rgz-on');
+    setBusy(false);
     render();
     updStrength();
   }
-  function deactivate() { var modal = document.querySelector('#mask .modal'); if (modal) modal.classList.remove('rgz-on'); }
+  function deactivate() { setBusy(false); var modal = document.querySelector('#mask .modal'); if (modal) modal.classList.remove('rgz-on'); }
 
-  /* surface the existing #mErr (worker/validation errors) into the wizard */
   function watchErr() {
     var me = $('mErr'); if (!me) return;
-    new MutationObserver(function () { if (!document.querySelector('.modal.rgz-on')) return; var shown = getComputedStyle(me).display !== 'none' && me.textContent.trim(); if (shown) { if (step !== 2) { step = 2; render(); } showErr(me.textContent.trim()); } }).observe(me, { childList: true, attributes: true, subtree: true, characterData: true });
+    new MutationObserver(function () {
+      if (!document.querySelector('.modal.rgz-on')) return;
+      var shown = getComputedStyle(me).display !== 'none' && me.textContent.trim();
+      if (shown) {
+        if (step !== 2) { step = 2; render(); }
+        showErr(me.textContent.trim());
+      }
+    }).observe(me, { childList: true, attributes: true, subtree: true, characterData: true });
   }
 
-  var wasSignup = false;
   function tick() {
     var su = signupMode();
     if (su && !document.querySelector('.modal.rgz-on')) { step = 1; activate(); }
     else if (!su && document.querySelector('.modal.rgz-on')) deactivate();
-    wasSignup = su;
   }
 
   function boot() { watchErr(); setInterval(tick, 300); tick(); window.addEventListener('nc-lang', function () { if (document.querySelector('.modal.rgz-on')) render(); }); }
