@@ -50,7 +50,7 @@ function eurF(n) {
 }
 function now() { return new Date().toISOString().slice(0, 10); }
 function getSessionToken() { return localStorage.getItem('session_token'); }
-function setSessionToken(t) { localStorage.setItem('session_token', t); }
+function setSessionToken(t) { localStorage.setItem('session_token', t); try { localStorage.setItem('nc_login_ts', String(Date.now())); } catch (e) {} }
 function clearSessionToken() { localStorage.removeItem('session_token'); }
 
 /* ─────────────── GLOBAL STATE ─────────────── */
@@ -141,6 +141,14 @@ function loadFromServer(cb, targetEmail) {
       var isServerError = data && data.ok === false;
       var errText = isServerError ? String(data.error || '') : '';
             if (errText && /session|token|expired|unauthor|invalid/i.test(errText)) {
+        // a brand-new session can be invisible to the server for a few seconds (storage propagation) — retry before giving up
+        window.__ncAuthRetry = (window.__ncAuthRetry || 0) + 1;
+        if (window.__ncAuthRetry <= 4) {
+          console.warn('[NC] session not visible yet, retry ' + window.__ncAuthRetry + '/4');
+          if (window.NCBoot) window.NCBoot.loading('Loading your account…');
+          setTimeout(function () { loadFromServer(cb, targetEmail); }, 1500 * window.__ncAuthRetry);
+          return;
+        }
         // 🛡️ FIX: НЕ УДАЛЯЕМ ТОКЕН ПРИ F5.
         // Если сервер вернул ошибку, просто показываем экран логина, но токен оставляем в браузере.
         // Токен удаляется ТОЛЬКО при нажатии кнопки "Log out".
@@ -158,6 +166,7 @@ function loadFromServer(cb, targetEmail) {
         throw new Error('server: ' + errText);
       }
       var stateData = (data && (data.ok === true || data.btc !== undefined || data.usd !== undefined)) ? data : null;
+      window.__ncAuthRetry = 0;
       st = _ncNormalizeState(stateData);
       stateLoaded = true;
       stateTrusted = true;
