@@ -1,724 +1,156 @@
-/* NORDIC CRYPTO — Dashboard v4 "glass": calmer, deeper surfaces, one accent colour. Enabled by <html class="v4">.
-   Accent is chosen with html.v4-mint / v4-lime / v4-ice (RGB triplet in --v4). Everything is scoped under html.v4 so removing the class restores the old look. */
-html.v4{--v4:70,232,176;--nc-acc:rgb(var(--v4));--nc-ink:#04140d;--nc3-green:rgb(var(--v4))}
-html.v4.v4-lime{--v4:98,232,194;--nc-ink:#0b1405}
-html.v4.v4-ice{--v4:96,214,255;--nc-ink:#031521}
-html.v4.v4-mint{--v4:70,232,176;--nc-ink:#04140d}
-html.v4 body{background:#070b10}
-/* soft light behind everything (static: costs nothing while scrolling) */
-html.v4 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
- background:
-  radial-gradient(900px 520px at 8% -8%,rgba(var(--v4),.22),transparent 62%),
-  radial-gradient(760px 520px at 100% 4%,rgba(var(--v4),.07),transparent 60%),
-  radial-gradient(900px 600px at 20% 110%,rgba(var(--v4),.14),transparent 60%),
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1672 941' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='f1' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%2346e8b0' stop-opacity='.0'/%3E%3Cstop offset='.55' stop-color='%2346e8b0' stop-opacity='.34'/%3E%3Cstop offset='1' stop-color='%23ffffff' stop-opacity='.1'/%3E%3C/linearGradient%3E%3ClinearGradient id='f2' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff' stop-opacity='.12'/%3E%3Cstop offset='1' stop-color='%2346e8b0' stop-opacity='.03'/%3E%3C/linearGradient%3E%3ClinearGradient id='s' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23fff' stop-opacity='0'/%3E%3Cstop offset='.5' stop-color='%23fff' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M-80 960C120 720 300 640 470 700S760 930 1080 960Z' fill='url(%23f1)'/%3E%3Cpath d='M-80 600C60 520 180 560 260 640S420 800 300 960L-80 960Z' fill='url(%23f2)'/%3E%3Cpath d='M930 -30C1090 150 1290 130 1480 -30L1700 -30L1700 250C1500 170 1300 300 1060 70Z' fill='url(%23f2)'/%3E%3Cpath d='M1250 960C1380 800 1540 760 1700 800L1700 960Z' fill='url(%23f1)'/%3E%3Cg fill='none' stroke='url(%23s)' stroke-width='1.2'%3E%3Cpath d='M-60 760C240 560 470 860 840 600S1360 220 1720 360'/%3E%3Cpath d='M-60 800C250 610 480 900 850 640S1370 270 1720 410'/%3E%3Cpath d='M-60 840C260 660 490 940 860 680S1380 320 1720 460'/%3E%3Cpath d='M860 -40C980 180 1260 120 1500 300S1620 640 1720 700'/%3E%3Cpath d='M900 -40C1010 190 1290 140 1530 320S1650 650 1720 730'/%3E%3C/g%3E%3C/svg%3E") center/cover no-repeat}
-html.v4 .main,html.v4 #app,html.v4 .app{position:relative;z-index:1}
+/* Dashboard v4 helpers: switches html.v4 on for clients and adds two small panels built from the client's REAL data
+   (available balance + account-security checklist). Nothing here claims anything the account does not have. */
+(function () {
+  'use strict';
+  if (window.__dashV4) return; window.__dashV4 = 1;
+  var de = document.documentElement;
+  function $(s, r) { return (r || document).querySelector(s); }
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+  function staff() { return !!(document.getElementById('agd') || document.getElementById('adminPanel') && document.getElementById('adminPanel').getClientRects().length); }
+  function kyc() { try { var v = st.verification && st.verification.status; return v === 'approved' || v === 'verified'; } catch (e) { return false; } }
+  var totp = null, asked = 0;
+  function askTotp_unused() {
+    if (asked || totp !== null) return; var tk = ''; try { tk = localStorage.getItem('session_token'); } catch (e) { } if (!tk) return; asked = 1;
+    try { fetch((window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev') + '?action=totpStatus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tk }) }).then(function (r) { return r.json(); }).then(function (d) { if (d && d.ok) { totp = !!d.enabled; var s = document.getElementById('v4Sec'); if (s) s.removeAttribute('data-h'); tick(); } }).catch(function () { }); } catch (e) { }
+  }
+  var SHI = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 2.8v5.8c0 4.6-3.2 7.9-7.5 9.4-4.3-1.5-7.5-4.8-7.5-9.4V5.8z"/><path d="m8.8 12 2.3 2.3 4.3-4.6"/></svg>';
+  function avail() {
+    var card = $('.bd-cardc'); if (!card) return;
+    var host = card.querySelector('.pay'), old = card.querySelector('.v4-av'); if (!host) return;
+    var cash = Number(window.st && st.usd); if (!isFinite(cash)) return;
+    var txt = ''; try { txt = window.fmtCurrency ? window.fmtCurrency(cash) : '$' + cash.toFixed(2); } catch (e) { txt = '$' + cash.toFixed(2); }
+    if (!txt) return;
+    var frozen = false; try { frozen = String(st.card && st.card.status).toLowerCase() === 'frozen'; } catch (e) { }
+    var html = '<div><small>Available cash</small><b class="bd-sens">' + esc(txt) + '</b></div><span class="v4-badge' + (frozen ? ' warn' : '') + '">' + (frozen ? 'Card frozen' : SHI + 'Card active') + '</span>';
+    if (!old) { old = document.createElement('div'); old.className = 'v4-av'; var slot = host.closest('.bd-slot') || host; slot.parentNode.insertBefore(old, slot.nextSibling); }
+    if (old.getAttribute('data-h') !== html) { old.innerHTML = html; old.setAttribute('data-h', html); }
+  }
+  var SHIELD = '<svg class="v4-shield" viewBox="0 0 160 190" aria-hidden="true"><defs><linearGradient id="v4a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9fff1" stop-opacity=".95"/><stop offset=".45" stop-color="#46e8b0" stop-opacity=".55"/><stop offset="1" stop-color="#0b3d30" stop-opacity=".9"/></linearGradient><linearGradient id="v4b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><filter id="v4g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter></defs><path d="M80 10 150 36v62c0 44-30 72-70 84C40 170 10 142 10 98V36z" fill="#46e8b0" opacity=".25" filter="url(#v4g)"/><path d="M80 12 146 37v60c0 41-28 68-66 80C42 165 14 138 14 97V37z" fill="url(#v4a)" stroke="#e8fff7" stroke-opacity=".7" stroke-width="2"/><path d="M80 24 136 45v52c0 34-23 56-56 67C47 153 24 131 24 97V45z" fill="#06241c" fill-opacity=".72" stroke="#46e8b0" stroke-opacity=".6" stroke-width="1.4"/><path d="M80 12 146 37v30C120 60 100 44 80 12z" fill="url(#v4b)" opacity=".5"/><path d="M52 94l20 20 38-44" fill="none" stroke="#9dffd8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function health() {
+    var h = $('#bdHealth'), card = $('#bdCard'); if (!h || !card) return;
+    if (card.nextElementSibling !== h) card.parentNode.insertBefore(h, card.nextSibling);
+    if (!h.querySelector('.v4-shield')) h.insertAdjacentHTML('beforeend', SHIELD);
+  }
+  var WK = (window.WORKER_LOGIN_URL || 'https://nordic-deposit-checker.otis-790.workers.dev'), svc = null, svcT = 0;
+  function checkSvc() {
+    var now = Date.now(); if (now - svcT < 60000) return; svcT = now;
+    var ctl = window.AbortController ? new AbortController() : null, to = setTimeout(function () { try { ctl && ctl.abort(); } catch (e) { } }, 5000);
+    fetch(WK + '?action=holidayConfig', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: ctl ? ctl.signal : undefined }).then(function (r) { return r.json(); }).then(function (d) { clearTimeout(to); svc = !!(d && d.ok); pill(); }).catch(function () { svc = false; pill(); });
+  }
+  function pill() {
+    var top = $('.bd-hero-top'); if (!top) return; var p = $('#v4Pill'), bad = svc === false;
+    var html = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.6-8 9-4.8-1.4-8-4.5-8-9V6z"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>' + (bad ? 'Connection problem' : svc === null ? 'Checking…' : 'All systems operational');
+    if (!p) { p = document.createElement('span'); p.id = 'v4Pill'; top.insertBefore(p, top.children[1] || null); }
+    if (p.getAttribute('data-h') !== html) { p.innerHTML = html; p.setAttribute('data-h', html); }
+    p.className = 'v4-badge v4-stat' + (bad ? ' warn' : '');
+  }
+  var GEM = '<svg viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="v4c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1fffa"/><stop offset=".5" stop-color="#46e8b0"/><stop offset="1" stop-color="#0d5a45"/></linearGradient></defs><polygon points="60,6 100,32 84,86 36,86 20,32" fill="url(#v4c)" opacity=".92"/><polygon points="60,6 100,32 60,44" fill="#fff" opacity=".55"/><polygon points="20,32 60,44 36,86" fill="#06241c" opacity=".35"/><polygon points="60,44 100,32 84,86" fill="#06241c" opacity=".2"/><polyline points="20,32 60,44 100,32" fill="none" stroke="#fff" stroke-opacity=".6"/><polyline points="60,44 36,86 84,86 60,44" fill="none" stroke="#fff" stroke-opacity=".3"/></svg>';
+  function promo() {
+    var side = $('#sideBar'); if (!side) return; var user = side.querySelector('.umi'), pr = $('#v4Promo');
+    var hol = false; try { hol = !!(window.__holApi && window.__holApi.active && window.__holApi.active()); } catch (e) { }
+    var kind = 'skins';
+    var html = GEM + (kind === 'skins' ? '<i class="v4-eb">NEW CARD DESIGNS</i><b>New card designs</b><span>' + (hol ? 'Snow, lights and Santa for your card.' : 'Fresh premium looks for your card.') + '</span><a>See designs →</a>' : '<i class="v4-eb">NORDIC REWARDS</i><b>Invite friends, earn NC</b><span>Share your link and collect bonus points.</span><a>Learn more →</a>');
+    if (!pr) { pr = document.createElement('div'); pr.id = 'v4Promo'; pr.className = 'v4-promo'; pr.setAttribute('role', 'button'); pr.tabIndex = 0;
+      var go = function () { var k = pr.getAttribute('data-k'); if (k === 'skins' && window.__cardSkins && window.__cardSkins.show) window.__cardSkins.show(true); else if (typeof window.openClientBonus === 'function') window.openClientBonus(); };
+      pr.addEventListener('click', go); pr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      var anchor = user || side.lastElementChild; side.insertBefore(pr, anchor); }
+    pr.setAttribute('data-k', kind); if (pr.getAttribute('data-h') !== html) { pr.innerHTML = html; pr.setAttribute('data-h', html); }
+  }
+  function heading() {
+    var bd = $('#bd'); if (!bd || !bd.parentNode) return; var h = $('#v4Head');
+    var hi = ($('#bdHi') || {}).textContent || 'Welcome'; hi = hi.replace(/\s+/g, ' ').trim();
+    var d = ''; try { d = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase().replace(',', ''); } catch (e) { }
+    var html = '<div><span class="v4-eb">PERSONAL OVERVIEW</span><h1>' + esc(hi) + '<i>.</i></h1></div><span class="v4-dt">' + esc(d) + '</span>';
+    if (!h) { h = document.createElement('div'); h.id = 'v4Head'; h.className = 'v4-head'; bd.parentNode.insertBefore(h, bd); }
+    if (h.getAttribute('data-h') !== html) { h.innerHTML = html; h.setAttribute('data-h', html); }
+  }
+  function tip() {
+    var c = $('#bdChart'), b = $('#bdBal'); if (!c || !b) return; var t = $('#v4Tip');
+    if (!t) { t = document.createElement('div'); t.id = 'v4Tip'; t.className = 'v4-tip'; c.appendChild(t); }
+    var v = b.textContent.trim(); if (t.textContent !== v) t.textContent = v;
+  }
+  function en() { try { var l = localStorage.getItem('nc_lang'); return !l || l === 'en'; } catch (e) { return true; } }
+  var IC = {
+    bars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 20V10M9 20V4M14 20v-7M19 20V8"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+    gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 21.5 12 12 21.5 2.5 12z" opacity=".9"/></svg>',
+    dia: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4.5 39.5 10v12.2c0 10-6.6 17.4-15.5 20.8C15.1 39.6 8.5 32.2 8.5 22.2V10z"/><path d="m16.5 24 5.4 5.4 9.8-10.6"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 2.8v5.8c0 4.6-3.2 7.9-7.5 9.4-4.3-1.5-7.5-4.8-7.5-9.4V5.8z"/><path d="m8.8 12 2.3 2.3 4.3-4.6"/></svg>',
+    info: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="7"/><path d="M8 7v4.2M8 4.6v.2" stroke-linecap="round"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'
+  };
+  function titles() {
+    var k = $('.bd-hero > .bd-k');
+    if (k && !k.querySelector('.v4-i')) k.insertAdjacentHTML('beforeend', ' <span class="v4-i" aria-hidden="true">' + IC.info + '</span>');
+  }
+  function curMore() {
+    var cb = $('#bdCur'); if (!cb) return; var n = cb.querySelectorAll('button:not(.v4-more)').length;
+    var m = cb.querySelector('.v4-more');
+    if (n <= 4) { if (m) m.remove(); return; }
+    if (!m) {
+      m = document.createElement('button'); m.type = 'button'; m.className = 'v4-more'; m.setAttribute('aria-label', 'More currencies'); m.innerHTML = IC.chev;
+      m.addEventListener('click', function (e) { e.stopPropagation(); var o = cb.classList.toggle('v4-all'); m.setAttribute('aria-expanded', o ? 'true' : 'false'); });
+      cb.appendChild(m);
+    } else if (m !== cb.lastElementChild) cb.appendChild(m);
+  }
+  function security() {
+    var h = $('#bdHealth'); if (!h) return;
+    var li = h.querySelectorAll('.bd-hli li'), ok = h.querySelectorAll('.bd-hli li.ok').length, all = li.length || 1, full = ok === all;
+    var html = '<span class="v4-shi">' + IC.dia + '</span><div><h2>' + (full ? 'Protected' : 'Almost protected') + '</h2><small>' + (svc === false ? 'Connection problem' : full ? 'All systems operational' : ok + ' of ' + all + ' steps completed') + '</small></div>';
+    var s = h.querySelector('.v4-sh');
+    if (!s) { s = document.createElement('div'); s.className = 'v4-sh'; h.insertBefore(s, h.firstChild); }
+    if (s.getAttribute('data-h') !== html) { s.innerHTML = html; s.setAttribute('data-h', html); }
+    s.classList.toggle('warn', !full);
+  }
+  function cardLook() {
+    [].forEach.call(document.querySelectorAll('.pay .ptop .pb'), function (pb) { if (!pb.querySelector('.v4-wm')) pb.insertAdjacentHTML('beforeend', '<span class="v4-wm"><b>Nordic</b>Crypto</span>'); });
+    var fz = document.querySelector('#bdCardRest .bd-cacts button[data-t="btnFreezeCard"] .bd-ci');
+    if (fz && !fz.querySelector('.v4-snow')) fz.innerHTML = '<svg class="v4-snow" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/><path d="m9.5 3.5 2.5 2 2.5-2M9.5 20.5l2.5-2 2.5 2M4.3 10.4l3.1-.6-1-3M19.7 13.6l-3.1.6 1 3M6.4 17.2l1-3-3.1-.6M17.6 6.8l-1 3 3.1.6"/></svg>';
+    [].forEach.call(document.querySelectorAll('.pay .card-network'), function (n) { var v = /VISA/.test(n.innerHTML) && !/circle/.test(n.innerHTML); if (n.classList.contains('v4-isvisa') !== v) n.classList.toggle('v4-isvisa', v); });
+  }
 
-/* ---- sidebar ---- */
-html.v4 .sb,html.v4 aside.sb,html.v4 #sidebar{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01))!important;border-right:1px solid rgba(255,255,255,.06)!important}
-html.v4 .mi.on{background:linear-gradient(90deg,rgba(var(--v4),.2),rgba(var(--v4),.07))!important;color:#fff!important;border:1px solid rgba(var(--v4),.35)!important;border-radius:16px!important;box-shadow:0 8px 24px -12px rgba(var(--v4),.6),inset 0 1px 0 rgba(255,255,255,.08)}
-html.v4 .mi.on svg{color:rgb(var(--v4))!important;stroke:rgb(var(--v4))!important}
-
-/* ---- panels: glass ---- */
-html.v4 .bd-card{background:linear-gradient(150deg,rgba(255,255,255,.065),rgba(255,255,255,.018) 55%,rgba(var(--v4),.025))!important;border:1px solid rgba(255,255,255,.085)!important;border-radius:28px!important;box-shadow:0 30px 60px -34px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07)!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-html.v4 .bd-hero{background:radial-gradient(620px 300px at 0% 0%,rgba(var(--v4),.16),transparent 62%),linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.015))!important;padding:26px 28px 22px!important}
-html.v4 .bd-hi{font-weight:600;opacity:.85}
-html.v4 .bd-k{letter-spacing:.16em;opacity:.7}
-html.v4 .bd-bal{font-size:clamp(40px,5.4vw,66px)!important;font-weight:800!important;letter-spacing:-.035em!important;line-height:1.02!important;text-shadow:0 0 40px rgba(var(--v4),.14)}
-html.v4 .bd-pill{border-radius:99px!important;border:1px solid rgba(var(--v4),.35)!important;background:rgba(var(--v4),.12)!important;color:rgb(var(--v4))!important;font-weight:700}
-html.v4 .bd-cur button,html.v4 .bd-seg button{border-radius:99px!important}
-html.v4 .bd-cur button.on,html.v4 .bd-seg button.on{background:rgb(var(--v4))!important;color:var(--nc-ink)!important;box-shadow:0 8px 20px -8px rgba(var(--v4),.8)}
-html.v4 .bd-seg{border-radius:99px!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.08)!important}
-html.v4 .bd-chart svg path[stroke]{stroke:rgb(var(--v4))!important;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(var(--v4),.45))}
-html.v4 .bd-chart svg circle{fill:rgb(var(--v4))!important}
-
-/* ---- action bar: one glass strip, pill buttons ---- */
-html.v4 #bdActs{display:flex!important;gap:8px!important;padding:8px!important;border-radius:26px!important;background:linear-gradient(150deg,rgba(255,255,255,.06),rgba(255,255,255,.015))!important;border:1px solid rgba(255,255,255,.085)!important;box-shadow:0 24px 50px -32px rgba(0,0,0,.8)!important}
-html.v4 #bdActs .bd-act{flex:1 1 auto!important;flex-direction:row!important;justify-content:center!important;gap:7px!important;min-height:58px!important;padding:0 10px!important;white-space:nowrap!important;font-size:13.5px!important;min-width:0!important;border-radius:20px!important;border:1px solid transparent!important;background:transparent!important;box-shadow:none!important;font-weight:700!important;transition:background .2s,border-color .2s,transform .15s}
-html.v4 #bdActs .bd-act:hover{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.1)!important}
-html.v4 #bdActs .bd-act .bd-act-l{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important}
-html.v4 #bdActs .bd-act.pri{flex:1.25 1 auto!important;background:linear-gradient(135deg,rgba(var(--v4),1),rgba(var(--v4),.72))!important;color:var(--nc-ink)!important;box-shadow:0 14px 30px -14px rgba(var(--v4),.85),inset 0 1px 0 rgba(255,255,255,.35)!important}
-html.v4 #bdActs .bd-act.pri .bd-act-i{background:rgba(0,0,0,.14)!important;color:var(--nc-ink)!important}
-html.v4 #bdActs .bd-act .bd-act-i{width:24px!important;height:24px!important;margin:0!important;flex:0 0 24px!important;background:transparent!important;color:rgb(var(--v4))!important}
-@media (max-width:900px){html.v4 #bdActs{display:grid!important;grid-template-columns:repeat(3,1fr)}html.v4 #bdActs .bd-act{flex-direction:column!important;gap:6px!important;min-height:76px!important;padding:8px 4px!important;font-size:12px!important}html.v4 #bdActs .bd-act.pri{grid-column:1/-1;flex-direction:row!important;min-height:56px!important}}
-
-/* ---- right column ---- */
-html.v4 .bd-cardc{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015))!important}
-html.v4 .bd-cardc .pay{box-shadow:0 26px 50px -26px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.1)!important}
-html.v4 a.bd-link,html.v4 .bd-link{color:rgb(var(--v4))!important}
-
-/* ---- injected pieces (dash-v4.js) ---- */
-.v4-av{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
-.v4-av small{display:block;font:700 11px/1.2 system-ui;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:4px}
-.v4-av b{font:800 24px/1.1 system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.v4-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;font:700 12px/1 system-ui;border:1px solid rgba(var(--v4),.4);background:rgba(var(--v4),.12);color:rgb(var(--v4));white-space:nowrap}
-.v4-badge.warn{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.12);color:#f5b84a}
-.v4-badge svg{width:14px;height:14px}
-.v4-sec{position:relative;overflow:hidden}
-.v4-sec h3{font:800 20px/1.2 system-ui;letter-spacing:-.01em;margin:0 0 2px!important}
-.v4-sec p{opacity:.7;font:500 13px/1.4 system-ui}
-.v4-sec ul{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px}
-.v4-sec li{display:flex;align-items:center;gap:12px;font:600 14px/1.3 system-ui}
-.v4-sec li i{flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:13px;background:rgba(var(--v4),.16);color:rgb(var(--v4));border:1px solid rgba(var(--v4),.4)}
-.v4-sec li.no i{background:rgba(245,158,11,.12);color:#f5b84a;border-color:rgba(245,158,11,.4)}
-.v4-sec li span{flex:1}.v4-sec li a{color:rgb(var(--v4));font-weight:700;font-size:13px;text-decoration:none;cursor:pointer}
-.v4-sec::after{content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(var(--v4),.22),transparent 70%);pointer-events:none}
-
-
-/* ===== v4 layout details ===== */
-/* top bar pills */
-html.v4 .top{background:transparent!important;border-bottom:0!important}
-html.v4 .top-search,html.v4 .curr-btn-top,html.v4 .top .tb,html.v4 .top button.ib,html.v4 .top .btn-bank{border-radius:99px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.09)!important}
-html.v4 .brand .nm span{color:rgb(var(--v4))!important}
-html.v4 .brand .blogo{background:linear-gradient(145deg,rgba(var(--v4),.35),rgba(var(--v4),.1))!important;border:1px solid rgba(var(--v4),.4)!important}
-
-/* hero: status pill, title, range top-right */
-html.v4 .bd-hero{position:relative}
-html.v4 .bd-hero-top{display:flex;align-items:center;gap:12px}
-html.v4 .bd-hero-top .bd-hi{order:2;margin-left:auto;font-size:13px;opacity:.7}
-html.v4 .bd-hero-top .bd-ib{order:3}
-html.v4 .v4-stat{order:1;padding:8px 14px;font-size:13px}
-html.v4 .bd-hero .bd-k{text-transform:none!important;letter-spacing:0!important;font:600 18px/1.2 system-ui!important;opacity:.92;margin-top:22px}
-html.v4 .bd-hero .bd-chart-h{position:absolute;top:84px;right:28px;margin:0!important;padding:0!important;z-index:2}
-html.v4 .bd-bal{margin-top:6px!important}
-html.v4 .bd-cur{margin-top:14px!important}
-html.v4 .bd-chart{margin-top:6px}
-@media (max-width:900px){html.v4 .bd-hero .bd-chart-h{position:static;margin:12px 0 0!important}html.v4 .bd-hero-top .bd-hi{display:none}}
-
-/* money flow: four open columns + bars on the right */
-@media (min-width:1100px){
- html.v4 #bdIns{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);column-gap:26px;align-items:end}
- html.v4 #bdIns>.bd-ch{grid-column:1/-1}
- html.v4 #bdIns .bd-kpis{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(2,1fr)!important;gap:18px 0!important;align-self:center;margin:0!important}
- html.v4 #bdIns .bd-kpis>div{background:transparent!important;border:0!important;border-left:1px solid rgba(255,255,255,.08)!important;border-radius:0!important;padding:4px 16px!important}
- html.v4 #bdIns .bd-kpis>div:nth-child(odd){border-left:0!important;padding-left:0!important}
- html.v4 #bdIns .bd-bars{grid-column:2;grid-row:2;align-self:end}
- html.v4 #bdIns .bd-bars svg{max-height:120px}
- html.v4 #bdIns .bd-kpis{align-self:center!important}
- html.v4 #bdIns .bd-ins-g,html.v4 #bdIns .bd-big{grid-column:1/-1}
-}
-
-/* Protected / account health panel with shield */
-html.v4 #bdHealth{overflow:hidden;padding-right:128px!important;background:radial-gradient(360px 220px at 100% 100%,rgba(var(--v4),.2),transparent 65%),linear-gradient(150deg,rgba(255,255,255,.06),rgba(255,255,255,.015))!important}
-html.v4 #bdHealth .v4-shield{position:absolute;right:8px;bottom:10px;width:112px;height:auto;pointer-events:none;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
-html.v4 #bdHealth .bd-ring b{color:rgb(var(--v4))}
-html.v4 #bdHealth .bd-ring circle:nth-child(2){stroke:rgb(var(--v4))!important}
-html.v4 #bdHealth .bd-hli li.ok i{background:rgba(var(--v4),.16)!important;color:rgb(var(--v4))!important;border:1px solid rgba(var(--v4),.45)!important}
-@media (max-width:900px){html.v4 #bdHealth{padding-right:22px!important}html.v4 #bdHealth .v4-shield{opacity:.35}}
-
-/* sidebar promo */
-.v4-promo{display:none}
-html.v4 .v4-promo{display:block;position:relative;overflow:hidden;margin:0 14px 12px;padding:16px 14px 14px;border-radius:20px;cursor:pointer;background:radial-gradient(160px 120px at 100% 0%,rgba(var(--v4),.28),transparent 70%),linear-gradient(150deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent}
-html.v4 .v4-promo:focus-visible{outline:2px solid rgb(var(--v4));outline-offset:2px}
-html.v4 .v4-promo svg{position:absolute;right:-6px;top:-4px;width:84px;height:auto;opacity:.95}
-html.v4 .v4-promo b{display:block;max-width:120px;font:800 15px/1.25 system-ui;margin-bottom:6px;letter-spacing:-.01em}
-html.v4 .v4-promo span{display:block;max-width:150px;font:500 12px/1.35 system-ui;opacity:.7}
-html.v4 .v4-promo a{display:inline-block;margin-top:10px;font:800 13px/1 system-ui;color:rgb(var(--v4))}
-@media (max-width:900px),(max-height:760px){html.v4 .v4-promo{display:none}}
-/* let the silk backdrop show through */
-html.v4 .main,html.v4 #mainApp,html.v4 .app,html.v4 #app,html.v4 .pg,html.v4 #dash{background:transparent!important}
-html.v4 .side,html.v4 #sideBar{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008))!important}
-html.v4 .top{background:rgba(7,11,16,.35)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-/* light theme: keep it calm and readable */
-html.v4[data-theme="light"] body{background:#eef3f1}
-html.v4[data-theme="light"] body::before{background:radial-gradient(900px 520px at 8% -8%,rgba(var(--v4),.22),transparent 62%),radial-gradient(760px 520px at 100% 4%,rgba(var(--v4),.12),transparent 60%)}
-html.v4[data-theme="light"] .bd-card,html.v4[data-theme="light"] #bdActs{background:linear-gradient(150deg,rgba(255,255,255,.95),rgba(255,255,255,.78))!important;border:1px solid rgba(15,30,25,.08)!important;box-shadow:0 20px 44px -26px rgba(20,50,40,.35)!important}
-html.v4[data-theme="light"] .bd-bal{text-shadow:none}
-html.v4[data-theme="light"] .bd-pill,html.v4[data-theme="light"] .v4-badge{color:#0a7a56!important;background:rgba(var(--v4),.16)!important}
-html.v4[data-theme="light"] .v4-av{background:rgba(15,30,25,.04);border-color:rgba(15,30,25,.08)}
-html.v4[data-theme="light"] .v4-promo{background:radial-gradient(160px 120px at 100% 0%,rgba(var(--v4),.3),transparent 70%),#fff;border-color:rgba(15,30,25,.08);color:#10201b}
-html.v4[data-theme="light"] #bdHealth .v4-shield{opacity:.9}
-
-html.v4[data-theme="light"] .mi.on{color:#073b2c!important;background:linear-gradient(90deg,rgba(var(--v4),.3),rgba(var(--v4),.12))!important}
-html.v4[data-theme="light"] .mi.on svg{color:#0a7a56!important;stroke:#0a7a56!important}
-html.v4[data-theme="light"] #bdActs .bd-act.pri,html.v4[data-theme="light"] #bdActs .bd-act.pri *{color:#04140d!important}
-html.v4[data-theme="light"] .bd-link,html.v4[data-theme="light"] .bd-cardc a,html.v4[data-theme="light"] #bdHealth a{color:#0a7a56!important}
-html.v4[data-theme="light"] .brand .nm span{color:#0a7a56!important}
-html.v4[data-theme="light"] .v4-promo a{color:#0a7a56}
-html.v4[data-theme="light"] #bdActs .bd-act:not(.pri){color:#10201b!important}
-
-/* =====================================================================
-   v4.1 — photo backdrop + softer buttons + mockup-style sidebar
-   ===================================================================== */
-html.v4 body::before{background:
-  linear-gradient(180deg,rgba(3,10,9,.38),rgba(3,10,9,.62)),
-  url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4 body{background:#030a09!important}
-
-/* glass panels over the photo: a bit clearer, blurred */
-html.v4 .bd-card{background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.028) 60%,rgba(var(--v4),.03))!important;border:1px solid rgba(255,255,255,.1)!important;-webkit-backdrop-filter:blur(22px) saturate(1.25);backdrop-filter:blur(22px) saturate(1.25)}
-html.v4 #bdActs{background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.03))!important;-webkit-backdrop-filter:blur(22px) saturate(1.25);backdrop-filter:blur(22px) saturate(1.25)}
-
-@media(min-width:761px){
-/* ---- sidebar like the mockup: big soft pills, outlined icons ---- */
-html.v4 .side{background:linear-gradient(180deg,rgba(6,16,14,.55),rgba(4,10,9,.7))!important;border-right:1px solid rgba(255,255,255,.07)!important;-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px)}
-html.v4 .side .menu{gap:8px!important;padding-top:10px}
-html.v4 .side .mi{padding:0 18px!important;min-height:50px;border-radius:26px!important;gap:15px!important;font-size:.95rem!important;font-weight:500!important;color:rgba(235,248,243,.72)!important;border:1px solid transparent!important;background:transparent!important;box-shadow:none!important;transition:background .25s,color .25s,border-color .25s,box-shadow .25s,transform .15s}
-html.v4 .side .mi svg{width:22px!important;height:22px!important;flex:0 0 22px;stroke-width:1.6!important;opacity:.9}
-html.v4 .side .mi:hover{background:rgba(255,255,255,.055)!important;color:#fff!important;border-color:rgba(255,255,255,.08)!important}
-html.v4 .side .mi:active{transform:scale(.985)}
-html.v4 .side .mi.on{background:linear-gradient(135deg,rgba(var(--v4),.95),rgba(var(--v4),.62))!important;color:var(--nc-ink)!important;font-weight:700!important;border-color:rgba(255,255,255,.28)!important;box-shadow:0 16px 34px -16px rgba(var(--v4),.85),inset 0 1px 0 rgba(255,255,255,.4)!important}
-html.v4 .side .mi.on svg{color:var(--nc-ink)!important;stroke:var(--nc-ink)!important;opacity:1}
-html.v4 .side .mi.on::before,html.v4 .side .mi.on::after{display:none!important}
-html.v4 .side .umi{border-radius:22px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.08)!important}
-}
-
-/* ---- every other button: softer, pill/glass ---- */
-html.v4 .top .tbp-t,html.v4 .top .nc-lang-btn,html.v4 .top .curr-btn-top,html.v4 .top .acx-pill,html.v4 .top .tbp-cl>button,html.v4 .top .tbp-cl>a,html.v4 .top .tbp-bk{border-radius:99px!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;transition:background .2s,border-color .2s}
-html.v4 .top .tbp-t:hover,html.v4 .top .nc-lang-btn:hover,html.v4 .top .curr-btn-top:hover,html.v4 .top .tbp-cl>button:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(var(--v4),.3)!important}
-html.v4 .top-search{border-radius:99px!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.08)!important}
-html.v4 .bd-ib,html.v4 .bd-mnav button{border-radius:50%!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.09)!important;box-shadow:none!important;transition:background .2s,border-color .2s}
-html.v4 .bd-ib:hover,html.v4 .bd-mnav button:hover{background:rgba(var(--v4),.14)!important;border-color:rgba(var(--v4),.4)!important}
-html.v4 .bd-cur button{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;color:rgba(235,248,243,.8)!important;box-shadow:none!important;transition:background .2s,border-color .2s}
-html.v4 .bd-cur button:hover{background:rgba(255,255,255,.09)!important}
-html.v4 .bd-cur button.on,html.v4 .bd-seg button.on{background:linear-gradient(135deg,rgba(var(--v4),1),rgba(var(--v4),.75))!important;color:var(--nc-ink)!important;border-color:transparent!important;box-shadow:0 10px 22px -10px rgba(var(--v4),.8)!important}
-html.v4 .bd-seg button{background:transparent!important;border:0!important}
-html.v4 .bd-link{border-radius:99px!important;background:rgba(var(--v4),.1)!important;border:1px solid rgba(var(--v4),.22)!important;color:rgb(var(--v4))!important;padding:6px 14px!important;font-weight:600!important}
-html.v4 .bd-link:hover{background:rgba(var(--v4),.18)!important}
-/* card quick actions: round glass icons */
-html.v4 .bd-cacts button>*:first-child{width:50px!important;height:50px!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.1)!important;color:rgb(var(--v4))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)!important;transition:background .2s,border-color .2s,transform .15s}
-html.v4 .bd-cacts button:hover>*:first-child{background:rgba(var(--v4),.16)!important;border-color:rgba(var(--v4),.45)!important}
-html.v4 .bd-cacts button:active>*:first-child{transform:scale(.94)}
-/* action strip: softer */
-html.v4 #bdActs .bd-act{border-radius:99px!important;font-weight:600!important;color:rgba(240,250,246,.9)}
-html.v4 #bdActs .bd-act.pri{font-weight:700!important;box-shadow:0 14px 30px -14px rgba(var(--v4),.8),inset 0 1px 0 rgba(255,255,255,.38)!important}
-html.v4 #bdActs .bd-act:not(.pri) .bd-act-i{width:32px!important;height:32px!important;flex:0 0 32px!important;border-radius:50%!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.09)!important;display:grid;place-items:center}
-@media(max-width:900px){html.v4 #bdActs .bd-act{border-radius:22px!important}html.v4 .side .mi{min-height:46px;padding:0 14px!important}}
-
-@media(max-width:760px){html.v4 #sideBar.side{background:rgba(5,13,12,.96)!important}html.v4[data-theme="light"] #sideBar.side{background:rgba(250,254,252,.97)!important}html.v4 #sideBar .mi.on{background:rgba(var(--v4),.16)!important;color:rgb(var(--v4))!important;border:0!important;box-shadow:none!important}html.v4[data-theme="light"] #sideBar .mi.on{color:#07533c!important}}
-/* light theme */
-html.v4[data-theme="light"] body::before{background:linear-gradient(180deg,rgba(244,251,248,.82),rgba(236,246,242,.9)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4[data-theme="light"] body{background:#eef6f3!important}
-html.v4[data-theme="light"] .side{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.5))!important;border-right-color:rgba(10,60,45,.08)!important}
-html.v4[data-theme="light"] .side .mi{color:#35514a!important}
-html.v4[data-theme="light"] .side .mi:hover{background:rgba(10,90,66,.07)!important;color:#08261d!important;border-color:rgba(10,90,66,.1)!important}
-html.v4[data-theme="light"] .side .mi.on,html.v4[data-theme="light"] .side .mi.on svg{color:#04140d!important;stroke:#04140d!important}
-html.v4[data-theme="light"] .side .umi{background:rgba(255,255,255,.7)!important;border-color:rgba(10,60,45,.1)!important}
-html.v4[data-theme="light"] .top .tbp-t,html.v4[data-theme="light"] .top .nc-lang-btn,html.v4[data-theme="light"] .top .curr-btn-top,html.v4[data-theme="light"] .top .acx-pill,html.v4[data-theme="light"] .top .tbp-cl>button,html.v4[data-theme="light"] .top-search,html.v4[data-theme="light"] .bd-ib,html.v4[data-theme="light"] .bd-cur button,html.v4[data-theme="light"] .bd-mnav button{background:rgba(255,255,255,.75)!important;border-color:rgba(10,60,45,.12)!important}
-html.v4[data-theme="light"] .bd-cur button.on,html.v4[data-theme="light"] .bd-seg button.on{color:#04140d!important}
-html.v4[data-theme="light"] .bd-cacts button>*:first-child,html.v4[data-theme="light"] #bdActs .bd-act:not(.pri) .bd-act-i{background:rgba(255,255,255,.8)!important;border-color:rgba(10,60,45,.12)!important;color:#0a7a56!important}
-html.v4[data-theme="light"] .bd-link{color:#0a7a56!important;background:rgba(10,122,86,.08)!important;border-color:rgba(10,122,86,.22)!important}
-
-/* =====================================================================
-   v4.2 — "Liquid Obsidian" tokens ported from the reference project
-   (panels, nav, round icon buttons, big pill actions, mint primary)
-   ===================================================================== */
-html.v4{--lo-line:rgba(181,219,220,.11)}
-html.v4 body::before{background:
-  radial-gradient(ellipse at 87% 5%,rgba(38,128,116,.2),transparent 30%),
-  linear-gradient(180deg,rgba(4,10,12,.55),rgba(4,10,12,.78)),
-  url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4 .bd-card{background:linear-gradient(145deg,rgba(22,31,35,.84),rgba(9,14,18,.88))!important;border:1px solid var(--lo-line)!important;border-radius:26px!important;box-shadow:0 18px 55px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.04)!important;-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
-html.v4 .bd-hero{background:radial-gradient(ellipse at 92% 37%,rgba(22,70,60,.35),transparent 42%),linear-gradient(145deg,rgba(24,34,38,.85),rgba(9,14,18,.92))!important}
-html.v4 #bdCard{background:radial-gradient(ellipse at 75% 6%,rgba(107,234,210,.17),transparent 45%),linear-gradient(145deg,rgba(27,41,45,.9),rgba(11,17,21,.92))!important}
-html.v4 #bdHealth{background:radial-gradient(ellipse at 90% 75%,rgba(28,120,100,.25),transparent 45%),linear-gradient(145deg,rgba(20,33,38,.9),rgba(8,14,18,.94))!important}
-
-@media(min-width:761px){
-html.v4 .side{background:rgba(5,9,12,.78)!important;border-right:1px solid var(--lo-line)!important}
-html.v4 .side .menu{gap:9px!important}
-html.v4 .side .mi{min-height:49px!important;border-radius:16px!important;padding:0 15px!important;gap:16px!important;font-size:.9rem!important;font-weight:600!important;color:#aab5bb!important}
-html.v4 .side .mi:hover{background:rgba(255,255,255,.04)!important;color:#fff!important;border-color:transparent!important}
-html.v4 .side .mi.on{background:linear-gradient(100deg,rgba(84,226,190,.26),rgba(255,255,255,.06))!important;border:1px solid rgba(98,232,194,.28)!important;color:#eafff8!important;font-weight:700!important;box-shadow:inset 3px 0 #62e8c2,0 0 25px rgba(57,205,165,.11)!important}
-html.v4 .side .mi.on svg{color:#62e8c2!important;stroke:#62e8c2!important}
-html.v4 .side .umi{border-radius:0!important;background:none!important;border:0!important;border-top:1px solid var(--lo-line)!important}
-}
-/* round dark icon buttons (top bar + hero eye) */
-html.v4 .top .tbp-t,html.v4 .top .nc-lang-btn,html.v4 .top .curr-btn-top,html.v4 .top .acx-pill,html.v4 .top .tbp-cl>button,html.v4 .top .tbp-cl>a,html.v4 .bd-ib{background:linear-gradient(145deg,rgba(24,33,38,.67),rgba(11,17,21,.8))!important;border:1px solid var(--lo-line)!important;color:#dce8e9}
-html.v4 .top .tbp-t:hover,html.v4 .top .nc-lang-btn:hover,html.v4 .top .curr-btn-top:hover,html.v4 .top .tbp-cl>button:hover,html.v4 .bd-ib:hover{border-color:rgba(98,232,194,.4)!important;transform:translateY(-1px)}
-html.v4 .top-search{background:rgba(255,255,255,.055)!important;border:1px solid var(--lo-line)!important;box-shadow:inset 0 1px rgba(255,255,255,.03)}
-/* range + currency chips */
-html.v4 .bd-seg{background:rgba(8,14,18,.66)!important;border:1px solid var(--lo-line)!important}
-html.v4 .bd-seg button.on{background:linear-gradient(135deg,rgba(91,226,191,.4),rgba(255,255,255,.09))!important;color:#f4fffc!important;box-shadow:0 0 16px rgba(98,232,194,.12)!important}
-html.v4 .bd-cur button{background:rgba(255,255,255,.03)!important;border:1px solid var(--lo-line)!important;color:#b6c4c9!important}
-html.v4 .bd-cur button.on{background:linear-gradient(120deg,#76f3d0,#48c9a9)!important;color:#08201a!important;border-color:transparent!important;box-shadow:0 0 20px rgba(98,232,194,.27)!important}
-/* big pill actions */
-html.v4 #bdActs{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;gap:10px!important;-webkit-backdrop-filter:none;backdrop-filter:none}
-html.v4 #bdActs .bd-act{min-height:67px!important;border-radius:40px!important;background:linear-gradient(145deg,rgba(32,42,47,.73),#0b1115)!important;border:1px solid var(--lo-line)!important;box-shadow:0 8px 25px rgba(0,0,0,.2)!important;color:#e9f2f2!important;font-weight:600!important;transition:border-color .2s,transform .2s}
-html.v4 #bdActs .bd-act:hover{border-color:rgba(98,232,194,.4)!important;transform:translateY(-2px);background:linear-gradient(145deg,rgba(32,42,47,.73),#0b1115)!important}
-html.v4 #bdActs .bd-act.pri{background:linear-gradient(115deg,#75f3d1,#40c6a3)!important;color:#062019!important;border:0!important;box-shadow:0 8px 28px rgba(69,216,181,.3)!important}
-html.v4 #bdActs .bd-act:not(.pri) .bd-act-i{background:none!important;border:0!important;width:26px!important;height:26px!important;flex:0 0 26px!important;color:#e9f2f2!important}
-/* card quick-action circles */
-html.v4 .bd-cacts button>*:first-child{width:49px!important;height:49px!important;border:1px solid var(--lo-line)!important;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(0,0,0,.2))!important}
-html.v4 .bd-cacts button:hover>*:first-child{background:rgba(98,232,194,.13)!important;box-shadow:0 0 20px rgba(98,232,194,.2)}
-html.v4 .bd-link{background:rgba(82,228,189,.09)!important;border:1px solid rgba(82,228,189,.2)!important}
-@media(max-width:900px){html.v4 #bdActs .bd-act{min-height:70px!important;border-radius:26px!important}}
-
-/* light */
-html.v4[data-theme="light"] .bd-card,html.v4[data-theme="light"] #bdCard,html.v4[data-theme="light"] #bdHealth,html.v4[data-theme="light"] .bd-hero{background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(237,244,242,.88))!important;border-color:rgba(10,60,45,.1)!important;box-shadow:0 18px 50px -24px rgba(10,60,45,.3)!important}
-html.v4[data-theme="light"] .side{background:rgba(255,255,255,.72)!important}
-html.v4[data-theme="light"] .side .mi{color:#4a5f5b!important}
-html.v4[data-theme="light"] .side .mi.on{background:linear-gradient(100deg,rgba(84,226,190,.4),rgba(255,255,255,.5))!important;color:#06382a!important;box-shadow:inset 3px 0 #0fa97d!important;border-color:rgba(15,169,125,.35)!important}
-html.v4[data-theme="light"] .side .mi.on svg{color:#0a7a56!important;stroke:#0a7a56!important}
-html.v4[data-theme="light"] .top .tbp-t,html.v4[data-theme="light"] .top .nc-lang-btn,html.v4[data-theme="light"] .top .curr-btn-top,html.v4[data-theme="light"] .top .acx-pill,html.v4[data-theme="light"] .top .tbp-cl>button,html.v4[data-theme="light"] .bd-ib,html.v4[data-theme="light"] .bd-cur button{background:rgba(255,255,255,.85)!important;border-color:rgba(10,60,45,.12)!important;color:#1b2f2b!important}
-html.v4[data-theme="light"] .bd-cur button.on{color:#06251d!important;background:linear-gradient(120deg,#76f3d0,#48c9a9)!important}
-html.v4[data-theme="light"] .bd-seg{background:rgba(255,255,255,.7)!important}
-html.v4[data-theme="light"] .bd-seg button.on{color:#06382a!important}
-html.v4[data-theme="light"] #bdActs .bd-act:not(.pri){background:rgba(255,255,255,.88)!important;color:#14201f!important;border-color:rgba(10,60,45,.12)!important}
-html.v4[data-theme="light"] #bdActs .bd-act:not(.pri) .bd-act-i{color:#0a7a56!important}
-
-/* =====================================================================
-   v4.3 — layout details copied 1:1 from the reference
-   ===================================================================== */
-html.v4 .v4-head{display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 17px 2px}
-html.v4 .v4-eb{font-size:9px;letter-spacing:1.6px;color:#87979e;font-weight:800}
-html.v4 .v4-head h1{font:700 22px/1.2 Manrope,'DM Sans',system-ui,sans-serif;margin:5px 0 0;letter-spacing:-.7px;color:var(--nc-fg,#f2f7f7)}
-html.v4 .v4-head h1 i{font-style:normal;color:#62e8c2}
-html.v4 .v4-dt{font-size:9px;letter-spacing:1.3px;color:#72838b}
-html.v4[data-theme="light"] .v4-head h1{color:#10201b}
-html.v4 .bd-hi{display:none!important}
-/* status: plain text with a diamond, no pill */
-html.v4 .bd-hero-top .v4-badge{background:none!important;border:0!important;padding:0!important;color:#c6e9e1!important;font-weight:500!important;font-size:12px}
-html.v4[data-theme="light"] .bd-hero-top .v4-badge{color:#2d5a4d!important}
-/* balance: Manrope 800, tight */
-html.v4 .bd-bal{font-family:Manrope,'DM Sans',system-ui,sans-serif!important;letter-spacing:-3px!important}
-/* chart: dotted grid + value bubble */
-html.v4 #bdChart{position:relative;background:repeating-linear-gradient(to bottom,transparent 0 53px,rgba(155,181,181,.12) 53px 54px)}
-html.v4 .v4-tip{position:absolute;right:-4px;top:-8px;background:#06110f;border:1px solid rgba(98,232,194,.27);border-radius:18px;padding:8px 12px;font-weight:700;font-size:13px;color:#eafff8;box-shadow:0 8px 20px rgba(0,0,0,.45);pointer-events:none}
-html.v4[data-theme="light"] .v4-tip{background:#fff;color:#06382a;box-shadow:0 8px 20px rgba(10,60,45,.18)}
-/* card panel: no title, art first */
-html.v4 #bdCard .bd-ch .bd-k,html.v4 #bdCard .bd-ch h2,html.v4 #bdCard .bd-ch .bd-t{display:none!important}
-/* action row: divider + compact "Details" like the reference */
-@media(min-width:901px){
-html.v4 #bdActs .bd-act:nth-child(4){margin-left:12px;position:relative;flex:0 0 78px!important;flex-direction:column!important;gap:2px!important;min-height:67px!important;padding:0 6px!important;font-size:10.5px!important}
-html.v4 #bdActs .bd-act:nth-child(4)::before{content:"";position:absolute;left:-12px;top:14px;bottom:14px;border-left:1px solid rgba(130,151,155,.35)}
-}
-/* sidebar: promo with diagonal outline + grey avatar and chevron like the reference */
-html.v4 .v4-promo{border-radius:21px!important;background:linear-gradient(135deg,#172329,#0a1014 72%)!important;border:1px solid var(--lo-line)!important}
-html.v4[data-theme="light"] .v4-promo{background:linear-gradient(135deg,#fff,#e9f3ef 72%)!important}
-html.v4 .side .umi .av,html.v4 .side .umi>div:first-child{background:linear-gradient(135deg,#c9d5d5,#42545b)!important;color:#10201e!important}
-html.v4 .side .umi::after{content:"\2335";margin-left:auto;color:#9caeb3;font-size:12px}
-/* page background: calm dark like the reference, photo only as a faint texture */
-html.v4 body::before{background:radial-gradient(ellipse at 87% 5%,rgba(38,128,116,.2),transparent 30%),radial-gradient(ellipse at 43% -12%,rgba(111,149,160,.14),transparent 30%),linear-gradient(180deg,rgba(7,11,14,.72),rgba(7,11,14,.86)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4[data-theme="light"] body::before{background:linear-gradient(180deg,rgba(244,251,248,.82),rgba(236,246,242,.9)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4 .bd-hero .bd-chart-h{top:30px!important;right:84px!important}
-@media(max-width:900px){html.v4 .bd-hero .bd-chart-h{top:auto!important;right:auto!important}}
-html.v4[data-theme="light"] body::before{background:linear-gradient(180deg,rgba(246,252,250,.93),rgba(238,247,243,.96)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-
-/* =====================================================================
-   v4.4 — full 1:1 match with "Liquid Obsidian" reference
-   ===================================================================== */
-/* typography: DM Sans body, Manrope for headings & numbers */
-html.v4 body,html.v4 .bd,html.v4 .side,html.v4 .top{font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
-html.v4 .bd-bal,html.v4 .bd-ch h3,html.v4 .v4-head h1,html.v4 .v4-av b,html.v4 .bd-kpis b,html.v4 .v4-sh h2,html.v4 .v4-promo b,html.v4 .side .nm{font-family:Manrope,'DM Sans',system-ui,sans-serif!important}
-
-/* ---- grid: exactly the reference areas ---- */
-@media(min-width:1101px){
-html.v4 .bd{display:grid!important;grid-template-columns:minmax(0,54.5fr) minmax(0,16.1fr) minmax(300px,29.4fr);grid-template-areas:"hero hero card" "acts acts sec" "ins ins sec" "tx as as" "acc gl gl";gap:18px!important;align-items:start}
-html.v4 .bd-main,html.v4 .bd-side{display:contents!important}
-html.v4 .bd-hero{grid-area:hero;align-self:stretch}
-html.v4 #bdCard{grid-area:card;align-self:stretch}
-html.v4 #bdActs{grid-area:acts}
-html.v4 #bdHealth{grid-area:sec;align-self:stretch}
-html.v4 #bdIns{grid-area:ins}
-html.v4 #bdTx{grid-area:tx;align-self:stretch}
-html.v4 #bdCrypto{grid-area:as;align-self:stretch}
-html.v4 #bdAcc{grid-area:acc}
-html.v4 #bdGoals{grid-area:gl}
-html.v4 .bd>*>section{margin:0!important}
-}
-@media(max-width:1100px){
-/* force the whole dashboard to a single, full-width column on tablet/phone
-   (overrides the 2-col base grid even if an older bankdash-pro.css is cached) */
-html.v4 .bd{display:flex!important;flex-direction:column!important;align-items:stretch!important;grid-template-columns:none!important;grid-template-areas:none!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:clip!important;gap:14px!important}
-html.v4 .bd-main,html.v4 .bd-side{display:contents!important}
-html.v4 .bd>*,html.v4 .bd>.bd-main>*,html.v4 .bd>.bd-side>*{grid-area:auto!important;width:auto!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
-html.v4 .bd-hero{order:1!important}html.v4 #bdCard{order:2!important}html.v4 #bdActs{order:3!important}html.v4 #bdHealth{order:4!important}html.v4 #bdIns{order:5!important}html.v4 #bdTx{order:6!important}html.v4 #bdCrypto{order:7!important}html.v4 #bdAcc{order:8!important}html.v4 #bdGoals{order:9!important}
-}
-/* global phone safety-net: never allow sideways scroll / left-shift */
-@media(max-width:760px){
-html,body{max-width:100%!important;overflow-x:hidden!important}
-html.v4 .body,html.v4 .main{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
-html.v4 .body>*{max-width:100%!important;box-sizing:border-box!important}
-}
-
-/* ---- section headers: icon + title, no eyebrow ---- */
-html.v4 .bd-ch .bd-k{display:none!important}
-html.v4 .bd-ch>div:first-child{display:flex;align-items:center;gap:12px}
-html.v4 .bd-ch h3{font-size:16px!important;font-weight:700!important;letter-spacing:-.2px}
-html.v4 .v4-ti{display:grid;place-items:center;width:22px;height:22px;color:#62e8c2;flex:none}
-html.v4 .v4-ti svg{width:21px;height:21px}
-html.v4 #bdCrypto .v4-ti svg{width:16px;height:16px}
-html.v4 .bd-ch .bd-link{background:transparent!important;border:0!important;padding:0!important;font-size:11px!important;color:#62e8c2!important}
-
-/* ---- hero ---- */
-html.v4 .bd-hero{min-height:456px;padding:27px 28px 19px!important}
-html.v4 .bd-hero::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(150deg,transparent 46%,rgba(87,234,192,.03) 47%,transparent 69%)}
-html.v4 .bd-hero>.bd-k{margin-top:25px;color:#b2c0c6!important;font-size:15px!important;font-weight:400!important;letter-spacing:0!important;text-transform:none!important;opacity:1!important;display:flex;align-items:center;gap:6px}
-html.v4 .v4-i{display:inline-grid;width:16px;height:16px;color:#72848b}
-html.v4 .v4-i svg{width:16px;height:16px}
-html.v4 .bd-bal{font-weight:800!important;font-size:clamp(42px,4.3vw,66px)!important;letter-spacing:-3.5px!important;line-height:1.2!important;margin-top:2px!important;color:#f2f7f7!important;-webkit-text-fill-color:#f2f7f7!important;background:none!important;text-shadow:none!important}
-html.v4 .bd-sub{margin-top:7px!important;gap:14px!important}
-html.v4 #bdDelta{background:none!important;border:0!important;padding:0!important;color:#62e8c2!important;font-size:16px!important;font-weight:700!important}
-html.v4 #bdDelta em{color:#b5c0c5!important;font-size:13px!important;font-weight:400!important;font-style:normal;margin-left:8px}
-html.v4 #bdSecond{display:none!important}
-html.v4 #bdCur{margin-top:18px!important;gap:8px!important;flex-wrap:wrap}
-html.v4 #bdCur button{padding:8px 14px!important;font-size:11px!important;font-weight:700!important;border-radius:20px!important}
-html.v4 #bdCur:not(.v4-all) button:not(.v4-more):not(.on):nth-child(n+5){display:none!important}
-html.v4 #bdCur .v4-more{width:32px;height:32px;padding:0!important;display:grid!important;place-items:center;border-radius:50%!important;background:rgba(255,255,255,.03)!important;border:1px solid var(--lo-line)!important;color:#b6c4c9!important;cursor:pointer}
-html.v4 #bdCur .v4-more svg{width:14px;height:14px;transition:transform .2s}
-html.v4 #bdCur.v4-all .v4-more svg{transform:rotate(180deg)}
-html.v4 .bd-hero-top .v4-badge svg{width:20px!important;height:20px!important;color:#62e8c2}
-
-/* ---- card panel ---- */
-html.v4 #bdCard{min-height:456px;padding:18px 20px 17px!important}
-html.v4 #bdCard>.bd-ch{display:none!important}
-html.v4 #bdCard .pay{min-height:228px;border-radius:22px!important;transform:perspective(900px) rotateY(-4deg) rotateX(2deg);box-shadow:0 16px 35px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.5)!important;border:1px solid rgba(184,233,231,.33)!important}
-html.v4 #bdCard .pay .pn,html.v4 #bdCard .pay .pf>div:not(.card-network),html.v4 #bdCard .pay .pt{visibility:hidden}
-html.v4 #bdCard .v4-av{background:none!important;border:0!important;padding:0!important;margin-top:22px!important;align-items:flex-start;flex-wrap:wrap}
-html.v4 #bdCard .v4-av small{font:400 12px 'DM Sans',system-ui!important;letter-spacing:0!important;text-transform:none!important;color:#aebbc0;opacity:1!important;margin-bottom:6px}
-html.v4 #bdCard .v4-av b{font-size:27px!important;font-weight:700!important;letter-spacing:-1px!important}
-html.v4 #bdCard .v4-av .v4-badge{background:rgba(82,228,189,.09)!important;border:0!important;color:#62e8c2!important;padding:7px 12px!important;border-radius:18px!important;font-size:12px!important}
-html.v4 .bd-cacts{display:flex!important;justify-content:space-around!important;margin-top:17px!important;gap:6px}
-html.v4 .bd-cacts button{display:grid!important;justify-items:center;gap:7px!important;background:none!important;border:0!important;font-size:11px!important;font-weight:700!important;color:#dce7e7!important}
-
-/* ---- actions: reference sizes ---- */
-html.v4 #bdActs .bd-act{font-size:12px!important;gap:11px!important}
-html.v4 #bdActs .bd-act .bd-act-i svg{width:22px;height:22px}
-
-/* ---- security = "Protected" ---- */
-html.v4 #bdHealth{min-height:280px;padding:25px 24px!important}
-html.v4 #bdHealth>.bd-ch,html.v4 #bdHealth .bd-hl,html.v4 #bdHealth .bd-sec{display:none!important}
-html.v4 .v4-sh{display:flex;align-items:center;gap:14px;position:relative}
-html.v4 .v4-shi{width:48px;height:52px;display:grid;place-items:center;color:#62e8c2;filter:drop-shadow(0 0 10px rgba(98,232,194,.5))}
-html.v4 .v4-shi svg{width:34px;height:34px}
-html.v4 .v4-sh h2{font-size:19px!important;font-weight:700;color:#62e8c2;margin:0 0 3px}
-html.v4 .v4-sh small{color:#b0bdc2;font-size:11px}
-html.v4 .v4-sh.warn h2,html.v4 .v4-sh.warn .v4-shi{color:#f5c26b}
-html.v4 #bdHealth .bd-hli{margin:26px 0 0!important;gap:13px!important;display:grid!important;position:relative}
-html.v4 #bdHealth .bd-hli li{font-size:12px!important;color:#c2ced1!important;gap:10px!important}
-html.v4 #bdHealth .bd-hli li i{width:18px!important;height:18px!important;background:none!important;border:1.5px solid #62e8c2!important;color:#62e8c2!important}
-html.v4 #bdHealth .bd-hli li:not(.ok) i{border-color:#72838b!important;color:#72838b!important}
-html.v4 #bdHealth .v4-shield{right:-14px!important;bottom:-6px!important;width:150px!important;opacity:.4}
-
-/* ---- money flow: 4 metrics + bars in one row ---- */
-html.v4 #bdIns{min-height:190px;padding:20px 25px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.5fr);grid-template-areas:"h h h h h" "k k k k b";column-gap:0;row-gap:20px}
-html.v4 #bdIns>.bd-ch{grid-area:h;margin:0!important}
-html.v4 #bdIns .bd-kpis{grid-area:k;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;margin:0!important}
-html.v4 #bdIns .bd-kpis>div{background:none!important;border:0!important;border-right:1px solid var(--lo-line)!important;border-radius:0!important;padding:0 0 0 22px!important;display:flex!important;flex-direction:column;gap:6px}
-html.v4 #bdIns .bd-kpis>div:first-child{padding-left:3px!important}
-html.v4 #bdIns .bd-kpis span{color:#a8b6bc!important;font-size:12px!important;text-transform:none!important;letter-spacing:0!important;font-weight:400!important}
-html.v4 #bdIns .bd-kpis b{font-size:19px!important;font-weight:700!important;white-space:nowrap}
-html.v4 #bdIns .bd-ins-g,html.v4 #bdIns .bd-big,html.v4 #bdIns .bd-bh,html.v4 #bdIns .bd-bx{display:none!important}
-html.v4 #bdIns .bd-bars{grid-area:b;margin:0!important;padding:0 0 0 15px!important;border:0!important;background:none!important;align-self:end}
-html.v4 #bdIns .bd-bars svg{width:100%;height:78px;display:block}
-html.v4 .bd-mnav{gap:4px}
-html.v4 .bd-mnav b{border:1px solid var(--lo-line);border-radius:20px;background:rgba(255,255,255,.03);padding:8px 13px;font-size:10px!important;font-weight:500!important}
-@media(max-width:900px){html.v4 #bdIns{grid-template-columns:1fr 1fr;grid-template-areas:"h h" "k k" "b b"}html.v4 #bdIns .bd-kpis{grid-template-columns:1fr 1fr!important;row-gap:18px!important}html.v4 #bdIns .bd-kpis>div:nth-child(2n){border-right:0!important}html.v4 #bdIns .bd-kpis>div:nth-child(2n+1){padding-left:3px!important}html.v4 #bdIns .bd-bars{padding:0!important}}
-
-/* ---- recent activity + assets ---- */
-html.v4 #bdTx,html.v4 #bdCrypto,html.v4 #bdAcc,html.v4 #bdGoals{padding:21px 24px!important}
-html.v4 #bdTx .bd-tools{display:none!important}
-html.v4 #bdTx .bd-tx{border-radius:0!important;background:none!important;border:0!important;border-bottom:1px solid var(--lo-line)!important;padding:14px 0!important}
-html.v4 #bdTx .bd-tx:last-child{border-bottom:0!important}
-html.v4 #bdTx .bd-ti{width:34px!important;height:34px!important;border-radius:12px!important}
-html.v4 #bdTx .bd-tt b,html.v4 #bdCrypto .bd-cn b{font-size:12px!important}
-html.v4 #bdTx .bd-tt small,html.v4 #bdCrypto .bd-cn small{font-size:10px!important;color:#8d9ca3!important}
-html.v4 #bdCrypto .bd-xc{background:none!important;border:0!important;border-bottom:1px solid var(--lo-line)!important;border-radius:0!important;padding:14px 0!important}
-html.v4 #bdCrypto .bd-xi{width:34px!important;height:34px!important;border-radius:50%!important}
-html.v4 .bd-more{border-radius:20px!important;background:rgba(255,255,255,.03)!important;border:1px solid var(--lo-line)!important}
-
-/* ---- sidebar: brand, promo, profile ---- */
-@media(min-width:761px){
-html.v4 .side{padding:30px 21px 18px!important}
-html.v4 .side .brand{margin:4px 0 49px 13px!important;gap:12px}
-html.v4 .side .blogo{width:31px!important;height:31px!important;border-radius:9px!important;box-shadow:0 0 24px rgba(85,232,193,.33)}
-html.v4 .side .nm{font-size:18px!important;font-weight:800!important;letter-spacing:-.6px}
-html.v4 .side .nm span{color:#62e8c2!important}
-html.v4 .side .mi{font-size:13px!important}
-html.v4 .side .umi{padding:15px 3px 0!important;margin-top:22px}
-}
-html.v4 .v4-promo{min-height:158px;margin:0 0 0!important;padding:17px 15px!important;display:flex!important;flex-direction:column;gap:7px}
-html.v4 .v4-promo::after{content:"";position:absolute;width:130px;height:130px;border:1px solid rgba(184,255,240,.27);transform:rotate(36deg);right:-38px;top:-37px;box-shadow:0 0 35px rgba(98,232,194,.13),inset 0 0 20px rgba(98,232,194,.13);pointer-events:none}
-html.v4 .v4-promo .v4-eb{font-style:normal;display:block}
-html.v4 .v4-promo b{font-size:16px!important;font-weight:700!important;max-width:none!important;margin:0!important}
-html.v4 .v4-promo span{font-size:11px!important;color:#a9b7bd;opacity:1!important;max-width:none!important}
-html.v4 .v4-promo a{font-size:11px!important;font-weight:700!important;color:#62e8c2!important;margin-top:5px!important}
-html.v4 .v4-promo svg{display:none!important}
-
-/* ---- top bar: round 46px buttons like the reference ---- */
-@media(min-width:1101px){
-html.v4 .top .tbp-cl>button,html.v4 .top .tbp-cl>a{min-width:46px;height:46px}
-html.v4 .top .nc-lang-btn,html.v4 .top .curr-btn-top,html.v4 .top .tbp-t{height:46px;border-radius:24px!important;padding:0 16px!important;font-size:12px!important;font-weight:700!important}
-html.v4 .top-search{height:48px;border-radius:28px!important}
-}
-
-/* ---- light theme for the new parts ---- */
-html.v4[data-theme="light"] .bd-bal{color:#14201f!important;-webkit-text-fill-color:#14201f!important}
-html.v4[data-theme="light"] .bd-hero>.bd-k,html.v4[data-theme="light"] #bdDelta em,html.v4[data-theme="light"] #bdCard .v4-av small,html.v4[data-theme="light"] #bdIns .bd-kpis span,html.v4[data-theme="light"] .v4-sh small{color:#637775!important}
-html.v4[data-theme="light"] #bdDelta,html.v4[data-theme="light"] .v4-sh h2,html.v4[data-theme="light"] .v4-shi,html.v4[data-theme="light"] .v4-ti,html.v4[data-theme="light"] .bd-ch .bd-link,html.v4[data-theme="light"] #bdCard .v4-av .v4-badge{color:#0a7a56!important}
-html.v4[data-theme="light"] #bdHealth .bd-hli li{color:#30413f!important}
-html.v4[data-theme="light"] #bdHealth .bd-hli li i{border-color:#0a7a56!important;color:#0a7a56!important}
-html.v4[data-theme="light"] .bd-cacts button{color:#1b2f2b!important}
-html.v4[data-theme="light"] .v4-promo span{color:#4a5f5b}
-html.v4[data-theme="light"] .v4-promo a{color:#0a7a56!important}
-html.v4[data-theme="light"] #bdCur .v4-more{background:#fff!important;border-color:rgba(10,60,45,.12)!important;color:#263b39!important}
-html.v4 .side .umi::after{content:""!important;width:8px;height:8px;border-right:1.6px solid #9caeb3;border-bottom:1.6px solid #9caeb3;transform:rotate(45deg) translateY(-3px);margin-right:8px}
-html.v4 .top .tbp-cl>button>svg,html.v4 .top .tbp-cl>a>svg{width:19px!important;height:19px!important}
-/* activity / assets: compact like the reference (full lists stay on their own pages) */
-html.v4 #bdTx .bd-day,html.v4 #bdTx .bd-more{display:none!important}
-html.v4 #bdTx .bd-list>.bd-tx:nth-of-type(n+5){display:none!important}
-html.v4 #bdTx .bd-list{margin-top:8px}
-html.v4 #bdCrypto .bd-xtot,html.v4 #bdCrypto .bd-xa{display:none!important}
-html.v4 #bdCrypto .bd-xc:last-of-type{border-bottom:0!important}
-html.v4 #bdCrypto .bd-ch,html.v4 #bdTx .bd-ch{margin-bottom:6px!important}
-@media (max-width:900px),(max-height:760px){html.v4 .v4-promo{display:none!important}}
-@media(max-width:850px){html.v4 .v4-dt{display:none}html.v4 .v4-head h1{font-size:19px}}
-
-/* =====================================================================
-   v4.5 — match the mockup image: soft glass buttons, silk light in panels
-   ===================================================================== */
-/* backdrop: silk clearly visible like the mockup */
-html.v4 body::before{background:radial-gradient(ellipse at 50% 0%,rgba(0,0,0,0),rgba(0,0,0,.25) 70%),linear-gradient(180deg,rgba(5,9,11,.42),rgba(5,9,11,.6)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-
-/* panels: dark glass + silk light inside (card + security like the mockup) */
-html.v4 .bd-card{background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.012) 40%),linear-gradient(145deg,rgba(14,21,24,.86),rgba(7,11,14,.9))!important;border:1px solid rgba(255,255,255,.075)!important;box-shadow:0 24px 60px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.06)!important}
-html.v4 .bd-hero{background:radial-gradient(ellipse at 95% 0%,rgba(98,232,194,.07),transparent 40%),linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01) 40%),linear-gradient(145deg,rgba(14,21,24,.86),rgba(7,11,14,.9))!important}
-html.v4 #bdCard,html.v4 #bdHealth{background:linear-gradient(160deg,rgba(9,14,17,.55),rgba(7,11,14,.86) 55%),url("../assets/silk-bg.jpg") 70% 0%/260% auto no-repeat,#0a1013!important}
-html.v4 #bdHealth{background:linear-gradient(200deg,rgba(9,14,17,.35),rgba(7,11,14,.9) 60%),url("../assets/silk-bg.jpg") 85% 60%/240% auto no-repeat,#0a1013!important}
-
-/* ---- soft glass buttons (actions) ---- */
-html.v4 #bdActs{gap:12px!important}
-html.v4 #bdActs .bd-act{min-height:66px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 26px rgba(0,0,0,.28)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:#e8f1ef!important;font-weight:500!important;font-size:13px!important;letter-spacing:.1px}
-html.v4 #bdActs .bd-act:hover{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.035))!important;border-color:rgba(98,232,194,.22)!important;transform:translateY(-1px)}
-html.v4 #bdActs .bd-act:not(.pri) .bd-act-i{color:#e8f1ef!important}
-html.v4 #bdActs .bd-act .bd-act-i svg{stroke-width:1.6!important;width:24px!important;height:24px!important}
-html.v4 #bdActs .bd-act.pri{background:linear-gradient(135deg,#86f7d8 0%,#5fe3bf 45%,#3fc39f 100%)!important;color:#06231b!important;font-weight:600!important;font-size:15px!important;border:1px solid rgba(255,255,255,.3)!important;box-shadow:0 0 0 1px rgba(98,232,194,.15),0 12px 36px rgba(69,216,181,.35),inset 0 1px 0 rgba(255,255,255,.55)!important}
-html.v4 #bdActs .bd-act.pri .bd-act-i{background:none!important;color:#06231b!important;width:26px!important;height:26px!important;flex:0 0 26px!important}
-@media(min-width:901px){
-html.v4 #bdActs .bd-act:nth-child(4){margin-right:12px}
-html.v4 #bdActs .bd-act:nth-child(4)::after{content:"";position:absolute;right:-12px;top:14px;bottom:14px;border-left:1px solid rgba(130,151,155,.35)}
-html.v4 #bdActs .bd-act:nth-child(4){border-radius:999px!important;background:none!important;border-color:transparent!important;box-shadow:none!important}
-html.v4 #bdActs .bd-act:nth-child(4):hover{background:rgba(255,255,255,.05)!important}
-}
-
-/* card + top round buttons: same soft glass */
-html.v4 .bd-cacts button>*:first-child{width:52px!important;height:52px!important;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 20px rgba(0,0,0,.3)!important;color:#bff7e6!important}
-html.v4 .bd-cacts button{font-weight:600!important;font-size:12px!important}
-html.v4 .top .tbp-t,html.v4 .top .nc-lang-btn,html.v4 .top .curr-btn-top,html.v4 .top .acx-pill,html.v4 .top .tbp-cl>button,html.v4 .top .tbp-cl>a,html.v4 .bd-ib,html.v4 .top-search{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important}
-html.v4 .top .tbp-st{border-radius:999px!important;background:rgba(98,232,194,.08)!important;border:1px solid rgba(98,232,194,.22)!important;height:40px;padding:0 15px!important;display:inline-flex;align-items:center;gap:8px}
-
-/* chips */
-html.v4 #bdCur button{background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.06)!important;color:#d3dfe0!important;font-weight:500!important;font-size:13px!important;padding:7px 15px!important}
-html.v4 #bdCur button.on{background:linear-gradient(135deg,rgba(98,232,194,.32),rgba(98,232,194,.16))!important;color:#bdfbe6!important;border:1px solid rgba(98,232,194,.35)!important;box-shadow:0 0 18px rgba(98,232,194,.15)!important}
-html.v4 .bd-seg{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.07)!important;padding:4px!important}
-html.v4 .bd-seg button{font-size:14px!important;font-weight:500!important;padding:8px 16px!important}
-html.v4 .bd-seg button.on{background:rgba(255,255,255,.1)!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)!important}
-
-/* sidebar active: soft mint pill (no hard bar) */
-@media(min-width:761px){
-html.v4 .side .mi{border-radius:26px!important;font-weight:500!important;font-size:14px!important;color:#c5d0d3!important;min-height:48px!important}
-html.v4 .side .mi svg{width:22px!important;height:22px!important;stroke-width:1.5!important}
-html.v4 .side .mi.on{background:linear-gradient(90deg,rgba(98,232,194,.3),rgba(98,232,194,.08) 75%,rgba(98,232,194,.02))!important;border:1px solid rgba(98,232,194,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(40,190,150,.12)!important;color:#fff!important;font-weight:600!important}
-html.v4 .side .mi.on svg{color:#fff!important;stroke:#fff!important}
-}
-/* promo: crystal back */
-html.v4 .v4-promo svg{display:block!important;position:absolute;right:6px;top:8px;width:78px;height:auto;opacity:.95;filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
-html.v4 .v4-promo .v4-eb,html.v4 .v4-promo b,html.v4 .v4-promo span{max-width:118px!important;position:relative}
-html.v4 .v4-promo{justify-content:flex-end;background:linear-gradient(160deg,rgba(9,14,17,.4),rgba(7,11,14,.9) 70%),url("../assets/silk-bg.jpg") 30% 70%/400% auto no-repeat,#0b1114!important}
-html.v4 .v4-promo::after{display:none}
-
-/* security shield + "Protected" icon */
-html.v4 .v4-shi svg{width:40px!important;height:40px!important}
-html.v4 .v4-sh h2{font-size:20px!important}
-html.v4 #bdCard .v4-av .v4-badge svg{width:16px;height:16px}
-html.v4 #bdCard .v4-av .v4-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(98,232,194,.1)!important;border:1px solid rgba(98,232,194,.18)!important;padding:8px 14px!important}
-
-/* money flow bars in mint like the mockup */
-html.v4 #bdIns .bd-bars rect[fill="#22d3a0"]{fill:#6ff0cc}
-html.v4 #bdIns .bd-bars rect[fill="#8b5cf6"]{fill:rgba(98,232,194,.38)}
-html.v4 #bdIns .bd-bars svg{filter:drop-shadow(0 0 8px rgba(98,232,194,.25))}
-html.v4 .bd-mnav b{font-size:12px!important;padding:8px 14px!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.07)!important}
-
-/* light theme versions */
-html.v4[data-theme="light"] body::before{background:linear-gradient(180deg,rgba(246,252,250,.93),rgba(238,247,243,.96)),url("../assets/silk-bg.jpg") center/cover no-repeat!important}
-html.v4[data-theme="light"] .bd-card,html.v4[data-theme="light"] .bd-hero,html.v4[data-theme="light"] #bdCard,html.v4[data-theme="light"] #bdHealth{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(237,244,242,.9))!important;border-color:rgba(10,60,45,.1)!important;box-shadow:0 18px 50px -24px rgba(10,60,45,.28)!important}
-html.v4[data-theme="light"] #bdActs .bd-act:not(.pri){background:linear-gradient(180deg,#fff,rgba(255,255,255,.8))!important;color:#14201f!important;border-color:rgba(10,60,45,.1)!important;box-shadow:0 8px 22px -12px rgba(10,60,45,.3)!important}
-html.v4[data-theme="light"] #bdActs .bd-act:not(.pri) .bd-act-i{color:#0a7a56!important}
-html.v4[data-theme="light"] .bd-cacts button>*:first-child{background:#fff!important;border-color:rgba(10,60,45,.12)!important;color:#0a7a56!important;box-shadow:0 6px 16px -10px rgba(10,60,45,.35)!important}
-html.v4[data-theme="light"] .top .tbp-t,html.v4[data-theme="light"] .top .nc-lang-btn,html.v4[data-theme="light"] .top .curr-btn-top,html.v4[data-theme="light"] .top .acx-pill,html.v4[data-theme="light"] .top .tbp-cl>button,html.v4[data-theme="light"] .bd-ib,html.v4[data-theme="light"] .top-search{background:rgba(255,255,255,.88)!important;border-color:rgba(10,60,45,.12)!important}
-html.v4[data-theme="light"] #bdCur button{background:#fff!important;border-color:rgba(10,60,45,.12)!important;color:#263b39!important}
-html.v4[data-theme="light"] #bdCur button.on{background:linear-gradient(135deg,#9af5dc,#6fe3c3)!important;color:#06251d!important}
-html.v4[data-theme="light"] .bd-seg{background:rgba(255,255,255,.8)!important;border-color:rgba(10,60,45,.12)!important}
-html.v4[data-theme="light"] .bd-seg button.on{background:rgba(10,122,86,.12)!important;color:#06382a!important}
-html.v4[data-theme="light"] .side .mi{color:#3f5652!important}
-html.v4[data-theme="light"] .side .mi.on,html.v4[data-theme="light"] .side .mi.on svg{color:#06382a!important;stroke:#06382a!important}
-html.v4[data-theme="light"] .v4-promo{background:linear-gradient(160deg,rgba(255,255,255,.75),rgba(240,248,245,.95) 70%),url("../assets/silk-bg.jpg") 30% 70%/400% auto no-repeat,#fff!important}
-html.v4[data-theme="light"] .top .tbp-st{background:rgba(10,122,86,.08)!important;border-color:rgba(10,122,86,.22)!important}
-html.v4[data-theme="light"] .bd-mnav b{background:#fff!important;border-color:rgba(10,60,45,.12)!important}
-@media (max-width:900px),(max-height:760px){html.v4 .v4-promo{display:none!important}}
-html.v4 #bdCard{background:linear-gradient(165deg,rgba(9,14,17,.05),rgba(9,14,17,.55) 38%,rgba(7,11,14,.9) 70%),url("../assets/silk-bg.jpg") 62% 18%/230% auto no-repeat,#0a1013!important}
-html.v4 #bdHealth{background:linear-gradient(200deg,rgba(9,14,17,.1),rgba(9,14,17,.5) 40%,rgba(7,11,14,.92) 75%),url("../assets/silk-bg.jpg") 60% 25%/230% auto no-repeat,#0a1013!important}
-html.v4 .bd-hero{background:linear-gradient(200deg,rgba(14,21,24,.55),rgba(10,15,18,.88) 35%,rgba(7,11,14,.93)),url("../assets/silk-bg.jpg") 75% 10%/160% auto no-repeat,#0a1013!important}
-html.v4 #ncThemeBtn svg,html.v4 #settingsBtn svg,html.v4 #btnRefreshBalance svg,html.v4 #hxTop svg,html.v4 #notifBell svg{width:20px!important;height:20px!important}
-html.v4 .v4-promo .v4-eb{display:none!important}
-html.v4 .v4-promo b{font-size:14px!important;font-weight:600!important;max-width:120px!important}
-html.v4[data-theme="light"] .bd-hero,html.v4[data-theme="light"] #bdCard,html.v4[data-theme="light"] #bdHealth{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(237,244,242,.9))!important}
-html.v4 .top #ncThemeBtn,html.v4 .top #settingsBtn,html.v4 .top #btnRefreshBalance,html.v4 .top #hxTop{padding:0!important;width:46px;min-width:46px;border-radius:50%!important;display:grid;place-items:center}
-html.v4 .top #ncThemeBtn svg,html.v4 .top #settingsBtn svg,html.v4 .top #btnRefreshBalance svg,html.v4 .top #hxTop svg{flex:none}
-
-/* =====================================================================
-   v4.6 — logo, card wordmark, gold VISA, card buttons (from the mockup)
-   ===================================================================== */
-html.v4 .side .blogo{background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2222 20 88 96%22 width=%22512%22 height=%22512%22%3E%3Cdefs%3E%0A%3ClinearGradient id=%22face%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23e9fff8%22/%3E%3Cstop offset=%22.28%22 stop-color=%22%239cf6dc%22/%3E%3Cstop offset=%22.62%22 stop-color=%22%234fdcb4%22/%3E%3Cstop offset=%221%22 stop-color=%22%231fa883%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient id=%22side%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%230f7a5d%22/%3E%3Cstop offset=%221%22 stop-color=%22%23053325%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient id=%22gloss%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.75%22/%3E%3Cstop offset=%22.45%22 stop-color=%22%23fff%22 stop-opacity=%22.12%22/%3E%3Cstop offset=%22.46%22 stop-color=%22%23fff%22 stop-opacity=%220%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient id=%22rimN%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.95%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23fff%22 stop-opacity=%22.15%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fff%22 stop-opacity=%22.35%22/%3E%3C/linearGradient%3E%0A%3CclipPath id=%22nc%22%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22/%3E%3C/clipPath%3E%0A%3Cfilter id=%22sh%22 x=%22-30%25%22 y=%22-30%25%22 width=%22160%25%22 height=%22160%25%22%3E%3CfeGaussianBlur stdDeviation=%223.2%22/%3E%3C/filter%3E%0A%3Cfilter id=%22gl%22 x=%22-50%25%22 y=%22-50%25%22 width=%22200%25%22 height=%22200%25%22%3E%3CfeGaussianBlur stdDeviation=%227%22/%3E%3C/filter%3E%0A%3ClinearGradient id=%22tile%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%2314262a%22/%3E%3Cstop offset=%22.55%22 stop-color=%22%230a1316%22/%3E%3Cstop offset=%221%22 stop-color=%22%2304080a%22/%3E%3C/linearGradient%3E%0A%3CradialGradient id=%22halo%22 cx=%22.52%22 cy=%22.5%22 r=%22.55%22%3E%3Cstop offset=%220%22 stop-color=%22%2362e8c2%22 stop-opacity=%22.38%22/%3E%3Cstop offset=%22.6%22 stop-color=%22%2362e8c2%22 stop-opacity=%22.06%22/%3E%3Cstop offset=%221%22 stop-color=%22%2362e8c2%22 stop-opacity=%220%22/%3E%3C/radialGradient%3E%0A%3ClinearGradient id=%22rim%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23bfffee%22 stop-opacity=%22.55%22/%3E%3Cstop offset=%22.35%22 stop-color=%22%2362e8c2%22 stop-opacity=%22.08%22/%3E%3Cstop offset=%221%22 stop-color=%22%2362e8c2%22 stop-opacity=%22.28%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient id=%22refl%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff%22 stop-opacity=%22.14%22/%3E%3Cstop offset=%221%22 stop-color=%22%23fff%22 stop-opacity=%220%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%3Cellipse cx=%2266%22 cy=%22106%22 rx=%2234%22 ry=%225%22 fill=%22%23000%22 opacity=%22.55%22 filter=%22url%28%23sh%29%22/%3E%0A%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 fill=%22%2362e8c2%22 opacity=%22.45%22 filter=%22url%28%23gl%29%22/%3E%0A%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%284.95 7.65%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%284.40 6.80%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%283.85 5.95%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%283.30 5.10%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%282.75 4.25%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%282.20 3.40%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%281.65 2.55%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%281.10 1.70%29%22 fill=%22url%28%23side%29%22/%3E%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 transform=%22translate%280.55 0.85%29%22 fill=%22url%28%23side%29%22/%3E%0A%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 fill=%22url%28%23face%29%22/%3E%0A%3Cg clip-path=%22url%28%23nc%29%22%3E%3Crect x=%2230%22 y=%2226%22 width=%2270%22 height=%2240%22 fill=%22url%28%23gloss%29%22/%3E%3Cpolygon points=%2234%2C30 51%2C30 79%2C74.3 79%2C80 47%2C30 34%2C36%22 fill=%22%23fff%22 opacity=%22.18%22/%3E%3C/g%3E%0A%3Cpolygon points=%2234%2C98 34%2C30 51%2C30 79%2C74.3 79%2C30 94%2C30 94%2C98 77%2C98 49%2C53.7 49%2C98%22 fill=%22none%22 stroke=%22url%28%23rimN%29%22 stroke-width=%22.9%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") center/contain no-repeat!important;border:0!important;box-shadow:none!important;border-radius:0!important;width:34px!important;height:36px!important;filter:drop-shadow(0 0 10px rgba(98,232,194,.35))}
-html.v4 .side .blogo img{display:none!important}
-html.v4 .side .nm{font-weight:600!important;font-size:19px!important;letter-spacing:-.3px!important;color:#f2f7f7}
-html.v4 .side .nm span{color:#62e8c2!important;font-weight:600!important}
-html.v4[data-theme="light"] .side .nm{color:#10201b}
-html.v4[data-theme="light"] .side .nm span{color:#0f9e76!important}
-/* card wordmark: white N + Nordic + grey Crypto */
-html.v4 .bd-slot #cardDash .ptop .pb{font-size:0!important;letter-spacing:0!important;display:flex!important;align-items:center;gap:0}
-html.v4 .bd-slot #cardDash .ptop .pb::before{content:""!important;width:22px!important;height:22px!important;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23ffffff%22/%3E%3Cstop offset=%22.6%22 stop-color=%22%23d9e4e2%22/%3E%3Cstop offset=%221%22 stop-color=%22%239fb0ad%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill=%22url%28%23g%29%22%3E%3Cpath d=%22M10 8h10v48H10z%22/%3E%3Cpath d=%22M44 8h10v48H44z%22/%3E%3Cpath d=%22M10 8h11.5L54 56H42.5z%22/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat!important;border-radius:0!important;margin-right:8px!important;box-shadow:none!important}
-html.v4 .bd-slot #cardDash .ptop .pb .v4-wm{font:600 16px/1 Manrope,'DM Sans',system-ui,sans-serif;color:#a9b7b5;letter-spacing:-.2px;text-transform:none}
-html.v4 .bd-slot #cardDash .ptop .pb .v4-wm b{font-weight:600;color:#f4f8f7}
-.v4-wm{display:none}html.v4 #cardDash .v4-wm{display:inline}
-/* gold VISA */
-html.v4 #cardDash .card-network.v4-isvisa svg{display:none!important}
-html.v4 #cardDash .card-network.v4-isvisa{visibility:visible!important;display:flex!important;align-items:flex-end;justify-content:flex-end;width:auto!important;height:auto!important}
-html.v4 #cardDash .card-network.v4-isvisa::after{content:"VISA";font:italic 900 30px/1 'Arial Black',Manrope,'DM Sans',system-ui,sans-serif;letter-spacing:-.5px;background:linear-gradient(180deg,#f7e8cc 0%,#d8b98b 45%,#a8845a 75%,#e6cfa6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
-/* card buttons: dark glass circles, mint snowflake, light icons */
-html.v4 .bd-cacts button>*:first-child{width:54px!important;height:54px!important;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.07),rgba(255,255,255,.015) 70%)!important;border:1px solid rgba(255,255,255,.085)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.35)!important;color:#e8efee!important}
-html.v4 .bd-cacts button>*:first-child svg{width:24px!important;height:24px!important;stroke-width:1.6!important}
-html.v4 .bd-cacts button:first-child>*:first-child{color:#7ff3d2!important}
-html.v4 .bd-cacts button:first-child>*:first-child svg{filter:drop-shadow(0 0 6px rgba(127,243,210,.55))}
-html.v4 .bd-cacts button{color:#f2f7f7!important;font-size:13px!important;font-weight:600!important;gap:10px!important}
-html.v4 .bd-cacts button:hover>*:first-child{border-color:rgba(127,243,210,.35)!important;background:radial-gradient(circle at 50% 30%,rgba(127,243,210,.16),rgba(127,243,210,.03) 70%)!important}
-html.v4[data-theme="light"] .bd-cacts button>*:first-child{background:#fff!important;color:#29403b!important}
-html.v4[data-theme="light"] .bd-cacts button:first-child>*:first-child{color:#0f9e76!important}
-html.v4[data-theme="light"] .bd-cacts button{color:#14201f!important}
-
-/* =====================================================================
-   v4.7 — section icons via CSS (no DOM rewrites), gift + currency fixes
-   ===================================================================== */
-html.v4 .v4-ti{display:none!important}
-html.v4 #bdIns .bd-ch h3::before,html.v4 #bdTx .bd-ch h3::before,html.v4 #bdCrypto .bd-ch h3::before{content:"";display:inline-block;width:21px;height:21px;margin-right:12px;vertical-align:-4px;background:#62e8c2;-webkit-mask:var(--v4m) center/contain no-repeat;mask:var(--v4m) center/contain no-repeat}
-html.v4 #bdIns .bd-ch h3{--v4m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 20V10M9 20V4M14 20v-7M19 20V8'/%3E%3C/svg%3E")}
-html.v4 #bdTx .bd-ch h3{--v4m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 7.5V12l3 2'/%3E%3C/svg%3E")}
-html.v4 #bdCrypto .bd-ch h3{--v4m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3 21 12 12 21 3 12z'/%3E%3C/svg%3E")}
-html.v4[data-theme="light"] #bdIns .bd-ch h3::before,html.v4[data-theme="light"] #bdTx .bd-ch h3::before,html.v4[data-theme="light"] #bdCrypto .bd-ch h3::before{background:#0a7a56}
-/* gift: gold outline icon, full size */
-html.v4 .top #hxTop>span{font-size:0!important;width:22px;height:22px;display:block;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6c34c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='8' width='17' height='4.5' rx='1'/%3E%3Cpath d='M5 12.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5M12 8v13M12 8C10.5 5 7.5 4.2 7 6.2 6.6 7.8 9.6 8 12 8zm0 0c1.5-3 4.5-3.8 5-1.8.4 1.6-2.6 1.8-5 1.8z'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 6px rgba(246,195,76,.35))}
-/* currency: one pill, not two */
-html.v4 .top #currSwitch{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;height:auto!important;width:auto!important}
-html.v4 .top #currBtnTop{display:inline-flex;align-items:center;gap:8px}
-@media(min-width:1101px){html.v4 .top #currBtnTop{height:46px;padding:0 18px!important;border-radius:24px!important;font-size:12px!important;font-weight:700!important}}
-
-/* =====================================================================
-   v4.8 — every card (dashboard, My Cards, previews): one wordmark + gold VISA
-   ===================================================================== */
-html.v4 body .pay .ptop .pb{font-size:0!important;letter-spacing:0!important;display:flex!important;align-items:center}
-html.v4 body .pay .ptop .pb::before{content:""!important;width:clamp(16px,5.4cqw,24px)!important;height:clamp(16px,5.4cqw,24px)!important;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.6' stop-color='%23d9e4e2'/%3E%3Cstop offset='1' stop-color='%239fb0ad'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Cpath d='M10 8h10v48H10z'/%3E%3Cpath d='M44 8h10v48H44z'/%3E%3Cpath d='M10 8h11.5L54 56H42.5z'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat!important;border-radius:0!important;margin-right:.55em!important;box-shadow:none!important;color:transparent!important;flex:none}
-html.v4 body .pay .ptop .pb .v4-wm{display:inline;font:600 clamp(13px,4.1cqw,18px)/1 Manrope,'DM Sans',system-ui,sans-serif;color:#b3c0be;letter-spacing:-.2px;text-transform:none;white-space:nowrap}
-html.v4 body .pay .ptop .pb .v4-wm b{font-weight:600;color:#f4f8f7}
-html.v4 body .pay.design-silver .ptop .pb .v4-wm,html.v4 body .pay.design-frost .ptop .pb .v4-wm{color:#55626a}
-html.v4 body .pay.design-silver .ptop .pb .v4-wm b,html.v4 body .pay.design-frost .ptop .pb .v4-wm b{color:#1c2430}
-html.v4 body .pay.design-silver .ptop .pb::before,html.v4 body .pay.design-frost .ptop .pb::before{filter:invert(.85)}
-html.v4 body .pay .card-network.v4-isvisa svg{display:none!important}
-html.v4 body .pay .card-network.v4-isvisa{display:flex!important;align-items:flex-end;justify-content:flex-end;visibility:visible!important}
-html.v4 body .pay .card-network.v4-isvisa::after{content:"VISA";font:italic 900 clamp(20px,7cqw,32px)/1 'Arial Black',Manrope,'DM Sans',system-ui,sans-serif;letter-spacing:-.5px;background:linear-gradient(180deg,#f7e8cc 0%,#d8b98b 45%,#a8845a 75%,#e6cfa6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
-
-/* =====================================================================
-   v4.9 — card design dialog + My Cards buttons in the same glass/mint style
-   ===================================================================== */
-html.v4 #designMask{background:rgba(2,6,8,.62)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-html.v4 #designMask .box{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 40%),linear-gradient(145deg,#111a1d,#080d10)!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:28px!important;box-shadow:0 40px 100px rgba(0,0,0,.65),inset 0 1px rgba(255,255,255,.06)!important;scrollbar-width:thin;scrollbar-color:rgba(98,232,194,.35) transparent}
-html.v4 #designMask h2{font-family:Manrope,'DM Sans',system-ui,sans-serif!important;font-weight:700!important;font-size:24px!important;color:#f2f7f7!important}
-html.v4 #designMask .d{color:#9fb0b4!important;font-size:14px!important}
-html.v4 #designMask .dname{font-family:Manrope,'DM Sans',system-ui,sans-serif;color:#eafff8!important}
-html.v4 #designMask #designLive{box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.35)!important;border:1px solid rgba(255,255,255,.18)}
-html.v4 #designMask #designLive span{font-size:0!important;display:flex;align-items:center;gap:8px}
-html.v4 #designMask #designLive span::before{content:"";width:18px;height:18px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='%23fff'%3E%3Cpath d='M10 8h10v48H10z'/%3E%3Cpath d='M44 8h10v48H44z'/%3E%3Cpath d='M10 8h11.5L54 56H42.5z'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
-html.v4 #designMask #designLive span::after{content:"NordicCrypto";font:600 15px/1 Manrope,'DM Sans',system-ui,sans-serif;letter-spacing:-.2px}
-html.v4 #designMask .design-opt{border:1px solid rgba(255,255,255,.06)!important;background:rgba(255,255,255,.025)!important;border-radius:18px!important;padding:7px!important;color:#aab8bb!important;font:500 13px 'DM Sans',system-ui,sans-serif!important}
-html.v4 #designMask .design-opt:hover{border-color:rgba(98,232,194,.28)!important;background:rgba(98,232,194,.05)!important}
-html.v4 #designMask .design-opt .design-preview{border-radius:12px!important;box-shadow:0 8px 18px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.18)}
-html.v4 #designMask .design-opt.on{border:1px solid rgba(98,232,194,.65)!important;background:rgba(98,232,194,.09)!important;color:#eafff8!important;box-shadow:0 0 0 3px rgba(98,232,194,.12),0 12px 28px rgba(40,190,150,.18)!important}
-html.v4 #designMask .design-opt.on::after{background:linear-gradient(135deg,#8ff5d8,#45cfa8)!important;color:#05211a!important;box-shadow:0 0 12px rgba(98,232,194,.6)}
-html.v4 #designMask .design-opt.hk-new::before{background:linear-gradient(135deg,#8ff5d8,#45cfa8)!important;color:#05211a!important;box-shadow:0 4px 12px rgba(69,207,168,.4)!important}
-html.v4 #designMask .hk-sep{color:#8ff3d6!important;opacity:.85!important}
-html.v4 #designMask .mact{position:sticky;bottom:-28px;margin:18px -28px -28px!important;padding:16px 28px 22px;background:linear-gradient(180deg,rgba(9,14,17,0),#090e11 30%)!important;z-index:3}
-html.v4 #designMask .btn{border-radius:999px!important;font:600 15px 'DM Sans',system-ui,sans-serif!important;min-height:52px!important}
-html.v4 #designMask .b1{background:linear-gradient(135deg,#86f7d8 0%,#5fe3bf 45%,#3fc39f 100%)!important;color:#06231b!important;border:1px solid rgba(255,255,255,.3)!important;box-shadow:0 12px 30px rgba(69,216,181,.32),inset 0 1px rgba(255,255,255,.55)!important}
-html.v4 #designMask .b2{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.09)!important;color:#e8f1ef!important;box-shadow:inset 0 1px rgba(255,255,255,.07)!important}
-/* My Cards buttons */
-html.v4 .v4-cb{display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center;gap:10px!important;min-height:52px!important;width:auto!important;height:auto!important;padding:0 20px 0 16px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:inset 0 1px rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.28)!important;color:#e8f1ef!important;font:500 14px 'DM Sans',system-ui,sans-serif!important;white-space:nowrap;transition:border-color .2s,background .2s,transform .15s}
-html.v4 .v4-cb svg{width:20px;height:20px;flex:none;color:#7ff3d2}
-html.v4 .v4-cb:hover{border-color:rgba(98,232,194,.3)!important;transform:translateY(-1px)}
-html.v4 #btnDeleteCard.v4-cb{color:#ffb4ac!important;border-color:rgba(255,118,109,.22)!important;background:linear-gradient(180deg,rgba(255,118,109,.1),rgba(255,118,109,.03))!important}
-html.v4 #btnDeleteCard.v4-cb svg{color:#ff8a80}
-@media(max-width:600px){html.v4 .v4-cb{flex:1 1 calc(50% - 10px)!important;padding:0 12px!important;font-size:13px!important}}
-/* light */
-html.v4[data-theme="light"] #designMask .box{background:linear-gradient(145deg,#fff,#eef6f3)!important;border-color:rgba(10,60,45,.1)!important}
-html.v4[data-theme="light"] #designMask h2,html.v4[data-theme="light"] #designMask .dname{color:#10201b!important}
-html.v4[data-theme="light"] #designMask .d,html.v4[data-theme="light"] #designMask .design-opt{color:#4a5f5b!important}
-html.v4[data-theme="light"] #designMask .design-opt{background:#fff!important;border-color:rgba(10,60,45,.1)!important}
-html.v4[data-theme="light"] #designMask .design-opt.on{color:#06382a!important;background:#e3f7f0!important}
-html.v4[data-theme="light"] #designMask .mact{background:linear-gradient(180deg,rgba(238,246,243,0),#eef6f3 30%)!important}
-html.v4[data-theme="light"] #designMask .b2{background:#fff!important;color:#14201f!important;border-color:rgba(10,60,45,.14)!important}
-html.v4[data-theme="light"] #designMask .hk-sep{color:#0a7a56!important}
-html.v4[data-theme="light"] .v4-cb{background:#fff!important;color:#14201f!important;border-color:rgba(10,60,45,.12)!important;box-shadow:0 8px 20px -12px rgba(10,60,45,.35)!important}
-html.v4[data-theme="light"] .v4-cb svg{color:#0a7a56}
-html.v4[data-theme="light"] #btnDeleteCard.v4-cb{color:#b42318!important;background:#fff5f4!important}
-html.v4 .v4-cb{max-width:none!important;flex:0 0 auto!important}html.v4 .v4-cb span{white-space:nowrap!important;display:inline!important;font-size:14px!important;line-height:1!important}
-@media(max-width:600px){html.v4 .v4-cb{flex:1 1 calc(50% - 10px)!important}html.v4 .v4-cb span{font-size:13px!important}}
-@media(max-width:600px){html.v4 div:has(> #btnChangeDesign){display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;overflow:visible!important}html.v4 div:has(> #btnChangeDesign)>.v4-cb{width:100%!important;padding:0 10px!important}}
-
-/* light theme: withdraw rails picker + sticky action bar were dark-only */
-html[data-theme="light"] .rp-t{background:#fff!important;border-color:rgba(10,60,45,.12)!important;color:#10201b!important}
-html[data-theme="light"] .rp-t.on{background:#e3f7f0!important;border-color:rgba(15,169,125,.55)!important}
-html[data-theme="light"] .rp-n{color:#10201b!important}
-html[data-theme="light"] .rp-s,html[data-theme="light"] .rp-g,html[data-theme="light"] .rp-note{color:#5b6f6b!important}
-html[data-theme="light"] .rp-k{background:rgba(10,60,45,.06)!important}
-html[data-theme="light"] .rp-h,html[data-theme="light"] .rp-pv{background:#f4faf7!important;border-color:rgba(10,60,45,.12)!important;color:#10201b!important}
-html[data-theme="light"] .rp-eta{color:#30413f!important}
-html[data-theme="light"] .wd-actions{background:linear-gradient(to top,#fff 78%,rgba(255,255,255,0))!important}
-html.v4 div:has(> #btnChangeDesign){display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;max-width:440px;overflow:visible!important}html.v4 div:has(> #btnChangeDesign)>.v4-cb{width:100%!important;padding:0 12px!important}
-
-/* "New card designs" banner under the dashboard card — glass / mint like the rest */
-html.v4 #bdCard .hkb{margin:16px 0 0!important;max-width:none;padding:12px 12px 12px 12px;border-radius:20px;background:linear-gradient(135deg,rgba(98,232,194,.12),rgba(255,255,255,.03))!important;border:1px solid rgba(98,232,194,.24)!important;box-shadow:inset 0 1px rgba(255,255,255,.06)}
-html.v4 #bdCard .hkb div{font:400 12px/1.4 'DM Sans',system-ui,sans-serif;color:#b6c4c6}
-html.v4 #bdCard .hkb b{font:700 13.5px/1.3 Manrope,'DM Sans',system-ui,sans-serif;color:#eafff8;margin-bottom:2px}
-html.v4 #bdCard .hkb .mini{flex:0 0 58px;border-radius:8px}
-html.v4 #bdCard .hkb .try{padding:9px 15px!important;border-radius:999px!important;background:linear-gradient(135deg,#86f7d8,#45cfa8)!important;color:#06231b!important;font:600 13px 'DM Sans',system-ui!important;box-shadow:0 6px 16px rgba(69,216,181,.3)}
-html.v4 #bdCard .hkb .x{padding:6px!important;color:#7f9396!important;background:none!important;font-size:13px}
-html.v4[data-theme="light"] #bdCard .hkb{background:linear-gradient(135deg,#e3f7f0,#fff)!important;border-color:rgba(15,169,125,.25)!important}
-html.v4[data-theme="light"] #bdCard .hkb div{color:#4a5f5b}
-html.v4[data-theme="light"] #bdCard .hkb b{color:#10201b}
-html.v4 #bdCard .hkb b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* holiday / new-designs popup in the same glass + mint style */
-html.v4 .hkn{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.01) 40%),linear-gradient(145deg,#111a1d,#080d10)!important;border:1px solid rgba(255,255,255,.09);box-shadow:0 40px 100px rgba(0,0,0,.65),inset 0 1px rgba(255,255,255,.06)!important}
-html.v4 .hkn small{background:linear-gradient(135deg,#8ff5d8,#45cfa8)!important;color:#05211a!important;font:700 10px/1.4 'DM Sans',system-ui!important}
-html.v4 .hkn h3{font:700 22px/1.2 Manrope,'DM Sans',system-ui,sans-serif!important;color:#f2f7f7}
-html.v4 .hkn p,html.v4 .hkn .ds{color:#9fb0b4;opacity:1!important;font-family:'DM Sans',system-ui,sans-serif}
-html.v4 .hkn .nm{font-family:Manrope,'DM Sans',system-ui,sans-serif!important;color:#eafff8}
-html.v4 .hkn .th button{border-radius:12px;box-shadow:0 6px 14px rgba(0,0,0,.35)}
-html.v4 .hkn .th button.on{border-color:#62e8c2!important;box-shadow:0 0 0 3px rgba(98,232,194,.15),0 8px 18px rgba(40,190,150,.25)}
-html.v4 .hkn .row button{border-radius:999px!important;font:600 15px/1.2 'DM Sans',system-ui,sans-serif!important;padding:15px 14px!important}
-html.v4 .hkn .row .go{background:linear-gradient(135deg,#86f7d8 0%,#5fe3bf 45%,#3fc39f 100%)!important;color:#06231b!important;box-shadow:0 12px 30px rgba(69,216,181,.32),inset 0 1px rgba(255,255,255,.55)}
-html.v4 .hkn .row .no{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02))!important;border:1px solid rgba(255,255,255,.09);color:#e8f1ef!important}
-html.v4 .hkn .row button:focus{outline:none}
-html.v4 .hkn .row button:focus-visible{outline:2px solid rgba(98,232,194,.6)!important;outline-offset:3px}
-html.v4[data-theme="light"] .hkn{background:linear-gradient(145deg,#fff,#eef6f3)!important;border-color:rgba(10,60,45,.1)}
-html.v4[data-theme="light"] .hkn h3,html.v4[data-theme="light"] .hkn .nm{color:#10201b}
-html.v4[data-theme="light"] .hkn p,html.v4[data-theme="light"] .hkn .ds{color:#4a5f5b}
-html.v4[data-theme="light"] .hkn .row .no{background:#fff!important;color:#14201f!important;border-color:rgba(10,60,45,.14)}
-/* hero: show Cash / Crypto split again so clients see what can be withdrawn */
-html.v4 #bdSplit{display:flex;gap:16px;margin-top:10px!important;font-size:12px!important;color:#9fb0b4!important;background:none!important;border:0!important;padding:0!important}
-html.v4 #bdSplit[style*="none"]{display:none!important}
-html.v4 #bdSplit b{color:#e8f1ef;font-weight:600}
-html.v4[data-theme="light"] #bdSplit{color:#5b6f6b!important}
-html.v4[data-theme="light"] #bdSplit b{color:#14201f}
-
-/* crypto withdrawal: mint instead of the old violet/blue */
-.ncw-seg button.on{background:linear-gradient(135deg,#86f7d8,#45cfa8)!important;color:#06231b!important}
-.ncw-recv{background:linear-gradient(135deg,rgba(98,232,194,.12),rgba(255,255,255,.03))!important;border-color:rgba(98,232,194,.22)!important}
-.ncw-recv b{color:#7ff3d2!important}
-.ncw-btn{background:linear-gradient(135deg,#86f7d8,#45cfa8)!important;color:#06231b!important;border-radius:999px!important}
-.ncw-coin.b{background:linear-gradient(135deg,#86f7d8,#3fc39f)!important}
-.ncw-arrow{background:linear-gradient(90deg,#45cfa8,#86f7d8)!important}
-.ncw-st.act i{border-color:#62e8c2!important;border-top-color:transparent!important}
-html[data-theme="light"] .ncw-recv b{color:#0a7a56!important}
-
-/* support chat button: mint like the rest (was blue/violet) */
-html #chatToggle{background:linear-gradient(135deg,#8ff5d8 0%,#5fe3bf 50%,#36bf99 100%)!important;color:#05211a!important;box-shadow:0 14px 34px -8px rgba(69,216,181,.55),inset 0 1px rgba(255,255,255,.5)!important}
-html #chatToggle svg{color:#05211a;stroke:#05211a}
+  /* translations for the new v4 strings (added once the main dictionary of the language is in) */
+  var TR = {
+    da: { 'Available cash': 'Tilgængelige kontanter', 'New card designs': 'Nye kortdesigns', 'New card designs ❄': 'Nye kortdesigns ❄', 'Fresh premium looks for your card.': 'Friske premium-looks til dit kort.', 'Five more holiday looks to try.': 'Fem flere julelooks at prøve.', 'Total Wealth': 'Samlet formue', 'Money Flow': 'Pengestrøm', 'Recent activity': 'Seneste aktivitet', 'Your assets': 'Dine aktiver', 'Protected': 'Beskyttet', 'Almost protected': 'Næsten beskyttet', 'All systems operational': 'Alle systemer kører', 'Connection problem': 'Forbindelsesproblem', 'Checking…': 'Kontrollerer…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort spærret', 'Available balance': 'Disponibel saldo', 'PERSONAL OVERVIEW': 'PERSONLIGT OVERBLIK', 'Holiday card skins': 'Juledesign til kort', 'Snow, lights and Santa for your card.': 'Sne, lys og julemand til dit kort.', 'See designs →': 'Se designs →', 'Invite friends, earn NC': 'Inviter venner, tjen NC', 'Share your link and collect bonus points.': 'Del dit link og saml bonuspoint.', 'Learn more →': 'Læs mere →', '{a} of {b} steps completed': '{a} af {b} trin fuldført' },
+    fi: { 'Available cash': 'Käytettävissä oleva käteinen', 'New card designs': 'Uudet korttien ulkoasut', 'New card designs ❄': 'Uudet korttien ulkoasut ❄', 'Fresh premium looks for your card.': 'Uusia premium-ulkoasuja korttiisi.', 'Five more holiday looks to try.': 'Viisi muuta jouluista ulkoasua kokeiltavaksi.', 'Total Wealth': 'Kokonaisvarallisuus', 'Money Flow': 'Rahavirta', 'Recent activity': 'Viimeaikainen toiminta', 'Your assets': 'Omaisuutesi', 'Protected': 'Suojattu', 'Almost protected': 'Melkein suojattu', 'All systems operational': 'Kaikki järjestelmät toimivat', 'Connection problem': 'Yhteysongelma', 'Checking…': 'Tarkistetaan…', 'Card active': 'Kortti aktiivinen', 'Card frozen': 'Kortti jäädytetty', 'Available balance': 'Käytettävissä oleva saldo', 'PERSONAL OVERVIEW': 'HENKILÖKOHTAINEN YLEISKATSAUS', 'Holiday card skins': 'Joulukorttien ulkoasut', 'Snow, lights and Santa for your card.': 'Lunta, valoja ja joulupukki korttiisi.', 'See designs →': 'Katso ulkoasut →', 'Invite friends, earn NC': 'Kutsu ystäviä, ansaitse NC', 'Share your link and collect bonus points.': 'Jaa linkkisi ja kerää bonuspisteitä.', 'Learn more →': 'Lue lisää →', '{a} of {b} steps completed': '{a}/{b} vaihetta tehty' },
+    es: { 'Available cash': 'Efectivo disponible', 'New card designs': 'Nuevos diseños de tarjeta', 'New card designs ❄': 'Nuevos diseños de tarjeta ❄', 'Fresh premium looks for your card.': 'Nuevos looks premium para tu tarjeta.', 'Five more holiday looks to try.': 'Cinco looks navideños más por probar.', 'Total Wealth': 'Patrimonio total', 'Money Flow': 'Flujo de dinero', 'Recent activity': 'Actividad reciente', 'Your assets': 'Tus activos', 'Protected': 'Protegida', 'Almost protected': 'Casi protegida', 'All systems operational': 'Todos los sistemas operativos', 'Connection problem': 'Problema de conexión', 'Checking…': 'Comprobando…', 'Card active': 'Tarjeta activa', 'Card frozen': 'Tarjeta congelada', 'Available balance': 'Saldo disponible', 'PERSONAL OVERVIEW': 'RESUMEN PERSONAL', 'Holiday card skins': 'Diseños navideños', 'Snow, lights and Santa for your card.': 'Nieve, luces y Papá Noel para tu tarjeta.', 'See designs →': 'Ver diseños →', 'Invite friends, earn NC': 'Invita amigos, gana NC', 'Share your link and collect bonus points.': 'Comparte tu enlace y gana puntos.', 'Learn more →': 'Más información →', '{a} of {b} steps completed': '{a} de {b} pasos completados' },
+    no: { 'Available cash': 'Tilgjengelig kontant', 'New card designs': 'Nye kortdesign', 'New card designs ❄': 'Nye kortdesign ❄', 'Fresh premium looks for your card.': 'Nye premium-utseender for kortet ditt.', 'Five more holiday looks to try.': 'Fem flere julelooks å prøve.', 'Total Wealth': 'Samlet formue', 'Money Flow': 'Pengestrøm', 'Recent activity': 'Siste aktivitet', 'Your assets': 'Dine eiendeler', 'Protected': 'Beskyttet', 'Almost protected': 'Nesten beskyttet', 'All systems operational': 'Alle systemer fungerer', 'Connection problem': 'Tilkoblingsproblem', 'Checking…': 'Sjekker…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort sperret', 'Available balance': 'Disponibel saldo', 'PERSONAL OVERVIEW': 'PERSONLIG OVERSIKT', 'Holiday card skins': 'Julekortdesign', 'Snow, lights and Santa for your card.': 'Snø, lys og julenisse til kortet ditt.', 'See designs →': 'Se design →', 'Invite friends, earn NC': 'Inviter venner, tjen NC', 'Share your link and collect bonus points.': 'Del lenken din og samle bonuspoeng.', 'Learn more →': 'Les mer →', '{a} of {b} steps completed': '{a} av {b} trinn fullført' },
+    sv: { 'Available cash': 'Tillgängliga kontanter', 'New card designs': 'Nya kortdesigner', 'New card designs ❄': 'Nya kortdesigner ❄', 'Fresh premium looks for your card.': 'Nya premiumlooker för ditt kort.', 'Five more holiday looks to try.': 'Fem fler jullooker att prova.', 'Total Wealth': 'Total förmögenhet', 'Money Flow': 'Pengaflöde', 'Recent activity': 'Senaste aktivitet', 'Your assets': 'Dina tillgångar', 'Protected': 'Skyddat', 'Almost protected': 'Nästan skyddat', 'All systems operational': 'Alla system fungerar', 'Connection problem': 'Anslutningsproblem', 'Checking…': 'Kontrollerar…', 'Card active': 'Kort aktivt', 'Card frozen': 'Kort fryst', 'Available balance': 'Tillgängligt saldo', 'PERSONAL OVERVIEW': 'PERSONLIG ÖVERSIKT', 'Holiday card skins': 'Juldesign för kort', 'Snow, lights and Santa for your card.': 'Snö, ljus och tomten till ditt kort.', 'See designs →': 'Se design →', 'Invite friends, earn NC': 'Bjud in vänner, tjäna NC', 'Share your link and collect bonus points.': 'Dela din länk och samla bonuspoäng.', 'Learn more →': 'Läs mer →', '{a} of {b} steps completed': '{a} av {b} steg klara' },
+    fr: { 'Available cash': 'Liquidités disponibles', 'New card designs': 'Nouveaux designs de carte', 'New card designs ❄': 'Nouveaux designs de carte ❄', 'Fresh premium looks for your card.': 'De nouveaux looks premium pour votre carte.', 'Five more holiday looks to try.': 'Cinq autres looks de fêtes à essayer.', 'Total Wealth': 'Patrimoine total', 'Money Flow': 'Flux d’argent', 'Recent activity': 'Activité récente', 'Your assets': 'Vos actifs', 'Protected': 'Protégé', 'Almost protected': 'Presque protégé', 'All systems operational': 'Tous les systèmes opérationnels', 'Connection problem': 'Problème de connexion', 'Checking…': 'Vérification…', 'Card active': 'Carte active', 'Card frozen': 'Carte gelée', 'Available balance': 'Solde disponible', 'PERSONAL OVERVIEW': 'APERÇU PERSONNEL', 'Holiday card skins': 'Designs de fêtes', 'Snow, lights and Santa for your card.': 'Neige, lumières et Père Noël pour votre carte.', 'See designs →': 'Voir les designs →', 'Invite friends, earn NC': 'Invitez des amis, gagnez des NC', 'Share your link and collect bonus points.': 'Partagez votre lien et cumulez des points.', 'Learn more →': 'En savoir plus →', '{a} of {b} steps completed': '{a} sur {b} étapes terminées' },
+    de: { 'Available cash': 'Verfügbares Guthaben', 'New card designs': 'Neue Kartendesigns', 'New card designs ❄': 'Neue Kartendesigns ❄', 'Fresh premium looks for your card.': 'Neue Premium-Looks für Ihre Karte.', 'Five more holiday looks to try.': 'Fünf weitere Festtagslooks zum Ausprobieren.', 'Total Wealth': 'Gesamtvermögen', 'Money Flow': 'Geldfluss', 'Recent activity': 'Letzte Aktivität', 'Your assets': 'Ihre Assets', 'Protected': 'Geschützt', 'Almost protected': 'Fast geschützt', 'All systems operational': 'Alle Systeme in Betrieb', 'Connection problem': 'Verbindungsproblem', 'Checking…': 'Wird geprüft…', 'Card active': 'Karte aktiv', 'Card frozen': 'Karte gesperrt', 'Available balance': 'Verfügbares Guthaben', 'PERSONAL OVERVIEW': 'PERSÖNLICHE ÜBERSICHT', 'Holiday card skins': 'Festtags-Kartendesigns', 'Snow, lights and Santa for your card.': 'Schnee, Lichter und Weihnachtsmann für Ihre Karte.', 'See designs →': 'Designs ansehen →', 'Invite friends, earn NC': 'Freunde einladen, NC verdienen', 'Share your link and collect bonus points.': 'Teilen Sie Ihren Link und sammeln Sie Bonuspunkte.', 'Learn more →': 'Mehr erfahren →', '{a} of {b} steps completed': '{a} von {b} Schritten erledigt' }
+  };
+  function regTr() { var N = window.NCI18N; if (!N || !N.add) return false; Object.keys(TR).forEach(function (l) { try { N.add(l, TR[l]); } catch (e) { } }); return true; }
+  if (!regTr()) { var rt = 0, ri = setInterval(function () { if (regTr() || ++rt > 40) clearInterval(ri); }, 250); }
+  window.addEventListener('nc-dict', function () { soon(); });
+  window.addEventListener('nc-lang', function () { soon(); });
+  /* My Cards action buttons: line icons instead of emoji, text still translated */
+  var CBI = {
+    pal: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.7-1.3-.7-2.2 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.2" r="1.2"/><circle cx="15" cy="7.6" r="1.2"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    eyeo: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+    snow: '<path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/><path d="m9.5 3.5 2.5 2 2.5-2M9.5 20.5l2.5-2 2.5 2M4.3 10.4l3.1-.6-1-3M19.7 13.6l-3.1.6 1 3M6.4 17.2l1-3-3.1-.6M17.6 6.8l-1 3 3.1.6"/>',
+    sun: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+    del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>'
+  };
+  function cardBtns() {
+    var N = window.NCI18N, L = N && N.lang || 'en';
+    function tt(en) { var t = N && N.t ? N.t(en) : en; return String(t).replace(/^[^\p{L}\p{N}]+/u, '').trim(); }
+    var frozen = false; try { frozen = String(st.card && st.card.status).toLowerCase() === 'frozen'; } catch (e) { }
+    [['btnChangeDesign', 'pal', '🎨 Change Design'], ['btnShowCvv', null, null], ['btnFreeze', frozen ? 'sun' : 'snow', frozen ? '🔥 Unfreeze Card' : '❄ Freeze Card'], ['btnDeleteCard', 'del', '🗑 Delete Card']].forEach(function (r) {
+      var b = document.getElementById(r[0]); if (!b) return;
+      var ic = r[1], en = r[2];
+      if (r[0] === 'btnShowCvv') { var hid = b.getAttribute('data-v4') === 'h'; if (/👁|🙈/.test(b.textContent)) hid = /🙈/.test(b.textContent); ic = hid ? 'eyeo' : 'eye'; en = hid ? '🙈 Hide CVV' : '👁 Show CVV'; b.setAttribute('data-v4', hid ? 'h' : 's'); }
+      var h = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CBI[ic] + '</svg><span class="nc-no-i18n">' + esc(tt(en)) + '</span>';
+      if (b.getAttribute('data-h') !== h + L || b.innerHTML !== h) { b.innerHTML = h; b.setAttribute('data-h', h + L); b.classList.add('v4-cb'); }
+    });
+  }
+  function tick() {
+    if (staff() || !$('.bd')) return;
+    de.classList.add('v4');
+    [avail, health, pill, heading, tip, titles, curMore, security, cardLook, cardBtns, checkSvc, promo].forEach(function (f) { try { f(); } catch (e) { if (window.__v4dbg) console.warn('[v4]', f.name, e); } });
+  }
+  var t = 0, runs = 0, rT = 0; function soon() { if (t) return; t = 1; var go = function () { t = 0; if (++runs > 40) return; tick(); }; if (window.Promise) Promise.resolve().then(go); else setTimeout(go, 0); if (!rT) rT = setTimeout(function () { rT = 0; runs = 0; }, 0); }
+  new MutationObserver(soon).observe(document.body, { childList: true, subtree: true });
+  setTimeout(tick, 600); setInterval(tick, 3000);
+})();
