@@ -1,9 +1,5 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v7.1 (Complete & Clean)
-   - Fixed Mobile Currency Switcher vs ☰ Burger Menu click collision
-   - Merged Pending/Rejected Withdrawals into Recent Transactions
-   - Live Interactive Balance Chart Tooltip + Live MultiPrices Sync
-   - Custom Client Card Skins (.pay) + Smooth 3D Tilt
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v7.3 (Complete & Verified)
    ============================================================ */
 (function () {
   'use strict';
@@ -79,7 +75,6 @@
     } catch (e) { return ''; }
   }
 
-  /* Merge regular transactions (st.txs) and withdrawal requests (st.withdrawals) without duplicates */
   function allTx() {
     var s = S();
     var txs = (s.txs || []).slice();
@@ -714,9 +709,7 @@
     }
     function closeHub() { hub.classList.remove('on'); }
 
-    /* Clean separation: Currency switcher vs Mobile ☰ button */
     document.addEventListener('click', function (e) {
-      /* 1. If user clicked inside currency switcher */
       if (e.target.closest('#currSwitch')) {
         closeHub();
         var sw = $('currSwitch');
@@ -732,10 +725,8 @@
         return;
       }
 
-      /* Clicking outside closes currency menu */
       closeCurrMenu();
 
-      /* 2. Check if user specifically clicked the ☰ hamburger button (and NOT currency or other top icons) */
       var burger = e.target.closest('#mobMenuBtn, .mob-menu-btn, #sideToggle, .burger-btn');
       if (!burger) {
         var btn = e.target.closest('.top button');
