@@ -1,19 +1,29 @@
 /* guard: app.html has no login form of its own — without a session go to the login page (no black screen) */
 (function(){try{if(!/index\.html$/.test(location.pathname)&&!localStorage.getItem('session_token')){location.replace('index.html')}}catch(e){}})();
-/* guard 2: a stored token the server no longer accepts (expired / password changed / account disabled) -> back to login instead of a dead page */
+/* guard 2: a stored token the server no longer accepts (expired / password changed / account disabled) -> back to login.
+   Never on a single answer: right after sign-up/sign-in the server can briefly not see the new session yet, and one
+   failed check used to wipe the token and throw the new client back to the home page. Skip the first 3 minutes after
+   sign-in, then log out only when the session is refused 3 times in a row (about 20 s apart). */
 (function(){try{
   if(/index\.html$/.test(location.pathname))return;
   var t=localStorage.getItem('session_token');if(!t)return;
-  setTimeout(function(){
+  var fresh=function(){try{return Date.now()-Number(localStorage.getItem('nc_login_ts')||0)<180000}catch(e){return false}};
+  var tries=0;
+  function check(){
+    if(fresh()){setTimeout(check,30000);return}
+    if(localStorage.getItem('session_token')!==t)return;          /* signed in again meanwhile */
     fetch('https://nordic-deposit-checker.otis-790.workers.dev?action=getUserState',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})})
     .then(function(r){return r.json()}).then(function(d){
       if(d&&d.ok===false&&/authenticat|session|expired|disabled|token/i.test(String(d.error||''))){
+        if(++tries<3){setTimeout(check,8000);return}
+        if(localStorage.getItem('session_token')!==t)return;
         ['session_token','user_email','user_role','user_name'].forEach(function(k){localStorage.removeItem(k)});
         try{sessionStorage.removeItem('nc_f5_recovery')}catch(e){}
         location.replace('index.html');
-      }
+      }else tries=0;
     }).catch(function(){});
-  },2500);
+  }
+  setTimeout(check,2500);
 }catch(e){}})();
 /* NC THEME PRO — theme switch (dark/light), shared with the landing page via localStorage 'nc_theme' */
 (function(){
