@@ -1,9 +1,9 @@
 /* ============================================================
-   NORDIC CRYPTO — BANKING DASHBOARD PRO v7.0 (Audit & Polish Edition)
-   - Fixed 3D tilt conflict with card-skins.js
-   - Added live interactive hover/touch tooltip on Balance chart
-   - Added direct fallback for Copy Card & Card Settings
-   - Fixed currency/price reactivity in render signature
+   NORDIC CRYPTO — BANKING DASHBOARD PRO v7.1 (Complete & Clean)
+   - Fixed Mobile Currency Switcher vs ☰ Burger Menu click collision
+   - Merged Pending/Rejected Withdrawals into Recent Transactions
+   - Live Interactive Balance Chart Tooltip + Live MultiPrices Sync
+   - Custom Client Card Skins (.pay) + Smooth 3D Tilt
    ============================================================ */
 (function () {
   'use strict';
@@ -79,17 +79,52 @@
     } catch (e) { return ''; }
   }
 
+  /* Merge regular transactions (st.txs) and withdrawal requests (st.withdrawals) without duplicates */
   function allTx() {
     var s = S();
     var txs = (s.txs || []).slice();
+    var wds = (s.withdrawals || []).slice();
+    var seenWd = {};
+    var merged = [];
+
     txs.forEach(function (t) {
+      if (!t) return;
       if (!t.ts) {
         var d = Date.parse(t.date || '');
         t.ts = isFinite(d) ? d : Date.now();
       }
+      if (t.wdId) seenWd[String(t.wdId)] = true;
+      merged.push({
+        _kind: 'tx',
+        raw: t,
+        ts: t.ts,
+        desc: String(t.desc || 'Transaction'),
+        amt: Number(t.amt) || 0,
+        coin: t.coin || t.symbol || '',
+        coinAmt: Number(t.coinAmt || t.crypto) || 0,
+        status: String(t.status || 'Completed')
+      });
     });
-    txs.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-    return txs;
+
+    wds.forEach(function (w) {
+      if (!w || seenWd[String(w.id)]) return;
+      var stLabel = w.status === 'approved' ? 'Completed'
+        : (w.status === 'rejected' ? 'Rejected'
+        : (w.holdUntil && w.holdUntil > Date.now() ? 'Safety hold' : 'Processing'));
+      merged.push({
+        _kind: 'wd',
+        raw: w,
+        ts: Number(w.createdAt) || Date.now(),
+        desc: 'Withdrawal — ' + String(w.method || 'IBAN').toUpperCase(),
+        amt: -(Math.abs(Number(w.amount) || 0)),
+        coin: w.asset || '',
+        coinAmt: Number(w.assetAmount) || 0,
+        status: stLabel
+      });
+    });
+
+    merged.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    return merged;
   }
 
   function totals() {
@@ -388,16 +423,17 @@
       var cls = 'in', sym = ICO.arrowDownLeft, amtCls = 'up';
       if (/exchange|swap|convert|buy|sell/.test(low)) { cls = 'swap'; sym = ICO.swap; amtCls = a < 0 ? 'dn' : 'up'; }
       else if (/bonus|reward/.test(low)) { cls = 'bonus'; sym = ICO.gift; amtCls = 'up'; }
-      else if (a < 0 || /withdraw|transfer/.test(low)) { cls = 'out'; sym = ICO.arrowUpRight; amtCls = 'dn'; }
+      else if (t._kind === 'wd' || a < 0 || /withdraw|transfer/.test(low)) { cls = 'out'; sym = ICO.arrowUpRight; amtCls = 'dn'; }
 
       var dt = t.ts ? new Date(t.ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' +
                new Date(t.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+      var subLine = t._kind === 'wd' ? (dt + ' · ' + t.status) : dt;
       var amtStr = a !== 0 ? ((a > 0 ? '+' : '−') + U(Math.abs(a))) : (t.coinAmt ? (t.coinAmt + ' ' + (t.coin || '')) : '—');
 
       return '<button type="button" class="bd-tx-item" data-a="tx" data-i="' + idx + '">' +
         '<div class="bd-tx-l">' +
           '<span class="bd-tx-ic ' + cls + '">' + sym + '</span>' +
-          '<div class="bd-tx-info"><b>' + esc(desc) + '</b><small>' + esc(dt) + '</small></div>' +
+          '<div class="bd-tx-info"><b>' + esc(desc) + '</b><small>' + esc(subLine) + '</small></div>' +
         '</div>' +
         '<span class="bd-tx-amt bd-sens ' + amtCls + '">' + esc(amtStr) + '</span>' +
       '</button>';
@@ -486,7 +522,8 @@
     var s = S();
     var sig = [
       s.usd, s.btc, s.eth, s.usdt, s.btcP, s.ethP, s.currency, s.eurR, s.sekR,
-      (s.txs || []).length, s.card && s.card.status, s.card && s.card.design, B.rng, B.hide
+      (s.txs || []).length, (s.withdrawals || []).length,
+      s.card && s.card.status, s.card && s.card.design, B.rng, B.hide
     ].join('|');
     if (!force && sig === B.sig) return;
     B.sig = sig;
@@ -538,28 +575,34 @@
     } else if (act === 'tx') {
       var idx = parseInt(btn.getAttribute('data-i'), 10);
       var item = allTx()[idx];
-      if (item && typeof window.openTxDetails === 'function') window.openTxDetails(item);
+      if (!item) return;
+      if (item._kind === 'wd') {
+        if (typeof window.openWdDetails === 'function') { window.openWdDetails(item.raw); return; }
+        if (typeof window.openTxDetails === 'function') {
+          var w = item.raw;
+          window.openTxDetails({
+            desc: item.desc,
+            amt: item.amt,
+            ts: w.createdAt,
+            status: item.status,
+            wdId: w.id,
+            isWithdrawal: true,
+            type: 'withdrawal',
+            method: w.method,
+            details: w.details,
+            reason: w.reason,
+            holdUntil: w.holdUntil,
+            asset: w.asset,
+            assetAmount: w.assetAmount
+          });
+          return;
+        }
+      } else if (typeof window.openTxDetails === 'function') {
+        window.openTxDetails(item.raw);
+        return;
+      }
+      nav('tx');
     }
-  }
-
-  function syncLivePrices() {
-    var base = window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
-    fetch(base + '?action=multiPrices&_t=' + Date.now())
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.ok || !Array.isArray(d.coins) || !window.st) return;
-        var changed = false;
-        d.coins.forEach(function (c) {
-          if (!c || !(c.usd > 0)) return;
-          var sym = String(c.symbol || '').toUpperCase();
-          if (sym === 'BTC' && st.btcP !== c.usd) { st.btcP = c.usd; changed = true; }
-          else if (sym === 'ETH' && st.ethP !== c.usd) { st.ethP = c.usd; changed = true; }
-          else if (sym === 'SOL' && st.solP !== c.usd) { st.solP = c.usd; changed = true; }
-          else if (sym === 'BNB' && st.bnbP !== c.usd) { st.bnbP = c.usd; changed = true; }
-        });
-        if (changed) render(true);
-      })
-      .catch(function () {});
   }
 
   function autoLocalCurrency() {
@@ -571,7 +614,6 @@
       var manualKey = 'nc_cur_manual_' + em;
       if (lsGet(manualKey) === '1') return;
 
-      /* Отслеживаем ручной клик клиента по выбору валюты, чтобы не перебивать его выбор */
       var sw = $('currSwitch');
       if (sw && !sw.__bdTracked) {
         sw.__bdTracked = true;
@@ -623,26 +665,14 @@
     if (window.__bdMobHub) return;
     window.__bdMobHub = true;
 
-    /* Закрытие меню валют при клике по валюте или вне списка */
-    document.addEventListener('click', function (e) {
+    function closeCurrMenu() {
       var sw = $('currSwitch');
       if (!sw) return;
       var menu = sw.querySelector('.curr-menu') || sw.children[1];
-      if (!menu) return;
-      var clickedBtn = e.target.closest('#currSwitch > button, #currSwitch > div:first-child');
-      if (clickedBtn) {
-        var isOpen = sw.classList.contains('open') || menu.classList.contains('open');
-        sw.classList.toggle('open', !isOpen);
-        menu.classList.toggle('open', !isOpen);
-        return;
-      }
-      if (e.target.closest('#currSwitch .curr-opt, #currSwitch [data-cur]') || !e.target.closest('#currSwitch')) {
-        sw.classList.remove('open', 'on');
-        menu.classList.remove('open', 'on');
-      }
-    }, true);
+      sw.classList.remove('open', 'on');
+      if (menu) menu.classList.remove('open', 'on');
+    }
 
-    /* Создаём полнофункциональную мобильную панель для кнопки ☰ */
     var hub = document.createElement('div');
     hub.id = 'bdMobHub';
     hub.className = 'bd-mob-hub';
@@ -671,6 +701,7 @@
     document.body.appendChild(hub);
 
     function openHub() {
+      closeCurrMenu();
       var nm = lsGet('user_name') || (S().user && S().user.name) || 'Client';
       var av = $('bdMhAv'), un = $('bdMhName'), sn = $('bdMhSnow');
       if (un) un.textContent = nm;
@@ -683,10 +714,37 @@
     }
     function closeHub() { hub.classList.remove('on'); }
 
-    /* Перехватываем клик по кнопке ☰ в мобильной шапке */
+    /* Clean separation: Currency switcher vs Mobile ☰ button */
     document.addEventListener('click', function (e) {
-      var burger = e.target.closest('#mobMenuBtn, .mob-menu-btn, .top button');
-      if (burger && burger.querySelector('svg') && burger.closest('.top') && burger.getBoundingClientRect().left < 90 && burger.getBoundingClientRect().top > 45) {
+      /* 1. If user clicked inside currency switcher */
+      if (e.target.closest('#currSwitch')) {
+        closeHub();
+        var sw = $('currSwitch');
+        var menu = sw.querySelector('.curr-menu') || sw.children[1];
+        if (!menu) return;
+        if (e.target.closest('.curr-opt, [data-cur]')) {
+          setTimeout(closeCurrMenu, 20);
+        } else {
+          var isOpen = sw.classList.contains('open') || menu.classList.contains('open');
+          sw.classList.toggle('open', !isOpen);
+          menu.classList.toggle('open', !isOpen);
+        }
+        return;
+      }
+
+      /* Clicking outside closes currency menu */
+      closeCurrMenu();
+
+      /* 2. Check if user specifically clicked the ☰ hamburger button (and NOT currency or other top icons) */
+      var burger = e.target.closest('#mobMenuBtn, .mob-menu-btn, #sideToggle, .burger-btn');
+      if (!burger) {
+        var btn = e.target.closest('.top button');
+        if (btn && !btn.closest('#currSwitch') && !btn.id && btn.querySelectorAll('line, path').length >= 3) {
+          var r = btn.getBoundingClientRect();
+          if (r.width <= 54 && r.left < 80) burger = btn;
+        }
+      }
+      if (burger) {
         e.preventDefault();
         e.stopPropagation();
         openHub();
@@ -714,8 +772,8 @@
         return;
       }
       if (e.target.closest('#bdMhSnow')) {
-        var sp = $('bdSnowPill');
-        if (sp) sp.click();
+        var hc = $('holChip');
+        if (hc) hc.click();
         else {
           var nextOff = !(lsGet('nc_hol_off') === '1');
           lsSet('nc_hol_off', nextOff ? '1' : '0');
@@ -729,6 +787,26 @@
         if (typeof window.doLogout === 'function') window.doLogout();
       }
     });
+  }
+
+  function syncLivePrices() {
+    var base = window.WORKER_URL || 'https://nordic-deposit-checker.otis-790.workers.dev';
+    fetch(base + '?action=multiPrices&_t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok || !Array.isArray(d.coins) || !window.st) return;
+        var changed = false;
+        d.coins.forEach(function (c) {
+          if (!c || !(c.usd > 0)) return;
+          var sym = String(c.symbol || '').toUpperCase();
+          if (sym === 'BTC' && st.btcP !== c.usd) { st.btcP = c.usd; changed = true; }
+          else if (sym === 'ETH' && st.ethP !== c.usd) { st.ethP = c.usd; changed = true; }
+          else if (sym === 'SOL' && st.solP !== c.usd) { st.solP = c.usd; changed = true; }
+          else if (sym === 'BNB' && st.bnbP !== c.usd) { st.bnbP = c.usd; changed = true; }
+        });
+        if (changed) render(true);
+      })
+      .catch(function () {});
   }
 
   function init() {
