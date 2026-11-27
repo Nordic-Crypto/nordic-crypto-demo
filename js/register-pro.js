@@ -1,4 +1,4 @@
-/* NordicCrypto — register-pro.js v2 (Reliable Submit + 502 Auto-Retry + Loading State) */
+/* NordicCrypto — register-pro.js v3 (Reliable Submit + 502 Auto-Retry + Loading State + always-visible server errors) */
 (function () {
   'use strict';
   if (window.__ncReg) return; window.__ncReg = 1;
@@ -235,7 +235,15 @@
   function showErr(msg) {
     setBusy(false);
     var e = $('rgzErr');
-    if (e) { e.textContent = msg; e.classList.toggle('on', !!msg); }
+    if (!e) return;
+    e.textContent = msg || '';
+    if (msg && /already registered/i.test(msg)) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-rgz', 'signin');
+      b.textContent = T('signin') + ' →'; b.style.cssText = 'display:block;margin-top:8px;background:none;border:0;padding:0;color:#45cfa8;font:inherit;font-weight:700;cursor:pointer';
+      e.appendChild(b);
+    }
+    e.classList.toggle('on', !!msg);
+    if (msg) { try { e.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (x) {} }
   }
 
   function activate() {
@@ -266,7 +274,9 @@
     var me = $('mErr'); if (!me) return;
     new MutationObserver(function () {
       if (!document.querySelector('.modal.rgz-on')) return;
-      var shown = getComputedStyle(me).display !== 'none' && me.textContent.trim();
+      // read the text, not the visibility: in the 2-step form #mErr itself is hidden, so a display check
+      // swallowed every server error ("Email already registered", rate limit, ...) and the button looked dead
+      var shown = !me.classList.contains('ok') && me.textContent.trim();
       if (shown) {
         if (step !== 2) { step = 2; render(); }
         showErr(me.textContent.trim());
