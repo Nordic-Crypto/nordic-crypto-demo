@@ -1665,3 +1665,10 @@ html[data-theme="light"] .bd-mh-pill {
     color: #0f172a !important;
   }
 }
+
+/* security panel: real statuses (amber = to do, grey = in review / loading) */
+.bd-sec-chk.warn { background: rgba(245, 181, 74, 0.16); border-color: rgba(245, 181, 74, 0.45); color: #f5b54a; }
+.bd-sec-chk.wait { background: rgba(148, 163, 184, 0.14); border-color: rgba(148, 163, 184, 0.35); color: #a9b6c4; }
+.bd-sec-list li.bd-sec-todo { color: #e9d9b8; }
+.bd-sec-partial .bd-sec-shield { background: rgba(245, 181, 74, 0.12); border-color: rgba(245, 181, 74, 0.35); color: #f5b54a; }
+.bd-sec-partial .bd-sec-watermark { opacity: .45; filter: grayscale(.6); }
